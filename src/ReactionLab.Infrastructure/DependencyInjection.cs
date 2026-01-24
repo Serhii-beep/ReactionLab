@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using ReactionLab.Domain.Interfaces;
 using ReactionLab.Infrastructure.Persistence;
 using ReactionLab.Infrastructure.Persistence.Repositories;
+using ReactionLab.Infrastructure.Persistence.Seeding;
 
 namespace ReactionLab.Infrastructure;
 
@@ -22,6 +23,9 @@ public static class DependencyInjection
         services.AddScoped<IReactionRepository, ReactionRepository>();
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+        services.AddScoped<IDataSeeder, ElementSeeder>();
+        services.AddScoped<DatabaseSeeder>();
 
         return services;
     }

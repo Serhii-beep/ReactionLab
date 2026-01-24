@@ -1,6 +1,7 @@
 using ReactionLab.API.Middleware;
 using ReactionLab.Application;
 using ReactionLab.Infrastructure;
+using ReactionLab.Infrastructure.Persistence.Seeding;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -41,6 +42,12 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var seeder = scope.ServiceProvider.GetRequiredService<DatabaseSeeder>();
+    await seeder.SeedAsync();
+}
 
 app.UseGlobalExceptionHandling();
 
