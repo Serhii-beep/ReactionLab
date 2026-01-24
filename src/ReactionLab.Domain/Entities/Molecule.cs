@@ -34,7 +34,7 @@ public class Molecule : BaseEntity
 
     public string? ImageUrl { get; set; }
 
-    public string? Molecule3DUrl { get; set; }
+    public string? Model3DUrl { get; set; }
 
     public ICollection<MoleculeElement> MoleculeElements { get; set; } = [];
 
