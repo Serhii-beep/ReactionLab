@@ -1,0 +1,41 @@
+# .NET
+bin/
+obj/
+*.user
+*.userosscache
+*.suo
+*.cache
+*.dll
+*.pdb
+*.log
+
+# IDE
+.vs/
+.vscode/
+*.swp
+.idea/
+
+# User-specific files
+appsettings.Development.json
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+
+# NuGet
+*.nupkg
+.nuget/
+packages/
+
+# Node (for Angular later)
+node_modules/
+dist/
+.angular/
+
+# Misc
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db

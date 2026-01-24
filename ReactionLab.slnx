@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ReactionLab.API/ReactionLab.API.csproj" />
+    <Project Path="src/ReactionLab.Application/ReactionLab.Application.csproj" />
+    <Project Path="src/ReactionLab.Domain/ReactionLab.Domain.csproj" />
+    <Project Path="src/ReactionLab.Infrastructure/ReactionLab.Infrastructure.csproj" />
+  </Folder>
+</Solution>
