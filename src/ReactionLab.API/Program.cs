@@ -1,3 +1,4 @@
+using ReactionLab.API.Middleware;
 using ReactionLab.Application;
 using ReactionLab.Infrastructure;
 using Serilog;
@@ -40,6 +41,8 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 var app = builder.Build();
+
+app.UseGlobalExceptionHandling();
 
 if (app.Environment.IsDevelopment())
 {

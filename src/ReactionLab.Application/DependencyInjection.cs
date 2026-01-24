@@ -1,5 +1,7 @@
 ﻿using FluentValidation;
+using MediatR;
 using Microsoft.Extensions.DependencyInjection;
+using ReactionLab.Application.Common.Behaviors;
 using System.Reflection;
 
 namespace ReactionLab.Application;
@@ -11,6 +13,8 @@ public static class DependencyInjection
         var assembly = Assembly.GetExecutingAssembly();
 
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(assembly));
+
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
         services.AddAutoMapper(cfg => cfg.AddMaps(assembly));
 
