@@ -47,6 +47,5 @@ public class Element : BaseEntity
 
     public string? InterestingFacts { get; set; } // JSON array stored as string
 
-    // Native properties
     public ICollection<MoleculeElement> MoleculeElements { get; set; } = [];
 }
