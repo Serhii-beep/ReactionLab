@@ -6,10 +6,6 @@
 
   <ItemGroup>
     <Folder Include="Common\Interfaces\" />
-    <Folder Include="Features\Molecules\Commands\" />
-    <Folder Include="Features\Molecules\Queries\" />
-    <Folder Include="Features\Reactions\Commands\" />
-    <Folder Include="Features\Reactions\Queries\" />
   </ItemGroup>
 
   <ItemGroup>
