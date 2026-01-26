@@ -25,6 +25,8 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         services.AddScoped<IDataSeeder, ElementSeeder>();
+        services.AddScoped<IDataSeeder, MoleculeSeeder>();
+        services.AddScoped<IDataSeeder, ReactionSeeder>();
         services.AddScoped<DatabaseSeeder>();
 
         return services;
