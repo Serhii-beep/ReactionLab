@@ -1,0 +1,94 @@
+.lab-workspace {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 600px;
+    display: flex;
+    flex-direction: column;
+}
+
+.canvas-container {
+    flex: 1;
+    width: 100%;
+    min-height: 500px;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.controls-panel {
+    padding: 16px;
+    background: #1e1e2f;
+    border-radius: 8px;
+    margin-top: 16px;
+
+    h3 {
+        margin: 0 0 12px 0;
+        color: #ffffff;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+}
+
+.molecule-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+
+    button {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        background: #4fc3f7;
+        color: #000000;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+
+        &:hover:not(:disabled) {
+            background: #81d4fa;
+            transform: translateY(-2px);
+        }
+
+        &:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    }
+}
+
+.actions {
+    display: flex;
+    gap: 8px;
+
+    button {
+        padding: 8px 16px;
+        border: 1px solid #4fc3f7;
+        border-radius: 4px;
+        background: transparent;
+        color: #4fc3f7;
+        cursor: pointer;
+        transition: all 0.2s ease;
+
+        &:hover {
+            background: rgba(79, 195, 247, 0.1);
+        }
+    }
+}
+
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.7);
+    color: #ffffff;
+    font-size: 18px;
+    border-radius: 8px;;
+}

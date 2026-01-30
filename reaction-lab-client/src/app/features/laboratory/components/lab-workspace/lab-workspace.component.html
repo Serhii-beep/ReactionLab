@@ -1,0 +1,27 @@
+<div class="lab-workspace">
+    <div #canvasContainer class="canvas-container"></div>
+
+    <div class="controls-panel">
+        <h3>Molecules</h3>
+        <div class="molecule-buttons">
+            @for (formula of availableMolecules; track formula) {
+                <button
+                    (click)="addMolecule(formula)"
+                    [disabled]="loading()">
+                    {{ formula }}
+                </button>
+            }
+        </div>
+
+        <div class="actions">
+            <button (click)="clearWorkspace()">Clear</button>
+            <button (click)="resetCamera()">Reset Camera</button>
+        </div>
+    </div>
+
+    @if (loading()) {
+        <div class="loading-overlay">
+            <span>Loading elements...</span>
+        </div>
+    }
+</div>

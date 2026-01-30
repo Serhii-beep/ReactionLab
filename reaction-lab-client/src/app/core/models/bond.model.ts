@@ -1,7 +1,4 @@
-﻿namespace ReactionLab.Domain.Enums;
-
-public enum BondType
-{
+export enum BondType {
     Single,
     Double,
     Triple,
