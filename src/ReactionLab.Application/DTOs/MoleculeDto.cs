@@ -2,80 +2,140 @@
 
 namespace ReactionLab.Application.DTOs;
 
-public record MoleculeDto(
-    Guid Id,
-    string Formula,
-    string Name,
-    string? IUPACName,
-    string? CommonNames,
-    decimal? MolecularWeight,
-    string? Structure3D,
-    bool IsOrganic,
-    string? Category,
-    MatterState StateAtRoomTemp,
-    string? Description,
-    string? Uses,
-    string? SafetyInfo,
-    string? InterestingFacts,
-    string? ImageUrl,
-    string? Model3DUrl,
-    IReadOnlyList<MoleculeElementDto> Elements
-);
+public class MoleculeDto
+{
+    public Guid Id { get; init; }
 
-public record MoleculeSummaryDto(
-    Guid Id,
-    string Formula,
-    string Name,
-    decimal? MolecularWeight,
-    bool IsOrganic,
-    string? Category,
-    MatterState StateAtRoomTemp
-);
+    public string Formula { get; init; } = default!;
 
-public record MoleculeElementDto(
-    Guid ElementId,
-    string Symbol,
-    string Name,
-    int Count
-);
+    public string Name { get; init; } = default!;
 
-public record CreateMoleculeDto(
-    string Formula,
-    string Name,
-    string? IUPACName,
-    string? CommonNames,
-    decimal? MolecularWeight,
-    string? Structure3D,
-    bool IsOrganic,
-    string? Category,
-    MatterState StateAtRoomTemp,
-    string? Description,
-    string? Uses,
-    string? SafetyInfo,
-    string? InterestingFacts,
-    string? ImageUrl,
-    string? Model3DUrl,
-    IReadOnlyList<CreateMoleculeElementDto>? Elements
-);
+    public string? IUPACName { get; init; }
 
-public record CreateMoleculeElementDto(
-    Guid ElementId,
-    int Count
-);
+    public string? CommonNames { get; init; }
 
-public record UpdateMoleculeDto(
-    string Name,
-    string? IUPACName,
-    string? CommonNames,
-    decimal? MolecularWeight,
-    string? Structure3D,
-    bool IsOrganic,
-    string? Category,
-    MatterState StateAtRoomTemp,
-    string? Description,
-    string? Uses,
-    string? SafetyInfo,
-    string? InterestingFacts,
-    string? ImageUrl,
-    string? Model3DUrl
-);
+    public decimal? MolecularWeight { get; init; }
+
+    public string? Structure3D { get; init; }
+
+    public bool IsOrganic { get; init; }
+
+    public string? Category { get; init; }
+
+    public MatterState StateAtRoomTemp { get; init; }
+
+    public string? Description { get; init; }
+
+    public string? Uses { get; init; }
+
+    public string? SafetyInfo { get; init; }
+
+    public string? InterestingFacts { get; init; }
+
+    public string? ImageUrl { get; init; }
+
+    public string? Model3DUrl { get; init; }
+
+    public IReadOnlyList<MoleculeElementDto> Elements { get; init; } = [];
+}
+
+public class MoleculeSummaryDto
+{
+    public Guid Id { get; init; }
+
+    public string Formula { get; init; } = default!;
+
+    public string Name { get; init; } = default!;
+
+    public decimal? MolecularWeight { get; init; }
+
+    public bool IsOrganic { get; init; }
+
+    public string? Category { get; init; }
+
+    public MatterState StateAtRoomTemp { get; init; }
+}
+
+public class MoleculeElementDto
+{
+    public Guid ElementId { get; init; }
+
+    public string Symbol { get; init; } = default!;
+
+    public string Name { get; init; } = default!;
+
+    public int Count { get; init; }
+}
+
+public class CreateMoleculeDto
+{
+    public string Formula { get; init; } = default!;
+
+    public string Name { get; init; } = default!;
+
+    public string? IUPACName { get; init; }
+
+    public string? CommonNames { get; init; }
+
+    public decimal? MolecularWeight { get; init; }
+
+    public string? Structure3D { get; init; }
+
+    public bool IsOrganic { get; init; }
+
+    public string? Category { get; init; }
+
+    public MatterState StateAtRoomTemp { get; init; }
+
+    public string? Description { get; init; }
+
+    public string? Uses { get; init; }
+
+    public string? SafetyInfo { get; init; }
+
+    public string? InterestingFacts { get; init; }
+
+    public string? ImageUrl { get; init; }
+
+    public string? Model3DUrl { get; init; }
+
+    public IReadOnlyList<CreateMoleculeElementDto>? Elements { get; init; }
+}
+
+public class CreateMoleculeElementDto
+{
+    public Guid ElementId { get; init; }
+
+    public int Count { get; init; }
+}
+
+public class UpdateMoleculeDto
+{
+    public string Name { get; init; } = default!;
+
+    public string? IUPACName { get; init; }
+
+    public string? CommonNames { get; init; }
+
+    public decimal? MolecularWeight { get; init; }
+
+    public string? Structure3D { get; init; }
+
+    public bool IsOrganic { get; init; }
+
+    public string? Category { get; init; }
+
+    public MatterState StateAtRoomTemp { get; init; }
+
+    public string? Description { get; init; }
+
+    public string? Uses { get; init; }
+
+    public string? SafetyInfo { get; init; }
+
+    public string? InterestingFacts { get; init; }
+
+    public string? ImageUrl { get; init; }
+
+    public string? Model3DUrl { get; init; }
+}

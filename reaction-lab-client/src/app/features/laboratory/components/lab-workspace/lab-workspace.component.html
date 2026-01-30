@@ -3,14 +3,23 @@
 
     <div class="controls-panel">
         <h3>Molecules</h3>
-        <div class="molecule-buttons">
-            @for (formula of availableMolecules; track formula) {
-                <button
-                    (click)="addMolecule(formula)"
-                    [disabled]="loading()">
-                    {{ formula }}
-                </button>
-            }
+        
+        @if (loading()) {
+            <div class="loading">Loading molecules...</div>
+        } @else {
+            <div class="molecule-buttons">
+                @for (mol of availableMolecules(); track mol.id) {
+                    <button
+                        (click)="addMoleculeToScene(mol)"
+                        [title]="mol.name">
+                        {{ mol.formula }}
+                    </button>
+                }
+            </div>
+        }
+
+        <div class="scene-info">
+            <span>Molecules in scene: {{ sceneMoleculeCount() }}</span>
         </div>
 
         <div class="actions">
@@ -19,9 +28,10 @@
         </div>
     </div>
 
-    @if (loading()) {
-        <div class="loading-overlay">
-            <span>Loading elements...</span>
+    @if (error()) {
+        <div class="error-overlay">
+            <span>{{ error() }}</span>
+            <button (click)="retry()">Retry</button>
         </div>
     }
 </div>

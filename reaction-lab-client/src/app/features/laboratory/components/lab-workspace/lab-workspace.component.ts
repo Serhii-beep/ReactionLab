@@ -1,9 +1,9 @@
 import { CommonModule } from "@angular/common";
-import { AfterViewInit, Component, ElementRef, inject, OnDestroy, signal, ViewChild } from "@angular/core";
+import { AfterViewInit, Component, computed, ElementRef, inject, OnDestroy, signal, ViewChild } from "@angular/core";
 import { Molecule3D, MoleculeFactoryService, SceneManagerService } from "../../../../three-engine";
-import { ElementService } from "../../../../core/services";
-import { ElementSummary } from "../../../../core/models";
-import { tap } from "rxjs";
+import { ElementService, MoleculeService } from "../../../../core/services";
+import { ElementSummary, Molecule, MoleculeSummary } from "../../../../core/models";
+import { forkJoin, tap } from "rxjs";
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
@@ -19,27 +19,21 @@ export class LabWorkspaceComponent implements AfterViewInit, OnDestroy {
     private readonly sceneManager = inject(SceneManagerService);
     private readonly moleculeFactory = inject(MoleculeFactoryService);
     private readonly elementService = inject(ElementService);
+    private readonly moleculeService = inject(MoleculeService);
 
     readonly loading = signal(true);
-    readonly availableMolecules = ['H2O', 'CO2', 'CH4', 'O2', 'H2'];
+    readonly error = signal<string | null>(null);
+    readonly availableMolecules = signal<MoleculeSummary[]>([]);
+
+    private readonly sceneMolecules = signal<Molecule3D[]>([]);
+    readonly sceneMoleculeCount = computed(() => this.sceneMolecules().length);
 
     private elements: ElementSummary[] = [];
-    private molecules: Molecule3D[] = [];
+    private moleculeCache = new Map<string, Molecule>();
     private moleculeSpawnOffset = 0;
 
     constructor() {
-        this.elementService.getAll().pipe(
-            takeUntilDestroyed(),
-            tap({
-                next: (elements) => {
-                    this.elements = elements;
-                    this.loading.set(false);
-                },
-                error: () => {
-                    this.loading.set(false);
-                }
-            })
-        ).subscribe();
+        this.loadData();
     }
 
     ngAfterViewInit(): void {
@@ -51,33 +45,86 @@ export class LabWorkspaceComponent implements AfterViewInit, OnDestroy {
         this.sceneManager.dispose();
     }
 
-    addMolecule(formula: string): void {
-        if (this.elements.length === 0) {
-            return;
-        }
+    addMoleculeToScene(moleculeSummary: MoleculeSummary): void {
+        const cached = this.moleculeCache.get(moleculeSummary.id);
 
-        const molecule = this.moleculeFactory.createMoleculeByFormula(formula, this.elements);
-
-        if (molecule) {
-            const offset = this.moleculeSpawnOffset * 4;
-            molecule.group.position.set(offset - 6, 0, 0);
-            this.moleculeSpawnOffset = (this.moleculeSpawnOffset + 1) % 4;
-
-            this.molecules.push(molecule);
-            this.sceneManager.addObject(molecule.id, molecule.group);
+        if (cached) {
+            this.createAndAddMolecule(cached);
+        } else {
+            this.moleculeService.getById(moleculeSummary.id).pipe(
+                tap({
+                    next: (molecule) => {
+                        this.moleculeCache.set(molecule.id, molecule);
+                        this.createAndAddMolecule(molecule);
+                    },
+                    error: (err) => {
+                        console.error('Failed to load molecule:', err);
+                    }
+                })
+            ).subscribe();
         }
     }
 
     clearWorkspace(): void {
-        this.molecules.forEach(molecule => {
+        const molecules = this.sceneMolecules();
+
+        molecules.forEach(molecule => {
             this.sceneManager.removeObject(molecule.id);
             this.moleculeFactory.disposeMolecule(molecule);
         });
-        this.molecules = [];
+
+        this.sceneMolecules.set([]);
         this.moleculeSpawnOffset = 0;
     }
 
     resetCamera(): void {
         this.sceneManager.resetCamera();
+    }
+
+    retry(): void {
+        this.loadData();
+    }
+
+    private createAndAddMolecule(molecule: Molecule): void {
+        const molecule3D = this.moleculeFactory.createFromMolecule(molecule, this.elements);
+
+        if (molecule3D) {
+            const col = this.moleculeSpawnOffset % 4;
+            const row = Math.floor(this.moleculeSpawnOffset / 4);
+            const offsetX = (col - 1.5) * 5;
+            const offsetZ = row * 5;
+
+            molecule3D.group.position.set(offsetX, 0, offsetZ);
+            this.moleculeSpawnOffset++;
+
+            this.sceneMolecules.update(molecules => [...molecules, molecule3D]);
+            this.sceneManager.addObject(molecule3D.id, molecule3D.group);
+        } else {
+            console.warn(`Could not create 3D model for molecule: ${molecule.formula}`);
+        }
+    }
+
+    private loadData(): void {
+        this.loading.set(true);
+        this.error.set(null);
+
+        forkJoin({
+            elements: this.elementService.getAll(),
+            molecules: this.moleculeService.getAll()
+        }).pipe(
+            takeUntilDestroyed(),
+            tap({
+                next: ({ elements, molecules }) => {
+                    this.elements = elements;
+                    this.availableMolecules.set(molecules);
+                    this.loading.set(false);
+                },
+                error: (err) => {
+                    this.error.set('Failed to load data. Please check if the API is running');
+                    this.loading.set(false);
+                    console.error('Failed to load data', err);
+                }
+            })
+        ).subscribe();
     }
 }

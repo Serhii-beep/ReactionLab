@@ -2,108 +2,196 @@
 
 namespace ReactionLab.Application.DTOs;
 
-public record ReactionDto(
-    Guid Id,
-    string Name,
-    string Equation,
-    string? EquationBalanced,
-    ReactionType ReactionType,
-    string? Category,
-    decimal? RequiredTemperature,
-    decimal? RequiredPressure,
-    bool RequiresCatalyst,
-    string? CatalystInfo,
-    decimal? EnthalpyChange,
-    bool? IsExothermic,
-    decimal? ActivationEnergy,
-    string? AnimationType,
-    string? EffectPreset,
-    int? AnimationDurationMs,
-    string? Description,
-    string? Mechanism,
-    string? RealWorldExamples,
-    string? SafetyWarnings,
-    int DifficultyLevel,
-    IReadOnlyList<ReactionParticipantDto> Reactants,
-    IReadOnlyList<ReactionParticipantDto> Products,
-    IReadOnlyList<string> Tags
-);
+public class ReactionDto
+{
+    public Guid Id { get; init; }
 
-public record ReactionSummaryDto(
-    Guid Id,
-    string Name,
-    string Equation,
-    ReactionType ReactionType,
-    string? Category,
-    bool? IsExothermic,
-    int DifficultyLevel
-);
+    public string Name { get; init; } = default!;
 
-public record ReactionParticipantDto(
-    Guid Id,
-    Guid? ElementId,
-    string? ElementSymbol,
-    string? ElementName,
-    Guid? MoleculeId,
-    string? MoleculeFormula,
-    string? MoleculeName,
-    ParticipantRole Role,
-    int Coefficient,
-    MatterState? State
-);
+    public string Equation { get; init; } = default!;
 
-public record CreateReactionDto(
-    string Name,
-    string Equation,
-    string? EquationBalanced,
-    ReactionType ReactionType,
-    string? Category,
-    decimal? RequiredTemperature,
-    decimal? RequiredPressure,
-    bool RequiresCatalyst,
-    string? CatalystInfo,
-    decimal? EnthalpyChange,
-    bool? IsExothermic,
-    decimal? ActivationEnergy,
-    string? AnimationType,
-    string? EffectPreset,
-    int? AnimationDurationMs,
-    string? Description,
-    string? Mechanism,
-    string? RealWorldExamples,
-    string? SafetyWarnings,
-    int DifficultyLevel,
-    IReadOnlyList<CreateReactionParticipantDto>? Participants,
-    IReadOnlyList<string>? Tags
-);
+    public string? EquationBalanced { get; init; }
 
-public record CreateReactionParticipantDto(
-    Guid? ElementId,
-    Guid? MoleculeId,
-    ParticipantRole Role,
-    int Coefficient,
-    MatterState? State
-);
+    public ReactionType ReactionType { get; init; }
 
-public record UpdateReactionDto(
-    string Name,
-    string Equation,
-    string? EquationBalanced,
-    ReactionType ReactionType,
-    string? Category,
-    decimal? RequiredTemperature,
-    decimal? RequiredPressure,
-    bool RequiresCatalyst,
-    string? CatalystInfo,
-    decimal? EnthalpyChange,
-    bool? IsExothermic,
-    decimal? ActivationEnergy,
-    string? AnimationType,
-    string? EffectPreset,
-    int? AnimationDurationMs,
-    string? Description,
-    string? Mechanism,
-    string? RealWorldExamples,
-    string? SafetyWarnings,
-    int DifficultyLevel
-);
+    public string? Category { get; init; }
+
+    public decimal? RequiredTemperature { get; init; }
+
+    public decimal? RequiredPressure { get; init; }
+
+    public bool RequiresCatalyst { get; init; }
+
+    public string? CatalystInfo { get; init; }
+
+    public decimal? EnthalpyChange { get; init; }
+
+    public bool? IsExothermic { get; init; }
+
+    public decimal? ActivationEnergy { get; init; }
+
+    public string? AnimationType { get; init; }
+
+    public string? EffectPreset { get; init; }
+
+    public int? AnimationDurationMs { get; init; }
+
+    public string? Description { get; init; }
+
+    public string? Mechanism { get; init; }
+
+    public string? RealWorldExamples { get; init; }
+
+    public string? SafetyWarnings { get; init; }
+
+    public int DifficultyLevel { get; init; }
+
+    public IReadOnlyList<ReactionParticipantDto> Reactants { get; init; } = [];
+
+    public IReadOnlyList<ReactionParticipantDto> Products { get; init; } = [];
+
+    public IReadOnlyList<string> Tags { get; init; } = [];
+}
+
+public class ReactionSummaryDto
+{
+    public Guid Id { get; init; }
+
+    public string Name { get; init; } = default!;
+
+    public string Equation { get; init; } = default!;
+
+    public ReactionType ReactionType { get; init; }
+
+    public string? Category { get; init; }
+
+    public bool? IsExothermic { get; init; }
+
+    public int DifficultyLevel { get; init; }
+}
+
+public class ReactionParticipantDto
+{
+    public Guid Id { get; init; }
+
+    public Guid? ElementId { get; init; }
+
+    public string? ElementSymbol { get; init; }
+
+    public string? ElementName { get; init; }
+
+    public Guid? MoleculeId { get; init; }
+
+    public string? MoleculeFormula { get; init; }
+
+    public string? MoleculeName { get; init; }
+
+    public ParticipantRole Role { get; init; }
+
+    public int Coefficient { get; init; }
+
+    public MatterState? State { get; init; }
+}
+
+public class CreateReactionDto
+{
+    public string Name { get; init; } = default!;
+
+    public string Equation { get; init; } = default!;
+
+    public string? EquationBalanced { get; init; }
+
+    public ReactionType ReactionType { get; init; }
+
+    public string? Category { get; init; }
+
+    public decimal? RequiredTemperature { get; init; }
+
+    public decimal? RequiredPressure { get; init; }
+
+    public bool RequiresCatalyst { get; init; }
+
+    public string? CatalystInfo { get; init; }
+
+    public decimal? EnthalpyChange { get; init; }
+
+    public bool? IsExothermic { get; init; }
+
+    public decimal? ActivationEnergy { get; init; }
+
+    public string? AnimationType { get; init; }
+
+    public string? EffectPreset { get; init; }
+
+    public int? AnimationDurationMs { get; init; }
+
+    public string? Description { get; init; }
+
+    public string? Mechanism { get; init; }
+
+    public string? RealWorldExamples { get; init; }
+
+    public string? SafetyWarnings { get; init; }
+
+    public int DifficultyLevel { get; init; }
+
+    public IReadOnlyList<CreateReactionParticipantDto>? Participants { get; init; }
+
+    public IReadOnlyList<string>? Tags { get; init; }
+}
+
+public class CreateReactionParticipantDto
+{
+    public Guid? ElementId { get; init; }
+
+    public Guid? MoleculeId { get; init; }
+
+    public ParticipantRole Role { get; init; }
+
+    public int Coefficient { get; init; }
+
+    public MatterState? State { get; init; }
+}
+
+public class UpdateReactionDto
+{
+    public string Name { get; init; } = default!;
+
+    public string Equation { get; init; } = default!;
+
+    public string? EquationBalanced { get; init; }
+
+    public ReactionType ReactionType { get; init; }
+
+    public string? Category { get; init; }
+
+    public decimal? RequiredTemperature { get; init; }
+
+    public decimal? RequiredPressure { get; init; }
+
+    public bool RequiresCatalyst { get; init; }
+
+    public string? CatalystInfo { get; init; }
+
+    public decimal? EnthalpyChange { get; init; }
+
+    public bool? IsExothermic { get; init; }
+
+    public decimal? ActivationEnergy { get; init; }
+
+    public string? AnimationType { get; init; }
+
+    public string? EffectPreset { get; init; }
+
+    public int? AnimationDurationMs { get; init; }
+
+    public string? Description { get; init; }
+
+    public string? Mechanism { get; init; }
+
+    public string? RealWorldExamples { get; init; }
+
+    public string? SafetyWarnings { get; init; }
+
+    public int DifficultyLevel { get; init; }
+}
