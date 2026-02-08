@@ -9,14 +9,31 @@ export class SceneManagerService {
     private scene!: THREE.Scene;
     private camera!: THREE.PerspectiveCamera;
     private renderer!: THREE.WebGLRenderer;
-    private controls!: OrbitControls;
     private animationFrameId: number | null = null;
     private container!: HTMLElement;
+
+    private isRotating = false;
+    private isPanning = false;
+    private previousMousePosition = { x: 0, y: 0 };
+    private spherical = new THREE.Spherical();
+    private target = new THREE.Vector3(0, 0, 0);
+    private rotateSpeed = 0.005;
+    private panSpeed = 0.15;
+    private zoomSpeed = 0.1;
+    private minDistance = 2;
+    private maxDistance = 100;
 
     private readonly _isInitialized = signal(false);
     readonly isInitialized = this._isInitialized.asReadonly();
 
     private readonly objects = new Map<string, THREE.Object3D>();
+
+    private boundOnMouseDown!: (e: MouseEvent) => void;
+    private boundOnMouseMove!: (e: MouseEvent) => void;
+    private boundOnMouseUp!: (e: MouseEvent) => void;
+    private boundOnWheel!: (e: WheelEvent) => void;
+    private boundOnContextMenu!: (e: MouseEvent) => void;
+    private boundOnWindowResize!: () => void;
 
     initialize(container: ElementRef<HTMLElement>): void {
         if (this._isInitialized()) {
@@ -28,7 +45,6 @@ export class SceneManagerService {
         this.setupCamera();
         this.setupRenderer();
         this.setupLights();
-        this.setupControls();
         this.setupEventListeners();
 
         this._isInitialized.set(true);
@@ -42,9 +58,16 @@ export class SceneManagerService {
 
     private setupCamera(): void {
         const aspect = this.container.clientWidth / this.container.clientHeight;
-        this.camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
-        this.camera.position.set(0, 5, 10);
-        this.camera.lookAt(0, 0, 0);
+        this.camera = new THREE.PerspectiveCamera(50, aspect, 0.1, 1000);
+        this.camera.position.set(0, 8, 15);
+        this.camera.lookAt(this.target);
+
+        this.updateSphericalFromCamera();
+    }
+
+    private updateSphericalFromCamera(): void {
+        const offset = new THREE.Vector3().subVectors(this.camera.position, this.target);
+        this.spherical.setFromVector3(offset);
     }
 
     private setupRenderer(): void {
@@ -56,36 +79,143 @@ export class SceneManagerService {
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        this.renderer.sortObjects = true;
         this.container.appendChild(this.renderer.domElement);
     }
 
     private setupLights(): void {
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
         this.scene.add(ambientLight);
 
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
         directionalLight.position.set(10, 20, 10);
         directionalLight.castShadow = true;
         directionalLight.shadow.mapSize.width = 2048;
         directionalLight.shadow.mapSize.height = 2048;
         this.scene.add(directionalLight);
 
-        const pointLight = new THREE.PointLight(0x4fc3f7, 0.5);
-        pointLight.position.set(-10, 10, -10);
+        const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.4);
+        directionalLight2.position.set(-10, 10, -10);
+        this.scene.add(directionalLight2);
+
+        const pointLight = new THREE.PointLight(0x4fc3f7, 0.3);
+        pointLight.position.set(0, 15, 0);
         this.scene.add(pointLight);
     }
 
-    private setupControls(): void {
-        this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-        this.controls.enableDamping = true;
-        this.controls.dampingFactor = 0.05;
-        this.controls.minDistance = 2;
-        this.controls.maxDistance = 50;
-        this.controls.maxPolarAngle = Math.PI / 1.5;
+    private setupEventListeners(): void {
+        this.boundOnMouseDown = this.onMouseDown.bind(this);
+        this.boundOnMouseMove = this.onMouseMove.bind(this);
+        this.boundOnMouseUp = this.onMouseUp.bind(this);
+        this.boundOnWheel = this.onWheel.bind(this);
+        this.boundOnContextMenu = (e: MouseEvent) => e.preventDefault();
+        this.boundOnWindowResize = this.onWindowResize.bind(this);
+
+        this.renderer.domElement.addEventListener('mousedown', this.boundOnMouseDown);
+        this.renderer.domElement.addEventListener('mousemove', this.boundOnMouseMove);
+        this.renderer.domElement.addEventListener('mouseup', this.boundOnMouseUp);
+        this.renderer.domElement.addEventListener('mouseleave', this.boundOnMouseUp);
+        this.renderer.domElement.addEventListener('wheel', this.boundOnWheel, { passive: false });
+        this.renderer.domElement.addEventListener('contextmenu', this.boundOnContextMenu);
+        window.addEventListener('resize', this.onWindowResize.bind(this));
     }
 
-    private setupEventListeners(): void {
-        window.addEventListener('resize', this.onWindowResize.bind(this));
+    private onMouseDown(event: MouseEvent): void {
+        event.preventDefault();
+
+        if (event.button === 0) {
+            this.isRotating = true;
+            this.renderer.domElement.style.cursor = 'grabbing';
+        } else if (event.button === 2) {
+            this.isPanning = true;
+            this.renderer.domElement.style.cursor = 'move';
+        }
+
+        this.previousMousePosition = { x: event.clientX, y: event.clientY };
+    }
+
+    private onMouseMove(event: MouseEvent): void {
+        const deltaX = event.clientX - this.previousMousePosition.x;
+        const deltaY = event.clientY - this.previousMousePosition.y;
+
+        if (this.isRotating) {
+            this.spherical.theta -= deltaX * this.rotateSpeed;
+            this.spherical.phi -= deltaY * this.rotateSpeed;
+
+            this.spherical.phi = Math.max(0.01, Math.min(Math.PI - 0.01, this.spherical.phi));
+
+            this.updateCameraFromSpherical();
+        }
+
+        if (this.isPanning) {
+            const panOffset = new THREE.Vector3();
+
+            const right = new THREE.Vector3();
+            const up = new THREE.Vector3();
+
+            right.setFromMatrixColumn(this.camera.matrix, 0);
+            up.setFromMatrixColumn(this.camera.matrix, 1);
+
+            const distance = this.camera.position.distanceTo(this.target);
+            const panMultiplier = distance * this.panSpeed;
+
+            panOffset.addScaledVector(right, -deltaX * panMultiplier * 0.01);
+            panOffset.addScaledVector(up, deltaY * panMultiplier * 0.01);
+
+            this.target.add(panOffset);
+            this.camera.position.add(panOffset);
+        }
+
+        if (!this.isRotating && !this.isPanning) {
+            this.renderer.domElement.style.cursor = 'grab';
+        }
+
+        this.previousMousePosition = { x: event.clientX, y: event.clientY };
+    }
+
+    private onMouseUp(): void {
+        this.isRotating = false;
+        this.isPanning = false;
+        this.renderer.domElement.style.cursor = 'grab';
+    }
+
+    private onWheel(event: WheelEvent): void {
+        event.preventDefault();
+
+        const rect = this.renderer.domElement.getBoundingClientRect();
+        const mouseX = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        const mouseY = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+        const raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera(new THREE.Vector2(mouseX, mouseY), this.camera);
+
+        const zoomDirection = raycaster.ray.direction.clone();
+
+        const zoomDelta = event.deltaY > 0 ? -this.zoomSpeed : this.zoomSpeed;
+        const currentDistance = this.camera.position.distanceTo(this.target);
+        const zoomAmount = currentDistance * zoomDelta;
+
+        const newPosition = this.camera.position.clone().addScaledVector(zoomDirection, zoomAmount);
+        const newDistance = newPosition.distanceTo(this.target);
+
+        if (newDistance >= this.minDistance && newDistance <= this.maxDistance) {
+            this.camera.position.copy(newPosition);
+
+            const targetMoveAmount = zoomAmount * 0.3;
+            const zoomPoint = this.camera.position.clone().addScaledVector(zoomDirection, currentDistance);
+            const targetDirection = new THREE.Vector3().subVectors(zoomPoint, this.target).normalize();
+            this.target.addScaledVector(targetDirection, targetMoveAmount);
+
+            this.updateSphericalFromCamera();
+        }
+    }
+
+    private updateCameraFromSpherical(): void {
+        this.spherical.radius = Math.max(this.minDistance, Math.min(this.maxDistance, this.spherical.radius));
+
+        const offset = new THREE.Vector3().setFromSpherical(this.spherical);
+        this.camera.position.copy(this.target).add(offset);
+        this.camera.lookAt(this.target);
     }
 
     private onWindowResize(): void {
@@ -103,7 +233,6 @@ export class SceneManagerService {
 
     private animate(): void {
         this.animationFrameId = requestAnimationFrame(() => this.animate());
-        this.controls.update();
         this.renderer.render(this.scene, this.camera);
     }
 
@@ -160,9 +289,10 @@ export class SceneManagerService {
     }
 
     resetCamera(): void {
-        this.camera.position.set(0, 5, 10);
-        this.camera.lookAt(0, 0, 0);
-        this.controls.reset();
+        this.target.set(0, 0, 0);
+        this.camera.position.set(0, 8, 15);
+        this.camera.lookAt(this.target);
+        this.updateCameraFromSpherical();
     }
 
     focusOnObject(object: THREE.Object3D): void {
@@ -170,11 +300,12 @@ export class SceneManagerService {
         const center = box.getCenter(new THREE.Vector3());
         const size = box.getSize(new THREE.Vector3());
         const maxDim = Math.max(size.x, size.y, size.z);
-        const distance = maxDim * 2;
+        const distance = maxDim * 2.5;
 
-        this.camera.position.set(center.x + distance, center.y + distance, center.z + distance);
-        this.camera.lookAt(center);
-        this.controls.target.copy(center);
+        this.target.copy(center);
+        this.camera.position.set(center.x + distance, center.y + distance * 0.5, center.z + distance);
+        this.camera.lookAt(this.target);
+        this.updateCameraFromSpherical();
     }
 
     dispose(): void {
@@ -182,10 +313,15 @@ export class SceneManagerService {
             cancelAnimationFrame(this.animationFrameId);
         }
 
-        window.removeEventListener('resize', this.onWindowResize.bind(this));
+        this.renderer.domElement.removeEventListener('mousedown', this.boundOnMouseDown);
+        this.renderer.domElement.removeEventListener('mousemove', this.boundOnMouseMove);
+        this.renderer.domElement.removeEventListener('mouseup', this.boundOnMouseUp);
+        this.renderer.domElement.removeEventListener('mouseleave', this.boundOnMouseUp);
+        this.renderer.domElement.removeEventListener('wheel', this.boundOnWheel);
+        this.renderer.domElement.removeEventListener('contextmenu', this.boundOnContextMenu);
+        window.removeEventListener('resize', this.boundOnWindowResize);
 
         this.clearScene();
-        this.controls.dispose();
         this.renderer.dispose();
 
         if (this.container && this.renderer.domElement.parentNode) {

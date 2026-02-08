@@ -14,7 +14,7 @@ export interface Atom3D {
     providedIn: 'root'
 })
 export class AtomFactoryService {
-    private readonly defaultSegments = 32;
+    private readonly defaultSegments = 64;
 
     createAtom(element: ElementSummary, position: THREE.Vector3 = new THREE.Vector3()): Atom3D {
         const group = new THREE.Group();
@@ -23,25 +23,19 @@ export class AtomFactoryService {
         const radius = this.calculateRadius(element);
         const color = new THREE.Color(element.displayColor);
 
+        const texture = this.createAtomTexture(element.symbol, color);
+
         const geometry = new THREE.SphereGeometry(radius, this.defaultSegments, this.defaultSegments);
         const material = new THREE.MeshPhongMaterial({
-            color: color,
-            shininess: 100,
-            specular: new THREE.Color(0x444444),
-            emissive: color.clone().multiplyScalar(0.1)
+            map: texture,
+            shininess: 60,
+            specular: new THREE.Color(0x333333)
         });
 
         const mesh = new THREE.Mesh(geometry, material);
         mesh.castShadow = true;
         mesh.receiveShadow = true;
         group.add(mesh);
-
-        const glowMesh = this.createGlowEffect(radius, color);
-        group.add(glowMesh);
-
-        const label = this.createLabel(element.symbol);
-        label.position.set(0, radius + 0.3, 0);
-        group.add(label);
 
         const id = crypto.randomUUID();
         group.userData = { id, elementId: element.id, type: 'atom' };
@@ -61,46 +55,57 @@ export class AtomFactoryService {
         return baseRadius + (element.atomicNumber / 118) * scaleFactor;
     }
 
-    private createGlowEffect(radius: number, color: THREE.Color): THREE.Mesh {
-        const glowGeometry = new THREE.SphereGeometry(radius * 1.2, this.defaultSegments, this.defaultSegments);
-        const glowMaterial = new THREE.MeshBasicMaterial({
-            color: color,
-            transparent: true,
-            opacity: 0.15,
-            side: THREE.BackSide
-        });
-
-        return new THREE.Mesh(glowGeometry, glowMaterial);
-    }
-
-    private createLabel(text: string): THREE.Sprite {
+    private createAtomTexture(symbol: string, atomColor: THREE.Color): THREE.CanvasTexture {
         const canvas = document.createElement('canvas');
         const context = canvas.getContext('2d')!;
-        canvas.width = 128;
-        canvas.height = 64;
+        const size = 1024;
+        canvas.width = size;
+        canvas.height = size;
 
-        context.fillStyle = 'rgba(0, 0, 0, 0)';
-        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.fillStyle = `rgb(${Math.floor(atomColor.r * 255)}, ${Math.floor(atomColor.g * 255)}, ${Math.floor(atomColor.b * 255)})`;
+        context.fillRect(0, 0, size, size);
 
-        context.font = 'Bold 48px Arial';
+        const gradient = context.createRadialGradient(
+            size * 0.35, size * 0.35, 0,
+            size * 0.5, size * 0.5, size * 0.5
+        );
+        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
+        gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0)');
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0.15)');
+        context.fillStyle = gradient;
+        context.fillRect(0, 0, size, size);
+
+        const textColor = this.getContrastingColor(atomColor);
+        const outlineColor = this.getOutlineColor(atomColor);
+
+        const fontSize = symbol.length === 1 ? 100 : symbol.length === 2 ? 80 : 65;
+        context.font = `Bold ${fontSize}px Arial`;
         context.textAlign = 'center';
         context.textBaseline = 'middle';
-        context.fillStyle = 'white';
-        context.strokeStyle = 'black';
-        context.lineWidth = 2;
-        context.strokeText(text, canvas.width / 2, canvas.height / 2);
-        context.fillText(text, canvas.width / 2, canvas.height / 2);
+
+        context.strokeStyle = outlineColor;
+        context.lineWidth = 8;
+        context.strokeText(symbol, size / 2, size / 2);
+
+        context.fillStyle = textColor;
+        context.fillText(symbol, size / 2, size / 2);
 
         const texture = new THREE.CanvasTexture(canvas);
-        const material = new THREE.SpriteMaterial({
-            map: texture,
-            transparent: true
-        });
+        texture.needsUpdate = true;
 
-        const sprite = new THREE.Sprite(material);
-        sprite.scale.set(1, 0.5, 1);
+        return texture;
+    }
 
-        return sprite;
+    private getContrastingColor(color: THREE.Color): string {
+        const luminance = 0.299 * color.r + 0.587 * color.g + 0.114 * color.b;
+
+        return luminance > 0.5 ? '#1a1a2e' : '#ffffff';
+    }
+
+    private getOutlineColor(color: THREE.Color): string {
+        const luminance = 0.299 * color.r + 0.587 * color.g + 0.114 * color.b;
+        
+        return luminance > 0.5 ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.5)';
     }
 
     updateAtomPosition(atom: Atom3D, position: THREE.Vector3): void {
@@ -111,9 +116,11 @@ export class AtomFactoryService {
     highlightAtom(atom: Atom3D, highlight: boolean): void {
         const material = atom.mesh.material as THREE.MeshPhongMaterial;
         if (highlight) {
-            material.emissive = new THREE.Color(atom.element.displayColor).multiplyScalar(0.5);
+            material.emissive = new THREE.Color(atom.element.displayColor).multiplyScalar(0.4);
+            material.opacity = 1;
         } else {
-            material.emissive = new THREE.Color(atom.element.displayColor).multiplyScalar(0.1);
+            material.emissive = new THREE.Color(0x000000);
+            material.opacity = 0.85;
         }
     }
 
