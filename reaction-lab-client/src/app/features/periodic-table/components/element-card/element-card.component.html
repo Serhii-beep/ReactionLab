@@ -1,0 +1,11 @@
+<div
+    class="element-card"
+    [class.selected]="selected()"
+    (click)="onSelect()">
+    <canvas #atomCanvas class="atom-preview"></canvas>
+    <div class="element-info">
+        <span class="atomic-number">{{ element().atomicNumber }}</span>
+        <span class="atomic-mass">{{ element().atomicMass | number:'1.2-2' }}</span>
+    </div>
+    <div class="element-name">{{ element().name }}</div>
+</div>

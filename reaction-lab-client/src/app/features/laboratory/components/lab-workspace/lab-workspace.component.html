@@ -1,37 +1,50 @@
-<div class="lab-workspace">
-    <div #canvasContainer class="canvas-container"></div>
+<div class="lab-layout">
+    <aside class="left-panel" [class.collapsed]="isPanelCollapsed()">
+        <app-periodic-table-panel (collapsed)="onPanelCollapsed($event)"></app-periodic-table-panel>
+    </aside>
 
-    <div class="controls-panel">
-        <h3>Molecules</h3>
-        
-        @if (loading()) {
-            <div class="loading">Loading molecules...</div>
-        } @else {
-            <div class="molecule-buttons">
-                @for (mol of availableMolecules(); track mol.id) {
-                    <button
-                        (click)="addMoleculeToScene(mol)"
-                        [title]="mol.name">
-                        {{ mol.formula }}
-                    </button>
-                }
+    <main class="main-area">
+        <div
+            #canvasContainer
+            class="canvas-container"
+            [appDropZone]="['molecule']"
+            (itemDropped)="onMoleculeDrop($event)">
+        </div>
+
+        <div class="controls-panel">
+            <div class="scene-info">
+                <mat-icon>view_in_ar</mat-icon>
+                {{ sceneMoleculeCount() }} molecules in scene
+            </div>
+
+            <div class="scene-controls">
+                <button mat-stroked-button (click)="clearWorkspace()" matTooltip="Remove all molecules">
+                    <mat-icon>delete_sweep</mat-icon>    
+                    Clear
+                </button>
+                <button mat-stroked-button (click)="resetCamera()" matTooltip="Reset camera position">
+                    <mat-icon>center_focus_strong</mat-icon>
+                    Reset View
+                </button>
+            </div>
+        </div>
+
+        @if (error()) {
+            <div class="error-overlay">
+                <mat-icon>error_outline</mat-icon>
+                <span>{{ error() }}</span>
+                <button mat-flat-button color="warn" (click)="retry()">
+                    <mat-icon>refresh</mat-icon>
+                    Retry
+                </button>
             </div>
         }
+    </main>
 
-        <div class="scene-info">
-            <span>Molecules in scene: {{ sceneMoleculeCount() }}</span>
-        </div>
-
-        <div class="actions">
-            <button (click)="clearWorkspace()">Clear</button>
-            <button (click)="resetCamera()">Reset Camera</button>
-        </div>
-    </div>
-
-    @if (error()) {
-        <div class="error-overlay">
-            <span>{{ error() }}</span>
-            <button (click)="retry()">Retry</button>
-        </div>
-    }
+    <aside class="right-panel" [class.collapsed]="isRightPanelCollapsed()">
+        <app-molecules-panel
+            (collapsed)="onRightPanelCollapsed($event)"
+            (addMolecule)="addMoleculeToScene($event)">
+        </app-molecules-panel>
+    </aside>
 </div>

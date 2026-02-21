@@ -1,0 +1,40 @@
+<div
+    class="molecule-card"
+    [class.selected]="selected()"
+    [appDraggable]="'molecule'"
+    [dragData]="molecule()"
+    (click)="onSelect()">
+    <div class="card-header">
+        <span class="formula">{{ molecule().formula }}</span>
+        <button
+            mat-icon-button
+            class="add-btn"
+            data-no-drag
+            (click)="onAddToScene($event)"
+            matTooltip="Add to scene">
+            <mat-icon>add_circle</mat-icon>
+        </button>
+    </div>
+
+    <div class="card-body">
+        <span class="name">{{ molecule().name }}</span>
+
+        <div class="details">
+            @if (molecule().molecularWeight) {
+                <span class="weight" matTooltip="Molecular weight">
+                    {{ molecule().molecularWeight | number: '1.2-2' }} g/mol
+                </span>
+            }
+
+            <span class="state" [matTooltip]="stateLabel()">
+                <mat-icon>{{ stateIcon() }}</mat-icon>
+            </span>
+        </div>
+    </div>
+
+    @if (molecule().category) {
+        <div class="card-footer">
+            <span class="category">{{ molecule().category }}</span>
+        </div>
+    }
+</div>

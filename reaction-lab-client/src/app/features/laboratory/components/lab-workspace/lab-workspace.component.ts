@@ -3,15 +3,30 @@ import { AfterViewInit, Component, computed, ElementRef, inject, OnDestroy, sign
 import { Molecule3D, MoleculeFactoryService, SceneManagerService } from "../../../../three-engine";
 import { ElementService, MoleculeService } from "../../../../core/services";
 import { ElementSummary, Molecule, MoleculeSummary } from "../../../../core/models";
-import { forkJoin, tap } from "rxjs";
+import { tap } from "rxjs";
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { PeriodicTablePanelComponent } from "../../../periodic-table";
+import { MoleculesPanelComponent } from "../../../molecules-panel";
+import { DropZoneDirective } from "../../../../shared";
+import { DropEvent } from "../../../../shared/drag-drop/drag-drop.model";
 
 @Component({
     selector: 'app-lab-workspace',
     standalone: true,
-    imports: [CommonModule],
+    imports: [
+        CommonModule,
+        PeriodicTablePanelComponent,
+        MoleculesPanelComponent,
+        MatIconModule,
+        MatButtonModule,
+        MatTooltipModule,
+        DropZoneDirective
+    ],
     templateUrl: './lab-workspace.component.html',
-    styleUrls: [ './lab-workspace.component.scss' ]
+    styleUrls: ['./lab-workspace.component.scss']
 })
 export class LabWorkspaceComponent implements AfterViewInit, OnDestroy {
     @ViewChild('canvasContainer', { static: true }) canvasContainer!: ElementRef<HTMLDivElement>;
@@ -23,7 +38,8 @@ export class LabWorkspaceComponent implements AfterViewInit, OnDestroy {
 
     readonly loading = signal(true);
     readonly error = signal<string | null>(null);
-    readonly availableMolecules = signal<MoleculeSummary[]>([]);
+    readonly isPanelCollapsed = signal(false);
+    readonly isRightPanelCollapsed = signal(false);
 
     private readonly sceneMolecules = signal<Molecule3D[]>([]);
     readonly sceneMoleculeCount = computed(() => this.sceneMolecules().length);
@@ -45,6 +61,22 @@ export class LabWorkspaceComponent implements AfterViewInit, OnDestroy {
         this.sceneManager.dispose();
     }
 
+    onPanelCollapsed(collapsed: boolean): void {
+        this.isPanelCollapsed.set(collapsed);
+
+        setTimeout(() => {
+            this.sceneManager.resize();
+        }, 350);
+    }
+
+    onRightPanelCollapsed(collapsed: boolean): void {
+        this.isRightPanelCollapsed.set(collapsed);
+
+        setTimeout(() => {
+            this.sceneManager.resize();
+        }, 350);
+    }
+
     addMoleculeToScene(moleculeSummary: MoleculeSummary): void {
         const cached = this.moleculeCache.get(moleculeSummary.id);
 
@@ -63,6 +95,46 @@ export class LabWorkspaceComponent implements AfterViewInit, OnDestroy {
                 })
             ).subscribe();
         }
+    }
+
+    private addMoleculeToSceneAtPosition(moleculeSummary: MoleculeSummary, position: { x: number; y: number; z: number }): void {
+        const cached = this.moleculeCache.get(moleculeSummary.id);
+
+        if (cached) {
+            this.createAndAddMoleculeAtPosition(cached, position);
+        } else {
+            this.moleculeService.getById(moleculeSummary.id).pipe(
+                tap({
+                    next: (molecule) => {
+                        this.moleculeCache.set(molecule.id, molecule);
+                        this.createAndAddMoleculeAtPosition(molecule, position);
+                    },
+                    error: (err) => {
+                        console.error('Failed to load molecule:', err);
+                    }
+                })
+            ).subscribe();
+        }
+    }
+
+    private createAndAddMoleculeAtPosition(molecule: Molecule, position: { x: number; y: number; z: number }): void {
+        const molecule3D = this.moleculeFactory.createFromMolecule(molecule, this.elements);
+
+        if (molecule3D) {
+            molecule3D.group.position.set(position.x, position.y, position.z);
+
+            this.sceneMolecules.update(molecules => [...molecules, molecule3D]);
+            this.sceneManager.addObject(molecule3D.id, molecule3D.group);
+        } else {
+            console.error(`Could not create 3D model for molecule: ${molecule.formula}`);
+        }
+    }
+
+    onMoleculeDrop(event: DropEvent<unknown>): void {
+        const molecule = event.data.data as MoleculeSummary;
+        const worldPosition = this.sceneManager.screenToWorldPosition(event.dropPosition.x, event.dropPosition.y);
+        const safePosition = this.sceneManager.findNonOverlappingPosition(worldPosition);
+        this.addMoleculeToSceneAtPosition(molecule, safePosition);
     }
 
     clearWorkspace(): void {
@@ -108,21 +180,16 @@ export class LabWorkspaceComponent implements AfterViewInit, OnDestroy {
         this.loading.set(true);
         this.error.set(null);
 
-        forkJoin({
-            elements: this.elementService.getAll(),
-            molecules: this.moleculeService.getAll()
-        }).pipe(
+        this.elementService.getAll().pipe(
             takeUntilDestroyed(),
             tap({
-                next: ({ elements, molecules }) => {
+                next: (elements) => {
                     this.elements = elements;
-                    this.availableMolecules.set(molecules);
                     this.loading.set(false);
                 },
                 error: (err) => {
-                    this.error.set('Failed to load data. Please check if the API is running');
+                    this.error.set('Failed to load data');
                     this.loading.set(false);
-                    console.error('Failed to load data', err);
                 }
             })
         ).subscribe();

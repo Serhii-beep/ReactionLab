@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using ReactionLab.Application.Common.Pagination;
 using ReactionLab.Application.DTOs;
 using ReactionLab.Application.Features.Molecules.Commands;
 using ReactionLab.Application.Features.Molecules.Queries;
@@ -51,15 +52,11 @@ public class MoleculesController : ControllerBase
     }
 
     [HttpGet("search")]
-    public async Task<ActionResult<IReadOnlyList<MoleculeSummaryDto>>> Search([FromQuery] string q, CancellationToken cancellationToken)
+    public async Task<ActionResult<CursorPagedResult<MoleculeSummaryDto>>> Search([FromQuery] string? q = null, [FromQuery] int pageSize = 20, [FromQuery] string? cursor = null, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(q))
-        {
-            return BadRequest("Search term is required");
-        }
+        var molecules = await _mediator.Send(new SearchMoleculesQuery(q, pageSize, cursor), cancellationToken);
 
-        var molecule = await _mediator.Send(new SearchMoleculesQuery(q), cancellationToken);
-        return Ok(molecule);
+        return Ok(molecules);
     }
 
     [HttpPost]

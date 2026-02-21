@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from "@angular/common/http";
 import { inject, Injectable, signal } from "@angular/core";
 import { environment } from "../../../environments/environment";
-import { CreateMolecule, Molecule, MoleculeSummary } from "../models";
+import { CreateMolecule, CursorPagedResult, Molecule, MoleculeSummary } from "../models";
 import { Observable, tap } from "rxjs";
 
 @Injectable({
@@ -57,9 +57,18 @@ export class MoleculeService {
         return this.http.get<MoleculeSummary>(`${this.baseUrl}/formula/${encodeURIComponent(formula)}`);
     }
 
-    search(query: string): Observable<MoleculeSummary[]> {
-        const params = new HttpParams().set('q', query);
-        return this.http.get<MoleculeSummary[]>(`${this.baseUrl}/search`, { params });
+    search(query?: string, pageSize: number = 20, cursor?: string | null): Observable<CursorPagedResult<MoleculeSummary>> {
+        let params = new HttpParams().set('pageSize', pageSize.toString());
+
+        if (query) {
+            params = params.set('q', query);
+        }
+
+        if (cursor) {
+            params = params.set('cursor', cursor);
+        }
+
+        return this.http.get<CursorPagedResult<MoleculeSummary>>(`${this.baseUrl}/search`, { params });
     }
 
     create(molecule: CreateMolecule): Observable<Molecule> {

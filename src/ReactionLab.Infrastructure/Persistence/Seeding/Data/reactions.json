@@ -1,0 +1,82 @@
+[
+  {
+    "Name": "Synthesis of Water",
+    "Equation": "2H2 + O2 → 2H2O",
+    "EquationBalanced": "2H2 + O2 → 2H2O",
+    "ReactionType": "Synthesis",
+    "Category": "Synthesis",
+    "RequiredTemperature": 811.0,
+    "RequiresCatalyst": false,
+    "EnthalpyChange": -572.0,
+    "IsExothermic": true,
+    "ActivationEnergy": 75.0,
+    "AnimationType": "combustion",
+    "EffectPreset": "fire",
+    "AnimationDurationMs": 3000,
+    "Description": "The synthesis of water from hydrogen and oxygen is a highly exothermic reaction. When ignited, hydrogen gas combines with oxygen to form water vapor, releasing significant energy.",
+    "Mechanism": "Hydrogen molecules collide with oxygen molecules. At sufficient temperature, bonds break and reform to create water molecules.",
+    "RealWorldExamples": ["Hydrogen fuel cells", "Rocket propulsion", "Oxyhydrogen welding"],
+    "SafetyWarnings": "Highly explosive when hydrogen and oxygen are mixed. Keep away from ignition sources.",
+    "DifficultyLevel": 1,
+    "Participants": [
+      { "MoleculeFormula": "H2", "Role": "Reactant", "Coefficient": 2, "State": "Gas" },
+      { "MoleculeFormula": "O2", "Role": "Reactant", "Coefficient": 1, "State": "Gas" },
+      { "MoleculeFormula": "H2O", "Role": "Product", "Coefficient": 2, "State": "Gas" }
+    ],
+    "Tags": ["Synthesis", "Exothermic", "Beginner", "Common"]
+  },
+  {
+    "Name": "Combustion of Methane",
+    "Equation": "CH4 + 2O2 → CO2 + 2H2O",
+    "EquationBalanced": "CH4 + 2O2 → CO2 + 2H2O",
+    "ReactionType": "Combustion",
+    "Category": "Combustion",
+    "RequiredTemperature": 873.0,
+    "RequiresCatalyst": false,
+    "EnthalpyChange": -890.0,
+    "IsExothermic": true,
+    "ActivationEnergy": 150.0,
+    "AnimationType": "combustion",
+    "EffectPreset": "fire",
+    "AnimationDurationMs": 4000,
+    "Description": "The combustion of methane is the primary reaction in natural gas burning. It produces carbon dioxide and water while releasing substantial heat energy.",
+    "Mechanism": "Methane reacts with oxygen at high temperature, breaking C-H and O=O bonds, forming C=O and O-H bonds in the products.",
+    "RealWorldExamples": ["Natural gas stoves", "Gas furnaces", "Power plants", "Gas water heaters"],
+    "SafetyWarnings": "Ensure proper ventilation. Incomplete combustion produces toxic carbon monoxide.",
+    "DifficultyLevel": 2,
+    "Participants": [
+      { "MoleculeFormula": "CH4", "Role": "Reactant", "Coefficient": 1, "State": "Gas" },
+      { "MoleculeFormula": "O2", "Role": "Reactant", "Coefficient": 2, "State": "Gas" },
+      { "MoleculeFormula": "CO2", "Role": "Product", "Coefficient": 1, "State": "Gas" },
+      { "MoleculeFormula": "H2O", "Role": "Product", "Coefficient": 2, "State": "Gas" }
+    ],
+    "Tags": ["Combustion", "Exothermic", "Common"]
+  },
+  {
+    "Name": "Electrolysis of Water",
+    "Equation": "2H2O → 2H2 + O2",
+    "EquationBalanced": "2H2O → 2H2 + O2",
+    "ReactionType": "Decomposition",
+    "Category": "Decomposition",
+    "RequiredTemperature": 298.0,
+    "RequiresCatalyst": true,
+    "CatalystInfo": "Requires electrical current. Electrolytes like NaOH or H2SO4 improve conductivity.",
+    "EnthalpyChange": 572.0,
+    "IsExothermic": false,
+    "ActivationEnergy": 285.0,
+    "AnimationType": "electrolysis",
+    "EffectPreset": "bubbles",
+    "AnimationDurationMs": 5000,
+    "Description": "Electrolysis of water splits water molecules into hydrogen and oxygen gases using electrical energy. This is the reverse of the synthesis of water.",
+    "Mechanism": "Electrical current breaks the O-H bonds in water molecules. Hydrogen ions gain electrons at the cathode, oxygen ions lose electrons at the anode.",
+    "RealWorldExamples": ["Hydrogen production for fuel cells", "Laboratory oxygen generation", "Industrial hydrogen production"],
+    "SafetyWarnings": "Produces flammable hydrogen gas. Ensure proper ventilation and no ignition sources.",
+    "DifficultyLevel": 2,
+    "Participants": [
+      { "MoleculeFormula": "H2O", "Role": "Reactant", "Coefficient": 2, "State": "Liquid" },
+      { "MoleculeFormula": "H2", "Role": "Product", "Coefficient": 2, "State": "Gas" },
+      { "MoleculeFormula": "O2", "Role": "Product", "Coefficient": 1, "State": "Gas" }
+    ],
+    "Tags": ["Decomposition", "Endothermic", "Beginner"]
+  }
+]

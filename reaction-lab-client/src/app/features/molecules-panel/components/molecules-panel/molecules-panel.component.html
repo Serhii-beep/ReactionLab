@@ -1,0 +1,82 @@
+<div
+    class="panel-wrapper"
+    [class.collapsed]="isCollapsed()"
+    [style.width.px]="isCollapsed() ? collapsedWidth : panelWidth()">
+
+    <button
+        mat-icon-button
+        class="collapse-toggle"
+        (click)="toggleCollapse()"
+        [matTooltip]="isCollapsed() ? 'Expand panel' : 'Collapse panel'"
+        matTooltipPosition="left">
+        <mat-icon>{{ isCollapsed() ? 'chevron_left' : 'chevron_right' }}</mat-icon>
+    </button>
+
+    @if (!isCollapsed()) {
+        <div
+            class="resize-handle"
+            (mousedown)="startResize($event)"
+            matTooltip="Drag to resize"
+            matTooltipPosition="left">
+            <mat-icon class="resize-icon">drag_indicator</mat-icon>
+        </div>
+    }
+
+    <div class="panel-container" [class.hidden]="isCollapsed()">
+        <div class="panel-header">
+            <h2>
+                <mat-icon>science</mat-icon>
+                Molecules
+            </h2>
+
+            <mat-form-field appearance="outline" class="search-field">
+                <mat-label>Search molecules</mat-label>
+                <input
+                    matInput
+                    [ngModel]="searchTerm()"
+                    (ngModelChange)="onSearchChange($event)"
+                    placeholder="Name or formula...">
+                <mat-icon matPrefix>search</mat-icon>
+                @if (searchTerm()) {
+                    <button matSuffix mat-icon-button (click)="clearSearch()">
+                        <mat-icon>close</mat-icon>
+                    </button>
+                }
+            </mat-form-field>
+        </div>
+
+        <div
+            class="molecules-grid"
+            [style.grid-template-columns]="gridColumns()"
+            appInfiniteScroll
+            [disabled]="!hasMore() || loading() || loadingMore()"
+            (scrolledToBottom)="loadMore()">
+            @if (loading()) {
+                <div class="loading">
+                    <mat-spinner diameter="32"></mat-spinner>
+                    Loading molecules...
+                </div>
+            } @else {
+                @for (molecule of molecules(); track molecule.id) {
+                    <app-molecule-card
+                        [molecule]="molecule"
+                        [selected]="selectedMolecule()?.id === molecule.id"
+                        (moleculeSelected)="onMoleculeSelected($event)"
+                        (addToScene)="onAddToScene($event)">
+                    </app-molecule-card>
+                } @empty {
+                    <div class="no-results">
+                        <mat-icon>search_off</mat-icon>
+                        No molecules found
+                    </div>
+                }
+
+                @if (loadingMore()) {
+                    <div class="loading-more">
+                        <mat-spinner diameter="24"></mat-spinner>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>

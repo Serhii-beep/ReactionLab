@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Microsoft.EntityFrameworkCore;
 using ReactionLab.Domain.Entities;
 using ReactionLab.Domain.Enums;
 
@@ -17,149 +19,167 @@ public class ReactionSeeder : IDataSeeder
 
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
-        if (await _context.Reactions.AnyAsync(cancellationToken))
+        if (await _context.Tags.AnyAsync(cancellationToken))
+        {
+            // If tags exist, we assume seeding already happened or at least tags are there.
+            // But reactions might not be there. Let's check reactions.
+            if (await _context.Reactions.AnyAsync(cancellationToken))
+            {
+                return;
+            }
+        }
+        else
+        {
+            await SeedTagsAsync(cancellationToken);
+        }
+
+        await SeedReactionsAsync(cancellationToken);
+    }
+
+    private async Task SeedTagsAsync(CancellationToken cancellationToken)
+    {
+        var filePath = Path.Combine(AppContext.BaseDirectory, "Persistence", "Seeding", "Data", "tags.json");
+        
+        if (!File.Exists(filePath))
+        {
+            filePath = Path.Combine("ReactionLab.Infrastructure", "Persistence", "Seeding", "Data", "tags.json");
+        }
+
+        if (!File.Exists(filePath))
+        {
+            filePath = Path.Combine("..", "ReactionLab.Infrastructure", "Persistence", "Seeding", "Data", "tags.json");
+        }
+
+        if (File.Exists(filePath))
+        {
+            var json = await File.ReadAllTextAsync(filePath, cancellationToken);
+            var tags = JsonSerializer.Deserialize<List<Tag>>(json);
+            if (tags != null)
+            {
+                await _context.Tags.AddRangeAsync(tags, cancellationToken);
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+        }
+    }
+
+    private async Task SeedReactionsAsync(CancellationToken cancellationToken)
+    {
+        var filePath = Path.Combine(AppContext.BaseDirectory, "Persistence", "Seeding", "Data", "reactions.json");
+        
+        if (!File.Exists(filePath))
+        {
+            filePath = Path.Combine("ReactionLab.Infrastructure", "Persistence", "Seeding", "Data", "reactions.json");
+        }
+
+        if (!File.Exists(filePath))
+        {
+            filePath = Path.Combine("..", "ReactionLab.Infrastructure", "Persistence", "Seeding", "Data", "reactions.json");
+        }
+
+        if (!File.Exists(filePath))
         {
             return;
         }
 
+        var json = await File.ReadAllTextAsync(filePath, cancellationToken);
+        var options = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true,
+            Converters = { new JsonStringEnumConverter() }
+        };
+
+        var reactionData = JsonSerializer.Deserialize<List<ReactionSeedDto>>(json, options);
         var molecules = await _context.Molecules.ToListAsync(cancellationToken);
-        var water = molecules.First(m => m.Formula == "H2O");
-        var carbonDioxide = molecules.First(m => m.Formula == "CO2");
-        var oxygen = molecules.First(m => m.Formula == "O2");
-        var hydrogen = molecules.First(m => m.Formula == "H2");
-        var methane = molecules.First(m => m.Formula == "CH4");
+        var tags = await _context.Tags.ToListAsync(cancellationToken);
 
-        var tags = new List<Tag>
+        if (reactionData != null)
         {
-            new Tag { Name = "Combustion", Category = "reaction_type" },
-            new Tag { Name = "Synthesis", Category = "reaction_type" },
-            new Tag { Name = "Decomposition", Category = "reaction_type" },
-            new Tag { Name = "Exothermic", Category = "thermodynamics" },
-            new Tag { Name = "Endothermic", Category = "thermodynamics" },
-            new Tag { Name = "Beginner", Category = "difficulty" },
-            new Tag { Name = "Common", Category = "frequency" }
-        };
-
-        await _context.Tags.AddRangeAsync(tags, cancellationToken);
-        await _context.SaveChangesAsync(cancellationToken);
-
-        var combustionTag = tags.First(t => t.Name == "Combustion");
-        var synthesisTag = tags.First(t => t.Name == "Synthesis");
-        var decompositionTag = tags.First(t => t.Name == "Decomposition");
-        var exothermicTag = tags.First(t => t.Name == "Exothermic");
-        var endothermicTag = tags.First(t => t.Name == "Endothermic");
-        var beginnerTag = tags.First(t => t.Name == "Beginner");
-        var commonTag = tags.First(t => t.Name == "Common");
-
-        var reactions = new List<Reaction>
-        {
-            new Reaction
+            foreach (var dto in reactionData)
             {
-                Name = "Synthesis of Water",
-                Equation = "2H2 + O2 → 2H2O",
-                EquationBalanced = "2H2 + O2 → 2H2O",
-                ReactionType = ReactionType.Synthesis,
-                Category = "Synthesis",
-                RequiredTemperature = 811m,
-                RequiresCatalyst = false,
-                EnthalpyChange = -572m,
-                IsExothermic = true,
-                ActivationEnergy = 75m,
-                AnimationType = "combustion",
-                EffectPreset = "fire",
-                AnimationDurationMs = 3000,
-                Description = "The synthesis of water from hydrogen and oxygen is a highly exothermic reaction. When ignited, hydrogen gas combines with oxygen to form water vapor, releasing significant energy.",
-                Mechanism = "Hydrogen molecules collide with oxygen molecules. At sufficient temperature, bonds break and reform to create water molecules.",
-                RealWorldExamples = "[\"Hydrogen fuel cells\", \"Rocket propulsion\", \"Oxyhydrogen welding\"]",
-                SafetyWarnings = "Highly explosive when hydrogen and oxygen are mixed. Keep away from ignition sources.",
-                DifficultyLevel = 1,
-                Participants =
+                var reaction = new Reaction
                 {
-                    new ReactionParticipant { MoleculeId = hydrogen.Id, Role = ParticipantRole.Reactant, Coefficient = 2, State = MatterState.Gas },
-                    new ReactionParticipant { MoleculeId = oxygen.Id, Role = ParticipantRole.Reactant, Coefficient = 1, State = MatterState.Gas },
-                    new ReactionParticipant { MoleculeId = water.Id, Role = ParticipantRole.Product, Coefficient = 2, State = MatterState.Gas }
-                },
-                ReactionTags =
-                {
-                    new ReactionTag { TagId = synthesisTag.Id },
-                    new ReactionTag { TagId = exothermicTag.Id },
-                    new ReactionTag { TagId = beginnerTag.Id },
-                    new ReactionTag { TagId = commonTag.Id }
-                }
-            },
+                    Name = dto.Name,
+                    Equation = dto.Equation,
+                    EquationBalanced = dto.EquationBalanced,
+                    ReactionType = Enum.Parse<ReactionType>(dto.ReactionType),
+                    Category = dto.Category,
+                    RequiredTemperature = dto.RequiredTemperature,
+                    RequiresCatalyst = dto.RequiresCatalyst,
+                    CatalystInfo = dto.CatalystInfo,
+                    EnthalpyChange = dto.EnthalpyChange,
+                    IsExothermic = dto.IsExothermic,
+                    ActivationEnergy = dto.ActivationEnergy,
+                    AnimationType = dto.AnimationType,
+                    EffectPreset = dto.EffectPreset,
+                    AnimationDurationMs = dto.AnimationDurationMs,
+                    Description = dto.Description,
+                    Mechanism = dto.Mechanism,
+                    RealWorldExamples = JsonSerializer.Serialize(dto.RealWorldExamples),
+                    SafetyWarnings = dto.SafetyWarnings,
+                    DifficultyLevel = dto.DifficultyLevel
+                };
 
-            new Reaction
-            {
-                Name = "Combustion of Methane",
-                Equation = "CH4 + 2O2 → CO2 + 2H2O",
-                EquationBalanced = "CH4 + 2O2 → CO2 + 2H2O",
-                ReactionType = ReactionType.Combustion,
-                Category = "Combustion",
-                RequiredTemperature = 873m,
-                RequiresCatalyst = false,
-                EnthalpyChange = -890m,
-                IsExothermic = true,
-                ActivationEnergy = 150m,
-                AnimationType = "combustion",
-                EffectPreset = "fire",
-                AnimationDurationMs = 4000,
-                Description = "The combustion of methane is the primary reaction in natural gas burning. It produces carbon dioxide and water while releasing substantial heat energy.",
-                Mechanism = "Methane reacts with oxygen at high temperature, breaking C-H and O=O bonds, forming C=O and O-H bonds in the products.",
-                RealWorldExamples = "[\"Natural gas stoves\", \"Gas furnaces\", \"Power plants\", \"Gas water heaters\"]",
-                SafetyWarnings = "Ensure proper ventilation. Incomplete combustion produces toxic carbon monoxide.",
-                DifficultyLevel = 2,
-                Participants =
+                foreach (var pDto in dto.Participants)
                 {
-                    new ReactionParticipant { MoleculeId = methane.Id, Role = ParticipantRole.Reactant, Coefficient = 1, State = MatterState.Gas },
-                    new ReactionParticipant { MoleculeId = oxygen.Id, Role = ParticipantRole.Reactant, Coefficient = 2, State = MatterState.Gas },
-                    new ReactionParticipant { MoleculeId = carbonDioxide.Id, Role = ParticipantRole.Product, Coefficient = 1, State = MatterState.Gas },
-                    new ReactionParticipant { MoleculeId = water.Id, Role = ParticipantRole.Product, Coefficient = 2, State = MatterState.Gas }
-                },
-                ReactionTags =
-                {
-                    new ReactionTag { TagId = combustionTag.Id },
-                    new ReactionTag { TagId = exothermicTag.Id },
-                    new ReactionTag { TagId = commonTag.Id }
+                    var molecule = molecules.FirstOrDefault(m => m.Formula == pDto.MoleculeFormula);
+                    if (molecule != null)
+                    {
+                        reaction.Participants.Add(new ReactionParticipant
+                        {
+                            MoleculeId = molecule.Id,
+                            Role = Enum.Parse<ParticipantRole>(pDto.Role),
+                            Coefficient = pDto.Coefficient,
+                            State = Enum.Parse<MatterState>(pDto.State)
+                        });
+                    }
                 }
-            },
 
-            new Reaction
-            {
-                Name = "Electrolysis of Water",
-                Equation = "2H2O → 2H2 + O2",
-                EquationBalanced = "2H2O → 2H2 + O2",
-                ReactionType = ReactionType.Decomposition,
-                Category = "Decomposition",
-                RequiredTemperature = 298m,
-                RequiresCatalyst = true,
-                CatalystInfo = "Requires electrical current. Electrolytes like NaOH or H2SO4 improve conductivity.",
-                EnthalpyChange = 572m,
-                IsExothermic = false,
-                ActivationEnergy = 285m,
-                AnimationType = "electrolysis",
-                EffectPreset = "bubbles",
-                AnimationDurationMs = 5000,
-                Description = "Electrolysis of water splits water molecules into hydrogen and oxygen gases using electrical energy. This is the reverse of the synthesis of water.",
-                Mechanism = "Electrical current breaks the O-H bonds in water molecules. Hydrogen ions gain electrons at the cathode, oxygen ions lose electrons at the anode.",
-                RealWorldExamples = "[\"Hydrogen production for fuel cells\", \"Laboratory oxygen generation\", \"Industrial hydrogen production\"]",
-                SafetyWarnings = "Produces flammable hydrogen gas. Ensure proper ventilation and no ignition sources.",
-                DifficultyLevel = 2,
-                Participants =
+                foreach (var tagName in dto.Tags)
                 {
-                    new ReactionParticipant { MoleculeId = water.Id, Role = ParticipantRole.Reactant, Coefficient = 2, State = MatterState.Liquid },
-                    new ReactionParticipant { MoleculeId = hydrogen.Id, Role = ParticipantRole.Product, Coefficient = 2, State = MatterState.Gas },
-                    new ReactionParticipant { MoleculeId = oxygen.Id, Role = ParticipantRole.Product, Coefficient = 1, State = MatterState.Gas }
-                },
-                ReactionTags =
-                {
-                    new ReactionTag { TagId = decompositionTag.Id },
-                    new ReactionTag { TagId = endothermicTag.Id },
-                    new ReactionTag { TagId = beginnerTag.Id }
+                    var tag = tags.FirstOrDefault(t => t.Name == tagName);
+                    if (tag != null)
+                    {
+                        reaction.ReactionTags.Add(new ReactionTag { TagId = tag.Id });
+                    }
                 }
+
+                await _context.Reactions.AddAsync(reaction, cancellationToken);
             }
-        };
 
-        await _context.Reactions.AddRangeAsync(reactions, cancellationToken);
-        await _context.SaveChangesAsync(cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+    }
+
+    private class ReactionSeedDto
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Equation { get; set; } = string.Empty;
+        public string EquationBalanced { get; set; } = string.Empty;
+        public string ReactionType { get; set; } = string.Empty;
+        public string? Category { get; set; }
+        public decimal? RequiredTemperature { get; set; }
+        public bool RequiresCatalyst { get; set; }
+        public string? CatalystInfo { get; set; }
+        public decimal? EnthalpyChange { get; set; }
+        public bool IsExothermic { get; set; }
+        public decimal? ActivationEnergy { get; set; }
+        public string? AnimationType { get; set; }
+        public string? EffectPreset { get; set; }
+        public int AnimationDurationMs { get; set; }
+        public string? Description { get; set; }
+        public string? Mechanism { get; set; }
+        public List<string> RealWorldExamples { get; set; } = [];
+        public string? SafetyWarnings { get; set; }
+        public int DifficultyLevel { get; set; }
+        public List<ReactionParticipantDto> Participants { get; set; } = [];
+        public List<string> Tags { get; set; } = [];
+    }
+
+    private class ReactionParticipantDto
+    {
+        public string MoleculeFormula { get; set; } = string.Empty;
+        public string Role { get; set; } = string.Empty;
+        public int Coefficient { get; set; }
+        public string State { get; set; } = string.Empty;
     }
 }

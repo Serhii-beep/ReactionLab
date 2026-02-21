@@ -1,0 +1,144 @@
+<div
+    class="panel-wrapper"
+    [class.collapsed]="isCollapsed()"
+    [style.width.px]="isCollapsed() ? collapsedWidth : panelWidth()">
+
+    <button
+        mat-icon-button
+        class="collapse-toggle"
+        (click)="toggleCollapse()"
+        [matTooltip]="isCollapsed() ? 'Expand panel' : 'Collapse panel'"
+        matTooltipPosition="right">
+        <mat-icon>{{ isCollapsed() ? 'chevron_right' : 'chevron_left' }}</mat-icon>
+    </button>
+
+    @if (!isCollapsed()) {
+        <div
+            class="resize-handle"
+            (mousedown)="startResize($event)"
+            matTooltip="Drag to resize"
+            matTooltipPosition="right">
+            <mat-icon class="resize-icon">drag_indicator</mat-icon>
+        </div>
+    }
+
+    <div class="panel-container" [class.hidden]="isCollapsed()">
+        <div class="panel-header">
+            <h2>
+                <mat-icon>science</mat-icon>
+                Elements
+            </h2>
+
+            <mat-form-field appearance="outline" class="search-field">
+                <mat-label>Search elements</mat-label>
+                <input
+                    matInput
+                    placeholder="Name, symbol, or number..."
+                    [ngModel]="searchTerm()"
+                    (ngModelChange)="onSearchChange($event)">
+                <mat-icon matPrefix>search</mat-icon>
+                @if (searchTerm()) {
+                    <button matSuffix mat-icon-button (click)="clearSearch()">
+                        <mat-icon>close</mat-icon>
+                    </button>
+                }
+            </mat-form-field>
+            
+            <mat-form-field appearance="outline" class="category-field">
+                <mat-label>Category</mat-label>
+                <mat-select [value]="selectedCategory()" (selectionChange)="onCategoryChange($event.value)">
+                    <mat-option [value]="null">All Elements</mat-option>
+                    @for (category of categories; track category.value) {
+                        <mat-option [value]="category.value">
+                            <span class="category-option">
+                                <span class="category-dot" [style.background]="category.color"></span>
+                                {{ category.label }}
+                            </span>
+                        </mat-option>
+                    }
+                </mat-select>
+                <mat-icon matPrefix>filter_list</mat-icon>
+            </mat-form-field>
+        </div>
+
+        <div
+            #elementsGrid
+            class="elements-grid"
+            [style.grid-template-columns]="gridColumns()">
+            @if (loading()) {
+                <div class="loading">
+                    <mat-icon>hourglass_empty</mat-icon>
+                    Loading elements...
+                </div>
+            } @else if (searching()) {
+                <div class="loading">
+                    <mat-icon>search</mat-icon>
+                    Searching...
+                </div>
+            } @else {
+                @for (element of displayedElements(); track element.id) {
+                    <app-element-card
+                        [element]="element"
+                        [selected]="selectedElement()?.id === element.id"
+                        (elementSelected)="onElementSelected($event)">
+                    </app-element-card>
+                } @empty {
+                    <div class="no-results">
+                        <mat-icon>search_off</mat-icon>
+                        No elements found
+                    </div>
+                }
+            }
+        </div>
+
+        @if (selectedElement(); as element) {
+          <div class="element-detail">
+            <div class="detail-header">
+              <h3>{{ element.name }}</h3>
+              <button mat-icon-button (click)="selectedElement.set(null)">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+            <div class="detail-grid">
+              <div class="detail-item">
+                <mat-icon>tag</mat-icon>
+                <div class="detail-content">
+                  <span class="label">Symbol</span>
+                  <span class="value">{{ element.symbol }}</span>
+                </div>
+              </div>
+              <div class="detail-item">
+                <mat-icon>numbers</mat-icon>
+                <div class="detail-content">
+                  <span class="label">Atomic Number</span>
+                  <span class="value">{{ element.atomicNumber }}</span>
+                </div>
+              </div>
+              <div class="detail-item">
+                <mat-icon>scale</mat-icon>
+                <div class="detail-content">
+                  <span class="label">Atomic Mass</span>
+                  <span class="value">{{ element.atomicMass | number:'1.4-4' }}</span>
+                </div>
+              </div>
+              <div class="detail-item">
+                <mat-icon>grid_on</mat-icon>
+                <div class="detail-content">
+                  <span class="label">Period / Group</span>
+                  <span class="value">{{ element.period }} / {{ element.group ?? 'N/A' }}</span>
+                </div>
+              </div>
+              <div class="detail-item full-width">
+                <mat-icon>category</mat-icon>
+                <div class="detail-content">
+                  <span class="label">Category</span>
+                  <span class="value category-badge" [style.background]="getCategoryColor(element.category)">
+                    {{ getCategoryLabel(element.category) }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+    </div>
+</div>
