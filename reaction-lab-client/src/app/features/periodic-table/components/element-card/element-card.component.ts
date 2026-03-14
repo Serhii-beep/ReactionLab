@@ -1,11 +1,15 @@
 import { CommonModule } from "@angular/common";
 import { AfterViewInit, Component, ElementRef, input, Input, OnChanges, OnInit, output, SimpleChanges, ViewChild } from "@angular/core";
 import { ElementSummary } from "../../../../core/models";
+import { DraggableDirective } from "../../../../shared";
 
 @Component({
     selector: 'app-element-card',
     standalone: true,
-    imports: [CommonModule],
+    imports: [
+        CommonModule,
+        DraggableDirective
+    ],
     templateUrl: './element-card.component.html',
     styleUrls: ['./element-card.component.scss']
 })

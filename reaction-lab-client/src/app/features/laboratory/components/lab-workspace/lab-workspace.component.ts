@@ -1,6 +1,6 @@
 import { CommonModule } from "@angular/common";
 import { AfterViewInit, Component, computed, effect, ElementRef, inject, OnDestroy, signal, ViewChild } from "@angular/core";
-import { Molecule3D, MoleculeFactoryService, SceneManagerService } from "../../../../three-engine";
+import { Atom3D, AtomFactoryService, Molecule3D, MoleculeFactoryService, SceneManagerService } from "../../../../three-engine";
 import { ElementService, MoleculeService } from "../../../../core/services";
 import { ElementSummary, Molecule, MoleculeSummary } from "../../../../core/models";
 import { tap } from "rxjs";
@@ -15,6 +15,8 @@ import { DropEvent } from "../../../../shared/drag-drop/drag-drop.model";
 import { SelectionService } from "../../../../core/services/selection.service";
 import { ContextPanelComponent } from "../../../../shared/components/context-panel/context-panel.component";
 import { MoleculeDetailPanelComponent } from "../molecule-detail-panel/molecule-detail-panel.component";
+import * as THREE from 'three';
+import { ElementDetailPanelComponent } from "../element-detail-panel/element-detail-panel.component";
 
 @Component({
     selector: 'app-lab-workspace',
@@ -28,7 +30,8 @@ import { MoleculeDetailPanelComponent } from "../molecule-detail-panel/molecule-
         MatTooltipModule,
         DropZoneDirective,
         ContextPanelComponent,
-        MoleculeDetailPanelComponent
+        MoleculeDetailPanelComponent,
+        ElementDetailPanelComponent
     ],
     templateUrl: './lab-workspace.component.html',
     styleUrls: ['./lab-workspace.component.scss']
@@ -41,6 +44,7 @@ export class LabWorkspaceComponent implements AfterViewInit, OnDestroy {
     private readonly elementService = inject(ElementService);
     private readonly moleculeService = inject(MoleculeService);
     private readonly selectionService = inject(SelectionService);
+    private readonly atomFactory = inject(AtomFactoryService);
 
     readonly loading = signal(true);
     readonly error = signal<string | null>(null);
@@ -48,12 +52,16 @@ export class LabWorkspaceComponent implements AfterViewInit, OnDestroy {
     readonly isRightPanelCollapsed = signal(false);
 
     private readonly sceneMolecules = signal<Molecule3D[]>([]);
+    private readonly sceneAtoms = signal<Atom3D[]>([]);
     readonly sceneMoleculeCount = computed(() => this.sceneMolecules().length);
+    readonly sceneAtomCount = computed(() => this.sceneAtoms().length);
     readonly isDetailPanelOpen = computed(() => this.selectionService.hasMoleculeSelected());
+    readonly isElementPanelOpen = computed(() => this.selectionService.hasElementSelected());
 
     private elements: ElementSummary[] = [];
     private moleculeCache = new Map<string, Molecule>();
     private molecule3DMap = new Map<string, Molecule3D>();
+    private atom3DMap = new Map<string, Atom3D>();
     private moleculeSpawnOffset = 0;
 
     readonly selectedMolecule3D = computed(() => {
@@ -72,6 +80,12 @@ export class LabWorkspaceComponent implements AfterViewInit, OnDestroy {
                 if (molecule3D) {
                     this.selectionService.selectMolecule(selectedId, molecule3D);
                 }
+
+                const atom3D = this.atom3DMap.get(selectedId);
+                if (atom3D) {
+                    this.selectionService.selectElement(selectedId, atom3D);
+                    return;
+                }
             } else {
                 this.selectionService.clearSelection();
             }
@@ -82,6 +96,10 @@ export class LabWorkspaceComponent implements AfterViewInit, OnDestroy {
 
             this.molecule3DMap.forEach((mol, id) => {
                 this.moleculeFactory.highlightMolecule(mol, id === selectedId);
+            });
+
+            this.atom3DMap.forEach((atom, id) => {
+                this.atomFactory.highlightAtom(atom, id === selectedId);
             });
         });
     }
@@ -127,15 +145,24 @@ export class LabWorkspaceComponent implements AfterViewInit, OnDestroy {
         }
 
         const molecule3D = this.molecule3DMap.get(selectedId);
-        if (!molecule3D) {
+        if (molecule3D) {
+            this.sceneManager.removeObject(selectedId);            
+            this.moleculeFactory.disposeMolecule(molecule3D);
+            this.molecule3DMap.delete(selectedId);
+            this.sceneMolecules.update(molecules => molecules.filter(m => m.id !== selectedId));
+            this.sceneManager.clearSelection();
             return;
         }
 
-        this.sceneManager.removeObject(selectedId);
-        this.sceneManager.clearSelection();
-        this.moleculeFactory.disposeMolecule(molecule3D);
-        this.molecule3DMap.delete(selectedId);
-        this.sceneMolecules.update(molecules => molecules.filter(m => m.id !== selectedId))
+        const atom3D = this.atom3DMap.get(selectedId);
+        if (atom3D) {
+            this.sceneManager.removeObject(selectedId);
+            this.atomFactory.disposeAtom(atom3D);
+            this.atom3DMap.delete(selectedId);
+            this.sceneAtoms.update(atoms => atoms.filter(a => a.id !== selectedId));
+            this.sceneManager.clearSelection();
+            return;
+        }
     }
 
     addMoleculeToScene(moleculeSummary: MoleculeSummary): void {
@@ -197,11 +224,26 @@ export class LabWorkspaceComponent implements AfterViewInit, OnDestroy {
         }
     }
 
+    onDrop(event: DropEvent): void {
+        if (event.data.type === 'molecule') {
+            this.onMoleculeDrop(event);
+        } else if (event.data.type === 'element') {
+            this.onElementDrop(event);
+        }
+    }
+
     onMoleculeDrop(event: DropEvent<unknown>): void {
         const molecule = event.data.data as MoleculeSummary;
         const worldPosition = this.sceneManager.screenToWorldPosition(event.dropPosition.x, event.dropPosition.y);
         const safePosition = this.sceneManager.findNonOverlappingPosition(worldPosition);
         this.addMoleculeToSceneAtPosition(molecule, safePosition);
+    }
+
+    onElementDrop(event: DropEvent): void {
+        const element = event.data.data as ElementSummary;
+        const worldPosition = this.sceneManager.screenToWorldPosition(event.dropPosition.x, event.dropPosition.y);
+        const safePosition = this.sceneManager.findNonOverlappingPosition(worldPosition, 1);
+        this.createAtomAtPosition(element, safePosition);
     }
 
     clearWorkspace(): void {
@@ -214,6 +256,15 @@ export class LabWorkspaceComponent implements AfterViewInit, OnDestroy {
 
         this.sceneMolecules.set([]);
         this.molecule3DMap.clear();
+
+        const atoms = this.sceneAtoms();
+        atoms.forEach(atom => {
+            this.sceneManager.removeObject(atom.id);
+            this.atomFactory.disposeAtom(atom);
+        });
+        this.sceneAtoms.set([]);
+        this.atom3DMap.clear();
+
         this.sceneManager.clearSelection();
         this.selectionService.clearSelection();
         this.moleculeSpawnOffset = 0;
@@ -225,6 +276,13 @@ export class LabWorkspaceComponent implements AfterViewInit, OnDestroy {
 
     retry(): void {
         this.loadData();
+    }
+
+    private createAtomAtPosition(element: ElementSummary, position: { x: number, y: number, z: number}): void {
+        const atom3D = this.atomFactory.createAtom(element, new THREE.Vector3(position.x, position.y, position.z));
+        this.sceneAtoms.update(atoms => [...atoms, atom3D]);
+        this.atom3DMap.set(atom3D.id, atom3D);
+        this.sceneManager.addObject(atom3D.id, atom3D.group);
     }
 
     private createAndAddMolecule(molecule: Molecule): void {

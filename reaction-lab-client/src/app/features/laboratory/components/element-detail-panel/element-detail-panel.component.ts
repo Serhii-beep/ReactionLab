@@ -2,36 +2,36 @@ import { CommonModule } from "@angular/common";
 import { ChangeDetectionStrategy, Component, computed, inject } from "@angular/core";
 import { MatIconModule } from "@angular/material/icon";
 import { SelectionService } from "../../../../core/services/selection.service";
-import { Molecule3D } from "../../../../three-engine";
+import { Atom3D } from "../../../../three-engine";
+import { getCategoryConfig } from "../../../periodic-table";
 import { MatterState } from "../../../../core/models";
 
 @Component({
-    selector: 'app-molecule-detail-panel',
+    selector: 'app-element-detail-panel',
     standalone: true,
     imports: [
         CommonModule,
         MatIconModule
     ],
-    templateUrl: './molecule-detail-panel.component.html',
-    styleUrls: ['./molecule-detail-panel.component.scss'],
+    templateUrl: './element-detail-panel.component.html',
+    styleUrls: ['./element-detail-panel.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class MoleculeDetailPanelComponent {
+export class ElementDetailPanelComponent {
     private readonly selectionService = inject(SelectionService);
 
-    readonly molecule = computed(() => {
-        const data = this.selectionService.selectedData() as Molecule3D | null;
-        return data?.molecule ?? null;
+    readonly element = computed(() => {
+        const data = this.selectionService.selectedData() as Atom3D | null;
+        return data?.element ?? null;
     });
 
-    readonly atomCount = computed(() => {
-        const data = this.selectionService.selectedData() as Molecule3D | null;
-        return data?.atoms.length ?? 0;
-    });
+    readonly categoryConfig = computed(() => {
+        const el = this.element();
+        if (!el) {
+            return;
+        }
 
-    readonly bondCount = computed(() => {
-        const data = this.selectionService.selectedData() as Molecule3D | null;
-        return data?.bonds.length ?? 0;
+        return getCategoryConfig(el.category);
     });
 
     getStateLabel(state: MatterState): string {

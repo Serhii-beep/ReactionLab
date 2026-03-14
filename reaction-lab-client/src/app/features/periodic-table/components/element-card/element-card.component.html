@@ -1,6 +1,8 @@
 <div
     class="element-card"
     [class.selected]="selected()"
+    [appDraggable]="'element'"
+    [dragData]="element()"
     (click)="onSelect()">
     <canvas #atomCanvas class="atom-preview"></canvas>
     <div class="element-info">

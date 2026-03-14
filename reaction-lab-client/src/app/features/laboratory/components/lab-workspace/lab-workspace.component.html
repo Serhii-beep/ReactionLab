@@ -7,8 +7,8 @@
         <div
             #canvasContainer
             class="canvas-container"
-            [appDropZone]="['molecule']"
-            (itemDropped)="onMoleculeDrop($event)">
+            [appDropZone]="['molecule', 'element']"
+            (itemDropped)="onDrop($event)">
         </div>
 
         <app-context-panel
@@ -17,6 +17,14 @@
             title="Molecule Details"
             (closed)="closeDetailPanel()">
             <app-molecule-detail-panel></app-molecule-detail-panel>
+        </app-context-panel>
+
+        <app-context-panel
+            side="left"
+            [isOpen]="isElementPanelOpen()"
+            title="Element Details"
+            (closed)="closeDetailPanel()">
+            <app-element-detail-panel></app-element-detail-panel>
         </app-context-panel>
 
         <div class="controls-panel">
