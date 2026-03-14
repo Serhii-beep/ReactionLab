@@ -1,5 +1,5 @@
 import { CommonModule } from "@angular/common";
-import { AfterViewInit, Component, computed, ElementRef, inject, OnDestroy, signal, ViewChild } from "@angular/core";
+import { AfterViewInit, Component, computed, effect, ElementRef, inject, OnDestroy, signal, ViewChild } from "@angular/core";
 import { Molecule3D, MoleculeFactoryService, SceneManagerService } from "../../../../three-engine";
 import { ElementService, MoleculeService } from "../../../../core/services";
 import { ElementSummary, Molecule, MoleculeSummary } from "../../../../core/models";
@@ -12,6 +12,9 @@ import { PeriodicTablePanelComponent } from "../../../periodic-table";
 import { MoleculesPanelComponent } from "../../../molecules-panel";
 import { DropZoneDirective } from "../../../../shared";
 import { DropEvent } from "../../../../shared/drag-drop/drag-drop.model";
+import { SelectionService } from "../../../../core/services/selection.service";
+import { ContextPanelComponent } from "../../../../shared/components/context-panel/context-panel.component";
+import { MoleculeDetailPanelComponent } from "../molecule-detail-panel/molecule-detail-panel.component";
 
 @Component({
     selector: 'app-lab-workspace',
@@ -23,7 +26,9 @@ import { DropEvent } from "../../../../shared/drag-drop/drag-drop.model";
         MatIconModule,
         MatButtonModule,
         MatTooltipModule,
-        DropZoneDirective
+        DropZoneDirective,
+        ContextPanelComponent,
+        MoleculeDetailPanelComponent
     ],
     templateUrl: './lab-workspace.component.html',
     styleUrls: ['./lab-workspace.component.scss']
@@ -35,6 +40,7 @@ export class LabWorkspaceComponent implements AfterViewInit, OnDestroy {
     private readonly moleculeFactory = inject(MoleculeFactoryService);
     private readonly elementService = inject(ElementService);
     private readonly moleculeService = inject(MoleculeService);
+    private readonly selectionService = inject(SelectionService);
 
     readonly loading = signal(true);
     readonly error = signal<string | null>(null);
@@ -43,17 +49,54 @@ export class LabWorkspaceComponent implements AfterViewInit, OnDestroy {
 
     private readonly sceneMolecules = signal<Molecule3D[]>([]);
     readonly sceneMoleculeCount = computed(() => this.sceneMolecules().length);
+    readonly isDetailPanelOpen = computed(() => this.selectionService.hasMoleculeSelected());
 
     private elements: ElementSummary[] = [];
     private moleculeCache = new Map<string, Molecule>();
+    private molecule3DMap = new Map<string, Molecule3D>();
     private moleculeSpawnOffset = 0;
+
+    readonly selectedMolecule3D = computed(() => {
+        const selectedId = this.sceneManager.selectedObjectId();
+        return selectedId ? this.molecule3DMap.get(selectedId) ?? null : null;
+    });
 
     constructor() {
         this.loadData();
+
+        effect(() => {
+            const selectedId = this.sceneManager.selectedObjectId();
+
+            if (selectedId) {
+                const molecule3D = this.molecule3DMap.get(selectedId);
+                if (molecule3D) {
+                    this.selectionService.selectMolecule(selectedId, molecule3D);
+                }
+            } else {
+                this.selectionService.clearSelection();
+            }
+        });
+
+        effect(() => {
+            const selectedId = this.selectionService.selectedObjectId();
+
+            this.molecule3DMap.forEach((mol, id) => {
+                this.moleculeFactory.highlightMolecule(mol, id === selectedId);
+            });
+        });
     }
 
     ngAfterViewInit(): void {
         this.sceneManager.initialize(this.canvasContainer);
+
+        this.sceneManager.createFloatingActions(
+            [{ id: 'delete', icon: 'delete', color: '#ff6b6b' }],
+            (actionId) => {
+                if (actionId === 'delete') {
+                    this.deleteSelected();
+                }
+            }
+        ).catch(err => console.error('Failed to create floating actions:', err));
     }
 
     ngOnDestroy(): void {
@@ -77,6 +120,24 @@ export class LabWorkspaceComponent implements AfterViewInit, OnDestroy {
         }, 350);
     }
 
+    deleteSelected(): void {
+        const selectedId = this.selectionService.selectedObjectId();
+        if (!selectedId) {
+            return;
+        }
+
+        const molecule3D = this.molecule3DMap.get(selectedId);
+        if (!molecule3D) {
+            return;
+        }
+
+        this.sceneManager.removeObject(selectedId);
+        this.sceneManager.clearSelection();
+        this.moleculeFactory.disposeMolecule(molecule3D);
+        this.molecule3DMap.delete(selectedId);
+        this.sceneMolecules.update(molecules => molecules.filter(m => m.id !== selectedId))
+    }
+
     addMoleculeToScene(moleculeSummary: MoleculeSummary): void {
         const cached = this.moleculeCache.get(moleculeSummary.id);
 
@@ -95,6 +156,11 @@ export class LabWorkspaceComponent implements AfterViewInit, OnDestroy {
                 })
             ).subscribe();
         }
+    }
+
+    closeDetailPanel(): void {
+        this.sceneManager.clearSelection();
+        this.selectionService.clearSelection();
     }
 
     private addMoleculeToSceneAtPosition(moleculeSummary: MoleculeSummary, position: { x: number; y: number; z: number }): void {
@@ -124,6 +190,7 @@ export class LabWorkspaceComponent implements AfterViewInit, OnDestroy {
             molecule3D.group.position.set(position.x, position.y, position.z);
 
             this.sceneMolecules.update(molecules => [...molecules, molecule3D]);
+            this.molecule3DMap.set(molecule3D.id, molecule3D);
             this.sceneManager.addObject(molecule3D.id, molecule3D.group);
         } else {
             console.error(`Could not create 3D model for molecule: ${molecule.formula}`);
@@ -146,6 +213,9 @@ export class LabWorkspaceComponent implements AfterViewInit, OnDestroy {
         });
 
         this.sceneMolecules.set([]);
+        this.molecule3DMap.clear();
+        this.sceneManager.clearSelection();
+        this.selectionService.clearSelection();
         this.moleculeSpawnOffset = 0;
     }
 
@@ -170,6 +240,7 @@ export class LabWorkspaceComponent implements AfterViewInit, OnDestroy {
             this.moleculeSpawnOffset++;
 
             this.sceneMolecules.update(molecules => [...molecules, molecule3D]);
+            this.molecule3DMap.set(molecule3D.id, molecule3D);
             this.sceneManager.addObject(molecule3D.id, molecule3D.group);
         } else {
             console.warn(`Could not create 3D model for molecule: ${molecule.formula}`);

@@ -29,6 +29,16 @@ export class SceneManagerService {
 
     private readonly objects = new Map<string, THREE.Object3D>();
 
+    private readonly _selectedObjectId = signal<string | null>(null);
+    readonly selectedObjectId = this._selectedObjectId.asReadonly();
+
+    private mouseDownPosition = { x: 0, y: 0 };
+    private readonly clickThreshold = 5;
+
+    private floatingActionsGroup: THREE.Group | null = null;
+    private actionSprites = new Map<string, THREE.Sprite>();
+    private readonly actionClickCallbacks = new Map<string, () => void>();
+
     private boundOnMouseDown!: (e: MouseEvent) => void;
     private boundOnMouseMove!: (e: MouseEvent) => void;
     private boundOnMouseUp!: (e: MouseEvent) => void;
@@ -124,6 +134,8 @@ export class SceneManagerService {
     private onMouseDown(event: MouseEvent): void {
         event.preventDefault();
 
+        this.mouseDownPosition = { x: event.clientX, y: event.clientY };
+
         if (event.button === 0) {
             this.isRotating = true;
             this.renderer.domElement.style.cursor = 'grabbing';
@@ -170,10 +182,256 @@ export class SceneManagerService {
         this.previousMousePosition = { x: event.clientX, y: event.clientY };
     }
 
-    private onMouseUp(): void {
+    private onMouseUp(event: MouseEvent): void {
+        const deltaX = Math.abs(event.clientX - this.mouseDownPosition.x);
+        const deltaY = Math.abs(event.clientY - this.mouseDownPosition.y);
+        const isClick = deltaX < this.clickThreshold && deltaY < this.clickThreshold;
+
+        if (isClick && event.button === 0) {
+            this.handleClick(event);
+        }
+
         this.isRotating = false;
         this.isPanning = false;
         this.renderer.domElement.style.cursor = 'grab';
+    }
+
+    private handleClick(event: MouseEvent): void {
+        const rect = this.renderer.domElement.getBoundingClientRect();
+        const mouseX = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        const mouseY = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+        const raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera(new THREE.Vector2(mouseX, mouseY), this.camera);
+
+        if (this.floatingActionsGroup && this.floatingActionsGroup.visible) {
+            const panelSprite = this.actionSprites.get('panel');
+            if (panelSprite) {
+                const intersects = raycaster.intersectObject(panelSprite, false);
+
+                if (intersects.length > 0) {
+                    const actionId = this.getClickedActionId(intersects[0], panelSprite);
+                    if (actionId) {
+                        const callback = this.actionClickCallbacks.get(actionId);
+                        if (callback) {
+                            callback();
+                        }
+                    }
+
+                    return;
+                }
+            }
+        }
+
+        const objectsArray = Array.from(this.objects.values());
+        const intersects = raycaster.intersectObjects(objectsArray, true);
+
+        if (intersects.length > 0) {
+            const hitObject = this.findRootObject(intersects[0].object);
+            const objectId = hitObject?.userData['id'] as string;
+
+            if (objectId) {
+                this.selectObject(objectId);
+            }
+        } else {
+            this.clearSelection();
+        }
+    }
+
+    private getClickedActionId(intersect: THREE.Intersection, sprite: THREE.Sprite): string | null {
+        const { actions, iconSize, padding, gap, width } = sprite.userData;
+
+        const uv = intersect.uv;
+        if (!uv) {
+            return null;
+        }
+
+        const pixelX = uv.x * width;
+
+        for (let i = 0; i < actions.length; i++) {
+            const iconStart = padding + i * (iconSize + gap);
+            const iconEnd = iconStart + iconSize;
+
+            if (pixelX >= iconStart && pixelX <= iconEnd) {
+                return actions[i].id;
+            }
+        }
+
+        return null;
+    }
+
+    private findRootObject(object: THREE.Object3D): THREE.Object3D | null {
+        let current: THREE.Object3D | null = object;
+
+        while (current) {
+            if (current.userData['id'] && this.objects.has(current.userData['id'])) {
+                return current;
+            }
+
+            current = current.parent;
+        }
+
+        return null;
+    }
+
+    async createFloatingActions(actions: { id: string; icon: string; color?: string }[], onClick: (actionId: string) => void): Promise<void> {
+        this.removeFloatingActions();
+
+        await document.fonts.load('48px Material Icons');
+
+        this.floatingActionsGroup = new THREE.Group();
+        this.floatingActionsGroup.userData = { type: 'floatingActions', actions };
+
+        const sprite = this.createPanelSprite(actions);
+        this.floatingActionsGroup.add(sprite);
+        this.actionSprites.set('panel', sprite);
+
+        actions.forEach(action => {
+            this.actionClickCallbacks.set(action.id, () => onClick(action.id));
+        });
+
+        this.scene.add(this.floatingActionsGroup);
+    }
+
+    private createPanelSprite(actions: { id: string; icon: string; color?: string }[]): THREE.Sprite {
+        const canvas = document.createElement('canvas');
+        const iconSize = 48;
+        const padding = 12;
+        const gap = 6;
+        const height = iconSize + padding * 2;
+        const width = actions.length * iconSize + (actions.length - 1) * gap + padding * 2;
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d')!;
+
+        const radius = 12;
+        ctx.beginPath();
+        ctx.roundRect(0, 0, width, height, radius);
+        ctx.fillStyle = 'rgba(26, 26, 46, 0.95)';
+        ctx.fill();
+        ctx.strokeStyle = '#4fc3f7';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        ctx.font = '32px Material Icons';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        actions.forEach((action, index) => {
+            const x = padding + iconSize / 2 + index * (iconSize + gap);
+            const y = height / 2;
+
+            ctx.fillStyle = action.color ?? '#ffffff';
+            ctx.fillText(this.getIconChar(action.icon), x, y);
+        });
+
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.needsUpdate = true;
+
+        const material = new THREE.SpriteMaterial({
+            map: texture,
+            transparent: true,
+            depthTest: false
+        });
+
+        const sprite = new THREE.Sprite(material);
+
+        sprite.renderOrder = 999;
+        sprite.userData = {
+            actions,
+            iconSize,
+            padding,
+            gap,
+            width,
+            height,
+            baseScale: width / height
+        };
+
+        return sprite;
+    }
+
+    private getIconChar(iconName: string): string {
+        const iconMap: Record<string, string> = {
+            'delete': '\ue872',
+            'content_copy': '\ue14d',
+            'center_focus_strong': '\ue3b4',
+            'info': '\ue88e',
+            'edit': '\ue3c9'
+        };
+
+        return iconMap[iconName] ?? '\ue88e';
+    }
+
+    updateFloatingActionsPosition(): void {
+        const selectedId = this._selectedObjectId();
+        if (!selectedId || !this.floatingActionsGroup) {
+            if (this.floatingActionsGroup) {
+                this.floatingActionsGroup.visible = false;
+            }
+
+            return;
+        }
+
+        const object = this.objects.get(selectedId);
+        if (!object) {
+            this.floatingActionsGroup.visible = false;
+            return;
+        }
+
+        const box = new THREE.Box3().setFromObject(object);
+        const center = box.getCenter(new THREE.Vector3());
+        const top = box.max.y;
+
+        this.floatingActionsGroup.position.set(center.x, top + 0.5, center.z);
+        this.floatingActionsGroup.visible = true;
+
+        const panelSprite = this.actionSprites.get('panel');
+        if (panelSprite) {
+            const distance = this.camera.position.distanceTo(this.floatingActionsGroup.position);
+            const fov = this.camera.fov * (Math.PI / 180);
+            const screenHeightAtDistance = 2 * Math.tan(fov / 2) * distance;
+
+            const targetScreenPercent = 0.04;
+            const scale = screenHeightAtDistance * targetScreenPercent;
+
+            const baseScale = panelSprite.userData['baseScale'] ?? 1;
+            panelSprite.scale.set(scale * baseScale, scale, 1);
+        }
+    }
+
+    removeFloatingActions(): void {
+        if (this.floatingActionsGroup) {
+            this.floatingActionsGroup.traverse((child) => {
+                if (child instanceof THREE.Sprite) {
+                    child.material.map?.dispose();
+                    child.material.dispose();
+                }
+            });
+            this.scene.remove(this.floatingActionsGroup);
+            this.floatingActionsGroup = null;
+        }
+
+        this.actionSprites.clear();
+        this.actionClickCallbacks.clear();
+    }
+
+    selectObject(id: string): void {
+        const currentId = this._selectedObjectId();
+
+        if (currentId === id) {
+            this._selectedObjectId.set(null);
+        } else {
+            this._selectedObjectId.set(id);
+        }
+    }
+
+    clearSelection(): void {
+        this._selectedObjectId.set(null);
+        if (this.floatingActionsGroup) {
+            this.floatingActionsGroup.visible = false;
+        }
     }
 
     private onWheel(event: WheelEvent): void {
@@ -300,6 +558,7 @@ export class SceneManagerService {
 
     private animate(): void {
         this.animationFrameId = requestAnimationFrame(() => this.animate());
+        this.updateFloatingActionsPosition();
         this.renderer.render(this.scene, this.camera);
     }
 
@@ -404,6 +663,43 @@ export class SceneManagerService {
         return { x: fallbackPoint.x, y: fallbackPoint.y, z: fallbackPoint.z };
     }
 
+    worldToScreenPosition(worldPosition: { x: number; y: number; z: number }): { x: number; y: number } | null {
+        if (!this._isInitialized()) {
+            return null;
+        }
+
+        const vector = new THREE.Vector3(worldPosition.x, worldPosition.y, worldPosition.z);
+
+        vector.project(this.camera);
+
+        if (vector.z > 1) {
+            return null;
+        }
+
+        const rect = this.renderer.domElement.getBoundingClientRect();
+
+        const x = ((vector.x + 1) / 2) * rect.width;
+        const y = ((-vector.y + 1) / 2) * rect.height;
+
+        return { x, y };
+    }
+
+    getObjectBoundingBoxTop(objectId: string): { x: number; y: number; z: number } | null {
+        const object = this.objects.get(objectId);
+        if (!object) {
+            return null;
+        }
+
+        const box = new THREE.Box3().setFromObject(object);
+        const center = box.getCenter(new THREE.Vector3());
+
+        return {
+            x: center.x + object.position.x,
+            y: box.max.y + object.position.y,
+            z: center.z + object.position.z
+        };
+    }
+
     findNonOverlappingPosition(position: { x: number; y: number; z: number }, radius: number = 2): { x: number; y: number; z: number } {
         const testPosition = new THREE.Vector3(position.x, position.y, position.z);
         const objectsArray = Array.from(this.objects.values());
@@ -463,6 +759,8 @@ export class SceneManagerService {
         if (this.animationFrameId !== null) {
             cancelAnimationFrame(this.animationFrameId);
         }
+
+        this.removeFloatingActions();
 
         this.renderer.domElement.removeEventListener('mousedown', this.boundOnMouseDown);
         this.renderer.domElement.removeEventListener('mousemove', this.boundOnMouseMove);

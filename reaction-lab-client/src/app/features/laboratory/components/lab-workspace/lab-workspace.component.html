@@ -11,6 +11,14 @@
             (itemDropped)="onMoleculeDrop($event)">
         </div>
 
+        <app-context-panel
+            side="right"
+            [isOpen]="isDetailPanelOpen()"
+            title="Molecule Details"
+            (closed)="closeDetailPanel()">
+            <app-molecule-detail-panel></app-molecule-detail-panel>
+        </app-context-panel>
+
         <div class="controls-panel">
             <div class="scene-info">
                 <mat-icon>view_in_ar</mat-icon>

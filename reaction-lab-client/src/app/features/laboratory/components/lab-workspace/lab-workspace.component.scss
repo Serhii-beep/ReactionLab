@@ -29,6 +29,7 @@
     @include flex-column;
     min-width: 0;
     position: relative;
+    overflow: hidden;
 }
 
 .canvas-container {
