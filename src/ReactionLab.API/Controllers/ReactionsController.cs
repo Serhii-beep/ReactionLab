@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using ReactionLab.Application.Common.Pagination;
 using ReactionLab.Application.DTOs;
 using ReactionLab.Application.Features.Reactions.Commands;
 using ReactionLab.Application.Features.Reactions.Queries;
@@ -65,6 +66,19 @@ public class ReactionsController : ControllerBase
         return Ok(reactions);
     }
 
+    [HttpPost("available")]
+    public async Task<ActionResult<CursorPagedResult<ReactionSummaryDto>>> FindAvailable([FromBody] FindAvailableReactionsRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new FindAvailableReactionsQuery(
+            request.MoleculeIds ?? [],
+            request.ElementIds ?? [],
+            request.SearchTerm,
+            request.PageSize,
+            request.Cursor), cancellationToken);
+
+        return Ok(result);
+    }
+
     [HttpPost]
     public async Task<ActionResult<ReactionDto>> Create(CreateReactionDto dto, CancellationToken cancellationToken)
     {
@@ -100,3 +114,11 @@ public class ReactionsController : ControllerBase
 }
 
 public record FindReactantsRequest(IEnumerable<Guid>? ElementIds, IEnumerable<Guid>? MoleculeIds);
+
+public record FindAvailableReactionsRequest(
+    IEnumerable<Guid>? MoleculeIds,
+    IEnumerable<Guid>? ElementIds,
+    string? SearchTerm = null,
+    int PageSize = 20,
+    string? Cursor = null
+);

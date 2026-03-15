@@ -388,11 +388,16 @@ namespace ReactionLab.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ElementId");
+                    b.HasIndex("ReactionId")
+                        .HasDatabaseName("IX_ReactionParticipants_ReactionId");
 
-                    b.HasIndex("MoleculeId");
+                    b.HasIndex("ElementId", "Role")
+                        .HasDatabaseName("IX_ReactionParticipants_ElementId_Role")
+                        .HasFilter("\"Role\" = 0");
 
-                    b.HasIndex("ReactionId");
+                    b.HasIndex("MoleculeId", "Role")
+                        .HasDatabaseName("IX_ReactionParticipants_MoleculeId_Role")
+                        .HasFilter("\"Role\" = 0");
 
                     b.ToTable("ReactionParticipants", (string)null);
                 });

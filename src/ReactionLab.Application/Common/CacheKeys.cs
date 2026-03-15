@@ -45,5 +45,18 @@ public static class CacheKeys
         public static string ByType(int type) => $"{Section}:type:{type}";
 
         public static string Search(string query) => $"{Section}:search:{query.ToLowerInvariant()}";
+
+        public static string Available(
+            IEnumerable<Guid> moleculeIds,
+            IEnumerable<Guid> elementIds,
+            string? searchTerm,
+            long cursorTicks,
+            int pageSize)
+        {
+            var molHash = string.Join("-", moleculeIds.OrderBy(id => id).Select(id => id.ToString("N")[..8]));
+            var elHash = string.Join("-", elementIds.OrderBy(id => id).Select(id => id.ToString("N")[..8]));
+            var search = searchTerm?.ToLowerInvariant() ?? "all";
+            return $"{Section}:available:{molHash}:{elHash}:{search}:c{cursorTicks}:s{pageSize}";
+        }
     }
 }

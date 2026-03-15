@@ -1,0 +1,41 @@
+<div
+    class="reaction-card"
+    [class.selected]="selected()"
+    [class.exothermic]="reaction().isExothermic === true"
+    [class.endothermic]="reaction().isExothermic === false"
+    (click)="onSelect()">
+    
+    <div class="card-header">
+        <div class="type-badge" [matTooltip]="reactionTypeLabel()">
+            <mat-icon>{{ reactionTypeIcon() }}</mat-icon>
+        </div>
+        <button
+            mat-icon-button
+            color="primary"
+            data-no-drag
+            matTooltip="Execute reaction"
+            (click)="onExecute($event)">
+            <mat-icon>play_circle</mat-icon>
+        </button>
+    </div>
+
+    <div class="card-body">
+        <span class="name">{{ reaction().name }}</span>
+        <span class="equation">{{ reaction().equation }}</span>
+    </div>
+
+    <div class="card-footer">
+        <div class="energy-indicator">
+            @if (reaction().isExothermic === true) {
+                <mat-icon matTooltip="Exothermic (releases energy)">whatshot</mat-icon>
+            } @else if (reaction().isExothermic === false) {
+                <mat-icon matTooltip="Endothermic (absorbs energy)">ac_unit</mat-icon>
+            }
+        </div>
+        <div class="difficulty" matTooltip="Difficulty level">
+            @for (star of difficultyStars(); track $index) {
+                <mat-icon>star</mat-icon>
+            }
+        </div>
+    </div>
+</div>

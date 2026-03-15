@@ -1,8 +1,8 @@
 import { CommonModule } from "@angular/common";
 import { AfterViewInit, Component, computed, effect, ElementRef, inject, OnDestroy, signal, ViewChild } from "@angular/core";
 import { Atom3D, AtomFactoryService, Molecule3D, MoleculeFactoryService, SceneManagerService } from "../../../../three-engine";
-import { ElementService, MoleculeService } from "../../../../core/services";
-import { ElementSummary, Molecule, MoleculeSummary } from "../../../../core/models";
+import { ElementService, MoleculeService, ReactionDetectorService } from "../../../../core/services";
+import { ElementSummary, Molecule, MoleculeSummary, ReactionSummary } from "../../../../core/models";
 import { tap } from "rxjs";
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -17,6 +17,7 @@ import { ContextPanelComponent } from "../../../../shared/components/context-pan
 import { MoleculeDetailPanelComponent } from "../molecule-detail-panel/molecule-detail-panel.component";
 import * as THREE from 'three';
 import { ElementDetailPanelComponent } from "../element-detail-panel/element-detail-panel.component";
+import { ReactionsPanelComponent } from "../../../reactions-panel/components/reactions-panel/reactions-panel.component";
 
 @Component({
     selector: 'app-lab-workspace',
@@ -31,7 +32,8 @@ import { ElementDetailPanelComponent } from "../element-detail-panel/element-det
         DropZoneDirective,
         ContextPanelComponent,
         MoleculeDetailPanelComponent,
-        ElementDetailPanelComponent
+        ElementDetailPanelComponent,
+        ReactionsPanelComponent
     ],
     templateUrl: './lab-workspace.component.html',
     styleUrls: ['./lab-workspace.component.scss']
@@ -45,11 +47,13 @@ export class LabWorkspaceComponent implements AfterViewInit, OnDestroy {
     private readonly moleculeService = inject(MoleculeService);
     private readonly selectionService = inject(SelectionService);
     private readonly atomFactory = inject(AtomFactoryService);
+    private readonly reactionDetector = inject(ReactionDetectorService);
 
     readonly loading = signal(true);
     readonly error = signal<string | null>(null);
     readonly isPanelCollapsed = signal(false);
     readonly isRightPanelCollapsed = signal(false);
+    readonly isReactionsPanelCollapsed = signal(false);
 
     private readonly sceneMolecules = signal<Molecule3D[]>([]);
     private readonly sceneAtoms = signal<Atom3D[]>([]);
@@ -57,6 +61,15 @@ export class LabWorkspaceComponent implements AfterViewInit, OnDestroy {
     readonly sceneAtomCount = computed(() => this.sceneAtoms().length);
     readonly isDetailPanelOpen = computed(() => this.selectionService.hasMoleculeSelected());
     readonly isElementPanelOpen = computed(() => this.selectionService.hasElementSelected());
+    private readonly sceneContents = computed(() => {
+        const molecules = this.sceneMolecules();
+        const atoms = this.sceneAtoms();
+
+        const moleculeIds = [...new Set(molecules.map(m => m.molecule?.id).filter((id): id is string => id !== undefined))];
+        const elementIds = [...new Set(atoms.map(a => a.element.id).filter((id): id is string => id !== undefined))];
+
+        return { moleculeIds, elementIds };
+    });
 
     private elements: ElementSummary[] = [];
     private moleculeCache = new Map<string, Molecule>();
@@ -101,6 +114,11 @@ export class LabWorkspaceComponent implements AfterViewInit, OnDestroy {
             this.atom3DMap.forEach((atom, id) => {
                 this.atomFactory.highlightAtom(atom, id === selectedId);
             });
+        });
+
+        effect(() => {
+            const contents = this.sceneContents();
+            this.reactionDetector.updateSceneContents(contents);
         });
     }
 
@@ -190,6 +208,15 @@ export class LabWorkspaceComponent implements AfterViewInit, OnDestroy {
         this.selectionService.clearSelection();
     }
 
+    onReactionPanelCollapsed(collapsed: boolean): void {
+        this.isReactionsPanelCollapsed.set(collapsed);
+    }
+
+    onExecuteReaction(reaction: ReactionSummary): void {
+        console.log('Execute reaction:', reaction);
+        // TODO: Implement reaction execution
+    }
+
     private addMoleculeToSceneAtPosition(moleculeSummary: MoleculeSummary, position: { x: number; y: number; z: number }): void {
         const cached = this.moleculeCache.get(moleculeSummary.id);
 
@@ -267,6 +294,7 @@ export class LabWorkspaceComponent implements AfterViewInit, OnDestroy {
 
         this.sceneManager.clearSelection();
         this.selectionService.clearSelection();
+        this.reactionDetector.reset();
         this.moleculeSpawnOffset = 0;
     }
 

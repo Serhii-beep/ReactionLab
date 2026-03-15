@@ -1,0 +1,81 @@
+<div
+    class="panel-wrapper"
+    [class.collapsed]="isCollapsed()">
+
+    <button
+        mat-icon-button
+        class="collapse-toggle"
+        matTooltipPosition="above"
+        [matTooltip]="isCollapsed() ? 'Expand panel' : 'Collapse panel'"
+        (click)="toggleCollapse()">
+        <mat-icon>{{ isCollapsed() ? 'expand_less' : 'expand_more' }}</mat-icon>
+    </button>
+
+    <div class="panel-container" [class.hidden]="isCollapsed()">
+        <div class="panel-header">
+            <div class="header-title">
+                <mat-icon>bolt</mat-icon>
+                <h2>Reactions</h2>
+                @if (reactionsCount() > 0) {
+                    <span class="count-badge">{{ reactionsCount() }}</span>
+                }
+            </div>
+
+            @if (hasReactants()) {
+                <mat-form-field appearance="outline" class="search-field">
+                    <mat-label>Search reactions</mat-label>
+                    <input
+                        matInput
+                        [ngModel]="searchTerm()"
+                        (ngModelChange)="onSearchChange($event)"
+                        placeholder="Name or equation...">
+                    <mat-icon matPrefix>search</mat-icon>
+                    @if (searchTerm()) {
+                        <button matSuffix mat-icon-button (click)="clearSearch()">
+                            <mat-icon>close</mat-icon>
+                        </button>
+                    }
+                </mat-form-field>
+            }
+        </div>
+
+        <div
+            class="reactions-list"
+            appInfiniteScroll
+            [disabled]="!hasMore() || loading()"
+            (scrolledToBottom)="loadMore()">
+
+            @if (!hasReactants()) {
+                <div class="empty-state">
+                    <mat-icon>science</mat-icon>
+                    <p>Add molecules or elements to the scene to see available reactions</p>
+                </div>
+            } @else if (loading() && reactions().length === 0) {
+                <div class="loading">
+                    <mat-spinner diameter="32"></mat-spinner>
+                    <span>Finding reactions...</span>
+                </div>
+            } @else {
+                @for (reaction of reactions(); track reaction.id) {
+                    <app-reaction-card
+                        [reaction]="reaction"
+                        [selected]="selectedReaction()?.id === reaction.id"
+                        (reactionSelected)="onReactionSelected($event)"
+                        (executeReaction)="onExecuteReaction($event)">
+                    </app-reaction-card>
+                } @empty {
+                    <div class="no-results">
+                        <mat-icon>search_off</mat-icon>
+                        <p>No reactions found</p>
+                    </div>
+                }
+
+                @if (loading() && reactions().length > 0) {
+                    <div class="loading-more">
+                        <mat-spinner diameter="24"></mat-spinner>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>

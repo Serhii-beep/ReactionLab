@@ -105,3 +105,11 @@ export interface FindReactantsRequest {
     elementIds?: string[];
     moleculeIds?: string[];
 }
+
+export interface FindAvailableReactionsRequest {
+    moleculeIds?: string[];
+    elementIds?: string[];
+    searchTerm?: string;
+    pageSize?: number;
+    cursor?: string;
+}

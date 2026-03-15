@@ -27,6 +27,11 @@
             <app-element-detail-panel></app-element-detail-panel>
         </app-context-panel>
 
+        <app-reactions-panel
+            (collapsed)="onReactionPanelCollapsed($event)"
+            (executeReaction)="onExecuteReaction($event)">
+        </app-reactions-panel>
+
         <div class="controls-panel">
             <div class="scene-info">
                 <mat-icon>view_in_ar</mat-icon>

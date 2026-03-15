@@ -30,5 +30,16 @@ public class ReactionParticipantConfiguration : IEntityTypeConfiguration<Reactio
             .WithMany()
             .HasForeignKey(rp => rp.ElementId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasIndex(rp => new { rp.MoleculeId, rp.Role })
+            .HasDatabaseName("IX_ReactionParticipants_MoleculeId_Role")
+            .HasFilter("\"Role\" = 0");
+
+        builder.HasIndex(rp => new { rp.ElementId, rp.Role })
+            .HasDatabaseName("IX_ReactionParticipants_ElementId_Role")
+            .HasFilter("\"Role\" = 0");
+
+        builder.HasIndex(rp => rp.ReactionId)
+            .HasDatabaseName("IX_ReactionParticipants_ReactionId");
     }
 }

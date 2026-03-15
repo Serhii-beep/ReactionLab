@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from "@angular/common/http";
 import { computed, inject, Injectable, signal } from "@angular/core";
 import { environment } from "../../../environments/environment";
-import { CreateReaction, FindReactantsRequest, Reaction, ReactionSummary, ReactionType } from "../models";
+import { CreateReaction, CursorPagedResult, FindAvailableReactionsRequest, FindReactantsRequest, Reaction, ReactionSummary, ReactionType } from "../models";
 import { Observable, tap } from "rxjs";
 
 @Injectable({
@@ -91,6 +91,10 @@ export class ReactionService {
                 }
             })
         );
+    }
+
+    findAvailable(request: FindAvailableReactionsRequest): Observable<CursorPagedResult<ReactionSummary>> {
+        return this.http.post<CursorPagedResult<ReactionSummary>>(`${this.baseUrl}/available`, request);
     }
 
     create(reaction: CreateReaction): Observable<Reaction> {
