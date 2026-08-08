@@ -10,6 +10,10 @@
     <File Path="NuGet.config" />
     <File Path="global.json" />
   </Folder>
+  <Folder Name="/aspire/">
+    <Project Path="aspire/ReactionLab.AppHost/ReactionLab.AppHost.csproj" />
+    <Project Path="aspire/ReactionLab.ServiceDefaults/ReactionLab.ServiceDefaults.csproj" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/ReactionLab.API/ReactionLab.API.csproj" />
     <Project Path="src/ReactionLab.Application/ReactionLab.Application.csproj" />

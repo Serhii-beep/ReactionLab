@@ -3,9 +3,12 @@ using ReactionLab.API.Middleware;
 using ReactionLab.Application;
 using ReactionLab.Infrastructure;
 using ReactionLab.Infrastructure.Persistence.Seeding;
+using ReactionLab.ServiceDefaults;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.AddServiceDefaults();
 
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
@@ -67,5 +70,7 @@ app.UseCors("AllowAngular");
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapDefaultEndpoints();
 
 await app.RunAsync();

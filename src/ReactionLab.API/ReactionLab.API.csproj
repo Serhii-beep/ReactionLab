@@ -16,5 +16,9 @@
     <ProjectReference Include="..\ReactionLab.Application\ReactionLab.Application.csproj" />
     <ProjectReference Include="..\ReactionLab.Infrastructure\ReactionLab.Infrastructure.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\aspire\ReactionLab.ServiceDefaults\ReactionLab.ServiceDefaults.csproj" />
+  </ItemGroup>
   
 </Project>
