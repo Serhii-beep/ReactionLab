@@ -1,4 +1,4 @@
-﻿using ReactionLab.Domain.Common;
+using ReactionLab.Domain.Common;
 using ReactionLab.Domain.Enums;
 
 namespace ReactionLab.Domain.Entities;
@@ -41,7 +41,7 @@ public class Element : BaseEntity
     public string DisplayColor { get; set; } = "#FFFFFF";
 
     public decimal Radius3D { get; set; } = 1.0m;
-    
+
     // Educational Content
     public string? DiscoveryInfo { get; set; }
 

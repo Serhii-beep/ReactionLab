@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 using ReactionLab.Application.Features.Elements.Commands;
 
 namespace ReactionLab.Application.Features.Elements.Validators;

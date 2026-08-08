@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using ReactionLab.Application.DTOs;
 using ReactionLab.Domain.Entities;
 

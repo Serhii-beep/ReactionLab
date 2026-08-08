@@ -1,4 +1,4 @@
-﻿using MediatR;
+using MediatR;
 using ReactionLab.Domain.Interfaces;
 
 namespace ReactionLab.Application.Features.Molecules.Commands;

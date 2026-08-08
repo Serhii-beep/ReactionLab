@@ -1,4 +1,4 @@
-﻿namespace ReactionLab.Domain.Enums;
+namespace ReactionLab.Domain.Enums;
 
 public enum UserRole
 {

@@ -1,4 +1,4 @@
-﻿namespace ReactionLab.Application.Interfaces;
+namespace ReactionLab.Application.Interfaces;
 
 public interface ICacheService
 {

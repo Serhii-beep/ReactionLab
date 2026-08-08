@@ -35,7 +35,7 @@ public class MoleculeSeeder : IDataSeeder
     private async Task<List<Molecule>> GetMoleculesAsync(CancellationToken cancellationToken)
     {
         var filePath = Path.Combine(AppContext.BaseDirectory, "Persistence", "Seeding", "Data", "molecules.json");
-        
+
         if (!File.Exists(filePath))
         {
             filePath = Path.Combine("ReactionLab.Infrastructure", "Persistence", "Seeding", "Data", "molecules.json");
@@ -60,7 +60,7 @@ public class MoleculeSeeder : IDataSeeder
 
         var moleculeData = JsonSerializer.Deserialize<List<MoleculeSeedDto>>(json, options);
         var elements = await _context.Elements.ToListAsync(cancellationToken);
-        
+
         var result = new List<Molecule>();
 
         if (moleculeData != null)

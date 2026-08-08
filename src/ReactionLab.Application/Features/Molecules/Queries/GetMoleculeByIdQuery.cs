@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using MediatR;
 using ReactionLab.Application.Common;
 using ReactionLab.Application.DTOs;

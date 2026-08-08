@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using ReactionLab.Domain.Entities;
 using ReactionLab.Domain.Interfaces;
 

@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using ReactionLab.Domain.Common;
 using ReactionLab.Domain.Interfaces;
 using System.Linq.Expressions;

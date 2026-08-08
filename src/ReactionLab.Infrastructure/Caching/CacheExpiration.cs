@@ -1,4 +1,4 @@
-﻿namespace ReactionLab.Infrastructure.Caching;
+namespace ReactionLab.Infrastructure.Caching;
 
 public static class CacheExpiration
 {

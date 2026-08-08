@@ -34,7 +34,7 @@ public class ElementSeeder : IDataSeeder
     private static async Task<List<Element>> GetElementsAsync()
     {
         var filePath = Path.Combine(AppContext.BaseDirectory, "Persistence", "Seeding", "Data", "elements.json");
-        
+
         if (!File.Exists(filePath))
         {
             // Fallback for development if not copied to output yet
@@ -59,7 +59,7 @@ public class ElementSeeder : IDataSeeder
         };
 
         var elementData = JsonSerializer.Deserialize<List<ElementSeedDto>>(json, options);
-        
+
         return elementData?.Select(d => d.ToEntity()).ToList() ?? [];
     }
 

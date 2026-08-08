@@ -1,4 +1,4 @@
-﻿using ReactionLab.Domain.Interfaces;
+using ReactionLab.Domain.Interfaces;
 
 namespace ReactionLab.Infrastructure.Persistence;
 

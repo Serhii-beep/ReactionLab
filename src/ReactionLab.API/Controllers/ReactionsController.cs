@@ -1,4 +1,4 @@
-﻿using MediatR;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using ReactionLab.Application.Common.Pagination;
 using ReactionLab.Application.DTOs;
@@ -16,7 +16,7 @@ public class ReactionsController : ControllerBase
 
     public ReactionsController(IMediator mediator)
     {
-        _mediator = mediator; 
+        _mediator = mediator;
     }
 
     [HttpGet]

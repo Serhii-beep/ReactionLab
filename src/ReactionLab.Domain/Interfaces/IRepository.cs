@@ -1,4 +1,4 @@
-﻿using ReactionLab.Domain.Common;
+using ReactionLab.Domain.Common;
 using System.Linq.Expressions;
 
 namespace ReactionLab.Domain.Interfaces;

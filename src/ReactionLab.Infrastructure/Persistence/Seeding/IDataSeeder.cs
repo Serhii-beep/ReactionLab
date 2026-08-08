@@ -1,4 +1,4 @@
-﻿namespace ReactionLab.Infrastructure.Persistence.Seeding;
+namespace ReactionLab.Infrastructure.Persistence.Seeding;
 
 public interface IDataSeeder
 {

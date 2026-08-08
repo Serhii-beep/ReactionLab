@@ -1,4 +1,4 @@
-﻿namespace ReactionLab.Application.Common;
+namespace ReactionLab.Application.Common;
 
 public class Result
 {

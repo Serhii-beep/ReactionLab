@@ -1,4 +1,4 @@
-﻿namespace ReactionLab.Application.Common;
+namespace ReactionLab.Application.Common;
 
 public static class CacheKeys
 {
@@ -9,7 +9,7 @@ public static class CacheKeys
         private const string Section = $"{Prefix}:elements";
 
         public const string All = $"{Section}:all";
-        
+
         public static string ById(Guid id) => $"{Section}:id:{id}";
 
         public static string BySymbol(string symbol) => $"{Section}:symbol:{symbol.ToUpperInvariant()}";

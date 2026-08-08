@@ -1,4 +1,4 @@
-﻿namespace ReactionLab.API.Middleware;
+namespace ReactionLab.API.Middleware;
 
 public static class MiddlewareExtensions
 {

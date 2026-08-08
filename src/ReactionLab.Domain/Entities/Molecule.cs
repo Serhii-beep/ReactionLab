@@ -1,4 +1,4 @@
-﻿using ReactionLab.Domain.Common;
+using ReactionLab.Domain.Common;
 using ReactionLab.Domain.Enums;
 
 namespace ReactionLab.Domain.Entities;
@@ -13,7 +13,7 @@ public class Molecule : BaseEntity
 
     public string? CommonNames { get; set; } // JSON array
 
-    public decimal? MolecularWeight {  get; set; }
+    public decimal? MolecularWeight { get; set; }
 
     public string? Structure3D { get; set; } // JSON: atom positions, bonds
 
@@ -26,7 +26,7 @@ public class Molecule : BaseEntity
     // Educational Content
     public string? Description { get; set; }
 
-    public string? Uses {  get; set; } // JSON array
+    public string? Uses { get; set; } // JSON array
 
     public string? SafetyInfo { get; set; }
 

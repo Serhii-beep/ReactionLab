@@ -1,4 +1,4 @@
-﻿using ReactionLab.Domain.Enums;
+using ReactionLab.Domain.Enums;
 
 namespace ReactionLab.Application.DTOs;
 

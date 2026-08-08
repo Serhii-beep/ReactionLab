@@ -1,4 +1,4 @@
-﻿using MediatR;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using ReactionLab.Application.Common.Pagination;
 using ReactionLab.Application.DTOs;

@@ -1,4 +1,4 @@
-﻿using MediatR;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using ReactionLab.Application.DTOs;
 using ReactionLab.Application.Features.Elements.Commands;

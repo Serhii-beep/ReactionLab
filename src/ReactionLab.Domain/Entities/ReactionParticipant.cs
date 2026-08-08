@@ -1,4 +1,4 @@
-﻿using ReactionLab.Domain.Common;
+using ReactionLab.Domain.Common;
 using ReactionLab.Domain.Enums;
 
 namespace ReactionLab.Domain.Entities;

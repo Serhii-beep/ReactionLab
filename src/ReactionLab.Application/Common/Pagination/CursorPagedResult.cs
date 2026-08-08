@@ -1,4 +1,4 @@
-﻿namespace ReactionLab.Application.Common.Pagination;
+namespace ReactionLab.Application.Common.Pagination;
 
 public record CursorPagedResult<T>
 {

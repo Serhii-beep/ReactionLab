@@ -1,4 +1,4 @@
-﻿namespace ReactionLab.Application.Common.Exceptions;
+namespace ReactionLab.Application.Common.Exceptions;
 
 public class ValidationException : Exception
 {

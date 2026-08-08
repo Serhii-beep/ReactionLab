@@ -1,4 +1,4 @@
-﻿namespace ReactionLab.Application.Common.Errors;
+namespace ReactionLab.Application.Common.Errors;
 
 public static class ElementErrors
 {

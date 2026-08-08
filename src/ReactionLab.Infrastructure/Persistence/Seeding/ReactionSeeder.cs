@@ -39,7 +39,7 @@ public class ReactionSeeder : IDataSeeder
     private async Task SeedTagsAsync(CancellationToken cancellationToken)
     {
         var filePath = Path.Combine(AppContext.BaseDirectory, "Persistence", "Seeding", "Data", "tags.json");
-        
+
         if (!File.Exists(filePath))
         {
             filePath = Path.Combine("ReactionLab.Infrastructure", "Persistence", "Seeding", "Data", "tags.json");
@@ -65,7 +65,7 @@ public class ReactionSeeder : IDataSeeder
     private async Task SeedReactionsAsync(CancellationToken cancellationToken)
     {
         var filePath = Path.Combine(AppContext.BaseDirectory, "Persistence", "Seeding", "Data", "reactions.json");
-        
+
         if (!File.Exists(filePath))
         {
             filePath = Path.Combine("ReactionLab.Infrastructure", "Persistence", "Seeding", "Data", "reactions.json");

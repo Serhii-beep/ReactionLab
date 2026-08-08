@@ -1,4 +1,4 @@
-﻿using ReactionLab.Domain.Entities;
+using ReactionLab.Domain.Entities;
 
 namespace ReactionLab.Domain.Interfaces;
 

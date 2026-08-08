@@ -1,4 +1,4 @@
-﻿namespace ReactionLab.Domain.Entities;
+namespace ReactionLab.Domain.Entities;
 
 public class ReactionTag
 {

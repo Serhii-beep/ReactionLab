@@ -1,4 +1,4 @@
-﻿namespace ReactionLab.Domain.Common;
+namespace ReactionLab.Domain.Common;
 
 public abstract class BaseEntity
 {

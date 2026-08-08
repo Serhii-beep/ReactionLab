@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using ReactionLab.Application.Common.Exceptions;
 using System.Text.Json;
 
