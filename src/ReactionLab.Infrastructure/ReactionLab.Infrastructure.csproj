@@ -5,12 +5,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Identity\" />
-    <Folder Include="Services\" />
-    <Folder Include="Persistence\Migrations\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <None Update="Persistence\Seeding\Data\*.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

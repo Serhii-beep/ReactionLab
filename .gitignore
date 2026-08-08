@@ -41,3 +41,29 @@ dist/
 Thumbs.db
 
 logs/
+
+# Internal planning documents (not part of the shipped repo)
+plan/
+
+# Test & coverage output
+TestResults/
+[Tt]est[Rr]esults/
+coverage/
+*.trx
+*.coverage
+*.coverage.json
+*.cobertura.xml
+coverage.opencover.xml
+
+# Playwright
+playwright-report/
+test-results/
+.playwright/
+
+# Build & tooling artifacts
+artifacts/
+.aspire/
+*.binlog
+
+# Data pipeline HTTP cache (regenerable; catalogue output IS committed)
+tools/**/.httpcache/

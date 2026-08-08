@@ -15,9 +15,19 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
+        var postgresConnectionString = configuration.GetConnectionString("DefaultConnection")
+            ?? throw new InvalidOperationException(
+                "Connection string 'DefaultConnection' is not configured. Set it with: " +
+                "dotnet user-secrets set \"ConnectionStrings:DefaultConnection\" \"<value>\" --project src/ReactionLab.API");
+
+        var redisConnectionString = configuration.GetConnectionString("Redis")
+            ?? throw new InvalidOperationException(
+                "Connection string 'Redis' is not configured. Set it with: " +
+                "dotnet user-secrets set \"ConnectionStrings:Redis\" \"<value>\" --project src/ReactionLab.API");
+
         services.AddDbContext<ReactionLabDbContext>(options =>
             options.UseNpgsql(
-                configuration.GetConnectionString("DefaultConnection"),
+                postgresConnectionString,
                 b => b.MigrationsAssembly(typeof(ReactionLabDbContext).Assembly.FullName)));
 
         services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
@@ -32,7 +42,6 @@ public static class DependencyInjection
         services.AddScoped<IDataSeeder, ReactionSeeder>();
         services.AddScoped<DatabaseSeeder>();
 
-        var redisConnectionString = configuration.GetConnectionString("Redis");
         services.AddSingleton<IConnectionMultiplexer>(sp =>
         {
             var options = ConfigurationOptions.Parse(redisConnectionString);

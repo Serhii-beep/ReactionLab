@@ -4,6 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>dfd1e992-13c1-4156-9c79-c6346d9f5949</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,10 +19,5 @@
     <ProjectReference Include="..\ReactionLab.Application\ReactionLab.Application.csproj" />
     <ProjectReference Include="..\ReactionLab.Infrastructure\ReactionLab.Infrastructure.csproj" />
   </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Hubs\" />
-    <Folder Include="Filters\" />
-  </ItemGroup>
-
+  
 </Project>
