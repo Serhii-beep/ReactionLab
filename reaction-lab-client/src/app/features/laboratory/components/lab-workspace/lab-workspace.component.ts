@@ -1,9 +1,9 @@
 import { CommonModule } from "@angular/common";
-import { AfterViewInit, Component, computed, effect, ElementRef, inject, OnDestroy, signal, ViewChild } from "@angular/core";
+import { AfterViewInit, Component, computed, DestroyRef, effect, ElementRef, inject, OnDestroy, signal, ViewChild } from "@angular/core";
 import { Atom3D, AtomFactoryService, Molecule3D, MoleculeFactoryService, SceneManagerService } from "../../../../three-engine";
-import { ElementService, MoleculeService, ReactionDetectorService } from "../../../../core/services";
-import { ElementSummary, Molecule, MoleculeSummary, ReactionSummary } from "../../../../core/models";
-import { tap } from "rxjs";
+import { ElementService, MoleculeService, ReactionDetectorService, ReactionExecutorService, ReactionService, SceneReactants } from "../../../../core/services";
+import { ElementSummary, Molecule, MoleculeSummary, Reaction, ReactionSummary } from "../../../../core/models";
+import { firstValueFrom, tap } from "rxjs";
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -48,12 +48,18 @@ export class LabWorkspaceComponent implements AfterViewInit, OnDestroy {
     private readonly selectionService = inject(SelectionService);
     private readonly atomFactory = inject(AtomFactoryService);
     private readonly reactionDetector = inject(ReactionDetectorService);
+    private readonly reactionExecutor = inject(ReactionExecutorService);
+    private readonly reactionService = inject(ReactionService);
+    private readonly destroyRef = inject(DestroyRef);
 
     readonly loading = signal(true);
     readonly error = signal<string | null>(null);
     readonly isPanelCollapsed = signal(false);
     readonly isRightPanelCollapsed = signal(false);
     readonly isReactionsPanelCollapsed = signal(false);
+    readonly isReactionExecuting = this.reactionExecutor.isExecuting;
+    readonly reactionPhase = this.reactionExecutor.currentPhase;
+    readonly reactionError = this.reactionExecutor.error;
 
     private readonly sceneMolecules = signal<Molecule3D[]>([]);
     private readonly sceneAtoms = signal<Atom3D[]>([]);
@@ -61,6 +67,15 @@ export class LabWorkspaceComponent implements AfterViewInit, OnDestroy {
     readonly sceneAtomCount = computed(() => this.sceneAtoms().length);
     readonly isDetailPanelOpen = computed(() => this.selectionService.hasMoleculeSelected());
     readonly isElementPanelOpen = computed(() => this.selectionService.hasElementSelected());
+    readonly reactionPhaseLabel = computed(() => {
+        switch (this.reactionPhase()) {
+            case 'gathering': return 'Gathering reactants...';
+            case 'breaking': return 'Breaking bonds...';
+            case 'transforming': return 'Forming products...';
+            case 'complete': return 'Reaction complete!';
+            default: return 'Preparing reaction...';
+        }
+    });
     private readonly sceneContents = computed(() => {
         const molecules = this.sceneMolecules();
         const atoms = this.sceneAtoms();
@@ -212,9 +227,41 @@ export class LabWorkspaceComponent implements AfterViewInit, OnDestroy {
         this.isReactionsPanelCollapsed.set(collapsed);
     }
 
-    onExecuteReaction(reaction: ReactionSummary): void {
-        console.log('Execute reaction:', reaction);
-        // TODO: Implement reaction execution
+    async onExecuteReaction(reactionSummary: ReactionSummary): Promise<void> {
+        if (this.reactionExecutor.isExecuting()) {
+            return;
+        }
+
+        try {
+            const reaction = await firstValueFrom(this.reactionService.getById(reactionSummary.id));
+
+            const sceneReactants = this.gatherSceneReactants(reaction);
+
+            this.sceneManager.clearSelection();
+            this.selectionService.clearSelection();
+
+            const result = await this.reactionExecutor.execute({
+                reaction,
+                sceneReactants,
+                elements: this.elements,
+                callbacks: {
+                    addMoleculeToScene: (mol) => this.addMolecule3DToScene(mol),
+                    addAtomToScene: (atom) => this.addAtom3DToScene(atom),
+                    removeMoleculeFromScene: (id) => this.removeMolecule3DFromScene(id),
+                    removeAtomFromScene: (id) => this.removeAtom3DFromScene(id)
+                }
+            });
+
+            if (!result.success) {
+                console.error('Reaction failed:', result.error);
+            }
+        } catch (error) {
+            console.error('Failed to execute reaction:', error);
+        }
+    }
+
+    stopReaction(): void {
+        this.reactionExecutor.stop();
     }
 
     private addMoleculeToSceneAtPosition(moleculeSummary: MoleculeSummary, position: { x: number; y: number; z: number }): void {
@@ -252,6 +299,10 @@ export class LabWorkspaceComponent implements AfterViewInit, OnDestroy {
     }
 
     onDrop(event: DropEvent): void {
+        if (this.reactionExecutor.isExecuting()) {
+            return;
+        }
+
         if (event.data.type === 'molecule') {
             this.onMoleculeDrop(event);
         } else if (event.data.type === 'element') {
@@ -333,12 +384,67 @@ export class LabWorkspaceComponent implements AfterViewInit, OnDestroy {
         }
     }
 
+    private gatherSceneReactants(reaction: Reaction): SceneReactants {
+        const molecules = new Map<string, Molecule3D[]>();
+        const atoms = new Map<string, Atom3D[]>();
+
+        for (const participant of reaction.reactants) {
+            if (participant.moleculeId) {
+                const matching = this.sceneMolecules().filter(m => m.molecule?.id === participant.moleculeId);
+
+                if (matching.length > 0) {
+                    molecules.set(participant.moleculeId, [...matching]);
+                }
+            } else if (participant.elementId) {
+                const matching = this.sceneAtoms().filter(a => a.element.id === participant.elementId);
+
+                if (matching.length > 0) {
+                    atoms.set(participant.elementId, [...matching]);
+                }
+            }
+        }
+
+        return { molecules, atoms };
+    }
+
+    private addMolecule3DToScene(molecule3D: Molecule3D): void {
+        this.sceneMolecules.update(molecules => [...molecules, molecule3D]);
+        this.molecule3DMap.set(molecule3D.id, molecule3D);
+        this.sceneManager.addObject(molecule3D.id, molecule3D.group);
+    }
+
+    private addAtom3DToScene(atom3D: Atom3D): void {
+        this.sceneAtoms.update(atoms => [...atoms, atom3D]);
+        this.atom3DMap.set(atom3D.id, atom3D);
+        this.sceneManager.addObject(atom3D.id, atom3D.group);
+    }
+
+    private removeMolecule3DFromScene(id: string): void {
+        const molecule3D = this.molecule3DMap.get(id);
+        if (molecule3D) {
+            this.sceneManager.removeObject(id);
+            this.moleculeFactory.disposeMolecule(molecule3D);
+            this.molecule3DMap.delete(id);
+            this.sceneMolecules.update(molecules => molecules.filter(m => m.id !== id));
+        }
+    }
+
+    private removeAtom3DFromScene(id: string): void {
+        const atom3D = this.atom3DMap.get(id);
+        if (atom3D) {
+            this.sceneManager.removeObject(id);
+            this.atomFactory.disposeAtom(atom3D);
+            this.atom3DMap.delete(id);
+            this.sceneAtoms.update(atoms => atoms.filter(a => a.id !== id));
+        }
+    }
+
     private loadData(): void {
         this.loading.set(true);
         this.error.set(null);
 
         this.elementService.getAll().pipe(
-            takeUntilDestroyed(),
+            takeUntilDestroyed(this.destroyRef),
             tap({
                 next: (elements) => {
                     this.elements = elements;

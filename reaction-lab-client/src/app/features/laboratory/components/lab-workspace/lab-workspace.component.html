@@ -7,9 +7,37 @@
         <div
             #canvasContainer
             class="canvas-container"
+            [class.reaction-active]="isReactionExecuting()"
             [appDropZone]="['molecule', 'element']"
             (itemDropped)="onDrop($event)">
         </div>
+
+        @if (isReactionExecuting()) {
+            <div class="reaction-overlay">
+                <div class="reaction-phase-indicator">
+                    <div class="phase-indicator-wrapper">
+                        @switch (reactionPhase()) {
+                            @case ('gathering') {
+                                <mat-icon class="phase-icon spinning">compress</mat-icon>
+                            }
+                            @case ('breaking') {
+                                <mat-icon class="phase-icon pulsing">flash_on</mat-icon>
+                            }
+                            @case ('transforming') {
+                                <mat-icon class="phase-icon spinning">autorenew</mat-icon>
+                            }
+                            @default {
+                                <mat-icon class="phase-icon pulsing">science</mat-icon>
+                            }
+                        }
+                    </div>
+                    <span class="phase-label">{{ reactionPhaseLabel() }}</span>
+                    <button mat-icon-button class="stop-button" (click)="stopReaction()" matTooltip="Cancel reaction">
+                        <mat-icon>close</mat-icon>
+                    </button>
+                </div>
+            </div>
+        }
 
         <app-context-panel
             side="right"
@@ -39,11 +67,11 @@
             </div>
 
             <div class="scene-controls">
-                <button mat-stroked-button (click)="clearWorkspace()" matTooltip="Remove all molecules">
+                <button mat-stroked-button (click)="clearWorkspace()" matTooltip="Remove all molecules" [disabled]="isReactionExecuting()">
                     <mat-icon>delete_sweep</mat-icon>    
                     Clear
                 </button>
-                <button mat-stroked-button (click)="resetCamera()" matTooltip="Reset camera position">
+                <button mat-stroked-button (click)="resetCamera()" matTooltip="Reset camera position" [disabled]="isReactionExecuting()">
                     <mat-icon>center_focus_strong</mat-icon>
                     Reset View
                 </button>
