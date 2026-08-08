@@ -1,3 +1,4 @@
+using System.Globalization;
 using ReactionLab.API.Middleware;
 using ReactionLab.Application;
 using ReactionLab.Infrastructure;
@@ -9,8 +10,8 @@ var builder = WebApplication.CreateBuilder(args);
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
     .Enrich.FromLogContext()
-    .WriteTo.Console()
-    .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day)
+    .WriteTo.Console(formatProvider: CultureInfo.InvariantCulture)
+    .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day, formatProvider: CultureInfo.InvariantCulture)
     .CreateLogger();
 
 builder.Host.UseSerilog();
@@ -67,4 +68,4 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.Run();
+await app.RunAsync();
