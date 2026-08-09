@@ -20,4 +20,7 @@
     <Project Path="src/ReactionLab.Domain/ReactionLab.Domain.csproj" />
     <Project Path="src/ReactionLab.Infrastructure/ReactionLab.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ReactionLab.Domain.UnitTests/ReactionLab.Domain.UnitTests.csproj" />
+  </Folder>
 </Solution>
