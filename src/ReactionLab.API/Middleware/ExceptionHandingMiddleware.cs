@@ -1,6 +1,6 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using ReactionLab.Application.Common.Exceptions;
-using System.Text.Json;
 
 namespace ReactionLab.API.Middleware;
 

@@ -1,7 +1,7 @@
+using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using ReactionLab.Domain.Common;
 using ReactionLab.Domain.Interfaces;
-using System.Linq.Expressions;
 
 namespace ReactionLab.Infrastructure.Persistence.Repositories;
 

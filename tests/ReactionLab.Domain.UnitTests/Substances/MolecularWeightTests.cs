@@ -1,4 +1,4 @@
-﻿using ReactionLab.Domain.Substances;
+using ReactionLab.Domain.Substances;
 using Shouldly;
 using Xunit;
 

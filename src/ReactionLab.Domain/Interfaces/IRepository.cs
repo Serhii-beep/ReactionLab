@@ -1,5 +1,5 @@
-using ReactionLab.Domain.Common;
 using System.Linq.Expressions;
+using ReactionLab.Domain.Common;
 
 namespace ReactionLab.Domain.Interfaces;
 

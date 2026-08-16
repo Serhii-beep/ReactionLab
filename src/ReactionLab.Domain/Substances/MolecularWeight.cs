@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using ReactionLab.Domain.Common;
 
 namespace ReactionLab.Domain.Substances;

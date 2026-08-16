@@ -11,7 +11,7 @@ public sealed class ReactionParticipant : Entity<ReactionParticipantId>
         SubstanceId substanceId,
         ParticipantRole role,
         int coefficient,
-        MatterState? state): base(id)
+        MatterState? state) : base(id)
     {
         SubstanceId = substanceId;
         Role = role;

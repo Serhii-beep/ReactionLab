@@ -1,4 +1,4 @@
-﻿using ReactionLab.Domain.Common;
+using ReactionLab.Domain.Common;
 using ReactionLab.Domain.Elements;
 
 namespace ReactionLab.Domain.Substances;

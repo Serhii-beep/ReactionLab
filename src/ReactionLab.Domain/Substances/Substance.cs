@@ -1,4 +1,4 @@
-﻿using ReactionLab.Domain.Common;
+using ReactionLab.Domain.Common;
 using ReactionLab.Domain.Elements;
 using ReactionLab.Domain.Enums;
 using ReactionLab.Domain.Substances.Events;

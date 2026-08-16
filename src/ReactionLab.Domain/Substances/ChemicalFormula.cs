@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using ReactionLab.Domain.Common;
 using ReactionLab.Domain.Elements;
 

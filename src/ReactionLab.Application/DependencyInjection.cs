@@ -1,8 +1,8 @@
+using System.Reflection;
 using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using ReactionLab.Application.Common.Behaviors;
-using System.Reflection;
 
 namespace ReactionLab.Application;
 

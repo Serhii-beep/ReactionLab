@@ -1,7 +1,7 @@
+using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using ReactionLab.Application.Interfaces;
 using StackExchange.Redis;
-using System.Text.Json;
 
 namespace ReactionLab.Infrastructure.Caching;
 
