@@ -1,22 +1,14 @@
 using ReactionLab.Domain.Common;
 using ReactionLab.Domain.Elements.Events;
 using ReactionLab.Domain.Enums;
+using ReactionLab.Domain.Localization;
 using ReactionLab.Domain.SharedKernel;
 
 namespace ReactionLab.Domain.Elements;
 
 public sealed class Element : AggregateRoot<ElementId>
 {
-    public const int MaximumNameLength = 50;
     public const int MaximumElectronConfigurationLength = 100;
-
-    public static readonly Error NameRequired = Error.Validation(
-        "Element.NameRequired",
-        "Element name is required.");
-
-    public static readonly Error NameTooLong = Error.Validation(
-        "Element.NameTooLong",
-        $"Element name must not exceed {MaximumNameLength} characters.");
 
     public static readonly Error FBlockCannotHaveGroup = Error.Validation(
         "Element.FBlockCannotHaveGroup",
@@ -26,13 +18,13 @@ public sealed class Element : AggregateRoot<ElementId>
         "Element.BoilingPointBelowMeltingPoint",
         "Boiling point cannot be lower than melting point.");
 
-    private readonly List<string> _interestingFacts = [];
+    private Translations<ElementContent> _translations = null!;
 
     private Element(
         ElementId id,
         AtomicNumber atomicNumber,
         ElementSymbol symbol,
-        string name,
+        Translations<ElementContent> translations,
         AtomicMass mass,
         ElementCategory category,
         PeriodicPosition position,
@@ -41,7 +33,7 @@ public sealed class Element : AggregateRoot<ElementId>
     {
         AtomicNumber = atomicNumber;
         Symbol = symbol;
-        Name = name;
+        _translations = translations;
         Mass = mass;
         Category = category;
         Position = position;
@@ -57,8 +49,6 @@ public sealed class Element : AggregateRoot<ElementId>
     public AtomicNumber AtomicNumber { get; private set; } = null!;
 
     public ElementSymbol Symbol { get; private set; } = null!;
-
-    public string Name { get; private set; } = null!;
 
     public AtomicMass Mass { get; private set; } = null!;
 
@@ -80,24 +70,22 @@ public sealed class Element : AggregateRoot<ElementId>
 
     public string? ElectronConfiguration { get; private set; }
 
-    public string? DiscoveryInfo { get; private set; }
-
-    public IReadOnlyList<string> InterestingFacts => _interestingFacts.AsReadOnly();
+    public IReadOnlyList<SupportedLocale> Locales => _translations.Locales;
 
     public static Result<Element> Create(
         AtomicNumber atomicNumber,
         ElementSymbol symbol,
-        string? name,
+        ElementContent content,
         AtomicMass mass,
         ElementCategory category,
         PeriodicPosition position,
         MatterState stateAtRoomTemperature,
         HexColor displayColor)
     {
-        var nameResult = ValidateName(name);
-        if (nameResult.IsFailure)
+        var translations = Translations.Create(content);
+        if (translations.IsFailure)
         {
-            return nameResult.Error;
+            return translations.Error;
         }
 
         if (category is ElementCategory.Lanthanide or ElementCategory.Actinide && position.Group is not null)
@@ -109,7 +97,7 @@ public sealed class Element : AggregateRoot<ElementId>
             ElementId.New(),
             atomicNumber,
             symbol,
-            nameResult.Value,
+            translations.Value,
             mass,
             category,
             position,
@@ -119,6 +107,15 @@ public sealed class Element : AggregateRoot<ElementId>
         element.Raise(new ElementCreated(element.Id, symbol));
 
         return element;
+    }
+
+    public ElementContent Content(SupportedLocale locale) => _translations.Resolve(locale);
+
+    public Result Translate(SupportedLocale locale, ElementContent content)
+    {
+        _translations = _translations.With(locale, content);
+
+        return Result.Success();
     }
 
     public Result DescribePhysicalProperties(
@@ -141,21 +138,9 @@ public sealed class Element : AggregateRoot<ElementId>
         return Result.Success();
     }
 
-    public Result DescribeDiscovery(
-        string? electronConfiguration,
-        string? discoveryInfo,
-        IEnumerable<string>? interestingFacts)
+    public Result RecordElectronConfiguration(string? electronConfiguration)
     {
-        ElectronConfiguration = Truncate(electronConfiguration, MaximumElectronConfigurationLength);
-        DiscoveryInfo = string.IsNullOrWhiteSpace(discoveryInfo) ? null : discoveryInfo.Trim();
-
-        _interestingFacts.Clear();
-        if (interestingFacts is not null)
-        {
-            _interestingFacts.AddRange(
-                interestingFacts.Where(fact => !string.IsNullOrWhiteSpace(fact))
-                    .Select(fact => fact.Trim()));
-        }
+        ElectronConfiguration = TextNormalizer.Clean(electronConfiguration, MaximumElectronConfigurationLength);
 
         return Result.Success();
     }
@@ -166,29 +151,5 @@ public sealed class Element : AggregateRoot<ElementId>
         Radii = radii;
 
         return Result.Success();
-    }
-
-    private static Result<string> ValidateName(string? name)
-    {
-        if (string.IsNullOrWhiteSpace(name))
-        {
-            return NameRequired;
-        }
-
-        var trimmed = name.Trim();
-
-        return trimmed.Length > MaximumNameLength ? NameTooLong : trimmed;
-    }
-
-    private static string? Truncate(string? value, int maximumLength)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return null;
-        }
-
-        var trimmed = value.Trim();
-
-        return trimmed.Length <= maximumLength ? trimmed : trimmed[..maximumLength];
     }
 }

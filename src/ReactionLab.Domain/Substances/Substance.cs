@@ -1,23 +1,14 @@
 using ReactionLab.Domain.Common;
 using ReactionLab.Domain.Elements;
 using ReactionLab.Domain.Enums;
+using ReactionLab.Domain.Localization;
 using ReactionLab.Domain.Substances.Events;
 
 namespace ReactionLab.Domain.Substances;
 
 public sealed class Substance : AggregateRoot<SubstanceId>
 {
-    public const int MaximumNameLength = 200;
-    public const int MaximumIupacNameLength = 300;
     public const int MaximumCategoryLength = 100;
-
-    public static readonly Error NameRequired = Error.Validation(
-        "Substance.NameRequired",
-        "Substance name is required.");
-
-    public static readonly Error NameTooLong = Error.Validation(
-        "Substance.NameTooLong",
-        $"Substance name must not exceed {MaximumNameLength} characters.");
 
     public static readonly Error StructureCompositionMismatch = Error.Validation(
         "Substance.StructureCompositionMismatch",
@@ -27,20 +18,18 @@ public sealed class Substance : AggregateRoot<SubstanceId>
         "Substance.PartialHydrogens",
         "A structure must place either all of the formula's hydrogens or none of them.");
 
-    private readonly List<string> _commonNames = [];
-    private readonly List<string> _uses = [];
-    private readonly List<string> _interestingFacts = [];
+    private Translations<SubstanceContent> _translations = null!;
 
     private Substance(
         SubstanceId id,
         ChemicalFormula formula,
-        string name,
+        Translations<SubstanceContent> translations,
         SubstanceKind kind,
         bool isOrganic,
         MatterState stateAtRoomTemperature) : base(id)
     {
         Formula = formula;
-        Name = name;
+        _translations = translations;
         Kind = kind;
         IsOrganic = isOrganic;
         StateAtRoomTemperature = stateAtRoomTemperature;
@@ -53,8 +42,6 @@ public sealed class Substance : AggregateRoot<SubstanceId>
 
     public ChemicalFormula Formula { get; private set; } = null!;
 
-    public string Name { get; private set; } = null!;
-
     public SubstanceKind Kind { get; private set; }
 
     public bool IsOrganic { get; private set; }
@@ -65,37 +52,27 @@ public sealed class Substance : AggregateRoot<SubstanceId>
 
     public MolecularStructure? Structure { get; private set; }
 
-    public string? IupacName { get; private set; }
-
     public string? Category { get; private set; }
 
-    public string? Description { get; private set; }
-
-    public string? SafetyInformation { get; private set; }
-
-    public IReadOnlyList<string> CommonNames => _commonNames.AsReadOnly();
-
-    public IReadOnlyList<string> Uses => _uses.AsReadOnly();
-
-    public IReadOnlyList<string> InterestingFacts => _interestingFacts.AsReadOnly();
+    public IReadOnlyList<SupportedLocale> Locales => _translations.Locales;
 
     public static Result<Substance> Create(
         ChemicalFormula formula,
-        string? name,
+        SubstanceContent content,
         SubstanceKind kind,
         bool isOrganic,
         MatterState stateAtRoomTemperature)
     {
-        var validatedName = ValidateName(name);
-        if (validatedName.IsFailure)
+        var translations = Translations.Create(content);
+        if (translations.IsFailure)
         {
-            return validatedName.Error;
+            return translations.Error;
         }
 
         var substance = new Substance(
             SubstanceId.New(),
             formula,
-            validatedName.Value,
+            translations.Value,
             kind,
             isOrganic,
             stateAtRoomTemperature);
@@ -103,6 +80,22 @@ public sealed class Substance : AggregateRoot<SubstanceId>
         substance.Raise(new SubstanceCreated(substance.Id, formula));
 
         return substance;
+    }
+
+    public SubstanceContent Content(SupportedLocale locale) => _translations.Resolve(locale);
+
+    public Result Translate(SupportedLocale locale, SubstanceContent content)
+    {
+        _translations = _translations.With(locale, content);
+
+        return Result.Success();
+    }
+
+    public Result Classify(string? category)
+    {
+        Category = TextNormalizer.Clean(category, MaximumCategoryLength);
+
+        return Result.Success();
     }
 
     public Result DefineStructure(MolecularStructure structure)
@@ -146,73 +139,5 @@ public sealed class Substance : AggregateRoot<SubstanceId>
         Weight = weight;
 
         return Result.Success();
-    }
-
-    public Result Describe(
-        string? iupacName,
-        IEnumerable<string>? commonNames,
-        string? category,
-        string? description)
-    {
-        IupacName = Clean(iupacName, MaximumIupacNameLength);
-        Category = Clean(category, MaximumCategoryLength);
-        Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim();
-
-        Replace(_commonNames, commonNames);
-
-        return Result.Success();
-    }
-
-    public Result DescribeSafety(
-        string? safetyInformation,
-        IEnumerable<string>? uses,
-        IEnumerable<string>? interestingFacts)
-    {
-        SafetyInformation = string.IsNullOrWhiteSpace(safetyInformation)
-            ? null
-            : safetyInformation.Trim();
-
-        Replace(_uses, uses);
-        Replace(_interestingFacts, interestingFacts);
-
-        return Result.Success();
-    }
-
-    private static Result<string> ValidateName(string? name)
-    {
-        if (string.IsNullOrWhiteSpace(name))
-        {
-            return NameRequired;
-        }
-
-        var trimmed = name.Trim();
-
-        return trimmed.Length > MaximumNameLength ? NameTooLong : trimmed;
-    }
-
-    private static string? Clean(string? value, int maximumLength)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return null;
-        }
-
-        var trimmed = value.Trim();
-
-        return trimmed.Length <= maximumLength ? trimmed : trimmed[..maximumLength];
-    }
-
-    private static void Replace(List<string> target, IEnumerable<string>? values)
-    {
-        target.Clear();
-
-        if (values is null)
-        {
-            return;
-        }
-
-        target.AddRange(values
-            .Where(value => !string.IsNullOrWhiteSpace(value))
-            .Select(value => value.Trim()));
     }
 }

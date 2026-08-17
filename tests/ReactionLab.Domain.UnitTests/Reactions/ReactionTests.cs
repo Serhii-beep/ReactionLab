@@ -1,5 +1,6 @@
 using ReactionLab.Domain.Common;
 using ReactionLab.Domain.Enums;
+using ReactionLab.Domain.Localization;
 using ReactionLab.Domain.Reactions;
 using ReactionLab.Domain.Reactions.Events;
 using ReactionLab.Domain.Substances;
@@ -15,18 +16,10 @@ public sealed class ReactionTests
     {
         var reaction = WaterSynthesis().Value;
 
-        reaction.Name.ShouldBe("Synthesis of Water");
+        reaction.Content(SupportedLocale.English).Name.ShouldBe("Synthesis of Water");
         reaction.Reactants.Count().ShouldBe(2);
         reaction.Products.Count().ShouldBe(1);
         reaction.DomainEvents.OfType<ReactionCreated>().Count().ShouldBe(1);
-    }
-
-    [Theory]
-    [InlineData(null)]
-    [InlineData("   ")]
-    public void Create_RejectsMissingName(string? name)
-    {
-        WaterSynthesis(name).Error.ShouldBe(Reaction.NameRequired);
     }
 
     [Fact]
@@ -51,7 +44,7 @@ public sealed class ReactionTests
         var participant = new ParticipantSpecification(SubstanceId.New(), CreateFormula("H2O"), ParticipantRole.Reactant, 1, null);
 
         var result = Reaction.Create(
-            "Duplicate",
+            ReactionContent.Create("Duplicate").Value,
             ReactionType.Synthesis,
             [
                 participant,
@@ -70,7 +63,7 @@ public sealed class ReactionTests
         var id = SubstanceId.New();
 
         var result = Reaction.Create(
-            "Duplicate",
+            ReactionContent.Create("Duplicate").Value,
             ReactionType.Synthesis,
             [
                 new ParticipantSpecification(id, CreateFormula("H2O"), ParticipantRole.Reactant, 1, null),
@@ -122,6 +115,18 @@ public sealed class ReactionTests
         signature.ShouldNotContain(reaction.Products.First().SubstanceId);
     }
 
+    [Fact]
+    public void Translate_AddsALocaleAndFallbackPerValue()
+    {
+        var reaction = WaterSynthesis().Value;
+
+        reaction.Translate(SupportedLocale.Ukrainian, ReactionContent.Create("Translated").Value);
+
+        var translated = reaction.Content(SupportedLocale.Ukrainian);
+        translated.Name.ShouldBe("Translated");
+        translated.Description.ShouldBe("Test");
+    }
+
     private static ChemicalFormula CreateFormula(string value) => ChemicalFormula.Create(value).Value;
 
     private static ParticipantSpecification CreateReactant(string formula, int coefficient) =>
@@ -132,7 +137,7 @@ public sealed class ReactionTests
 
     private static Result<Reaction> Build(IReadOnlyList<ParticipantSpecification> participants) =>
         Reaction.Create(
-            "Test",
+            ReactionContent.Create("Test").Value,
             ReactionType.Synthesis,
             participants,
             DifficultyLevel.Introductory,
@@ -140,7 +145,7 @@ public sealed class ReactionTests
 
     private static Result<Reaction> WaterSynthesis(string? name = "Synthesis of Water") =>
         Reaction.Create(
-            name,
+            ReactionContent.Create(name, "Test").Value,
             ReactionType.Synthesis,
             [CreateReactant("H2", 2), CreateReactant("O2", 1), CreateProduct("H2O", 2)],
             DifficultyLevel.Introductory,

@@ -2,6 +2,7 @@ using ReactionLab.Domain.Common;
 using ReactionLab.Domain.Elements;
 using ReactionLab.Domain.Elements.Events;
 using ReactionLab.Domain.Enums;
+using ReactionLab.Domain.Localization;
 using ReactionLab.Domain.SharedKernel;
 using Shouldly;
 using Xunit;
@@ -16,35 +17,10 @@ public sealed class ElementTests
         var element = CreateElement().Value;
 
         element.Symbol.Value.ShouldBe("H");
-        element.Name.ShouldBe("Hydrogen");
+        element.Content(SupportedLocale.English).Name.ShouldBe("Hydrogen");
         element.Id.Value.ShouldNotBe(Guid.Empty);
         element.DomainEvents.OfType<ElementCreated>().Count().ShouldBe(1);
     }
-
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData("   ")]
-    public void Create_RejectsMissingName(string? name)
-    {
-        var result = CreateElement(name: name);
-
-        result.IsFailure.ShouldBeTrue();
-        result.Error.ShouldBe(Element.NameRequired);
-    }
-
-    [Fact]
-    public void Create_RejectsOverlongName()
-    {
-        var result = CreateElement(name: new string('x', Element.MaximumNameLength + 1));
-
-        result.IsFailure.ShouldBeTrue();
-        result.Error.ShouldBe(Element.NameTooLong);
-    }
-
-    [Fact]
-    public void Create_TrimsName() =>
-        CreateElement(name: "   Hydrogen   ").Value.Name.ShouldBe("Hydrogen");
 
     [Theory]
     [InlineData(ElementCategory.Lanthanide)]
@@ -100,23 +76,25 @@ public sealed class ElementTests
     }
 
     [Fact]
-    public void DescribeDiscovery_TrimsAndDiscardsBlankFacts()
+    public void RecordElectronConfiguration_TruncatesAndTrims()
     {
         var element = CreateElement().Value;
 
-        element.DescribeDiscovery("1s1", "   Cavendish, 1766   ", ["   Most abundant   ", "", "   "]);
+        element.RecordElectronConfiguration("   1s1   ");
 
-        element.DiscoveryInfo.ShouldBe("Cavendish, 1766");
-        element.InterestingFacts.ShouldHaveSingleItem().ShouldBe("Most abundant");
+        element.ElectronConfiguration.ShouldBe("1s1");
     }
 
     [Fact]
-    public void InterestingFacts_CannotBeMutatedByCallers()
+    public void Translate_AddsALocaleAndFallsBackPerValue()
     {
         var element = CreateElement().Value;
-        element.DescribeDiscovery(null, null, ["fact"]);
+        element.Translate(SupportedLocale.Ukrainian, ElementContent.Create("Translation").Value);
 
-        (element.InterestingFacts as ICollection<string>)?.IsReadOnly.ShouldBeTrue();
+        var translated = element.Content(SupportedLocale.Ukrainian);
+        translated.Name.ShouldBe("Translation");
+        translated.DiscoveryInfo.ShouldBe("Test");
+        element.Locales.ShouldBe([SupportedLocale.English, SupportedLocale.Ukrainian]);
     }
 
     [Fact]
@@ -131,13 +109,13 @@ public sealed class ElementTests
     }
 
     private static Result<Element> CreateElement(
-        string? name = "Hydrogen",
+        ElementContent? content = null,
         ElementCategory category = ElementCategory.NonMetal,
         PeriodicPosition? position = null) =>
         Element.Create(
             AtomicNumber.Create(1).Value,
             ElementSymbol.Create("H").Value,
-            name,
+            content ?? ElementContent.Create("Hydrogen", "Test").Value,
             AtomicMass.Create(1.008m).Value,
             category,
             position ?? PeriodicPosition.Create(1, 1).Value,

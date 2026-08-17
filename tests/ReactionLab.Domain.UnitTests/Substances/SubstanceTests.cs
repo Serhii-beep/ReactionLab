@@ -1,5 +1,6 @@
 using ReactionLab.Domain.Common;
 using ReactionLab.Domain.Enums;
+using ReactionLab.Domain.Localization;
 using ReactionLab.Domain.Substances;
 using ReactionLab.Domain.Substances.Events;
 using Shouldly;
@@ -18,21 +19,9 @@ public sealed class SubstanceTests
         var substance = CreateWater().Value;
 
         substance.Formula.Value.ShouldBe("H2O");
-        substance.Name.ShouldBe("Water");
+        substance.Content(SupportedLocale.English).Name.ShouldBe("Water");
         substance.DomainEvents.OfType<SubstanceCreated>().Count().ShouldBe(1);
     }
-
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData("   ")]
-    public void Create_RejectsMissingName(string? name) =>
-        CreateWater(name).Error.ShouldBe(Substance.NameRequired);
-
-    [Fact]
-    public void Create_RejectsOverlongName() =>
-        CreateWater(new string('x', Substance.MaximumNameLength + 1))
-            .Error.ShouldBe(Substance.NameTooLong);
 
     [Fact]
     public void DefineStructure_AcceptsAMatchingStructure()
@@ -47,7 +36,9 @@ public sealed class SubstanceTests
     public void DefineStructure_AcceptsAHeavyAtomSkeletonWithNoHydrogens()
     {
         var benzene = Substance.Create(
-            ChemicalFormula.Create("C6H6").Value, "Benzene", SubstanceKind.Molecular, true,
+            ChemicalFormula.Create("C6H6").Value,
+            SubstanceContent.Create("Benzene").Value,
+            SubstanceKind.Molecular, true,
             MatterState.Liquid).Value;
 
         var skeleton = MolecularStructure.Create(
@@ -73,7 +64,9 @@ public sealed class SubstanceTests
     public void DefineStructure_RejectsAStructureMissingHeavyAtoms()
     {
         var caffeine = Substance.Create(
-            ChemicalFormula.Create("C8H10N4O2").Value, "Caffeine", SubstanceKind.Molecular, true,
+            ChemicalFormula.Create("C8H10N4O2").Value,
+            SubstanceContent.Create("Caffeine").Value,
+            SubstanceKind.Molecular, true,
             MatterState.Solid).Value;
 
         var truncated = MolecularStructure.Create(
@@ -95,21 +88,35 @@ public sealed class SubstanceTests
     }
 
     [Fact]
-    public void Describe_TrimsAndDiscardsBlankCommonNames()
+    public void Translate_AddsALocaleAndFallsBackPerValue()
     {
         var substance = CreateWater().Value;
 
-        substance.Describe("Oxidane", ["   test1   ", "", "test2"], "Inorganic", "   liquid.");
+        substance.Translate(
+            SupportedLocale.Ukrainian,
+            SubstanceContent.Create("Translated", description: "Translated").Value);
 
-        substance.IupacName.ShouldBe("Oxidane");
-        substance.CommonNames.ShouldBe(["test1", "test2"]);
-        substance.Description.ShouldBe("liquid.");
+        var translated = substance.Content(SupportedLocale.Ukrainian);
+
+        translated.Name.ShouldBe("Translated");
+        translated.Description.ShouldBe("Translated");
+        translated.IupacName.ShouldBe("Oxidane");
+    }
+
+    [Fact]
+    public void Classify_StoresACategoryKey()
+    {
+        var substance = CreateWater().Value;
+
+        substance.Classify("   Test   ");
+
+        substance.Category.ShouldBe("Test");
     }
 
     private static Result<Substance> CreateWater(string? name = "Water") =>
         Substance.Create(
             ChemicalFormula.Create("H2O").Value,
-            name,
+            SubstanceContent.Create("Water", iupacName: "Oxidane").Value,
             SubstanceKind.Molecular,
             isOrganic: false,
             MatterState.Liquid);

@@ -1,6 +1,7 @@
 using ReactionLab.Domain.Common;
 using ReactionLab.Domain.Elements;
 using ReactionLab.Domain.Enums;
+using ReactionLab.Domain.Localization;
 using ReactionLab.Domain.Reactions.Events;
 using ReactionLab.Domain.Substances;
 
@@ -8,16 +9,6 @@ namespace ReactionLab.Domain.Reactions;
 
 public sealed class Reaction : AggregateRoot<ReactionId>
 {
-    public const int MaximumNameLength = 200;
-
-    public static readonly Error NameRequired = Error.Validation(
-        "Reaction.NameRequired",
-        "Reaction name is required.");
-
-    public static readonly Error NameTooLong = Error.Validation(
-        "Reaction.NameTooLong",
-        $"Reaction name must not exceed {MaximumNameLength} characters.");
-
     public static readonly Error NoReactants = Error.Validation(
         "Reaction.NoReactants",
         "A reaction must have at least one reactant.");
@@ -39,17 +30,19 @@ public sealed class Reaction : AggregateRoot<ReactionId>
         "The reaction does not conserve mass. Reactant and product atom counts differ.");
 
     private readonly List<ReactionParticipant> _participants = [];
+
     private readonly List<string> _tags = [];
-    private readonly List<string> _realWorldExamples = [];
+
+    private Translations<ReactionContent> _translations = null!;
 
     private Reaction(
         ReactionId id,
-        string name,
+        Translations<ReactionContent> translations,
         ReactionType type,
         DifficultyLevel difficulty,
         bool isReversible) : base(id)
     {
-        Name = name;
+        _translations = translations;
         Type = type;
         Difficulty = difficulty;
         IsReversible = isReversible;
@@ -59,8 +52,6 @@ public sealed class Reaction : AggregateRoot<ReactionId>
     {
 
     }
-
-    public string Name { get; private set; } = null!;
 
     public ReactionType Type { get; private set; }
 
@@ -74,17 +65,11 @@ public sealed class Reaction : AggregateRoot<ReactionId>
 
     public VisualizationHint Visualization { get; private set; } = VisualizationHint.None;
 
-    public string? Description { get; private set; }
-
-    public string? Mechanism { get; private set; }
-
-    public string? SafetyWarnings { get; private set; }
-
     public IReadOnlyList<ReactionParticipant> Participants => _participants.AsReadOnly();
 
     public IReadOnlyList<string> Tags => _tags.AsReadOnly();
 
-    public IReadOnlyList<string> RealWorldExamples => _realWorldExamples.AsReadOnly();
+    public IReadOnlyList<SupportedLocale> Locales => _translations.Locales;
 
     public IEnumerable<ReactionParticipant> Reactants =>
         _participants.Where(participant => participant.Role == ParticipantRole.Reactant);
@@ -99,16 +84,16 @@ public sealed class Reaction : AggregateRoot<ReactionId>
             .ToList();
 
     public static Result<Reaction> Create(
-        string? name,
+        ReactionContent content,
         ReactionType type,
         IReadOnlyList<ParticipantSpecification> participants,
         DifficultyLevel difficulty,
         bool isReversible)
     {
-        var validatedName = ValidateName(name);
-        if (validatedName.IsFailure)
+        var translations = Translations.Create(content);
+        if (translations.IsFailure)
         {
-            return validatedName.Error;
+            return translations.Error;
         }
 
         var validatedParticipants = ValidateParticipants(participants);
@@ -117,7 +102,7 @@ public sealed class Reaction : AggregateRoot<ReactionId>
             return validatedParticipants.Error;
         }
 
-        var reaction = new Reaction(ReactionId.New(), validatedName.Value, type, difficulty, isReversible);
+        var reaction = new Reaction(ReactionId.New(), translations.Value, type, difficulty, isReversible);
 
         foreach (var specification in participants)
         {
@@ -129,9 +114,26 @@ public sealed class Reaction : AggregateRoot<ReactionId>
                 specification.State));
         }
 
-        reaction.Raise(new ReactionCreated(reaction.Id, reaction.Name));
+        reaction.Raise(new ReactionCreated(reaction.Id, content.Name));
 
         return reaction;
+    }
+
+    public ReactionContent Content(SupportedLocale locale) => _translations.Resolve(locale);
+
+    public Result Translate(SupportedLocale locale, ReactionContent content)
+    {
+        _translations = _translations.With(locale, content);
+
+        return Result.Success();
+    }
+
+    public Result ApplyTags(IEnumerable<string>? tags)
+    {
+        _tags.Clear();
+        _tags.AddRange(TextNormalizer.CleanAll(tags));
+
+        return Result.Success();
     }
 
     public Result DescribeEnergetics(Thermodynamics energetics)
@@ -153,35 +155,6 @@ public sealed class Reaction : AggregateRoot<ReactionId>
         Visualization = visualization;
 
         return Result.Success();
-    }
-
-    public Result Describe(
-        string? description,
-        string? mechanism,
-        string? safetyWarnings,
-        IEnumerable<string>? realWorldExamples,
-        IEnumerable<string>? tags)
-    {
-        Description = Clean(description);
-        Mechanism = Clean(mechanism);
-        SafetyWarnings = Clean(safetyWarnings);
-
-        Replace(_realWorldExamples, realWorldExamples);
-        Replace(_tags, tags);
-
-        return Result.Success();
-    }
-
-    private static Result<string> ValidateName(string? name)
-    {
-        if (string.IsNullOrWhiteSpace(name))
-        {
-            return NameRequired;
-        }
-
-        var trimmed = name.Trim();
-
-        return trimmed.Length > MaximumNameLength ? NameTooLong : trimmed;
     }
 
     private static Result ValidateParticipants(IReadOnlyList<ParticipantSpecification> participants)
@@ -225,21 +198,6 @@ public sealed class Reaction : AggregateRoot<ReactionId>
             .Select(group => (Symbol: group.Key, Total: group.Sum(entry => entry.Total)))
             .OrderBy(entry => entry.Symbol.Value, StringComparer.Ordinal)
             .ToList());
-
-    private static string? Clean(string? value) =>
-        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
-
-    private static void Replace(List<string> target, IEnumerable<string>? values)
-    {
-        target.Clear();
-
-        if (values is null)
-        {
-            return;
-        }
-
-        target.AddRange(values.Where(value => !string.IsNullOrWhiteSpace(value)).Select(value => value.Trim()));
-    }
 
     private sealed class AtomTally(IReadOnlyList<(ElementSymbol Symbol, int Total)> entries)
     {
