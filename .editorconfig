@@ -206,18 +206,6 @@ dotnet_naming_rule.async_methods_end_in_async.symbols = async_methods
 dotnet_naming_rule.async_methods_end_in_async.style = async_suffixed
 dotnet_naming_rule.async_methods_end_in_async.severity = suggestion
 
-[src/ReactionLab.Infrastructure/{Persistence,Caching}/**]
-dotnet_diagnostic.CA1304.severity = suggestion
-dotnet_diagnostic.CA1311.severity = suggestion
-dotnet_diagnostic.CA1862.severity = suggestion
-dotnet_diagnostic.CA1873.severity = suggestion
-dotnet_diagnostic.CA1852.severity = suggestion
-dotnet_diagnostic.CA1869.severity = suggestion
-dotnet_diagnostic.CA1860.severity = suggestion
-dotnet_diagnostic.CA1051.severity = suggestion
-dotnet_diagnostic.CA1720.severity = suggestion
-dotnet_diagnostic.CA1849.severity = suggestion
-
 #───────────────────────────────────────────────────────────────────────────────
 # Generated code
 #───────────────────────────────────────────────────────────────────────────────

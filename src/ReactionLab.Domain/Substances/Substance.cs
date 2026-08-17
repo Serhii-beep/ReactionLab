@@ -202,7 +202,7 @@ public sealed class Substance : AggregateRoot<SubstanceId>
         return trimmed.Length <= maximumLength ? trimmed : trimmed[..maximumLength];
     }
 
-    public static void Replace(List<string> target, IEnumerable<string>? values)
+    private static void Replace(List<string> target, IEnumerable<string>? values)
     {
         target.Clear();
 
