@@ -8,6 +8,7 @@
     <None Update="Persistence\Seeding\Data\*.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <InternalsVisibleTo Include="ReactionLab.Infrastructure.UnitTests" />
   </ItemGroup>
 
   <ItemGroup>

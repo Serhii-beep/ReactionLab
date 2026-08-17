@@ -22,5 +22,6 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/ReactionLab.Domain.UnitTests/ReactionLab.Domain.UnitTests.csproj" />
+    <Project Path="tests/ReactionLab.Infrastructure.UnitTests/ReactionLab.Infrastructure.UnitTests.csproj" />
   </Folder>
 </Solution>

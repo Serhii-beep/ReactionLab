@@ -50,6 +50,9 @@ public sealed class Translations<TContent>
 
     public bool Has(SupportedLocale locale) => _byLocale.ContainsKey(locale);
 
+    public TContent? Stored(SupportedLocale locale) =>
+        _byLocale.TryGetValue(locale, out var content) ? content : null;
+
     public TContent Resolve(SupportedLocale locale)
     {
         var fallback = _byLocale[SupportedLocale.Default];

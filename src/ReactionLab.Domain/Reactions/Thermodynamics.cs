@@ -19,10 +19,10 @@ public sealed record Thermodynamics
         "Thermodynamics.ActivationEnergyBelowEnthalpy",
         "Activation energy cannot be lower than the enthalpy change of an endothermic reaction.");
 
-    private Thermodynamics(Enthalpy? enthalpyChange, decimal? activationEnergy)
+    private Thermodynamics(Enthalpy? enthalpyChange, decimal? activationEnergyKilojoulesPerMole)
     {
         EnthalpyChange = enthalpyChange;
-        ActivationEnergyKilojoulesPerMole = activationEnergy;
+        ActivationEnergyKilojoulesPerMole = activationEnergyKilojoulesPerMole;
     }
 
     public Enthalpy? EnthalpyChange { get; }
