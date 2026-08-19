@@ -35,6 +35,9 @@ internal sealed class SubstanceConfiguration : IEntityTypeConfiguration<Substanc
             .HasConversion<SubstanceTranslationsConverter>()
             .IsRequired();
 
+        builder.HasSearchText();
+        builder.HasAuditTimestamps();
+
         builder.Ignore(s => s.Locales);
         builder.Ignore(s => s.DomainEvents);
     }

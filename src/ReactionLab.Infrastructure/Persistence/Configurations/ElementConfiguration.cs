@@ -17,7 +17,7 @@ internal sealed class ElementConfiguration : IEntityTypeConfiguration<Element>
         builder.Property(e => e.AtomicNumber).IsRequired();
         builder.HasIndex(e => e.AtomicNumber).IsUnique();
 
-        builder.Property(e => e.Symbol).IsRequired();
+        builder.Property(e => e.Symbol).IsRequired().HasColumnType("citext");
         builder.HasIndex(e => e.Symbol).IsUnique();
 
         builder.Property(e => e.Mass).IsRequired();
@@ -47,6 +47,9 @@ internal sealed class ElementConfiguration : IEntityTypeConfiguration<Element>
             .HasColumnType("jsonb")
             .HasConversion<ElementTranslationsConverter>()
             .IsRequired();
+
+        builder.HasSearchText();
+        builder.HasAuditTimestamps();
 
         builder.Ignore(e => e.Locales);
         builder.Ignore(e => e.DomainEvents);

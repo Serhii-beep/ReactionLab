@@ -55,6 +55,9 @@ internal sealed class ReactionConfiguration : IEntityTypeConfiguration<Reaction>
             .HasConversion<ReactionTranslationsConverter>()
             .IsRequired();
 
+        builder.Property<Guid[]>(PersistenceColumns.ReactantSignature).IsRequired();
+        builder.HasIndex(PersistenceColumns.ReactantSignature).HasMethod("gin");
+
         builder.OwnsMany<ReactionParticipant>("_participants", p =>
         {
             p.ToTable("reaction_participants");
@@ -67,6 +70,9 @@ internal sealed class ReactionConfiguration : IEntityTypeConfiguration<Reaction>
             p.HasIndex(x => x.SubstanceId);
         });
         builder.Navigation("_participants").UsePropertyAccessMode(PropertyAccessMode.Field);
+
+        builder.HasSearchText();
+        builder.HasAuditTimestamps();
 
         builder.Ignore(r => r.Participants);
         builder.Ignore(r => r.Reactants);
