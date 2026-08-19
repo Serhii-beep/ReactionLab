@@ -29,11 +29,13 @@ public static class DependencyInjection
             SlowQueryThreshold));
 
         services.AddDbContext<AppDbContext>((sp, options) => options
-            .UseNpgsql(connectionString)
+            .UseNpgsql(connectionString, NpgsqlSetup.Configure)
             .AddInterceptors(sp.GetRequiredService<SlowQueryInterceptor>())
             .AddInterceptors(sp.GetServices<ISaveChangesInterceptor>()));
 
         services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbContext>());
+
+        services.AddHealthChecks().AddDbContextCheck<AppDbContext>("database");
 
         return services;
     }

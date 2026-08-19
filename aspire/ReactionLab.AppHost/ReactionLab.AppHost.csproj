@@ -16,6 +16,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\src\ReactionLab.API\ReactionLab.API.csproj" />
+      <ProjectReference Include="..\..\src\ReactionLab.DbMigrator\ReactionLab.DbMigrator.csproj" />
     </ItemGroup>
 
   </Project>

@@ -1,11 +1,10 @@
 using System.Data.Common;
-using System.Globalization;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Logging;
 
 namespace ReactionLab.Infrastructure.Persistence.Interceptors;
 
-internal sealed partial class SlowQueryInterceptor(
+internal sealed class SlowQueryInterceptor(
     ILogger<SlowQueryInterceptor> logger,
     TimeSpan threshold) : DbCommandInterceptor
 {
@@ -70,15 +69,10 @@ internal sealed partial class SlowQueryInterceptor(
             return;
         }
 
-        LogSlowQuery(
-            logger,
-            eventData.Duration.TotalMilliseconds.ToString("F0", CultureInfo.InvariantCulture),
-            threshold.TotalMilliseconds.ToString("F0", CultureInfo.InvariantCulture),
+        logger.LogWarning(
+            "Query took {ElapsedMilliseconds} ms against a {BudgetMilliseconds} ms budget: {CommandText}",
+            eventData.Duration.TotalMilliseconds,
+            threshold.TotalMilliseconds,
             command.CommandText);
     }
-
-    [LoggerMessage(
-        Level = LogLevel.Warning,
-        Message = "Query took {ElapsedMilliseconds} ms against a {BudgetMilliseconds} ms budget: {CommandText}")]
-    private static partial void LogSlowQuery(ILogger logger, string elapsedMilliseconds, string budgetMilliseconds, string commandText);
 }

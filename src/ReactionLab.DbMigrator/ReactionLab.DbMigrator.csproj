@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\aspire\ReactionLab.ServiceDefaults\ReactionLab.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\ReactionLab.Infrastructure\ReactionLab.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -188,6 +188,7 @@ dotnet_diagnostic.CA1849.severity = warning # call async methods in async contex
 dotnet_diagnostic.CA2007.severity = none    # ConfigureAwait: no sync context in ASP.NET Core
 dotnet_diagnostic.CA1062.severity = none    # superseded by nullable reference types
 dotnet_diagnostic.CA1848.severity = suggestion
+dotnet_diagnostic.CA1873.severity = suggestion
 dotnet_diagnostic.CA1305.severity = warning # specify IFormatProvider
 dotnet_diagnostic.CA1310.severity = warning # specify StringComparison
 
