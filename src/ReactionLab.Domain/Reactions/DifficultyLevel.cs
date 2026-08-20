@@ -10,7 +10,8 @@ public sealed record DifficultyLevel
 
     public static readonly Error OutOfRange = Error.Validation(
         "DifficultyLevel.OutOfRange",
-        $"Difficulty must be between {Minimum} and {Maximum}.");
+        $"Difficulty must be between {Minimum} and {Maximum}.")
+        .WithArgs(("min", Minimum), ("max", Maximum));
 
     private DifficultyLevel(int value) => Value = value;
 

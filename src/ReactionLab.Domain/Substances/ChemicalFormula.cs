@@ -14,7 +14,8 @@ public sealed record ChemicalFormula
 
     public static readonly Error TooLong = Error.Validation(
         "ChemicalFormula.TooLong",
-        $"A chemical formula must not exceed {MaximumLength} characters.");
+        $"A chemical formula must not exceed {MaximumLength} characters.")
+        .WithArgs(("max", MaximumLength));
 
     public static readonly Error Malformed = Error.Validation(
         "ChemicalFormula.Malformed",

@@ -13,7 +13,8 @@ public sealed record MolecularWeight
 
     public static readonly Error Implausible = Error.Validation(
         "MolecularWeight.Implausible",
-        $"Molecular weight above {Maximum} g/mol usually indicates a unit error.");
+        $"Molecular weight above {Maximum} g/mol usually indicates a unit error.")
+        .WithArgs(("max", Maximum));
 
     private MolecularWeight(decimal gramsPerMole) => GramsPerMole = gramsPerMole;
 

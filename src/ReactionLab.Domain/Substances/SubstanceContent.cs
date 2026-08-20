@@ -15,7 +15,8 @@ public sealed class SubstanceContent : ITranslatableContent<SubstanceContent>
 
     public static readonly Error NameTooLong = Error.Validation(
         "SubstanceContent.NameTooLong",
-        $"Substance name must not exceed {MaximumNameLength} characters.");
+        $"Substance name must not exceed {MaximumNameLength} characters.")
+        .WithArgs(("max", MaximumNameLength));
 
     private SubstanceContent(
         string name,

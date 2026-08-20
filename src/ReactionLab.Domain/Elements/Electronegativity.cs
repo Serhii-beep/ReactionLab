@@ -10,7 +10,8 @@ public sealed record Electronegativity
 
     public static readonly Error OutOfRange = Error.Validation(
         "Electronegativity.OutOfRange",
-        $"Pauling electronegativity must be between {Minimum} and {Maximum}.");
+        $"Pauling electronegativity must be between {Minimum} and {Maximum}.")
+        .WithArgs(("min", Minimum), ("max", Maximum));
 
     private Electronegativity(decimal pauling) => Pauling = pauling;
 

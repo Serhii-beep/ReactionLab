@@ -12,7 +12,8 @@ public sealed record AtomicRadii
 
     public static readonly Error Implausible = Error.Validation(
         "AtomicRadii.Implausible",
-        $"A radius above {MaximumPicometers} pm exceeds any known element.");
+        $"A radius above {MaximumPicometers} pm exceeds any known element.")
+        .WithArgs(("max", MaximumPicometers));
 
     public static readonly Error VanDerWaalsSmallerThanCovalent = Error.Validation(
         "AtomicRadii.VanDerWaalsSmallerThanCovalent",

@@ -13,7 +13,8 @@ public sealed record Thermodynamics
 
     public static readonly Error ImplausibleActivationEnergy = Error.Validation(
         "Thermodynamics.ImplausibleActivationEnergy",
-        $"Activation energy above {MaximumActivationEnergy} kJ/mol usually indicates a unit error.");
+        $"Activation energy above {MaximumActivationEnergy} kJ/mol usually indicates a unit error.")
+        .WithArgs(("max", MaximumActivationEnergy));
 
     public static readonly Error ActivationEnergyBelowEnthalpy = Error.Validation(
         "Thermodynamics.ActivationEnergyBelowEnthalpy",

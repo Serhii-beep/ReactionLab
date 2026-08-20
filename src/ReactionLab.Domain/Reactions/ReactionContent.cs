@@ -13,7 +13,8 @@ public sealed class ReactionContent : ITranslatableContent<ReactionContent>
 
     public static readonly Error NameTooLong = Error.Validation(
         "ReactionContent.NameTooLong",
-        $"Reaction name must not exceed {MaximumNameLength} characters.");
+        $"Reaction name must not exceed {MaximumNameLength} characters.")
+        .WithArgs(("max", MaximumNameLength));
 
     private ReactionContent(
         string name,

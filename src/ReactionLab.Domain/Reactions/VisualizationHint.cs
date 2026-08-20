@@ -10,11 +10,13 @@ public sealed record VisualizationHint
 
     public static readonly Error PresetKeyTooLong = Error.Validation(
         "VisualizationHint.PresetKeyTooLong",
-        $"Effect preset key must not exceed {MaximumPresetKeyLength} characters.");
+        $"Effect preset key must not exceed {MaximumPresetKeyLength} characters.")
+        .WithArgs(("max", MaximumPresetKeyLength));
 
     public static readonly Error InvalidDuration = Error.Validation(
         "VisualizationHint.InvalidDuration",
-        $"Animation duration must be between 1 and {MaximumDurationMilliseconds} ms.");
+        $"Animation duration must be between 1 and {MaximumDurationMilliseconds} ms.")
+        .WithArgs(("min", 1), ("max", MaximumDurationMilliseconds));
 
     private VisualizationHint(string? presetKey, int? durationMilliseconds)
     {

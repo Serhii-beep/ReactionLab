@@ -8,7 +8,8 @@ public sealed record Enthalpy
 
     public static readonly Error Implausible = Error.Validation(
         "Enthalpy.Implausible",
-        $"Enthalpy magnitude exceeds {ImplausibleMagnitude} kJ/mol, which ususally means a unit error.");
+        $"Enthalpy magnitude exceeds {ImplausibleMagnitude} kJ/mol, which usually means a unit error.")
+        .WithArgs(("max", ImplausibleMagnitude));
 
     private Enthalpy(decimal kilojoulesPerMole) => KilojoulesPerMole = kilojoulesPerMole;
 

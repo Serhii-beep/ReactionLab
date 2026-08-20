@@ -9,7 +9,8 @@ public sealed record ReactionConditions
 
     public static readonly Error CatalystTooLong = Error.Validation(
         "ReactionConditions.CatalystTooLong",
-        $"Catalyst description must not exceed {MaximumCatalystLength} characters.");
+        $"Catalyst description must not exceed {MaximumCatalystLength} characters.")
+        .WithArgs(("max", MaximumCatalystLength));
 
     private ReactionConditions(Temperature? temperature, Pressure? pressure, string? catalyst)
     {

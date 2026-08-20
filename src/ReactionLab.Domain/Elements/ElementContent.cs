@@ -13,7 +13,8 @@ public sealed class ElementContent : ITranslatableContent<ElementContent>
 
     public static readonly Error NameTooLong = Error.Validation(
         "ElementContent.NameTooLong",
-        $"Element name must not exceed {MaximumNameLength} characters.");
+        $"Element name must not exceed {MaximumNameLength} characters.")
+        .WithArgs(("max", MaximumNameLength));
 
     private ElementContent(string name, string? discoveryInfo, IReadOnlyList<string> interestingFacts)
     {

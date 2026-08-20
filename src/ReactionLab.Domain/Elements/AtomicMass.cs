@@ -13,7 +13,8 @@ public sealed record AtomicMass
 
     public static readonly Error Implausible = Error.Validation(
         "AtomicMass.Implausible",
-        $"Atomic mass above {Maximum} u exceeds any known element.");
+        $"Atomic mass above {Maximum} u exceeds any known element.")
+        .WithArgs(("max", Maximum));
 
     private AtomicMass(decimal daltons) => Daltons = daltons;
 

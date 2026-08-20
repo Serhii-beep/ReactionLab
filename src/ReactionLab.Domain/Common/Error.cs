@@ -1,6 +1,10 @@
 namespace ReactionLab.Domain.Common;
 
-public sealed record Error(string Code, string Description, ErrorType Type)
+public sealed record Error(
+    string Code,
+    string Description,
+    ErrorType Type,
+    IReadOnlyDictionary<string, object?>? Args = null)
 {
     public static readonly Error None = new(string.Empty, string.Empty, ErrorType.None);
 
@@ -23,4 +27,15 @@ public sealed record Error(string Code, string Description, ErrorType Type)
 
     public static Error Unexpected(string code, string description) =>
         new(code, description, ErrorType.Unexpected);
+
+    public Error WithArgs(params (string Key, object? Value)[] args) =>
+        this with { Args = args.ToDictionary(arg => arg.Key, arg => arg.Value, StringComparer.Ordinal) };
+
+    public bool Equals(Error? other) =>
+        other is not null
+        && Code == other.Code
+        && Description == other.Description
+        && Type == other.Type;
+
+    public override int GetHashCode() => HashCode.Combine(Code, Description, Type);
 }

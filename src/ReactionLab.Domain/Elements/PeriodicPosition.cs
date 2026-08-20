@@ -11,11 +11,13 @@ public sealed record PeriodicPosition
 
     public static readonly Error PeriodOutOfRange = Error.Validation(
         "PeriodicPosition.PeriodOutOfRange",
-        $"Period must be between {MinimumPeriod} and {MaximumPeriod}.");
+        $"Period must be between {MinimumPeriod} and {MaximumPeriod}.")
+        .WithArgs(("min", MinimumPeriod), ("max", MaximumPeriod));
 
     public static readonly Error GroupOutOfRange = Error.Validation(
         "PeriodicPosition.GroupOutOfRange",
-        $"Group must be between {MinimumGroup} and {MaximumGroup}.");
+        $"Group must be between {MinimumGroup} and {MaximumGroup}.")
+        .WithArgs(("min", MinimumGroup), ("max", MaximumGroup));
 
     private PeriodicPosition(int period, int? group)
     {

@@ -10,7 +10,8 @@ public sealed record AtomicNumber
 
     public static readonly Error OutOfRange = Error.Validation(
         "AtomicNumber.OutOfRange",
-        $"Atomic number must be between {Minimum} and {Maximum}.");
+        $"Atomic number must be between {Minimum} and {Maximum}.")
+        .WithArgs(("min", Minimum), ("max", Maximum));
 
     private AtomicNumber(int value) => Value = value;
 
