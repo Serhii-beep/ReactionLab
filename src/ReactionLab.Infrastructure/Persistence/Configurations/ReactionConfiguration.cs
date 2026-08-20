@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using ReactionLab.Domain.Localization;
 using ReactionLab.Domain.Reactions;
 using ReactionLab.Infrastructure.Persistence.Converters;
 
@@ -48,7 +47,7 @@ internal sealed class ReactionConfiguration : IEntityTypeConfiguration<Reaction>
             .HasColumnName("tags")
             .IsRequired();
 
-        builder.Property<Translations<ReactionContent>>("_translations")
+        builder.Property(r => r.Translations)
             .UsePropertyAccessMode(PropertyAccessMode.Field)
             .HasColumnName("translations")
             .HasColumnType("jsonb")

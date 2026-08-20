@@ -70,6 +70,8 @@ public sealed class Element : AggregateRoot<ElementId>
 
     public string? ElectronConfiguration { get; private set; }
 
+    public Translations<ElementContent> Translations => _translations;
+
     public IReadOnlyList<SupportedLocale> Locales => _translations.Locales;
 
     public static Result<Element> Create(
@@ -82,7 +84,7 @@ public sealed class Element : AggregateRoot<ElementId>
         MatterState stateAtRoomTemperature,
         HexColor displayColor)
     {
-        var translations = Translations.Create(content);
+        var translations = ReactionLab.Domain.Localization.Translations.Create(content);
         if (translations.IsFailure)
         {
             return translations.Error;

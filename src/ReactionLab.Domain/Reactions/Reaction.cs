@@ -69,6 +69,8 @@ public sealed class Reaction : AggregateRoot<ReactionId>
 
     public IReadOnlyList<string> Tags => _tags.AsReadOnly();
 
+    public Translations<ReactionContent> Translations => _translations;
+
     public IReadOnlyList<SupportedLocale> Locales => _translations.Locales;
 
     public IEnumerable<ReactionParticipant> Reactants =>
@@ -90,7 +92,7 @@ public sealed class Reaction : AggregateRoot<ReactionId>
         DifficultyLevel difficulty,
         bool isReversible)
     {
-        var translations = Translations.Create(content);
+        var translations = ReactionLab.Domain.Localization.Translations.Create(content);
         if (translations.IsFailure)
         {
             return translations.Error;

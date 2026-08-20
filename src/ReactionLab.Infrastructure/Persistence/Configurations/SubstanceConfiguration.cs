@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using ReactionLab.Domain.Localization;
 using ReactionLab.Domain.Substances;
 using ReactionLab.Infrastructure.Persistence.Converters;
 
@@ -28,7 +27,7 @@ internal sealed class SubstanceConfiguration : IEntityTypeConfiguration<Substanc
             .HasColumnType("jsonb")
             .HasConversion<MolecularStructureConverter>();
 
-        builder.Property<Translations<SubstanceContent>>("_translations")
+        builder.Property(s => s.Translations)
             .UsePropertyAccessMode(PropertyAccessMode.Field)
             .HasColumnName("translations")
             .HasColumnType("jsonb")

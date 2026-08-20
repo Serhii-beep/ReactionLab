@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using ReactionLab.Domain.Elements;
-using ReactionLab.Domain.Localization;
 using ReactionLab.Infrastructure.Persistence.Converters;
 
 namespace ReactionLab.Infrastructure.Persistence.Configurations;
@@ -41,7 +40,7 @@ internal sealed class ElementConfiguration : IEntityTypeConfiguration<Element>
                 .HasColumnName("van_der_waals_radius_pm").HasPrecision(6, 2);
         });
 
-        builder.Property<Translations<ElementContent>>("_translations")
+        builder.Property(e => e.Translations)
             .UsePropertyAccessMode(PropertyAccessMode.Field)
             .HasColumnName("translations")
             .HasColumnType("jsonb")

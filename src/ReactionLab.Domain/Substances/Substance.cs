@@ -54,6 +54,8 @@ public sealed class Substance : AggregateRoot<SubstanceId>
 
     public string? Category { get; private set; }
 
+    public Translations<SubstanceContent> Translations => _translations;
+
     public IReadOnlyList<SupportedLocale> Locales => _translations.Locales;
 
     public static Result<Substance> Create(
@@ -63,7 +65,7 @@ public sealed class Substance : AggregateRoot<SubstanceId>
         bool isOrganic,
         MatterState stateAtRoomTemperature)
     {
-        var translations = Translations.Create(content);
+        var translations = ReactionLab.Domain.Localization.Translations.Create(content);
         if (translations.IsFailure)
         {
             return translations.Error;
