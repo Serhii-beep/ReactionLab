@@ -9,6 +9,7 @@ var builder = Host.CreateApplicationBuilder(args);
 builder.AddServiceDefaults();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddHostedService<MigrationWorker>();
+builder.Services.AddHostedService<SeedWorker>();
 
 var host = builder.Build();
 

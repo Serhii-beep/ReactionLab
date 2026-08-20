@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using ReactionLab.Application.Common.Abstractions;
 using ReactionLab.Infrastructure.Persistence;
 using ReactionLab.Infrastructure.Persistence.Interceptors;
+using ReactionLab.Infrastructure.Persistence.Seeding;
 
 namespace ReactionLab.Infrastructure;
 
@@ -36,6 +37,9 @@ public static class DependencyInjection
         services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbContext>());
 
         services.AddHealthChecks().AddDbContextCheck<AppDbContext>("database");
+
+        services.AddScoped<ICatalogSource, JsonCatalogSource>();
+        services.AddScoped<CatalogSeeder>();
 
         return services;
     }

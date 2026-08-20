@@ -1,0 +1,162 @@
+# --- simple inorganic ---
+water | liquid | molecular | inorganic
+hydrogen | gas | molecular | inorganic
+oxygen | gas | molecular | inorganic
+nitrogen | gas | molecular | inorganic
+ozone | gas | molecular | inorganic
+carbon dioxide | gas | molecular | inorganic
+carbon monoxide | gas | molecular | inorganic
+ammonia | gas | molecular | inorganic | NH3
+hydrogen peroxide | liquid | molecular | inorganic
+hydrogen sulfide | gas | molecular | inorganic
+sulfur dioxide | gas | molecular | inorganic | SO2
+nitrogen dioxide | gas | molecular | inorganic
+nitrous oxide | gas | molecular | inorganic
+hydrogen cyanide | gas | molecular | inorganic | HCN
+chlorine | gas | molecular | inorganic
+
+# --- acids ---
+hydrochloric acid | liquid | molecular | acid | HCl
+sulfuric acid | liquid | molecular | acid | H2SO4
+nitric acid | liquid | molecular | acid
+phosphoric acid | liquid | molecular | acid | H3PO4
+carbonic acid | liquid | molecular | acid | H2CO3
+acetic acid | liquid | molecular | organic-acid
+formic acid | liquid | molecular | organic-acid
+citric acid | solid | molecular | organic-acid
+lactic acid | liquid | molecular | organic-acid
+oxalic acid | solid | molecular | organic-acid
+benzoic acid | solid | molecular | organic-acid
+
+# --- bases ---
+sodium hydroxide | solid | ionic | base | NaOH
+potassium hydroxide | solid | ionic | base | KOH
+calcium hydroxide | solid | ionic | base | Ca(OH)2
+magnesium hydroxide | solid | ionic | base | Mg(OH)2
+
+# --- salts and oxides ---
+sodium chloride | solid | ionic | salt | NaCl
+potassium chloride | solid | ionic | salt | KCl
+calcium chloride | solid | ionic | salt
+ammonium chloride | solid | ionic | salt | NH4Cl
+sodium bicarbonate | solid | ionic | salt | NaHCO3
+sodium carbonate | solid | ionic | salt | Na2CO3
+calcium carbonate | solid | ionic | salt | CaCO3
+potassium nitrate | solid | ionic | salt
+silver nitrate | solid | ionic | salt
+copper(II) sulfate | solid | ionic | salt | CuSO4
+ferric oxide | solid | ionic | oxide
+zinc oxide | solid | ionic | oxide | ZnO
+calcium oxide | solid | ionic | oxide
+potassium permanganate | solid | ionic | salt
+sodium hypochlorite | solid | ionic | salt | NaClO
+
+# --- alkanes ---
+methane | gas | molecular | alkane
+ethane | gas | molecular | alkane
+propane | gas | molecular | alkane
+butane | gas | molecular | alkane
+pentane | liquid | molecular | alkane
+hexane | liquid | molecular | alkane
+octane | liquid | molecular | alkane
+cyclohexane | liquid | molecular | alkane
+
+# --- alkenes and alkynes ---
+ethylene | gas | molecular | alkene
+propene | gas | molecular | alkene
+acetylene | gas | molecular | alkyne
+isoprene | liquid | molecular | alkene
+
+# --- aromatics ---
+benzene | liquid | molecular | aromatic
+toluene | liquid | molecular | aromatic
+phenol | solid | molecular | aromatic
+aniline | liquid | molecular | aromatic
+naphthalene | solid | molecular | aromatic
+styrene | liquid | molecular | aromatic
+
+# --- alcohols ---
+methanol | liquid | molecular | alcohol
+ethanol | liquid | molecular | alcohol
+isopropanol | liquid | molecular | alcohol
+butanol | liquid | molecular | alcohol
+ethylene glycol | liquid | molecular | alcohol
+glycerol | liquid | molecular | alcohol
+
+# --- carbonyls, esters, ethers, halocarbons ---
+formaldehyde | gas | molecular | aldehyde
+acetaldehyde | liquid | molecular | aldehyde
+acetone | liquid | molecular | ketone
+ethyl acetate | liquid | molecular | ester
+diethyl ether | liquid | molecular | ether
+chloroform | liquid | molecular | halocarbon
+dichloromethane | liquid | molecular | halocarbon
+
+# --- biochemistry ---
+glucose | solid | molecular | sugar
+fructose | solid | molecular | sugar
+sucrose | solid | molecular | sugar
+glycine | solid | molecular | amino-acid
+alanine | solid | molecular | amino-acid
+cysteine | solid | molecular | amino-acid
+urea | solid | molecular | organic
+adenine | solid | molecular | nucleobase
+guanine | solid | molecular | nucleobase
+cytosine | solid | molecular | nucleobase
+thymine | solid | molecular | nucleobase
+uracil | solid | molecular | nucleobase
+cholesterol | solid | molecular | lipid
+palmitic acid | solid | molecular | lipid
+ascorbic acid | solid | molecular | vitamin
+
+# --- pharmaceuticals and everyday ---
+aspirin | solid | molecular | pharmaceutical
+paracetamol | solid | molecular | pharmaceutical
+ibuprofen | solid | molecular | pharmaceutical
+caffeine | solid | molecular | stimulant
+nicotine | liquid | molecular | alkaloid
+dopamine | solid | molecular | neurotransmitter
+serotonin | solid | molecular | neurotransmitter
+adrenaline | solid | molecular | neurotransmitter
+histamine | solid | molecular | neurotransmitter
+morphine | solid | molecular | alkaloid
+capsaicin | solid | molecular | alkaloid
+menthol | solid | molecular | terpene
+vanillin | solid | molecular | aromatic
+
+# --- elements as substances ---
+sodium | solid | metallic | element
+potassium | solid | metallic | element
+lithium | solid | metallic | element
+magnesium | solid | metallic | element
+calcium | solid | metallic | element
+zinc | solid | metallic | element
+iron | solid | metallic | element
+copper | solid | metallic | element
+silver | solid | metallic | element
+aluminium | solid | metallic | element
+carbon | solid | networkcovalent | element
+sulfur | solid | molecular | element
+
+# --- oxides and salts formed as products ---
+magnesium oxide | solid | ionic | oxide
+copper(II) oxide | solid | ionic | oxide
+aluminium oxide | solid | ionic | oxide
+magnesium chloride | solid | ionic | salt | MgCl2
+zinc chloride | solid | ionic | salt | ZnCl2
+ferric chloride | solid | ionic | salt | FeCl3
+cupric chloride | solid | ionic | salt | CuCl2
+zinc sulfate | solid | ionic | salt | ZnSO4
+magnesium sulfate | solid | ionic | salt | MgSO4
+ferrous sulfate | solid | ionic | salt | FeSO4
+sodium nitrate | solid | ionic | salt | NaNO3
+sodium sulfate | solid | ionic | salt | Na2SO4
+calcium sulfate | solid | ionic | salt | CaSO4
+silver chloride | solid | ionic | salt
+barium chloride | solid | ionic | salt
+barium sulfate | solid | ionic | salt | BaSO4
+lead nitrate | solid | ionic | salt | Pb(NO3)2
+lead iodide | solid | ionic | salt | PbI2
+potassium iodide | solid | ionic | salt | KI
+ammonium nitrate | solid | ionic | salt | NH4NO3
+sodium acetate | solid | ionic | salt | CH3COONa

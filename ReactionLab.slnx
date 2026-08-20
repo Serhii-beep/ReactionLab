@@ -25,4 +25,7 @@
     <Project Path="tests/ReactionLab.Domain.UnitTests/ReactionLab.Domain.UnitTests.csproj" />
     <Project Path="tests/ReactionLab.Infrastructure.UnitTests/ReactionLab.Infrastructure.UnitTests.csproj" />
   </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/ReactionLab.CatalogBuilder/ReactionLab.CatalogBuilder.csproj" />
+  </Folder>
 </Solution>

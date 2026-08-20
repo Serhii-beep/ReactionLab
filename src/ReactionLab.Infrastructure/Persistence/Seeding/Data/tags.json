@@ -1,9 +1,0 @@
-[
-  { "Name": "Combustion", "Category": "reaction_type" },
-  { "Name": "Synthesis", "Category": "reaction_type" },
-  { "Name": "Decomposition", "Category": "reaction_type" },
-  { "Name": "Exothermic", "Category": "thermodynamics" },
-  { "Name": "Endothermic", "Category": "thermodynamics" },
-  { "Name": "Beginner", "Category": "difficulty" },
-  { "Name": "Common", "Category": "frequency" }
-]

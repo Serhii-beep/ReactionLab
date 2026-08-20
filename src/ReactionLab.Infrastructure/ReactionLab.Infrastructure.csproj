@@ -5,10 +5,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Persistence\Seeding\Data\*.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <InternalsVisibleTo Include="ReactionLab.Infrastructure.UnitTests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="..\..\data\catalog\v1\*.jsonl" Link="catalog\%(Filename)%(Extension)">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>
