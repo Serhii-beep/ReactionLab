@@ -1,3 +1,5 @@
+using ReactionLab.API;
+using ReactionLab.API.Endpoints.Elements;
 using ReactionLab.Application;
 using ReactionLab.Infrastructure;
 using ReactionLab.ServiceDefaults;
@@ -8,26 +10,19 @@ builder.AddServiceDefaults();
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
-
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowAngular", policy =>
-    {
-        var origins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
-            ?? ["http://localhost:4200"];
-
-        policy.WithOrigins(origins)
-            .AllowAnyMethod()
-            .AllowAnyHeader()
-            .AllowCredentials();
-    });
-});
+builder.Services.AddApi(builder.Configuration);
 
 var app = builder.Build();
 
+app.UseExceptionHandler();
+
 app.UseHttpsRedirection();
-app.UseCors("AllowAngular");
+app.UseCors(ReactionLab.API.DependencyInjection.CorsPolicy);
 
 app.MapDefaultEndpoints();
+app.MapOpenApi();
+
+var api = app.MapGroup("/api/v1");
+api.MapElementEndpoints();
 
 await app.RunAsync();

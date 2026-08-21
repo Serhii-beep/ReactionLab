@@ -53,6 +53,18 @@ public sealed partial record SupportedLocale
     public static SupportedLocale OrDefault(string? code) =>
         Create(code) is { IsSuccess: true } result ? result.Value : Default;
 
+    public static SupportedLocale? Match(string? tag)
+    {
+        if (Create(tag) is { IsSuccess: true } exact)
+        {
+            return exact.Value;
+        }
+
+        var primary = tag!.Trim().Split('-')[0];
+
+        return Create(primary) is { IsSuccess: true } fallback ? fallback.Value : null;
+    }
+
     public override string ToString() => Code;
 
     private static string Normalize(string tag)
