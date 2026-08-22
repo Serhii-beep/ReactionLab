@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using ReactionLab.API.Http;
 
 namespace ReactionLab.API;
@@ -8,7 +9,9 @@ internal static class DependencyInjection
 
     public static IServiceCollection AddApi(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddProblemDetails();
+        services.ConfigureHttpJsonOptions(options => options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+
+        services.AddProblemDetails(options => options.CustomizeProblemDetails = ApiProblems.BringIntoContract);
         services.AddExceptionHandler<GlobalExceptionHandler>();
         services.AddOpenApi();
 

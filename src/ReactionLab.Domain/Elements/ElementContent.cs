@@ -9,11 +9,13 @@ public sealed class ElementContent : ITranslatableContent<ElementContent>
 
     public static readonly Error NameRequired = Error.Validation(
         "ElementContent.NameRequired",
-        "Element name is required.");
+        "Element name is required.",
+        nameof(Name));
 
     public static readonly Error NameTooLong = Error.Validation(
         "ElementContent.NameTooLong",
-        $"Element name must not exceed {MaximumNameLength} characters.")
+        $"Element name must not exceed {MaximumNameLength} characters.",
+        nameof(Name))
         .WithArgs(("max", MaximumNameLength));
 
     private ElementContent(string name, string? discoveryInfo, IReadOnlyList<string> interestingFacts)

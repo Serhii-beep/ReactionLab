@@ -11,15 +11,18 @@ public sealed partial record SupportedLocale
 
     public static readonly Error Required = Error.Validation(
         "SupportedLocale.Required",
-        "A locale code is required.");
+        "A locale code is required.",
+        "Locale");
 
     public static readonly Error Malformed = Error.Validation(
         "SupportedLocale.Malformed",
-        "A locale code must be a BCP 47 tag.");
+        "A locale code must be a BCP 47 tag.",
+        "Locale");
 
     public static readonly Error Unsupported = Error.Validation(
         "SupportedLocale.Unsupported",
-        "The provided locale is not supported.");
+        "The provided locale is not supported.",
+        "Locale");
 
     private SupportedLocale(string code) => Code = code;
 

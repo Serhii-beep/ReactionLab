@@ -15,6 +15,7 @@ builder.Services.AddApi(builder.Configuration);
 var app = builder.Build();
 
 app.UseExceptionHandler();
+app.UseStatusCodePages();
 
 app.UseHttpsRedirection();
 app.UseCors(ReactionLab.API.DependencyInjection.CorsPolicy);

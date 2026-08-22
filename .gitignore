@@ -67,3 +67,6 @@ artifacts/
 
 # Data pipeline HTTP cache (regenerable; catalogue output IS committed)
 tools/**/.httpcache/
+
+# Local API test collection (Postman); not part of the shipped repo
+tools/postman/
