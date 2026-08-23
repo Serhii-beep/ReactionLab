@@ -1,6 +1,8 @@
 using ReactionLab.API.Http;
 using ReactionLab.Application.Features.Elements.Contracts;
 using ReactionLab.Application.Features.Elements.GetElementById;
+using ReactionLab.Application.Features.Elements.GetElementBySymbol;
+using ReactionLab.Application.Features.Elements.ListElements;
 using ReactionLab.Application.Features.Elements.TranslateElement;
 
 namespace ReactionLab.API.Endpoints.Elements;
@@ -10,6 +12,38 @@ internal static class ElementEndpoints
     public static RouteGroupBuilder MapElementEndpoints(this RouteGroupBuilder api)
     {
         var group = api.MapGroup("/elements").WithTags("Elements");
+
+        group.MapGet("/", async (
+            string? q,
+            HttpContext httpContext,
+            ListElementsHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            var query = new ListElementsQuery(q, httpContext.ResolveLocale());
+            var result = await handler.HandleAsync(query, cancellationToken);
+
+            return result.ToHttpResult();
+        })
+        .WithName("ListElements")
+        .WithSummary("The periodic table, or the elements matching q.")
+        .Produces<IReadOnlyList<ElementSummaryResponse>>();
+
+        group.MapGet("/symbol/{symbol}", async (
+            string symbol,
+            HttpContext httpContext,
+            GetElementBySymbolHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            var query = new GetElementBySymbolQuery(symbol, httpContext.ResolveLocale());
+            var result = await handler.HandleAsync(query, cancellationToken);
+
+            return result.ToHttpResult();
+        })
+        .WithName("GetElementBySymbol")
+        .WithSummary("One element by its chemical symbol, case-insensitively.")
+        .Produces<ElementResponse>()
+        .ProducesProblem(StatusCodes.Status400BadRequest)
+        .ProducesProblem(StatusCodes.Status404NotFound);
 
         group.MapGet("/{id:guid}", async (
             Guid id,

@@ -41,6 +41,8 @@ public static class DependencyInjection
         services.AddScoped<ICatalogSource, JsonCatalogSource>();
         services.AddScoped<CatalogSeeder>();
 
+        services.AddSingleton<ICatalogSearch, TrigramCatalogSearch>();
+
         return services;
     }
 }
