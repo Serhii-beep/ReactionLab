@@ -5,7 +5,7 @@ using ReactionLab.Application.Features.Elements.GetElementBySymbol;
 using ReactionLab.Application.Features.Elements.ListElements;
 using ReactionLab.Application.Features.Elements.TranslateElement;
 
-namespace ReactionLab.API.Endpoints.Elements;
+namespace ReactionLab.API.Endpoints;
 
 internal static class ElementEndpoints
 {

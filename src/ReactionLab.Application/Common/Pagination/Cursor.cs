@@ -1,35 +1,76 @@
-using System.Text;
-using System.Text.Json;
+using System.Buffers.Binary;
+using System.Buffers.Text;
+using ReactionLab.Domain.Common;
 
 namespace ReactionLab.Application.Common.Pagination;
 
-public record Cursor
+public sealed record Cursor
 {
-    public DateTime CreatedAt { get; init; }
+    public static readonly Error Malformed = Error.Validation(
+        "Cursor.Malformed",
+        "The pagination cursor is not valid.",
+        field: "Cursor");
 
-    public Guid Id { get; init; }
+    private const byte KeysetKind = 1;
+    private const byte OffsetKind = 2;
+    private const int PayloadBytes = 17;
+    private const int EncodedLength = 23;
+
+    private Cursor(byte kind, Guid afterId, int skip)
+    {
+        Kind = kind;
+        AfterId = afterId;
+        Skip = skip;
+    }
+
+    public Guid AfterId { get; }
+
+    public int Skip { get; }
+
+    public bool IsKeyset => Kind == KeysetKind;
+
+    private byte Kind { get; }
+
+    public static Cursor After(Guid id) => new(KeysetKind, id, 0);
+
+    public static Cursor Skipping(int rows) => new(OffsetKind, Guid.Empty, rows);
 
     public string Encode()
     {
-        var json = JsonSerializer.Serialize(this);
-        return Convert.ToBase64String(Encoding.UTF8.GetBytes(json));
+        Span<byte> bytes = stackalloc byte[PayloadBytes];
+        bytes[0] = Kind;
+
+        if (Kind == KeysetKind)
+        {
+            AfterId.TryWriteBytes(bytes[1..]);
+        }
+        else
+        {
+            BinaryPrimitives.WriteInt32LittleEndian(bytes[1..], Skip);
+        }
+
+        return Base64Url.EncodeToString(bytes);
     }
 
-    public static Cursor? Decode(string? encoded)
+    public static Result<Cursor> Decode(string? encoded)
     {
-        if (string.IsNullOrWhiteSpace(encoded))
+        if (encoded is not { Length: EncodedLength } || !Base64Url.IsValid(encoded))
         {
-            return null;
+            return Malformed;
         }
 
-        try
+        Span<byte> bytes = stackalloc byte[PayloadBytes];
+
+        if (!Base64Url.TryDecodeFromChars(encoded, bytes, out var written) || written != PayloadBytes)
         {
-            var json = Encoding.UTF8.GetString(Convert.FromBase64String(encoded));
-            return JsonSerializer.Deserialize<Cursor>(json);
+            return Malformed;
         }
-        catch
+
+        return bytes[0] switch
         {
-            return null;
-        }
+            KeysetKind => new Cursor(KeysetKind, new Guid(bytes[1..]), 0),
+            OffsetKind => new Cursor(OffsetKind, Guid.Empty, BinaryPrimitives.ReadInt32LittleEndian(bytes[1..])),
+            _ => Malformed
+        };
     }
 }

@@ -1,5 +1,5 @@
 using ReactionLab.API;
-using ReactionLab.API.Endpoints.Elements;
+using ReactionLab.API.Endpoints;
 using ReactionLab.Application;
 using ReactionLab.Infrastructure;
 using ReactionLab.ServiceDefaults;
@@ -25,5 +25,6 @@ app.MapOpenApi();
 
 var api = app.MapGroup("/api/v1");
 api.MapElementEndpoints();
+api.MapSubstanceEndpoints();
 
 await app.RunAsync();

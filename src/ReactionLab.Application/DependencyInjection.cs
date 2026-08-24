@@ -3,6 +3,8 @@ using ReactionLab.Application.Features.Elements.GetElementById;
 using ReactionLab.Application.Features.Elements.GetElementBySymbol;
 using ReactionLab.Application.Features.Elements.ListElements;
 using ReactionLab.Application.Features.Elements.TranslateElement;
+using ReactionLab.Application.Features.Substances.GetSubstanceById;
+using ReactionLab.Application.Features.Substances.ListSubstances;
 
 namespace ReactionLab.Application;
 
@@ -11,6 +13,7 @@ public static class DependencyInjection
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
         services.AddElementHandlers();
+        services.AddSubstanceHandlers();
 
         return services;
     }
@@ -21,6 +24,14 @@ public static class DependencyInjection
         services.AddScoped<TranslateElementHandler>();
         services.AddScoped<ListElementsHandler>();
         services.AddScoped<GetElementBySymbolHandler>();
+
+        return services;
+    }
+
+    private static IServiceCollection AddSubstanceHandlers(this IServiceCollection services)
+    {
+        services.AddScoped<ListSubstancesHandler>();
+        services.AddScoped<GetSubstanceByIdHandler>();
 
         return services;
     }
