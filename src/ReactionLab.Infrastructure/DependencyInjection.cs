@@ -42,6 +42,7 @@ public static class DependencyInjection
         services.AddScoped<CatalogSeeder>();
 
         services.AddSingleton<ICatalogSearch, TrigramCatalogSearch>();
+        services.AddSingleton<IReactionMatching, ReactantSignatureMatching>();
 
         return services;
     }

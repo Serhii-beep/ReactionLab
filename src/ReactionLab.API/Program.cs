@@ -26,5 +26,6 @@ app.MapOpenApi();
 var api = app.MapGroup("/api/v1");
 api.MapElementEndpoints();
 api.MapSubstanceEndpoints();
+api.MapReactionEndpoints();
 
 await app.RunAsync();

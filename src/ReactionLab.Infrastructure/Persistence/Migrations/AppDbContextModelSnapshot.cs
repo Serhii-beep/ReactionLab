@@ -84,7 +84,7 @@ namespace ReactionLab.Infrastructure.Persistence.Migrations
                         .HasColumnType("citext")
                         .HasColumnName("symbol");
 
-                    b.Property<string>("_translations")
+                    b.Property<string>("Translations")
                         .IsRequired()
                         .HasColumnType("jsonb")
                         .HasColumnName("translations");
@@ -162,6 +162,11 @@ namespace ReactionLab.Infrastructure.Persistence.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("is_reversible");
 
+                    b.Property<string>("Translations")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("translations");
+
                     b.Property<string>("Type")
                         .IsRequired()
                         .HasMaxLength(40)
@@ -172,11 +177,6 @@ namespace ReactionLab.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text[]")
                         .HasColumnName("tags");
-
-                    b.Property<string>("_translations")
-                        .IsRequired()
-                        .HasColumnType("jsonb")
-                        .HasColumnName("translations");
 
                     b.Property<DateTimeOffset>("created_at")
                         .HasColumnType("timestamp with time zone")
@@ -302,15 +302,15 @@ namespace ReactionLab.Infrastructure.Persistence.Migrations
                         .HasColumnType("jsonb")
                         .HasColumnName("structure");
 
+                    b.Property<string>("Translations")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("translations");
+
                     b.Property<decimal?>("Weight")
                         .HasPrecision(12, 5)
                         .HasColumnType("numeric(12,5)")
                         .HasColumnName("weight");
-
-                    b.Property<string>("_translations")
-                        .IsRequired()
-                        .HasColumnType("jsonb")
-                        .HasColumnName("translations");
 
                     b.Property<DateTimeOffset>("created_at")
                         .HasColumnType("timestamp with time zone")
@@ -345,7 +345,7 @@ namespace ReactionLab.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("ReactionLab.Domain.Reactions.Reaction", b =>
                 {
-                    b.OwnsMany("ReactionLab.Domain.Reactions.ReactionParticipant", "_participants", b1 =>
+                    b.OwnsMany("ReactionLab.Domain.Reactions.ReactionParticipant", "Participants", b1 =>
                         {
                             b1.Property<Guid>("Id")
                                 .HasColumnType("uuid")
@@ -388,9 +388,16 @@ namespace ReactionLab.Infrastructure.Persistence.Migrations
                             b1.WithOwner()
                                 .HasForeignKey("ReactionId")
                                 .HasConstraintName("fk_reaction_participants_reactions_reaction_id");
+
+                            b1.HasOne("ReactionLab.Domain.Substances.Substance", null)
+                                .WithMany()
+                                .HasForeignKey("SubstanceId")
+                                .OnDelete(DeleteBehavior.Restrict)
+                                .IsRequired()
+                                .HasConstraintName("fk_reaction_participants_substances_substance_id");
                         });
 
-                    b.Navigation("_participants");
+                    b.Navigation("Participants");
                 });
 #pragma warning restore 612, 618
         }

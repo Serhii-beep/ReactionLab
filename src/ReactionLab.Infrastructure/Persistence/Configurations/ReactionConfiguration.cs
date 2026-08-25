@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using ReactionLab.Domain.Reactions;
+using ReactionLab.Domain.Substances;
 using ReactionLab.Infrastructure.Persistence.Converters;
 
 namespace ReactionLab.Infrastructure.Persistence.Configurations;
@@ -57,7 +58,7 @@ internal sealed class ReactionConfiguration : IEntityTypeConfiguration<Reaction>
         builder.Property<Guid[]>(PersistenceColumns.ReactantSignature).IsRequired();
         builder.HasIndex(PersistenceColumns.ReactantSignature).HasMethod("gin");
 
-        builder.OwnsMany<ReactionParticipant>("_participants", p =>
+        builder.OwnsMany(r => r.Participants, p =>
         {
             p.ToTable("reaction_participants");
             p.WithOwner().HasForeignKey("ReactionId");
@@ -67,13 +68,16 @@ internal sealed class ReactionConfiguration : IEntityTypeConfiguration<Reaction>
             p.Property(x => x.Role).IsRequired();
             p.Property(x => x.Coefficient).IsRequired();
             p.HasIndex(x => x.SubstanceId);
+            p.HasOne<Substance>()
+                .WithMany()
+                .HasForeignKey(x => x.SubstanceId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
-        builder.Navigation("_participants").UsePropertyAccessMode(PropertyAccessMode.Field);
+        builder.Navigation(r => r.Participants).UsePropertyAccessMode(PropertyAccessMode.Field);
 
         builder.HasSearchText();
         builder.HasAuditTimestamps();
 
-        builder.Ignore(r => r.Participants);
         builder.Ignore(r => r.Reactants);
         builder.Ignore(r => r.Products);
         builder.Ignore(r => r.ReactantSignature);
