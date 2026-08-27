@@ -8,6 +8,7 @@ using ReactionLab.Application.Common.Abstractions;
 using ReactionLab.Infrastructure.Persistence;
 using ReactionLab.Infrastructure.Persistence.Interceptors;
 using ReactionLab.Infrastructure.Persistence.Seeding;
+using StackExchange.Redis;
 
 namespace ReactionLab.Infrastructure;
 
@@ -43,6 +44,25 @@ public static class DependencyInjection
 
         services.AddSingleton<ICatalogSearch, TrigramCatalogSearch>();
         services.AddSingleton<IReactionMatching, ReactantSignatureMatching>();
+
+        var redis = configuration.GetConnectionString("Redis");
+
+        if (!string.IsNullOrWhiteSpace(redis))
+        {
+            services.AddStackExchangeRedisCache(options =>
+            {
+                var parsed = ConfigurationOptions.Parse(redis);
+
+                parsed.AbortOnConnectFail = false;
+                parsed.ConnectTimeout = 200;
+                parsed.ConnectRetry = 1;
+                parsed.SyncTimeout = 200;
+
+                options.ConfigurationOptions = parsed;
+            });
+        }
+
+        services.AddHybridCache();
 
         return services;
     }

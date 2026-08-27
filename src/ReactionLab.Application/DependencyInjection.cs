@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using ReactionLab.Application.Common.Caching;
 using ReactionLab.Application.Features.Elements.GetElementById;
 using ReactionLab.Application.Features.Elements.GetElementBySymbol;
 using ReactionLab.Application.Features.Elements.ListElements;
@@ -14,6 +15,8 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
+        services.AddScoped<CacheInvalidator>();
+
         services.AddElementHandlers();
         services.AddSubstanceHandlers();
         services.AddReactionHandlers();

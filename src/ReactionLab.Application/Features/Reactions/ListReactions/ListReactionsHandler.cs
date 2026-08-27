@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
 using ReactionLab.Application.Common.Abstractions;
+using ReactionLab.Application.Common.Caching;
 using ReactionLab.Application.Common.Pagination;
 using ReactionLab.Application.Features.Reactions.Contracts;
 using ReactionLab.Domain.Common;
@@ -10,7 +12,8 @@ namespace ReactionLab.Application.Features.Reactions.ListReactions;
 public sealed class ListReactionsHandler(
     IAppDbContext context,
     ICatalogSearch search,
-    IReactionMatching matching)
+    IReactionMatching matching,
+    HybridCache cache)
     : IQueryHandler<ListReactionsQuery, CursorPagedResult<ReactionSummaryResponse>>
 {
     private const int MaximumSearchDepth = 1000;
@@ -30,31 +33,54 @@ public sealed class ListReactionsHandler(
             cursor = decoded.Value;
         }
 
-        var reactions = context.Reactions.AsNoTracking();
+        var browsing = string.IsNullOrWhiteSpace(query.Search);
 
-        if (query.AvailableSubstanceIds is { Count: > 0 } available)
+        if (cursor is not null && cursor.IsKeyset != browsing)
         {
-            reactions = matching.PossibleWith(reactions, available);
+            return Result.Failure<CursorPagedResult<ReactionSummaryResponse>>(Cursor.Malformed);
         }
 
-        return string.IsNullOrWhiteSpace(query.Search)
-            ? await BrowseAsync(reactions, cursor, query, cancellationToken)
-            : await SearchAsync(reactions, cursor, query, cancellationToken);
+        if (!browsing && cursor is { Skip: >= MaximumSearchDepth })
+        {
+            return Result.Failure<CursorPagedResult<ReactionSummaryResponse>>(
+                Error.Validation(
+                    "Reaction.SearchTooDeep",
+                    "Search results are limited.",
+                    field: "Cursor")
+                .WithArgs(("max", MaximumSearchDepth)));
+        }
+
+        var page = await cache.GetOrCreateAsync(
+            CacheKeys.ReactionList(
+                query.Search, query.AvailableSubstanceIds, query.Page.Cursor, query.Page.Limit, query.Locale),
+            async token => browsing
+                ? await BrowseAsync(cursor, query, token)
+                : await SearchAsync(cursor, query, token),
+            browsing && query.AvailableSubstanceIds is null ? CachePolicies.Catalog : CachePolicies.Query,
+            [CacheTags.Reactions],
+            cancellationToken);
+
+        return Result.Success(page);
     }
 
-    private async Task<Result<CursorPagedResult<ReactionSummaryResponse>>> BrowseAsync(
-        IQueryable<Reaction> reactions,
+    private IQueryable<Reaction> Candidates(ListReactionsQuery query)
+    {
+        var reactions = context.Reactions.AsNoTracking();
+
+        return query.AvailableSubstanceIds is { Count: > 0 } available
+            ? matching.PossibleWith(reactions, available)
+            : reactions;
+    }
+
+    private async Task<CursorPagedResult<ReactionSummaryResponse>> BrowseAsync(
         Cursor? cursor,
         ListReactionsQuery query,
         CancellationToken cancellationToken)
     {
+        var reactions = Candidates(query);
+
         if (cursor is not null)
         {
-            if (!cursor.IsKeyset)
-            {
-                return Result.Failure<CursorPagedResult<ReactionSummaryResponse>>(Cursor.Malformed);
-            }
-
             var after = ReactionId.From(cursor.AfterId);
             reactions = reactions.Where(reaction => reaction.Id > after);
         }
@@ -68,36 +94,15 @@ public sealed class ListReactionsHandler(
         return Page(rows, query.Page.Limit, last => Cursor.After(last.Id));
     }
 
-    public async Task<Result<CursorPagedResult<ReactionSummaryResponse>>> SearchAsync(
-        IQueryable<Reaction> reactions,
+    public async Task<CursorPagedResult<ReactionSummaryResponse>> SearchAsync(
         Cursor? cursor,
         ListReactionsQuery query,
         CancellationToken cancellationToken)
     {
-        var skip = 0;
-
-        if (cursor is not null)
-        {
-            if (cursor.IsKeyset)
-            {
-                return Result.Failure<CursorPagedResult<ReactionSummaryResponse>>(Cursor.Malformed);
-            }
-
-            skip = cursor.Skip;
-        }
-
-        if (skip >= MaximumSearchDepth)
-        {
-            return Result.Failure<CursorPagedResult<ReactionSummaryResponse>>(
-                Error.Validation(
-                    "Reaction.SearchTooDeep",
-                    "Search results are limited.",
-                    field: "Cursor")
-                    .WithArgs(("max", MaximumSearchDepth)));
-        }
+        var skip = cursor?.Skip ?? 0;
 
         var rows = await ReactionQueries.SummariesAsync(
-            search.Matching(reactions, query.Search!.Trim())
+            search.Matching(Candidates(query), query.Search!.Trim())
                 .ThenBy(reaction => reaction.Id)
                 .Skip(skip)
                 .Take(query.Page.Limit + 1),
@@ -108,7 +113,7 @@ public sealed class ListReactionsHandler(
         return Page(rows, query.Page.Limit, _ => Cursor.Skipping(skip + query.Page.Limit));
     }
 
-    private static Result<CursorPagedResult<ReactionSummaryResponse>> Page(
+    private static CursorPagedResult<ReactionSummaryResponse> Page(
         IReadOnlyList<ReactionSummaryResponse> rows,
         int pageSize,
         Func<ReactionSummaryResponse, Cursor> next)
@@ -116,12 +121,12 @@ public sealed class ListReactionsHandler(
         var hasMore = rows.Count > pageSize;
         var items = hasMore ? rows.Take(pageSize).ToList() : rows;
 
-        return Result.Success(new CursorPagedResult<ReactionSummaryResponse>
+        return new CursorPagedResult<ReactionSummaryResponse>
         {
             Items = items,
             PageSize = pageSize,
             HasMore = hasMore,
             NextCursor = hasMore ? next(items[^1]).Encode() : null
-        });
+        };
     }
 }

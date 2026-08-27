@@ -1,12 +1,14 @@
 using Microsoft.EntityFrameworkCore;
 using ReactionLab.Application.Common.Abstractions;
+using ReactionLab.Application.Common.Caching;
 using ReactionLab.Domain.Common;
 using ReactionLab.Domain.Elements;
 using ReactionLab.Domain.Localization;
 
 namespace ReactionLab.Application.Features.Elements.TranslateElement;
 
-public sealed class TranslateElementHandler(IAppDbContext context) : ICommandHandler<TranslateElementCommand>
+public sealed class TranslateElementHandler(IAppDbContext context, CacheInvalidator invalidator)
+    : ICommandHandler<TranslateElementCommand>
 {
     public async ValueTask<Result> HandleAsync(
         TranslateElementCommand command,
@@ -41,6 +43,14 @@ public sealed class TranslateElementHandler(IAppDbContext context) : ICommandHan
         }
 
         await context.SaveChangesAsync(cancellationToken);
+
+        await invalidator.InvalidateAsync(
+            [
+                .. SupportedLocale.All.Select(locale => CacheKeys.Element(command.ElementId, locale)),
+                .. SupportedLocale.All.Select(locale => CacheKeys.ElementBySymbol(element.Symbol.Value, locale))
+            ],
+            CacheTags.Elements,
+            cancellationToken);
 
         return Result.Success();
     }

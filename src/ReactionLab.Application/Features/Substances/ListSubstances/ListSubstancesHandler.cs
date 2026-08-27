@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
 using ReactionLab.Application.Common.Abstractions;
+using ReactionLab.Application.Common.Caching;
 using ReactionLab.Application.Common.Pagination;
 using ReactionLab.Application.Features.Substances.Contracts;
 using ReactionLab.Domain.Common;
@@ -7,7 +9,7 @@ using ReactionLab.Domain.Substances;
 
 namespace ReactionLab.Application.Features.Substances.ListSubstances;
 
-public sealed class ListSubstancesHandler(IAppDbContext context, ICatalogSearch search)
+public sealed class ListSubstancesHandler(IAppDbContext context, ICatalogSearch search, HybridCache cache)
     : IQueryHandler<ListSubstancesQuery, CursorPagedResult<SubstanceSummaryResponse>>
 {
     private const int MaximumSearchDepth = 1000;
@@ -27,26 +29,39 @@ public sealed class ListSubstancesHandler(IAppDbContext context, ICatalogSearch 
             cursor = decoded.Value;
         }
 
-        var substances = context.Substances.AsNoTracking();
+        var browsing = string.IsNullOrWhiteSpace(query.Search);
 
-        return string.IsNullOrWhiteSpace(query.Search)
-            ? await BrowseAsync(substances, cursor, query, cancellationToken)
-            : await SearchAsync(substances, cursor, query, cancellationToken);
+        if (cursor is not null && cursor.IsKeyset != browsing)
+        {
+            return Result.Failure<CursorPagedResult<SubstanceSummaryResponse>>(Cursor.Malformed);
+        }
+
+        if (!browsing && cursor is { Skip: >= MaximumSearchDepth })
+        {
+            return Result.Failure<CursorPagedResult<SubstanceSummaryResponse>>(
+                SubstanceErrors.SearchTooDeep(MaximumSearchDepth));
+        }
+
+        var page = await cache.GetOrCreateAsync(
+            CacheKeys.SubstanceList(query.Search, query.Page.Cursor, query.Page.Limit, query.Locale),
+            async token => browsing
+                ? await BrowseAsync(cursor, query, token)
+                : await SearchAsync(cursor, query, token),
+            browsing ? CachePolicies.Catalog : CachePolicies.Query,
+            [CacheTags.Substances],
+            cancellationToken);
+
+        return Result.Success(page);
     }
 
-    private static async Task<Result<CursorPagedResult<SubstanceSummaryResponse>>> BrowseAsync(
-        IQueryable<Substance> substances,
+    private async Task<CursorPagedResult<SubstanceSummaryResponse>> BrowseAsync(
         Cursor? cursor,
         ListSubstancesQuery query,
         CancellationToken cancellationToken)
     {
+        var substances = context.Substances.AsNoTracking();
         if (cursor is not null)
         {
-            if (!cursor.IsKeyset)
-            {
-                return Result.Failure<CursorPagedResult<SubstanceSummaryResponse>>(Cursor.Malformed);
-            }
-
             var after = SubstanceId.From(cursor.AfterId);
             substances = substances.Where(substance => substance.Id > after);
         }
@@ -59,31 +74,15 @@ public sealed class ListSubstancesHandler(IAppDbContext context, ICatalogSearch 
         return Page(rows, query.Page.Limit, last => Cursor.After(last.Id));
     }
 
-    private async Task<Result<CursorPagedResult<SubstanceSummaryResponse>>> SearchAsync(
-        IQueryable<Substance> substances,
+    private async Task<CursorPagedResult<SubstanceSummaryResponse>> SearchAsync(
         Cursor? cursor,
         ListSubstancesQuery query,
         CancellationToken cancellationToken)
     {
-        var skip = 0;
-
-        if (cursor is not null)
-        {
-            if (cursor.IsKeyset)
-            {
-                return Result.Failure<CursorPagedResult<SubstanceSummaryResponse>>(Cursor.Malformed);
-            }
-
-            skip = cursor.Skip;
-        }
-
-        if (skip >= MaximumSearchDepth)
-        {
-            return Result.Failure<CursorPagedResult<SubstanceSummaryResponse>>(SubstanceErrors.SearchTooDeep(MaximumSearchDepth));
-        }
+        var skip = cursor?.Skip ?? 0;
 
         var rows = await SubstanceQueries.SummariesAsync(
-            search.Matching(substances, query.Search!.Trim())
+            search.Matching(context.Substances.AsNoTracking(), query.Search!.Trim())
                 .ThenBy(substance => substance.Id)
                 .Skip(skip)
                 .Take(query.Page.Limit + 1),
@@ -93,7 +92,7 @@ public sealed class ListSubstancesHandler(IAppDbContext context, ICatalogSearch 
         return Page(rows, query.Page.Limit, _ => Cursor.Skipping(skip + query.Page.Limit));
     }
 
-    private static Result<CursorPagedResult<SubstanceSummaryResponse>> Page(
+    private static CursorPagedResult<SubstanceSummaryResponse> Page(
         IReadOnlyList<SubstanceSummaryResponse> rows,
         int pageSize,
         Func<SubstanceSummaryResponse, Cursor> next)
@@ -101,12 +100,12 @@ public sealed class ListSubstancesHandler(IAppDbContext context, ICatalogSearch 
         var hasMore = rows.Count > pageSize;
         var items = hasMore ? rows.Take(pageSize).ToList() : rows;
 
-        return Result.Success(new CursorPagedResult<SubstanceSummaryResponse>
+        return new CursorPagedResult<SubstanceSummaryResponse>
         {
             Items = items,
             PageSize = pageSize,
             HasMore = hasMore,
             NextCursor = hasMore ? next(items[^1]).Encode() : null
-        });
+        };
     }
 }
