@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.ResponseCompression;
 using ReactionLab.API.Http;
 
 namespace ReactionLab.API;
@@ -25,6 +26,15 @@ internal static class DependencyInjection
                 .AllowAnyHeader()
                 .AllowCredentials();
         }));
+
+        services.AddRateLimiter(RateLimitPolicies.Configure);
+
+        services.AddResponseCompression(options =>
+        {
+            options.EnableForHttps = true;
+            options.Providers.Add<BrotliCompressionProvider>();
+            options.Providers.Add<GzipCompressionProvider>();
+        });
 
         return services;
     }

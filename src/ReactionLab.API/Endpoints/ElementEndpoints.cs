@@ -11,7 +11,9 @@ internal static class ElementEndpoints
 {
     public static RouteGroupBuilder MapElementEndpoints(this RouteGroupBuilder api)
     {
-        var group = api.MapGroup("/elements").WithTags("Elements");
+        var group = api.MapGroup("/elements")
+            .WithTags("Elements")
+            .WithLocaleHeaders();
 
         group.MapGet("/", async (
             string? q,

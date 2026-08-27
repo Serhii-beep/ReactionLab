@@ -10,7 +10,9 @@ internal static class ReactionEndpoints
 {
     public static RouteGroupBuilder MapReactionEndpoints(this RouteGroupBuilder api)
     {
-        var group = api.MapGroup("/reactions").WithTags("Reactions");
+        var group = api.MapGroup("/reactions")
+            .WithTags("Reactions")
+            .WithLocaleHeaders();
 
         group.MapGet("/", async (
             string? q,
@@ -25,6 +27,7 @@ internal static class ReactionEndpoints
 
             return result.ToHttpResult();
         })
+        .RequireRateLimiting(RateLimitPolicies.Matching)
         .WithName("ListReactions")
         .WithSummary("Browse or search reactions.")
         .Produces<CursorPagedResult<ReactionSummaryResponse>>()

@@ -10,7 +10,9 @@ internal static class SubstanceEndpoints
 {
     public static RouteGroupBuilder MapSubstanceEndpoints(this RouteGroupBuilder api)
     {
-        var group = api.MapGroup("/substances").WithTags("Substances");
+        var group = api.MapGroup("/substances")
+            .WithTags("Substances")
+            .WithLocaleHeaders();
 
         group.MapGet("/", async (
             string? q,
