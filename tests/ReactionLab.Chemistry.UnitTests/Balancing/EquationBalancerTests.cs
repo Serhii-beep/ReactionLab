@@ -1,6 +1,5 @@
 using System.Globalization;
 using ReactionLab.Chemistry.Balancing;
-using ReactionLab.Chemistry.Formulas;
 using Shouldly;
 using Xunit;
 
@@ -18,7 +17,7 @@ public sealed class EquationBalancerTests
     public void TryBalance_BalancesMolecularEquations(
         string reactants, string products, string reactantCoefficients, string productCoefficients)
     {
-        var balanced = Balance(reactants, products);
+        var balanced = Species.Balanced(reactants, products);
 
         balanced.ReactantCoefficients.ShouldBe(Numbers(reactantCoefficients));
         balanced.ProductCoefficients.ShouldBe(Numbers(productCoefficients));
@@ -31,7 +30,7 @@ public sealed class EquationBalancerTests
     public void TryBalance_BalancesIonicEquationsUsingCharge(
         string reactants, string products, string reactantCoefficients, string productCoefficients)
     {
-        var balanced = Balance(reactants, products);
+        var balanced = Species.Balanced(reactants, products);
 
         balanced.ReactantCoefficients.ShouldBe(Numbers(reactantCoefficients));
         balanced.ProductCoefficients.ShouldBe(Numbers(productCoefficients));
@@ -44,7 +43,7 @@ public sealed class EquationBalancerTests
     public void TryBalance_BalancesHalfEquationsWithElectrons(
         string reactants, string products, string reactantCoefficients, string productCoefficients)
     {
-        var balanced = Balance(reactants, products);
+        var balanced = Species.Balanced(reactants, products);
 
         balanced.ReactantCoefficients.ShouldBe(Numbers(reactantCoefficients));
         balanced.ProductCoefficients.ShouldBe(Numbers(productCoefficients));
@@ -70,37 +69,13 @@ public sealed class EquationBalancerTests
     public void TryBalance_RefusesAnEmptySide(string reactants, string products) =>
         Refuse(reactants, products).ShouldBe(BalanceError.EmptySide);
 
-    private static BalancedEquation Balance(string reactants, string products)
-    {
-        EquationBalancer.TryBalance(Species(reactants), Species(products), out var balanced, out var error)
-            .ShouldBeTrue($"'{reactants} -> {products}' was refused as {error}");
-
-        return balanced;
-    }
-
     private static BalanceError Refuse(string reactants, string products)
     {
-        EquationBalancer.TryBalance(Species(reactants), Species(products), out _, out var error)
+        EquationBalancer.TryBalance(Species.Of(reactants), Species.Of(products), out _, out var error)
             .ShouldBeFalse();
 
         return error;
     }
-
-    private static IReadOnlyList<ChemicalComposition> Species(string formulas) =>
-    [
-        .. formulas.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(formula =>
-        {
-            if (formula == "e-")
-            {
-                return EquationBalancer.Electron;
-            }
-
-            FormulaParser.TryParse(formula, out var composition, out var error)
-                .ShouldBeTrue($"'{formula}' was refused as {error}");
-
-            return composition;
-        })
-    ];
 
     private static int[] Numbers(string values) =>
     [
