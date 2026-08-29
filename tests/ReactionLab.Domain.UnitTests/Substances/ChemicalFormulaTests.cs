@@ -81,6 +81,20 @@ public sealed class ChemicalFormulaTests
         ChemicalFormula.Create("CO").Value.Hill.ShouldBe("CO");
     }
 
+    [Fact]
+    public void Create_ExpandsSquareBracketGroups() =>
+        ChemicalFormula.Create("K4[Fe(CN)6]").Value.Hill.ShouldBe("C6FeK4N6");
+
+    [Theory]
+    [InlineData("SO4^2-", -2)]
+    [InlineData("H2O", 0)]
+    public void Create_ReadsTheCharge(string formula, int charge) =>
+        ChemicalFormula.Create(formula).Value.Charge.ShouldBe(charge);
+
+    [Fact]
+    public void Create_RejectsInvalidCharge() =>
+        ChemicalFormula.Create("H2O^0-").Error.ShouldBe(ChemicalFormula.InvalidCharge);
+
     [Theory]
     [InlineData(null)]
     [InlineData("")]
@@ -92,6 +106,7 @@ public sealed class ChemicalFormulaTests
     [InlineData("h2o")]
     [InlineData("H2O!")]
     [InlineData("2H2O")]
+    [InlineData("H2()")]
     public void Create_RejectsMalformedInput(string value) =>
         ChemicalFormula.Create(value).Error.ShouldBe(ChemicalFormula.Malformed);
 

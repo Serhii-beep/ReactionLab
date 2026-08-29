@@ -17,12 +17,14 @@
   <Folder Name="/src/">
     <Project Path="src/ReactionLab.API/ReactionLab.API.csproj" />
     <Project Path="src/ReactionLab.Application/ReactionLab.Application.csproj" />
+    <Project Path="src/ReactionLab.Chemistry/ReactionLab.Chemistry.csproj" />
     <Project Path="src/ReactionLab.DbMigrator/ReactionLab.DbMigrator.csproj" />
     <Project Path="src/ReactionLab.Domain/ReactionLab.Domain.csproj" />
     <Project Path="src/ReactionLab.Infrastructure/ReactionLab.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/ReactionLab.Api.UnitTests/ReactionLab.Api.UnitTests.csproj" />
+    <Project Path="tests/ReactionLab.Chemistry.UnitTests/ReactionLab.Chemistry.UnitTests.csproj" />
     <Project Path="tests/ReactionLab.Domain.UnitTests/ReactionLab.Domain.UnitTests.csproj" />
     <Project Path="tests/ReactionLab.Infrastructure.UnitTests/ReactionLab.Infrastructure.UnitTests.csproj" />
   </Folder>
