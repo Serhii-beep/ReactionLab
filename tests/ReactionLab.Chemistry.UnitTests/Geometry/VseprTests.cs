@@ -42,7 +42,7 @@ public sealed class VseprTests
 
         directions.Count.ShouldBe(bonding, species);
         directions.ShouldAllBe(direction => Math.Abs(direction.Length() - 1f) < 1e-6f);
-        Angles(directions).ShouldBe(angles, species);
+        AllAngles(directions).ShouldBe(angles, species);
     }
 
     [Theory]
@@ -52,7 +52,7 @@ public sealed class VseprTests
     [InlineData(3, "180")]
     public void Directions_SeatLonePairsEquatoriallyInATrigonalBipyramid(
         int lonePairs, string angles) =>
-        Angles(Vsepr.Directions(new ElectronDomains(5 - lonePairs, lonePairs))).ShouldBe(angles);
+        AllAngles(Vsepr.Directions(new ElectronDomains(5 - lonePairs, lonePairs))).ShouldBe(angles);
 
     [Fact]
     public void Directions_SeatLonePairsOppositeEachOtherInAnOctahedron()
@@ -60,7 +60,7 @@ public sealed class VseprTests
         var square = Vsepr.Directions(new ElectronDomains(4, 2));
 
         square.ShouldAllBe(direction => Math.Abs(direction.Z) < 1e-6f);
-        Angles(square).ShouldBe("90 180");
+        AllAngles(square).ShouldBe("90 180");
     }
 
     [Fact]
@@ -68,7 +68,7 @@ public sealed class VseprTests
         Should.Throw<ArgumentOutOfRangeException>(() =>
             _ = Vsepr.ShapeOf(new ElectronDomains(7, 0)));
 
-    private static string Angles(IReadOnlyList<Vector3> directions)
+    private static string AllAngles(IReadOnlyList<Vector3> directions)
     {
         var angles = new List<double>();
 
@@ -76,14 +76,10 @@ public sealed class VseprTests
         {
             for (var second = first + 1; second < directions.Count; second++)
             {
-                angles.Add(Math.Round(AngleDegrees(directions[first], directions[second]), 1));
+                angles.Add(Math.Round(Angles.Between(directions[first], directions[second]), 1));
             }
         }
 
         return string.Join(' ', angles.Distinct().Order());
     }
-
-    private static double AngleDegrees(Vector3 direction, Vector3 other) =>
-        double.RadiansToDegrees(Math.Acos(Math.Clamp(
-            Vector3.Dot(Vector3.Normalize(direction), Vector3.Normalize(other)), -1f, 1f)));
 }
