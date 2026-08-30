@@ -44,6 +44,8 @@
       { "formula": "PO4", "charge": -3 },
       { "formula": "N", "charge": -3 }
     ],
+    "thermallyStableCations": ["Li", "Na", "K", "Rb", "Cs", "NH4"],
+    "oxidizingAnions": ["NO3", "NO2"],
     "solubility": [
       { "code": "groupOneAndAmmonium", "solubility": "Soluble", "cations": ["Li", "Na", "K", "Rb", "Cs", "NH4"] },
       { "code": "nitratesAndAcetates", "solubility": "Soluble", "anions": ["NO3", "NO2", "ClO3", "ClO", "CH3COO"] },

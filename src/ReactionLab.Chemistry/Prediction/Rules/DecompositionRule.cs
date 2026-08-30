@@ -19,7 +19,7 @@ public sealed class DecompositionRule(IonTable table) : IReactionRule
 
             switch (anion.Formula)
             {
-                case "CO3":
+                case "CO3" when !table.IsThermallyStable(cation):
                     yield return new PredictedReaction(
                         [i], [oxide, "CO2"], "decomposition.carbonate", 0.85m);
                     break;
@@ -34,7 +34,7 @@ public sealed class DecompositionRule(IonTable table) : IReactionRule
                         "decomposition.hydrogencarbonate",
                         0.85m);
                     break;
-                case "OH":
+                case "OH" when !table.IsThermallyStable(cation):
                     yield return new PredictedReaction(
                         [i], [oxide, "H2O"], "decomposition.hydroxide", 0.8m);
                     break;

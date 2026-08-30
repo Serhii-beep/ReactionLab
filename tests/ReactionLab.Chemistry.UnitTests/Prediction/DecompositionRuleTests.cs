@@ -11,7 +11,6 @@ public sealed class DecompositionRuleTests
 {
     [Theory]
     [InlineData("CaCO3", "CaO", "decomposition.carbonate")]
-    [InlineData("Na2CO3", "Na2O", "decomposition.carbonate")]
     [InlineData("Ca(OH)2", "CaO", "decomposition.hydroxide")]
     [InlineData("Mg(OH)2", "MgO", "decomposition.hydroxide")]
     public void Predict_LeavesTheMetalAsItsOxide(string reactant, string oxide, string rule)
@@ -23,8 +22,16 @@ public sealed class DecompositionRuleTests
     }
 
     [Fact]
-    public void Predict_BreaksAHydrogencarbonateIntoThreeThings() =>
+    public void Predict_BreaksAGroupOneHydrogencarbonate() =>
         Predictions("NaHCO3").Single().Products.ShouldBe(["Na2CO3", "H2O", "CO2"]);
+
+    [Theory]
+    [InlineData("Na2CO3")]
+    [InlineData("K2CO3")]
+    [InlineData("NaOH")]
+    [InlineData("KOH")]
+    public void Predict_LeavesTheThermallyStableSaltsAlone(string reactant) =>
+        Predictions(reactant).ShouldBeEmpty();
 
     [Fact]
     public void Predict_CarriesNoTemperature() =>
@@ -39,7 +46,6 @@ public sealed class DecompositionRuleTests
 
     [Theory]
     [InlineData("CaCO3")]
-    [InlineData("Na2CO3")]
     [InlineData("NaHCO3")]
     [InlineData("Ca(OH)2")]
     [InlineData("Mg(OH)2")]

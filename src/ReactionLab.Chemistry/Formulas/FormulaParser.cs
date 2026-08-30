@@ -146,7 +146,11 @@ public static class FormulaParser
 
                 foreach (var (groupSymbol, count) in group)
                 {
-                    Add(tally, groupSymbol, count * multiplier);
+                    if (!TryAdd(tally, groupSymbol, count, multiplier))
+                    {
+                        error = FormulaError.InvalidCount;
+                        return false;
+                    }
                 }
 
                 continue;
@@ -172,7 +176,11 @@ public static class FormulaParser
                 return false;
             }
 
-            Add(tally, symbol, atoms);
+            if (!TryAdd(tally, symbol, atoms, 1))
+            {
+                error = FormulaError.InvalidCount;
+                return false;
+            }
         }
 
         return true;
@@ -210,6 +218,21 @@ public static class FormulaParser
         return true;
     }
 
-    private static void Add(Dictionary<string, int> tally, string symbol, int count) =>
-        tally[symbol] = tally.TryGetValue(symbol, out var existing) ? existing + count : count;
+    private static bool TryAdd(Dictionary<string, int> tally, string symbol, int count, int multiplier)
+    {
+        try
+        {
+            checked
+            {
+                var added = count * multiplier;
+                tally[symbol] = tally.TryGetValue(symbol, out var existing) ? existing + added : added;
+            }
+
+            return true;
+        }
+        catch (OverflowException)
+        {
+            return false;
+        }
+    }
 }

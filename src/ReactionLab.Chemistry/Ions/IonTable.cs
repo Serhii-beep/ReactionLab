@@ -1,9 +1,13 @@
+using System.Globalization;
+
 namespace ReactionLab.Chemistry.Ions;
 
 public sealed class IonTable(
     IReadOnlyList<Ion> cations,
     IReadOnlyList<Ion> anions,
-    IReadOnlyList<SolubilityRule> solubilityRules)
+    IReadOnlyList<SolubilityRule> solubilityRules,
+    IReadOnlyList<string> thermallyStableCations,
+    IReadOnlyList<string> oxidizingAnions)
 {
     public IReadOnlyList<Ion> Cations { get; } = cations;
 
@@ -50,7 +54,88 @@ public sealed class IonTable(
         }
 
         rule = "unmatched";
-        return Solubility.Insoluble;
+        return Solubility.Unknown;
+    }
+
+    public bool TryReadAcid(string formula, out Ion anion)
+    {
+        anion = default;
+
+        if (formula.Length < 2 || formula[0] != 'H' || char.IsAsciiLetterLower(formula[1]))
+        {
+            return false;
+        }
+
+        var index = 1;
+
+        while (index < formula.Length && char.IsAsciiDigit(formula[index]))
+        {
+            index++;
+        }
+
+        var hydrogens = index == 1 ? 1 : int.Parse(formula[1..index], CultureInfo.InvariantCulture);
+        var rest = formula[index..];
+
+        if (rest.Length == 0 || rest is "O" or "OH")
+        {
+            return false;
+        }
+
+        return TryMatch(Anions, rest, hydrogens, out anion);
+    }
+
+    public bool TryReadBase(string formula, out Ion cation)
+    {
+        cation = default;
+        string rest;
+        int hydroxides;
+
+        if (formula.EndsWith("OH", StringComparison.Ordinal))
+        {
+            rest = formula[..^2];
+            hydroxides = 1;
+        }
+        else
+        {
+            var group = formula.LastIndexOf("(OH)", StringComparison.Ordinal);
+
+            if (group < 0)
+            {
+                return false;
+            }
+
+            var count = formula[(group + 4)..];
+
+            if (count.Length == 0 || !count.All(char.IsAsciiDigit))
+            {
+                return false;
+            }
+
+            rest = formula[..group];
+            hydroxides = int.Parse(count, CultureInfo.InvariantCulture);
+        }
+
+        return TryMatch(Cations, rest, hydroxides, out cation);
+    }
+
+    public bool IsThermallyStable(Ion cation) => Holds(thermallyStableCations, cation.Formula);
+
+    public bool IsOxidizing(Ion anion) => Holds(oxidizingAnions, anion.Formula);
+
+    private static bool TryMatch(IReadOnlyList<Ion> known, string formula, int magnitude, out Ion found)
+    {
+        foreach (var candidate in known)
+        {
+            if (string.Equals(candidate.Formula, formula, StringComparison.Ordinal)
+                && candidate.Magnitude == magnitude)
+            {
+                found = candidate;
+                return true;
+            }
+        }
+
+        found = default;
+        return false;
     }
 
     private static bool Matches(IReadOnlyList<string>? formulas, string formula) =>
@@ -62,4 +147,7 @@ public sealed class IonTable(
 
     private static Solubility Reversed(Solubility solubility) =>
         solubility == Solubility.Soluble ? Solubility.Insoluble : Solubility.Soluble;
+
+    private static bool Holds(IReadOnlyList<string> formulas, string formula) =>
+        formulas.Any(candidate => string.Equals(candidate, formula, StringComparison.Ordinal));
 }

@@ -14,7 +14,7 @@ internal static class TestIons
             new("F", -1), new("Cl", -1), new("Br", -1), new("I", -1), new("OH", -1),
             new("NO3", -1), new("MnO4", -1), new("HCO3", -1), new("CH3COO", -1),
             new("O", -2), new("S", -2), new("SO4", -2), new("CO3", -2),
-            new("N", -3), new("PO4", -3)
+            new("N", -3), new("PO4", -3), new("NO2", -1)
         ],
         [
             new("groupOneAndAmmonium", Solubility.Soluble, Cations: ["Li", "Na", "K", "Rb", "Cs", "NH4"]),
@@ -23,7 +23,9 @@ internal static class TestIons
             new("sulfates", Solubility.Soluble, Anions: ["SO4"], ExceptCations: ["Ba", "Pb", "Ca", "Sr", "Ag"]),
             new("hydroxides", Solubility.Insoluble, Anions: ["OH"], ExceptCations: ["Ba", "Sr"]),
             new("carbonatesAndTheRest", Solubility.Insoluble),
-        ]);
+        ],
+        ["Li", "Na", "K", "Rb", "Cs", "NH4"],
+        ["NO3", "NO2"]);
 
     public static ActivitySeries Series { get; } = new(
     [

@@ -2,7 +2,7 @@ using ReactionLab.Chemistry.Ions;
 
 namespace ReactionLab.Chemistry.Prediction.Rules;
 
-public sealed class NeutralizationRule : IReactionRule
+public sealed class NeutralizationRule(IonTable table) : IReactionRule
 {
     public string Name => "neutralization";
 
@@ -10,21 +10,21 @@ public sealed class NeutralizationRule : IReactionRule
     {
         for (var acid = 0; acid < reactants.Count; acid++)
         {
-            if (!IonicFormula.TryReadAcid(reactants[acid].Formula, out var anion, out var anionCharge))
+            if (!table.TryReadAcid(reactants[acid].Formula, out var anion))
             {
                 continue;
             }
 
             for (var alkali = 0; alkali < reactants.Count; alkali++)
             {
-                if (alkali == acid || !IonicFormula.TryReadBase(reactants[alkali].Formula, out var cation, out var cationCharge))
+                if (alkali == acid || !table.TryReadBase(reactants[alkali].Formula, out var cation))
                 {
                     continue;
                 }
 
                 yield return new PredictedReaction(
                     [acid, alkali],
-                    [IonicFormula.Combine(cation, cationCharge, anion, anionCharge), "H2O"],
+                    [IonicFormula.Combine(cation.Formula, cation.Magnitude, anion.Formula, anion.Magnitude), "H2O"],
                     "neutralization.saltAndWater",
                     0.9m);
             }

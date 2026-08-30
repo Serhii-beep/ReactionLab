@@ -46,7 +46,8 @@ public sealed class SynthesisRule(ActivitySeries series, IonTable table) : IReac
 
         if (string.Equals(reactants[second].Formula, "H2O", StringComparison.Ordinal)
             && table.TrySplit(reactants[first].Formula, out var cation, out var oxide)
-            && string.Equals(oxide.Formula, "O", StringComparison.Ordinal))
+            && string.Equals(oxide.Formula, "O", StringComparison.Ordinal)
+            && series.Displaces(cation.Formula, "Al"))
         {
             return
             [

@@ -1,6 +1,7 @@
 using ReactionLab.Chemistry.Balancing;
 using ReactionLab.Chemistry.Prediction;
 using ReactionLab.Chemistry.Prediction.Rules;
+using ReactionLab.Chemistry.UnitTests.Ions;
 using Shouldly;
 using Xunit;
 
@@ -49,5 +50,5 @@ public sealed class NeutralizationRuleTests
     }
 
     private static IReadOnlyList<PredictedReaction> Predictions(string reactants) =>
-        new ReactionPredictor([new NeutralizationRule()]).Predict(Species.Reagents(reactants));
+        new ReactionPredictor([new NeutralizationRule(TestIons.Table)]).Predict(Species.Reagents(reactants));
 }

@@ -42,10 +42,10 @@ public sealed class SingleReplacementRule(ActivitySeries series, IonTable table)
             return Water(metalIndex, metal, otherIndex);
         }
 
-        if (IonicFormula.TryReadAcid(other.Formula, out var anion, out var anionCharge))
+        if (table.TryReadAcid(other.Formula, out var anion))
         {
-            return series.Displaces(metal.Symbol, "H")
-                ? [Displacement(metalIndex, metal, otherIndex, anion, anionCharge, "H2", "metalAndAcid", 0.9m)]
+            return !table.IsOxidizing(anion) && series.Displaces(metal.Symbol, "H")
+                ? [Displacement(metalIndex, metal, otherIndex, anion.Formula, anion.Magnitude, "H2", "metalAndAcid", 0.9m)]
                 : [];
         }
 

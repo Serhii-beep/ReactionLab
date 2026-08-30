@@ -59,16 +59,61 @@ public sealed class IonTableTests
     }
 
     [Fact]
-    public void SolubilityOf_FallsBackToInsolubleWhenTheRulesHaveNoCatch()
+    public void SolubilityOf_ReportsUnknownWhenTheRulesHaveNoCatch()
     {
         var sparse = new IonTable(
             [new Ion("Na", 1)],
             [new Ion("Cl", -1)],
-            [new SolubilityRule("onlyNitrates", Solubility.Soluble, Anions: ["NO3"])]);
+            [new SolubilityRule("onlyNitrates", Solubility.Soluble, Anions: ["NO3"])],
+            [],
+            []);
 
         sparse.SolubilityOf(new Ion("Na", 1), new Ion("Cl", -1), out var rule)
-            .ShouldBe(Solubility.Insoluble);
+            .ShouldBe(Solubility.Unknown);
 
         rule.ShouldBe("unmatched");
     }
+
+    [Theory]
+    [InlineData("HCl", "Cl", -1)]
+    [InlineData("H2SO4", "SO4", -2)]
+    [InlineData("H3PO4", "PO4", -3)]
+    [InlineData("H2S", "S", -2)]
+    public void TryReadAcid_TakesTheAnionFromTheTable(
+        string formula, string anion, int charge)
+    {
+        TestIons.Table.TryReadAcid(formula, out var read).ShouldBeTrue(formula);
+
+        read.ShouldBe(new Ion(anion, charge));
+    }
+
+    [Theory]
+    [InlineData("H2O")]
+    [InlineData("H2O2")]
+    [InlineData("He")]
+    [InlineData("Hg")]
+    [InlineData("NaOH")]
+    [InlineData("C2H4O2")]
+    public void TryReadAcid_RefusesWhatIsNotWrittenAsAnAcid(string formula) =>
+        TestIons.Table.TryReadAcid(formula, out _).ShouldBeFalse();
+
+    [Theory]
+    [InlineData("NaOH", "Na", 1)]
+    [InlineData("Ca(OH)2", "Ca", 2)]
+    [InlineData("Al(OH)3", "Al", 3)]
+    [InlineData("NH4OH", "NH4", 1)]
+    public void TryReadBase_TakesTheChargeFromTheHydroxideCount(
+        string formula, string cation, int charge)
+    {
+        TestIons.Table.TryReadBase(formula, out var read).ShouldBeTrue(formula);
+
+        read.ShouldBe(new Ion(cation, charge));
+    }
+
+    [Theory]
+    [InlineData("H2O")]
+    [InlineData("HCl")]
+    [InlineData("OH")]
+    public void TryReadBase_RefusesWhatIsNotWrittenAsAHydroxide(string formula) =>
+        TestIons.Table.TryReadBase(formula, out _).ShouldBeFalse();
 }
