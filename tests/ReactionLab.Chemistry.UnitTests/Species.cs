@@ -1,5 +1,6 @@
 using ReactionLab.Chemistry.Balancing;
 using ReactionLab.Chemistry.Formulas;
+using ReactionLab.Chemistry.Prediction;
 using Shouldly;
 
 namespace ReactionLab.Chemistry.UnitTests;
@@ -29,4 +30,14 @@ internal static class Species
 
         return balanced;
     }
+
+    public static IReadOnlyList<Reagent> Reagents(string formulas) =>
+    [
+        .. formulas.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(formula =>
+        {
+            Reagent.TryCreate(formula, out var reagent).ShouldBeTrue($"'{formula}' did not parse");
+
+            return reagent;
+        })
+    ];
 }

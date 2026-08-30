@@ -6,5 +6,5 @@ public interface IReactionRule
 {
     string Name { get; }
 
-    IEnumerable<PredictedReaction> Predict(IReadOnlyList<ChemicalComposition> reactants);
+    IEnumerable<PredictedReaction> Predict(IReadOnlyList<Reagent> reactants);
 }

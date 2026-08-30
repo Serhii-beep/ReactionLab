@@ -6,7 +6,7 @@ public sealed class ReactionPredictor(IEnumerable<IReactionRule> rules)
 {
     private readonly IReadOnlyList<IReactionRule> _rules = [.. rules];
 
-    public IReadOnlyList<PredictedReaction> Predict(IReadOnlyList<ChemicalComposition> reactants) =>
+    public IReadOnlyList<PredictedReaction> Predict(IReadOnlyList<Reagent> reactants) =>
         reactants.Count == 0
             ? []
             : [.. _rules

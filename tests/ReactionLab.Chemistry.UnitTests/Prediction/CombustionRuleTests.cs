@@ -71,7 +71,7 @@ public sealed class CombustionRuleTests
     }
 
     private static IReadOnlyList<PredictedReaction> Predictions(string reactants) =>
-        new ReactionPredictor([new CombustionRule()]).Predict(Species.Of(reactants));
+        new ReactionPredictor([new CombustionRule()]).Predict(Species.Reagents(reactants));
 
     private static string? Product(Dictionary<string, string> products, string rule) =>
         products.TryGetValue(rule, out var formula) ? formula : null;

@@ -10,7 +10,7 @@ public sealed class CombustionRule : IReactionRule
 
     public string Name => "combustion";
 
-    public IEnumerable<PredictedReaction> Predict(IReadOnlyList<ChemicalComposition> reactants)
+    public IEnumerable<PredictedReaction> Predict(IReadOnlyList<Reagent> reactants)
     {
         var oxygen = IndexOfMolecularOxygen(reactants);
 
@@ -21,7 +21,7 @@ public sealed class CombustionRule : IReactionRule
 
         for (var i = 0; i < reactants.Count; i++)
         {
-            var fuel = reactants[i];
+            var fuel = reactants[i].Composition;
 
             if (i == oxygen || !IsFuel(fuel))
             {
@@ -54,11 +54,11 @@ public sealed class CombustionRule : IReactionRule
     private static bool ConsumesOxygen(ChemicalComposition fuel, int oxygenPerCarbon) =>
         2 * fuel.CountOf(Oxygen) < 2 * oxygenPerCarbon * fuel.CountOf(Carbon) + fuel.CountOf(Hydrogen);
 
-    private static int IndexOfMolecularOxygen(IReadOnlyList<ChemicalComposition> reactants)
+    private static int IndexOfMolecularOxygen(IReadOnlyList<Reagent> reactants)
     {
         for (var i = 0; i < reactants.Count; i++)
         {
-            if (reactants[i] is { Charge: 0, Elements: [{ Symbol: Oxygen, Count: 2 }] })
+            if (reactants[i].Composition is { Charge: 0, Elements: [{ Symbol: Oxygen, Count: 2 }] })
             {
                 return i;
             }
