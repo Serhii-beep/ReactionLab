@@ -11,9 +11,10 @@ internal static class TestIons
             new("Fe", 2), new("Pb", 2), new("Al", 3), new("Fe", 3),
         ],
         [
-            new("Cl", -1), new("Br", -1), new("I", -1), new("OH", -1), new("NO3", -1),
-            new("MnO4", -1), new("HCO3", -1), new("CH3COO", -1),
-            new("O", -2), new("SO4", -2), new("CO3", -2), new("PO4", -3),
+            new("F", -1), new("Cl", -1), new("Br", -1), new("I", -1), new("OH", -1),
+            new("NO3", -1), new("MnO4", -1), new("HCO3", -1), new("CH3COO", -1),
+            new("O", -2), new("S", -2), new("SO4", -2), new("CO3", -2),
+            new("N", -3), new("PO4", -3)
         ],
         [
             new("groupOneAndAmmonium", Solubility.Soluble, Cations: ["Li", "Na", "K", "Rb", "Cs", "NH4"]),
