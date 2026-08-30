@@ -23,4 +23,24 @@ internal static class TestIons
             new("hydroxides", Solubility.Insoluble, Anions: ["OH"], ExceptCations: ["Ba", "Sr"]),
             new("carbonatesAndTheRest", Solubility.Insoluble),
         ]);
+
+    public static ActivitySeries Series { get; } = new(
+    [
+        new("K", 1, WaterReactivity.Cold),
+        new("Na", 1, WaterReactivity.Cold),
+        new("Li", 1, WaterReactivity.Cold),
+        new("Ba", 2, WaterReactivity.Cold),
+        new("Ca", 2, WaterReactivity.Cold),
+        new("Mg", 2, WaterReactivity.Steam),
+        new("Al", 3, WaterReactivity.Steam),
+        new("Zn", 2, WaterReactivity.Steam),
+        new("Fe", 2, WaterReactivity.Steam),
+        new("Ni", 2, WaterReactivity.None),
+        new("Sn", 2, WaterReactivity.None),
+        new("Pb", 2, WaterReactivity.None),
+        new("H", 1, WaterReactivity.None),
+        new("Cu", 2, WaterReactivity.None),
+        new("Ag", 1, WaterReactivity.None),
+        new("Au", 3, WaterReactivity.None),
+    ]);
 }

@@ -1,0 +1,21 @@
+{
+"source": "",
+    "metals": [
+        { "symbol": "K",  "charge": 1, "water": "Cold" },
+        { "symbol": "Na", "charge": 1, "water": "Cold" },
+        { "symbol": "Li", "charge": 1, "water": "Cold" },
+        { "symbol": "Ba", "charge": 2, "water": "Cold" },
+        { "symbol": "Ca", "charge": 2, "water": "Cold" },
+        { "symbol": "Mg", "charge": 2, "water": "Steam" },
+        { "symbol": "Al", "charge": 3, "water": "Steam" },
+        { "symbol": "Zn", "charge": 2, "water": "Steam" },
+        { "symbol": "Fe", "charge": 2, "water": "Steam" },
+        { "symbol": "Ni", "charge": 2, "water": "None" },
+        { "symbol": "Sn", "charge": 2, "water": "None" },
+        { "symbol": "Pb", "charge": 2, "water": "None" },
+        { "symbol": "H",  "charge": 1, "water": "None" },
+        { "symbol": "Cu", "charge": 2, "water": "None" },
+        { "symbol": "Ag", "charge": 1, "water": "None" },
+        { "symbol": "Au", "charge": 3, "water": "None" }
+    ]
+}

@@ -6,7 +6,8 @@ public sealed class PredictedReaction
         IReadOnlyList<int> reactants,
         IReadOnlyList<string> products,
         string rule,
-        decimal confidence)
+        decimal confidence,
+        decimal? minimumKelvin = null)
     {
         if (reactants.Count == 0)
         {
@@ -26,6 +27,7 @@ public sealed class PredictedReaction
         Products = products;
         Rule = rule;
         Confidence = confidence;
+        MinimumKelvin = minimumKelvin;
     }
 
     public IReadOnlyList<int> Reactants { get; }
@@ -35,4 +37,6 @@ public sealed class PredictedReaction
     public string Rule { get; }
 
     public decimal Confidence { get; }
+
+    public decimal? MinimumKelvin { get; }
 }
