@@ -31,7 +31,7 @@ public static class GeometryRelaxation
 
         for (var centre = 0; centre < atoms.Count; centre++)
         {
-            if (neighbours[centre].Count < 2 || IdealAngle(atoms[centre], neighbours[centre], table) is not { } angle)
+            if (neighbours[centre].Count < 2 || IdealAngles(atoms[centre], neighbours[centre], table) is not { } angles)
             {
                 continue;
             }
@@ -45,7 +45,7 @@ public static class GeometryRelaxation
 
                     var across = Math.Sqrt(
                         (left * left) + (right * right)
-                        - (2 * left * right * Math.Cos(double.DegreesToRadians(angle))));
+                        - (2 * left * right * Math.Cos(double.DegreesToRadians(angles[first, second]))));
 
                     targets.Add(new DistanceTarget(
                         neighbours[centre][first].Atom, neighbours[centre][second].Atom,
@@ -238,18 +238,21 @@ public static class GeometryRelaxation
                     ring.Add(at);
                 }
 
-                return ring.Count <= 7 ? ring : null;
+                return ring.Count is >= 5 and <= 7 ? ring : null;
             }
         }
 
         return null;
     }
 
-    private static double? IdealAngle(
+    private static double[,]? IdealAngles(
         SkeletalAtom atom,
         List<(int Atom, int Order)> neighbours,
         IReadOnlyDictionary<string, AtomicGeometry> table)
     {
+        IReadOnlyList<Vector3> directions;
+        int lonePairs;
+
         try
         {
             var domains = ElectronDomains.Around(
@@ -257,22 +260,55 @@ public static class GeometryRelaxation
                 [.. neighbours.Select(neighbour => neighbour.Order)],
                 atom.FormalCharge);
 
-            var directions = Vsepr.Directions(domains);
-
-            if (directions.Count < 2)
-            {
-                return null;
-            }
-
-            var ideal = double.RadiansToDegrees(Math.Acos(Math.Clamp(
-                Vector3.Dot(Vector3.Normalize(directions[0]), Vector3.Normalize(directions[1])), -1f, 1f)));
-
-            return ideal - (LonePairCompressionDegrees * domains.LonePairs);
+            directions = Vsepr.Directions(domains);
+            lonePairs = domains.LonePairs;
         }
         catch (Exception ex) when (ex is ArgumentException or ArgumentOutOfRangeException)
         {
             return null;
         }
+
+        if (directions.Count < 2)
+        {
+            return null;
+        }
+
+        var angles = new double[directions.Count, directions.Count];
+        var isogonal = true;
+
+        for (var first = 0; first < directions.Count; first++)
+        {
+            for (var second = first + 1; second < directions.Count; second++)
+            {
+                var between = double.RadiansToDegrees(Math.Acos(Math.Clamp(
+                    Vector3.Dot(
+                        Vector3.Normalize(directions[first]),
+                        Vector3.Normalize(directions[second])), -1f, 1f)));
+
+                angles[first, second] = between;
+                angles[second, first] = between;
+
+                if (Math.Abs(between - angles[0, 1]) > 0.5d)
+                {
+                    isogonal = false;
+                }
+            }
+        }
+
+        if (!isogonal || lonePairs == 0)
+        {
+            return angles;
+        }
+
+        for (var first = 0; first < directions.Count; first++)
+        {
+            for (var second = 0; second < directions.Count; second++)
+            {
+                angles[first, second] -= LonePairCompressionDegrees * lonePairs;
+            }
+        }
+
+        return angles;
     }
 
     private static int StericNumber(

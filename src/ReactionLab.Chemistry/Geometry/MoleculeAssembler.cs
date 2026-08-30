@@ -41,6 +41,8 @@ public static class MoleculeAssembler
         }
 
         var placed = new Vector3[count];
+        var positioned = new bool[count];
+        positioned[0] = true;
 
         foreach (var atom in visit)
         {
@@ -55,9 +57,6 @@ public static class MoleculeAssembler
                 : Turned(directions, Vector3.Normalize(placed[parent[atom]] - placed[atom]));
 
             var slot = parent[atom] < 0 ? 0 : 1;
-
-            var positioned = new bool[count];
-            positioned[0] = true;
 
             foreach (var (child, order) in neighbours[atom])
             {
