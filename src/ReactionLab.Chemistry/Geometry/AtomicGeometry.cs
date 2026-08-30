@@ -4,7 +4,8 @@ public readonly record struct AtomicGeometry(
     int ValenceElectrons,
     int SingleBondRadiusPicometres,
     int? DoubleBondRadiusPicometres = null,
-    int? TripleBondRadiusPicometres = null)
+    int? TripleBondRadiusPicometres = null,
+    int? AromaticBondRadiusPicometres = null)
 {
     public int RadiusFor(int order) => order switch
     {
@@ -12,4 +13,6 @@ public readonly record struct AtomicGeometry(
         2 => DoubleBondRadiusPicometres ?? SingleBondRadiusPicometres,
         _ => SingleBondRadiusPicometres
     };
+
+    public int AromaticRadius => AromaticBondRadiusPicometres ?? RadiusFor(2);
 }

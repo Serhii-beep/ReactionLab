@@ -10,9 +10,9 @@ public sealed class MoleculeAssemblerTests
     private static readonly Dictionary<string, AtomicGeometry> Table = new(StringComparer.Ordinal)
     {
         ["H"] = new(1, 31),
-        ["C"] = new(4, 76, 67, 60),
-        ["N"] = new(5, 71, 60, 54),
-        ["O"] = new(6, 66, 57, 53),
+        ["C"] = new(4, 76, 67, 60, 70),
+        ["N"] = new(5, 71, 60, 54, 66),
+        ["O"] = new(6, 66, 57, 53, 66),
         ["P"] = new(5, 107, 102, 94),
         ["S"] = new(6, 105, 94, 95),
         ["Cl"] = new(7, 102, 99)
@@ -27,12 +27,12 @@ public sealed class MoleculeAssemblerTests
     }
 
     [Fact]
-    public void TryAssemble_OpensWaterToTheIdealTetrahedralAngle()
+    public void TryAssemble_ClosesWaterToItsMeasuredAngle()
     {
         var placed = Assemble([Atom("O"), Atom("H"), Atom("H")], [new(0, 1, 1), new(0, 2, 1)]);
 
-        Angles.At(placed, 0, 1, 2).ShouldBe(109.5d, 0.1d);
-        Vector3.Distance(placed[0], placed[1]).ShouldBe(0.97f, 0.001f);
+        Angles.At(placed, 0, 1, 2).ShouldBe(104.5d, 0.3d);
+        Vector3.Distance(placed[0], placed[1]).ShouldBe(0.97f, 0.01f);
     }
 
     [Fact]
@@ -67,8 +67,8 @@ public sealed class MoleculeAssemblerTests
             [Atom("O"), Atom("O"), Atom("H"), Atom("H")],
             [new(0, 1, 1), new(0, 2, 1), new(1, 3, 1)]);
 
-        Angles.At(placed, 0, 1, 2).ShouldBe(109.5d, 0.1d);
-        Angles.At(placed, 1, 0, 3).ShouldBe(109.5d, 0.1d);
+        Angles.At(placed, 0, 1, 2).ShouldBe(104.5d, 0.3d);
+        Angles.At(placed, 1, 0, 3).ShouldBe(104.5d, 0.3d);
         Vector3.Distance(placed[0], placed[1]).ShouldBe(1.32f, 0.001f);
     }
 
@@ -82,10 +82,27 @@ public sealed class MoleculeAssemblerTests
     }
 
     [Fact]
-    public void TryAssemble_RefusesARing() =>
-        Refuse(
-            [Atom("C"), Atom("C"), Atom("C")],
-            [new(0, 1, 1), new(1, 2, 1), new(2, 0, 1)]).ShouldBe(AssemblyError.Cyclic);
+    public void TryAssemble_ClosesARing()
+    {
+        List<SkeletalAtom> atoms = [.. Enumerable.Repeat(Atom("C"), 6)];
+        atoms.AddRange(Enumerable.Repeat(Atom("H"), 12));
+
+        List<AtomBond> bonds = [];
+
+        for (var carbon = 0; carbon < 6; carbon++)
+        {
+            bonds.Add(new AtomBond(carbon, (carbon + 1) % 6, 1));
+            bonds.Add(new AtomBond(carbon, 6 + (2 * carbon), 1));
+            bonds.Add(new AtomBond(carbon, 7 + (2 * carbon), 1));
+        }
+
+        var placed = Assemble(atoms, bonds);
+
+        for (var carbon = 0; carbon < 6; carbon++)
+        {
+            Vector3.Distance(placed[carbon], placed[(carbon + 1) % 6]).ShouldBe(1.52f, 0.05f);
+        }
+    }
 
     [Fact]
     public void TryAssemble_RefusesTwoMoleculesInOneGraph() =>

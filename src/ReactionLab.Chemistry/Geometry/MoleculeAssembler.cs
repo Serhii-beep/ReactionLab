@@ -40,12 +40,6 @@ public static class MoleculeAssembler
             return false;
         }
 
-        if (bonds.Count != count - 1)
-        {
-            error = AssemblyError.Cyclic;
-            return false;
-        }
-
         var placed = new Vector3[count];
 
         foreach (var atom in visit)
@@ -62,9 +56,12 @@ public static class MoleculeAssembler
 
             var slot = parent[atom] < 0 ? 0 : 1;
 
+            var positioned = new bool[count];
+            positioned[0] = true;
+
             foreach (var (child, order) in neighbours[atom])
             {
-                if (child == parent[atom])
+                if (child == parent[atom] || positioned[child] || slot >= frame.Count)
                 {
                     continue;
                 }
@@ -73,10 +70,11 @@ public static class MoleculeAssembler
                     + table[atoms[child].Symbol].RadiusFor(order);
 
                 placed[child] = placed[atom] + (frame[slot++] * (length / 100f));
+                positioned[child] = true;
             }
         }
 
-        positions = placed;
+        positions = GeometryRelaxation.Settle(placed, GeometryRelaxation.Targets(atoms, bonds, table), 8);
         error = AssemblyError.None;
         return true;
     }
