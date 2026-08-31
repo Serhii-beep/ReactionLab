@@ -1,4 +1,5 @@
 using System.Text.Json;
+using ReactionLab.Chemistry.Geometry;
 using ReactionLab.Chemistry.Ions;
 using ReactionLab.Chemistry.Thermochemistry;
 
@@ -63,6 +64,26 @@ internal static class ReferenceData
             entry.GetProperty("transfer").GetDecimal(),
             entry.GetProperty("minimum").GetDecimal()))
     ];
+
+    public static Dictionary<string, AtomicGeometry> ReadAtomicGeometry(string path)
+    {
+        var table = new Dictionary<string, AtomicGeometry>(StringComparer.Ordinal);
+
+        foreach (var entry in Document(path).GetProperty("elements").EnumerateArray())
+        {
+            table[entry.GetProperty("symbol").GetString()!] = new AtomicGeometry(
+                entry.GetProperty("valenceElectrons").GetInt32(),
+                entry.GetProperty("single").GetInt32(),
+                Optional(entry, "double"),
+                Optional(entry, "triple"),
+                Optional(entry, "aromatic"));
+        }
+
+        return table;
+
+        static int? Optional(JsonElement entry, string name) =>
+            entry.TryGetProperty(name, out var value) ? value.GetInt32() : null;
+    }
 
     private static List<Ion> Ions(JsonElement document, string name) =>
     [

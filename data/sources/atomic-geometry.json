@@ -1,0 +1,17 @@
+{
+    "source": "",
+    "elements": [
+      { "symbol": "H",  "valenceElectrons": 1, "single": 31 },
+      { "symbol": "B",  "valenceElectrons": 3, "single": 84,  "double": 78,  "triple": 73 },
+      { "symbol": "C",  "valenceElectrons": 4, "single": 76,  "double": 67,  "triple": 60, "aromatic": 70 },
+      { "symbol": "N",  "valenceElectrons": 5, "single": 71,  "double": 60,  "triple": 54, "aromatic": 66 },
+      { "symbol": "O",  "valenceElectrons": 6, "single": 66,  "double": 57,  "triple": 53, "aromatic": 66 },
+      { "symbol": "F",  "valenceElectrons": 7, "single": 57,  "double": 59 },
+      { "symbol": "Si", "valenceElectrons": 4, "single": 111, "double": 107, "triple": 102 },
+      { "symbol": "P",  "valenceElectrons": 5, "single": 107, "double": 102, "triple": 94 },
+      { "symbol": "S",  "valenceElectrons": 6, "single": 105, "double": 94,  "triple": 95 },
+      { "symbol": "Cl", "valenceElectrons": 7, "single": 102, "double": 99,  "triple": 95 },
+      { "symbol": "Br", "valenceElectrons": 7, "single": 120, "double": 114, "triple": 110 },
+      { "symbol": "I",  "valenceElectrons": 7, "single": 139, "double": 133, "triple": 125 }
+    ]
+  }

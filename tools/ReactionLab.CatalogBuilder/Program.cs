@@ -23,6 +23,13 @@ if (args.Contains("emit", StringComparer.OrdinalIgnoreCase))
     return;
 }
 
+if (args.Contains("rmsd", StringComparer.OrdinalIgnoreCase))
+{
+    GeometryAccuracy.Run(root);
+
+    return;
+}
+
 var sources = Path.Combine(root, "data", "sources");
 var output = Path.Combine(root, "data", "catalog", "v1");
 
