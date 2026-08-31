@@ -13,4 +13,5 @@ internal sealed record ReactionSeed(
     Thermodynamics? Energetics,
     ReactionConditions? Conditions,
     VisualizationHint? Visualization,
+    ReactionProvenance Provenance,
     IReadOnlyList<string> Tags);

@@ -15,7 +15,7 @@
       "EffectPreset": "catalytic-glow", "AnimationDurationMs": 4000,
       "Description": "Nitrogen and hydrogen combine over an iron catalyst to form ammonia. The reaction is reversible and run under high pressure.",
       "RealWorldExamples": ["Fertiliser production", "Explosives manufacture"],
-      "Tags": ["synthesis", "exothermic", "catalysed", "industrial"],
+      "Tags": ["synthesis", "exothermic", "catalyzed", "industrial"],
       "Participants": [
         { "MoleculeFormula": "N2", "Role": "Reactant", "Coefficient": 1, "State": "Gas" },
         { "MoleculeFormula": "H2", "Role": "Reactant", "Coefficient": 3, "State": "Gas" },
@@ -33,7 +33,7 @@
         { "MoleculeFormula": "MgO", "Role": "Product", "Coefficient": 2, "State": "Solid" } ] },
 
     { "Name": "Formation of Sodium Chloride", "ReactionType": "Synthesis", "DifficultyLevel": 2,
-      "EnthalpyChange": -822.4, "EffectPreset": "ionic-crystallisation", "AnimationDurationMs": 4000,
+      "EnthalpyChange": -822.4, "EffectPreset": "ionic-crystallization", "AnimationDurationMs": 4000,
       "Description": "Sodium metal reacts vigorously with chlorine gas, transferring an electron per atom to form an ionic lattice.",
       "SafetyWarnings": "Violent. Chlorine is highly toxic; sodium reacts explosively with water.",
       "Tags": ["synthesis", "exothermic", "ionic"],
@@ -68,7 +68,7 @@
       "EffectPreset": "foaming-gas", "AnimationDurationMs": 3000,
       "Description": "Hydrogen peroxide breaks down into water and oxygen. A catalyst makes it dramatically fast.",
       "RealWorldExamples": ["Elephant's toothpaste", "Catalase in living cells"],
-      "Tags": ["decomposition", "exothermic", "catalysed", "beginner"],
+      "Tags": ["decomposition", "exothermic", "catalyzed", "beginner"],
       "Participants": [
         { "MoleculeFormula": "H2O2", "Role": "Reactant", "Coefficient": 2, "State": "Aqueous" },
         { "MoleculeFormula": "H2O", "Role": "Product", "Coefficient": 2, "State": "Liquid" },
@@ -186,10 +186,10 @@
         { "MoleculeFormula": "H2", "Role": "Product", "Coefficient": 1, "State": "Gas" } ] },
 
     { "Name": "Iron Displaces Copper", "ReactionType": "SingleReplacement", "DifficultyLevel": 2,
-      "EffectPreset": "colour-change", "AnimationDurationMs": 4000,
+      "EffectPreset": "color-change", "AnimationDurationMs": 4000,
       "Description": "An iron nail in copper sulfate solution turns copper-coloured as the blue fades.",
       "RealWorldExamples": ["Activity series demonstrations", "Copper recovery"],
-      "Tags": ["single-replacement", "colour-change"],
+      "Tags": ["single-replacement", "color-change"],
       "Participants": [
         { "MoleculeFormula": "Fe", "Role": "Reactant", "Coefficient": 1, "State": "Solid" },
         { "MoleculeFormula": "CuSO4", "Role": "Reactant", "Coefficient": 1, "State": "Aqueous" },
@@ -254,7 +254,7 @@
       "EffectPreset": "white-precipitate", "AnimationDurationMs": 3000,
       "Description": "Mixing silver nitrate with any chloride gives a curdy white solid that darkens in light.",
       "RealWorldExamples": ["Testing for halides", "Photographic film"],
-      "Tags": ["precipitation", "double-replacement", "colour-change"],
+      "Tags": ["precipitation", "double-replacement", "color-change"],
       "Participants": [
         { "MoleculeFormula": "AgNO3", "Role": "Reactant", "Coefficient": 1, "State": "Aqueous" },
         { "MoleculeFormula": "NaCl", "Role": "Reactant", "Coefficient": 1, "State": "Aqueous" },

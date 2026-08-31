@@ -43,6 +43,17 @@ internal sealed class ReactionConfiguration : IEntityTypeConfiguration<Reaction>
             v.Property(x => x.DurationMilliseconds).HasColumnName("animation_duration_ms");
         });
 
+        builder.ComplexProperty(r => r.Provenance, p =>
+        {
+            p.Property(x => x.Rule)
+                .HasColumnName("rule")
+                .HasMaxLength(ReactionProvenance.MaximumRuleLength);
+
+            p.Property(x => x.Confidence)
+                .HasColumnName("confidence")
+                .HasPrecision(4, 3);
+        });
+
         builder.Property<List<string>>("_tags")
             .UsePropertyAccessMode(PropertyAccessMode.Field)
             .HasColumnName("tags")

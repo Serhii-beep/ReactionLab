@@ -7,7 +7,7 @@ namespace ReactionLab.DbMigrator;
 internal sealed class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<AppDbContext>
 {
     private const string DesignTimePlaceholder =
-        "Host=localhost;Database=reactionlab;Username=postgres;Passowrd=postgres";
+        "Host=localhost;Database=reactionlab;Username=postgres;Password=postgres";
 
     public AppDbContext CreateDbContext(string[] args)
     {

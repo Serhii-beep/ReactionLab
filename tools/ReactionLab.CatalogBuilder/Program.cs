@@ -5,6 +5,7 @@ using System.Text.Json;
 using ReactionLab.CatalogBuilder;
 using ReactionLab.Chemistry.Formulas;
 using ReactionLab.Domain.Elements;
+using ReactionLab.Domain.Reactions;
 using ReactionLab.Domain.Substances;
 using ReactionLab.Infrastructure.Persistence.Seeding.Catalog;
 
@@ -13,6 +14,12 @@ var root = FindRepositoryRoot();
 if (args.Contains("generate", StringComparer.OrdinalIgnoreCase))
 {
     CandidateGeneration.Run(root);
+    return;
+}
+
+if (args.Contains("emit", StringComparer.OrdinalIgnoreCase))
+{
+    await CatalogEmission.RunAsync(root);
     return;
 }
 
@@ -28,7 +35,6 @@ var atomicMasses = elements.ToDictionary(
 
 await BuildElementsAsync();
 await BuildSubstancesAsync();
-await BuildReactionsAsync();
 
 Console.WriteLine($"Catalog written to {output}");
 
@@ -150,37 +156,6 @@ async Task<PubChemMatch?> LookUpAsync(string key, string? declared)
             cid.Value,
             properties,
             declared is null || Chemistry.SameComposition(declared, properties.Formula));
-}
-
-async Task BuildReactionsAsync()
-{
-    var raw = await ReadJsonAsync<List<SourceReaction>>(Path.Combine(sources, "reactions.json"));
-
-    var records = raw.Select(reaction => new ReactionRecord
-    {
-        Key = Slug(reaction.Name),
-        Type = reaction.ReactionType,
-        Difficulty = reaction.DifficultyLevel,
-        EnthalpyKjPerMol = reaction.EnthalpyChange,
-        ActivationEnergyKjPerMol = reaction.ActivationEnergy,
-        TemperatureK = reaction.RequiredTemperature,
-        Catalyst = reaction.CatalystInfo,
-        EffectPreset = reaction.EffectPreset,
-        AnimationDurationMs = reaction.AnimationDurationMs,
-        Tags = reaction.Tags,
-        Participants = (reaction.Participants ?? [])
-            .Select(p => new ReactionRecord.ParticipantRecord(
-                p.MoleculeFormula, p.Role, p.Coefficient, p.State, p.Substance))
-            .ToList(),
-        Translations = new Dictionary<string, ReactionRecord.ReactionText>
-        {
-            ["en"] = new(reaction.Name, reaction.Description, reaction.Mechanism,
-                reaction.SafetyWarnings, reaction.RealWorldExamples)
-        }
-    }).ToList();
-
-    await CatalogJson.WriteLinesAsync(Path.Combine(output, "reactions.jsonl"), records, CancellationToken.None);
-    Console.WriteLine($"reactions: {records.Count}");
 }
 
 async Task<int?> GetCidAsync(string name)
@@ -310,12 +285,6 @@ static WantedSubstance ParseWanted(string line)
 
 static string Capitalize(string value) =>
     value.Length == 0 ? value : char.ToUpperInvariant(value[0]) + value[1..];
-
-static string Slug(string value) =>
-    string.Join(
-        '-',
-        new string([.. value.Select(c => char.IsLetterOrDigit(c) ? char.ToLowerInvariant(c) : ' ')])
-            .Split(' ', StringSplitOptions.RemoveEmptyEntries));
 
 static async Task<T> ReadJsonAsync<T>(string path)
 {

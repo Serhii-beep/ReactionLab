@@ -104,6 +104,7 @@ internal sealed class CatalogSeeder(
                 reaction.DescribeVisualization(seed.Visualization);
             }
 
+            reaction.DescribeProvenance(seed.Provenance);
             reaction.ApplyTags(seed.Tags);
 
             context.Reactions.Add(reaction);

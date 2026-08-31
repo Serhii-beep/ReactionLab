@@ -327,6 +327,15 @@ internal sealed class JsonCatalogSource : ICatalogSource
 
         var visualization = VisualizationHint.Create(record.EffectPreset, record.AnimationDurationMs);
 
+        var provenance = record.Rule is null
+            ? ReactionProvenance.Curated
+            : ReactionProvenance.Create(record.Rule, record.Confidence ?? 1m);
+
+        if (provenance.IsFailure)
+        {
+            Reject($"{record.Key} provenance", provenance.Error);
+        }
+
         return new ReactionSeed(
             record.Key,
             content.Value,
@@ -337,6 +346,7 @@ internal sealed class JsonCatalogSource : ICatalogSource
             energetics.IsSuccess ? energetics.Value : null,
             conditions.IsSuccess ? conditions.Value : null,
             visualization.IsSuccess ? visualization.Value : null,
+            provenance.IsSuccess ? provenance.Value : ReactionProvenance.Curated,
             record.Tags ?? []);
     }
 

@@ -231,6 +231,22 @@ namespace ReactionLab.Infrastructure.Persistence.Migrations
                                 .HasColumnName("enthalpy_kj_per_mol");
                         });
 
+                    b.ComplexProperty(typeof(Dictionary<string, object>), "Provenance", "ReactionLab.Domain.Reactions.Reaction.Provenance#ReactionProvenance", b1 =>
+                        {
+                            b1.IsRequired();
+
+                            b1.Property<decimal>("Confidence")
+                                .HasPrecision(4, 3)
+                                .HasColumnType("numeric(4,3)")
+                                .HasColumnName("confidence");
+
+                            b1.Property<string>("Rule")
+                                .IsRequired()
+                                .HasMaxLength(60)
+                                .HasColumnType("character varying(60)")
+                                .HasColumnName("rule");
+                        });
+
                     b.ComplexProperty(typeof(Dictionary<string, object>), "Visualization", "ReactionLab.Domain.Reactions.Reaction.Visualization#VisualizationHint", b1 =>
                         {
                             b1.IsRequired();

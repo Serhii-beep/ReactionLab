@@ -65,6 +65,8 @@ public sealed class Reaction : AggregateRoot<ReactionId>
 
     public VisualizationHint Visualization { get; private set; } = VisualizationHint.None;
 
+    public ReactionProvenance Provenance { get; private set; } = ReactionProvenance.Curated;
+
     public IReadOnlyList<ReactionParticipant> Participants => _participants.AsReadOnly();
 
     public IReadOnlyList<string> Tags => _tags.AsReadOnly();
@@ -155,6 +157,13 @@ public sealed class Reaction : AggregateRoot<ReactionId>
     public Result DescribeVisualization(VisualizationHint visualization)
     {
         Visualization = visualization;
+
+        return Result.Success();
+    }
+
+    public Result DescribeProvenance(ReactionProvenance provenance)
+    {
+        Provenance = provenance;
 
         return Result.Success();
     }

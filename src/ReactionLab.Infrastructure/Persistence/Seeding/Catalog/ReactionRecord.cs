@@ -22,6 +22,10 @@ public sealed record ReactionRecord
 
     public int? AnimationDurationMs { get; init; }
 
+    public string? Rule { get; init; }
+
+    public decimal? Confidence { get; init; }
+
     public required List<ParticipantRecord> Participants { get; init; }
 
     public List<string>? Tags { get; init; }
