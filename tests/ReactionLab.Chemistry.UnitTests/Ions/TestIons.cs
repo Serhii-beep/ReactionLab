@@ -24,8 +24,11 @@ internal static class TestIons
             new("hydroxides", Solubility.Insoluble, Anions: ["OH"], ExceptCations: ["Ba", "Sr"]),
             new("carbonatesAndTheRest", Solubility.Insoluble),
         ],
-        ["Li", "Na", "K", "Rb", "Cs", "NH4"],
-        ["NO3", "NO2"]);
+        new IonBehaviors(
+            ["Li", "Na", "K", "Rb", "Cs", "NH4"],
+            ["NO3", "NO2"],
+            ["CO3"],
+            ["N", "O"]));
 
     public static ActivitySeries Series { get; } = new(
     [

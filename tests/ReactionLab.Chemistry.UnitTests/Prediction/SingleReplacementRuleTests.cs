@@ -83,6 +83,23 @@ public sealed class SingleReplacementRuleTests
     public void Predict_WillNotTakeAMetalOutOfASaltThatDoesNotDissolve() =>
         Predictions("Cu AgCl").ShouldBeEmpty();
 
+    [Theory]
+    [InlineData("K BaCl2")]
+    [InlineData("Na AgNO3")]
+    [InlineData("Li CuSO4")]
+    [InlineData("Ca CuSO4")]
+    [InlineData("Ba CuSO4")]
+    public void Predict_WillNotDisplaceAMetalWithOneThatReactsWithColdWater(string reactants) =>
+        Predictions(reactants).ShouldBeEmpty();
+
+    [Fact]
+    public void Predict_DisplacesHydrogenWithAColdWaterMetal() =>
+        Predictions("Ca HCl").Single().Products.ShouldBe(["CaCl2", "H2"]);
+
+    [Fact]
+    public void Predict_RefusesAnAcidThatOnlyExistsInSolutionWithItsAnhydride() =>
+        Predictions("Zn H2CO3").ShouldBeEmpty();
+
     private static IReadOnlyList<PredictedReaction> Predictions(string reactants) =>
         new ReactionPredictor([new SingleReplacementRule(TestIons.Series, TestIons.Table)])
             .Predict(Species.Reagents(reactants));

@@ -24,6 +24,14 @@ public sealed class PrecipitationRuleTests
         Predictions("BaCl2 Na2SO4").Single().Rule.ShouldBe("precipitation.sulfates");
 
     [Theory]
+    [InlineData("Li3N CuSO4")]
+    [InlineData("Li3N BaCl2")]
+    [InlineData("Li2O CuSO4")]
+    [InlineData("K2O MgCl2")]
+    public void Predict_WillNotDrawAnIonOutOfASaltThatWaterDestroys(string reactants) =>
+        Predictions(reactants).ShouldBeEmpty();
+
+    [Theory]
     [InlineData("NaCl KNO3")]
     [InlineData("NaNO3 KCl")]
     [InlineData("AgCl NaNO3")]

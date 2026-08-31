@@ -20,6 +20,12 @@ public sealed class NeutralizationRuleTests
         Predictions(reactants).Single().Products.ShouldBe([salt, "H2O"]);
 
     [Theory]
+    [InlineData("NaOH H2CO3")]
+    [InlineData("Ca(OH)2 H2CO3")]
+    public void Predict_RefusesAnAcidThatOnlyExistsInSolutionWithItsAnhydride(string reactants) =>
+        Predictions(reactants).ShouldBeEmpty();
+
+    [Theory]
     [InlineData("NaOH NaOH")]
     [InlineData("HCl HCl")]
     [InlineData("H2O NaOH")]

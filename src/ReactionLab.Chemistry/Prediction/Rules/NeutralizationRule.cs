@@ -10,7 +10,7 @@ public sealed class NeutralizationRule(IonTable table) : IReactionRule
     {
         for (var acid = 0; acid < reactants.Count; acid++)
         {
-            if (!table.TryReadAcid(reactants[acid].Formula, out var anion))
+            if (!table.TryReadAcid(reactants[acid].Formula, out var anion) || table.IsUnstableAcid(anion))
             {
                 continue;
             }

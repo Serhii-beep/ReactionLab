@@ -44,12 +44,15 @@ public sealed class SingleReplacementRule(ActivitySeries series, IonTable table)
 
         if (table.TryReadAcid(other.Formula, out var anion))
         {
-            return !table.IsOxidizing(anion) && series.Displaces(metal.Symbol, "H")
+            return !table.IsOxidizing(anion)
+                && !table.IsUnstableAcid(anion)
+                && series.Displaces(metal.Symbol, "H")
                 ? [Displacement(metalIndex, metal, otherIndex, anion.Formula, anion.Magnitude, "H2", "metalAndAcid", 0.9m)]
                 : [];
         }
 
-        return table.TrySplit(other.Formula, out var cation, out var saltAnion)
+        return metal.Water != WaterReactivity.Cold
+            && table.TrySplit(other.Formula, out var cation, out var saltAnion)
             && table.SolubilityOf(cation, saltAnion, out _) == Solubility.Soluble
             && series.Displaces(metal.Symbol, cation.Formula)
                 ? [Displacement(

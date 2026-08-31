@@ -55,5 +55,6 @@ public sealed class PrecipitationRule(IonTable table) : IReactionRule
 
     private bool Dissolved(string formula, out Ion cation, out Ion anion) =>
         table.TrySplit(formula, out cation, out anion)
+        && !table.Hydrolyzes(anion)
         && table.SolubilityOf(cation, anion, out _) == Solubility.Soluble;
 }

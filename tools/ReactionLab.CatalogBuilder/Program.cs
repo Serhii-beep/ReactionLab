@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using ReactionLab.CatalogBuilder;
+using ReactionLab.Chemistry.Formulas;
 using ReactionLab.Domain.Elements;
 using ReactionLab.Domain.Substances;
 using ReactionLab.Infrastructure.Persistence.Seeding.Catalog;
@@ -21,6 +22,10 @@ var output = Path.Combine(root, "data", "catalog", "v1");
 using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(60), BaseAddress = new Uri("https://pubchem.ncbi.nlm.nih.gov/rest/pug/") };
 http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("ReactionLab", "0.1"));
 
+var elements = await ReadJsonAsync<List<SourceElement>>(Path.Combine(sources, "elements.json"));
+var atomicMasses = elements.ToDictionary(
+    element => element.Symbol, element => element.AtomicMass, StringComparer.Ordinal);
+
 await BuildElementsAsync();
 await BuildSubstancesAsync();
 await BuildReactionsAsync();
@@ -29,9 +34,7 @@ Console.WriteLine($"Catalog written to {output}");
 
 async Task BuildElementsAsync()
 {
-    var raw = await ReadJsonAsync<List<SourceElement>>(Path.Combine(sources, "elements.json"));
-
-    var records = raw.Select(element => new ElementRecord
+    var records = elements.Select(element => new ElementRecord
     {
         AtomicNumber = element.AtomicNumber,
         Symbol = element.Symbol,
@@ -90,7 +93,49 @@ async Task BuildSubstancesAsync()
 
 async Task<SubstanceRecord?> FetchSubstanceAsync(WantedSubstance wanted)
 {
-    var cid = await GetCidAsync(wanted.Name);
+    var found = await LookUpAsync(wanted.Name, wanted.Formula);
+
+    if (found is not { Verified: true } && wanted.Formula is not null)
+    {
+        found = await LookUpAsync(wanted.Formula, wanted.Formula) ?? found;
+    }
+
+    if (found is null)
+    {
+        return null;
+    }
+
+    if (!found.Verified)
+    {
+        Console.WriteLine($"      unverified: declared {wanted.Formula}, CID {found.Cid} is {found.Properties.Formula} - dropping its identity");
+    }
+
+    var sdf = found.Verified ? await GetTextAsync($"compound/cid/{found.Cid}/SDF?record_type=3d") : null;
+
+    return new SubstanceRecord
+    {
+        Formula = wanted.Formula ?? found.Properties.Formula,
+        Kind = wanted.Kind,
+        State = wanted.State,
+        IsOrganic = Chemistry.IsOrganic(wanted.Formula ?? found.Properties.Formula, wanted.Category),
+        MolecularWeight = found.Verified
+            ? found.Properties.MolecularWeight
+            : Chemistry.MolecularWeight(wanted.Formula!, atomicMasses),
+        Category = wanted.Category,
+        Structure = sdf is null ? null : ParseSdf(sdf),
+        PubChemCid = found.Verified ? found.Cid : null,
+        Translations = new Dictionary<string, SubstanceRecord.SubstanceText>
+        {
+            ["en"] = new(
+                Capitalize(wanted.Name), found.Verified ? found.Properties.IupacName : null,
+                null, null, null, null, null)
+        }
+    };
+}
+
+async Task<PubChemMatch?> LookUpAsync(string key, string? declared)
+{
+    var cid = await GetCidAsync(key);
 
     if (cid is null)
     {
@@ -99,30 +144,12 @@ async Task<SubstanceRecord?> FetchSubstanceAsync(WantedSubstance wanted)
 
     var properties = await GetPropertiesAsync(cid.Value);
 
-    if (properties is null)
-    {
-        return null;
-    }
-
-    var sdf = await GetTextAsync($"compound/cid/{cid}/SDF?record_type=3d");
-
-    return new SubstanceRecord
-    {
-        Formula = wanted.Formula ?? properties.Formula,
-        Kind = wanted.Kind,
-        State = wanted.State,
-        IsOrganic = Chemistry.IsOrganic(properties.Formula, wanted.Category),
-        MolecularWeight = properties.MolecularWeight,
-        Category = wanted.Category,
-        Structure = sdf is null ? null : ParseSdf(sdf),
-        PubChemCid = cid,
-        Translations = new Dictionary<string, SubstanceRecord.SubstanceText>
-        {
-            ["en"] = new(
-                Capitalize(wanted.Name), properties.IupacName,
-                null, null, null, null, null)
-        }
-    };
+    return properties is null
+        ? null
+        : new PubChemMatch(
+            cid.Value,
+            properties,
+            declared is null || Chemistry.SameComposition(declared, properties.Formula));
 }
 
 async Task BuildReactionsAsync()
@@ -313,6 +340,8 @@ internal sealed record WantedSubstance(string Name, string State, string Kind, s
 
 internal sealed record PubChemProperties(string Formula, decimal? MolecularWeight, string? IupacName);
 
+internal sealed record PubChemMatch(int Cid, PubChemProperties Properties, bool Verified);
+
 internal sealed record SourceElement(
     int AtomicNumber, string Symbol, string Name, decimal AtomicMass, string Category, int Period,
     int? Group, string? ElectronConfiguration, decimal? Electronegativity, decimal? MeltingPoint,
@@ -359,4 +388,18 @@ internal static class Chemistry
             && parsed.Value.CountOf(ElementSymbol.Create("C").Value) > 0
             && parsed.Value.CountOf(ElementSymbol.Create("H").Value) > 0;
     }
+
+    public static bool SameComposition(string declared, string reported)
+    {
+        var left = ChemicalFormula.Create(declared);
+        var right = ChemicalFormula.Create(reported);
+
+        return left.IsSuccess && right.IsSuccess && string.Equals(left.Value.Hill, right.Value.Hill, StringComparison.Ordinal);
+    }
+
+    public static decimal? MolecularWeight(string formula, IReadOnlyDictionary<string, decimal> atomicMasses) =>
+        FormulaParser.TryParse(formula, out var composition, out _)
+        && MolarMass.TryCompute(composition, atomicMasses, out var grams, out _)
+            ? decimal.Round(grams, 3)
+            : null;
 }

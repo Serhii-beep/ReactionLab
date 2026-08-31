@@ -6,8 +6,7 @@ public sealed class IonTable(
     IReadOnlyList<Ion> cations,
     IReadOnlyList<Ion> anions,
     IReadOnlyList<SolubilityRule> solubilityRules,
-    IReadOnlyList<string> thermallyStableCations,
-    IReadOnlyList<string> oxidizingAnions)
+    IonBehaviors behaviors)
 {
     public IReadOnlyList<Ion> Cations { get; } = cations;
 
@@ -118,9 +117,13 @@ public sealed class IonTable(
         return TryMatch(Cations, rest, hydroxides, out cation);
     }
 
-    public bool IsThermallyStable(Ion cation) => Holds(thermallyStableCations, cation.Formula);
+    public bool IsThermallyStable(Ion cation) => Holds(behaviors.ThermallyStableCations, cation.Formula);
 
-    public bool IsOxidizing(Ion anion) => Holds(oxidizingAnions, anion.Formula);
+    public bool IsOxidizing(Ion anion) => Holds(behaviors.OxidizingAnions, anion.Formula);
+
+    public bool IsUnstableAcid(Ion anion) => Holds(behaviors.UnstableAcidAnions, anion.Formula);
+
+    public bool Hydrolyzes(Ion anion) => Holds(behaviors.HydrolyzingAnions, anion.Formula);
 
     private static bool TryMatch(IReadOnlyList<Ion> known, string formula, int magnitude, out Ion found)
     {

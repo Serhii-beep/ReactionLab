@@ -65,8 +65,7 @@ public sealed class IonTableTests
             [new Ion("Na", 1)],
             [new Ion("Cl", -1)],
             [new SolubilityRule("onlyNitrates", Solubility.Soluble, Anions: ["NO3"])],
-            [],
-            []);
+            IonBehaviors.None);
 
         sparse.SolubilityOf(new Ion("Na", 1), new Ion("Cl", -1), out var rule)
             .ShouldBe(Solubility.Unknown);

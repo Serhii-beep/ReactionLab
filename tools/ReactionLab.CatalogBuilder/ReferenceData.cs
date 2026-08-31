@@ -8,6 +8,7 @@ internal static class ReferenceData
     public static IonTable ReadIons(string path)
     {
         var document = JsonDocument.Parse(File.ReadAllText(path)).RootElement;
+        var behaviors = document.GetProperty("behaviors");
 
         return new IonTable(
             Ions(document, "cations"),
@@ -18,8 +19,11 @@ internal static class ReferenceData
                 Optional(rule, "cations"),
                 Optional(rule, "anions"),
                 Optional(rule, "exceptCations")))],
-            Names(document, "thermallyStableCations"),
-            Names(document, "oxidizingAnions"));
+           new IonBehaviors(
+               Names(behaviors, "thermallyStableCations"),
+               Names(behaviors, "oxidizingAnions"),
+               Names(behaviors, "unstableAcidAnions"),
+               Names(behaviors, "hydrolyzingAnions")));
     }
 
     public static ActivitySeries ReadActivitySeries(string path)

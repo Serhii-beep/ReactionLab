@@ -20,7 +20,7 @@ hydrochloric acid | liquid | molecular | acid | HCl
 sulfuric acid | liquid | molecular | acid | H2SO4
 nitric acid | liquid | molecular | acid
 phosphoric acid | liquid | molecular | acid | H3PO4
-carbonic acid | liquid | molecular | acid | H2CO3
+carbonic acid | aqueous | molecular | acid | H2CO3
 acetic acid | liquid | molecular | organic-acid
 formic acid | liquid | molecular | organic-acid
 citric acid | solid | molecular | organic-acid
@@ -134,14 +134,14 @@ zinc | solid | metallic | element
 iron | solid | metallic | element
 copper | solid | metallic | element
 silver | solid | metallic | element
-aluminium | solid | metallic | element
+aluminum | solid | metallic | element
 carbon | solid | networkcovalent | element
 sulfur | solid | molecular | element
 
 # --- oxides and salts formed as products ---
 magnesium oxide | solid | ionic | oxide
 copper(II) oxide | solid | ionic | oxide
-aluminium oxide | solid | ionic | oxide
+aluminum oxide | solid | ionic | oxide
 magnesium chloride | solid | ionic | salt | MgCl2
 zinc chloride | solid | ionic | salt | ZnCl2
 ferric chloride | solid | ionic | salt | FeCl3
@@ -160,3 +160,78 @@ lead iodide | solid | ionic | salt | PbI2
 potassium iodide | solid | ionic | salt | KI
 ammonium nitrate | solid | ionic | salt | NH4NO3
 sodium acetate | solid | ionic | salt | CH3COONa
+
+# --- salts and oxides needed by generated reactions (5.2) ---
+lead | solid | metallic | element
+lithium chloride | solid | ionic | salt | LiCl
+aluminum chloride | solid | ionic | salt | AlCl3
+iron(II) chloride | solid | ionic | salt | FeCl2
+lead(II) chloride | solid | ionic | salt | PbCl2
+silver iodide | solid | ionic | salt | AgI
+lithium nitrate | solid | ionic | salt | LiNO3
+magnesium nitrate | solid | ionic | salt | Mg(NO3)2
+calcium nitrate | solid | ionic | salt | Ca(NO3)2
+barium nitrate | solid | ionic | salt | Ba(NO3)2
+zinc nitrate | solid | ionic | salt | Zn(NO3)2
+copper(II) nitrate | solid | ionic | salt | Cu(NO3)2
+iron(II) nitrate | solid | ionic | salt | Fe(NO3)2
+iron(III) nitrate | solid | ionic | salt | Fe(NO3)3
+aluminum nitrate | solid | ionic | salt | Al(NO3)3
+lithium sulfate | solid | ionic | salt | Li2SO4
+potassium sulfate | solid | ionic | salt | K2SO4
+silver sulfate | solid | ionic | salt | Ag2SO4
+lead(II) sulfate | solid | ionic | salt | PbSO4
+aluminum sulfate | solid | ionic | salt | Al2(SO4)3
+magnesium carbonate | solid | ionic | salt | MgCO3
+zinc carbonate | solid | ionic | salt | ZnCO3
+iron(II) carbonate | solid | ionic | salt | FeCO3
+copper(II) carbonate | solid | ionic | salt | CuCO3
+silver carbonate | solid | ionic | salt | Ag2CO3
+barium carbonate | solid | ionic | salt | BaCO3
+lead(II) carbonate | solid | ionic | salt | PbCO3
+sodium sulfide | solid | ionic | salt | Na2S
+potassium sulfide | solid | ionic | salt | K2S
+dilithium sulfide | solid | ionic | salt | Li2S
+magnesium sulfide | solid | ionic | salt | MgS
+calcium sulfide | solid | ionic | salt | CaS
+zinc sulfide | solid | ionic | salt | ZnS
+iron(II) sulfide | solid | ionic | salt | FeS
+copper(II) sulfide | solid | ionic | salt | CuS
+silver sulfide | solid | ionic | salt | Ag2S
+aluminum sulfide | solid | ionic | salt | Al2S3
+sodium phosphate | solid | ionic | salt | Na3PO4
+potassium phosphate | solid | ionic | salt | K3PO4
+lithium phosphate | solid | ionic | salt | Li3PO4
+magnesium phosphate | solid | ionic | salt | Mg3(PO4)2
+calcium phosphate | solid | ionic | salt | Ca3(PO4)2
+zinc phosphate | solid | ionic | salt | Zn3(PO4)2
+iron(II) phosphate | solid | ionic | salt | Fe3(PO4)2
+aluminum phosphate | solid | ionic | salt | AlPO4
+lithium nitride | solid | ionic | salt | Li3N
+magnesium nitride | solid | ionic | salt | Mg3N2
+calcium nitride | solid | ionic | salt | Ca3N2
+zinc nitride | solid | ionic | salt | Zn3N2
+aluminum nitride | solid | ionic | salt | AlN
+lithium hydroxide | solid | ionic | base | LiOH
+copper(II) hydroxide | solid | ionic | base | Cu(OH)2
+zinc hydroxide | solid | ionic | base | Zn(OH)2
+iron(II) hydroxide | solid | ionic | base | Fe(OH)2
+ferric hydroxide | solid | ionic | base | Fe(OH)3
+lead(II) hydroxide | solid | ionic | base | Pb(OH)2
+lithium oxide | solid | ionic | oxide | Li2O
+potassium oxide | solid | ionic | oxide | K2O
+iron(II) oxide | solid | ionic | oxide | FeO
+silver oxide | solid | ionic | oxide | Ag2O
+aluminum hydroxide | solid | ionic | base | Al(OH)3
+copper(II) phosphate | solid | ionic | salt | Cu3(PO4)2
+barium phosphate | solid | ionic | salt | Ba3(PO4)2
+lead(II) phosphate | solid | ionic | salt | Pb3(PO4)2
+silver phosphate | solid | ionic | salt | Ag3PO4
+ferric phosphate | solid | ionic | salt | FePO4
+barium sulfide | solid | ionic | salt | BaS
+lead(II) sulfide | solid | ionic | salt | PbS
+ferric sulfide | solid | ionic | salt | Fe2S3
+barium oxide | solid | ionic | oxide | BaO
+lead(II) oxide | solid | ionic | oxide | PbO
+barium hydroxide | solid | ionic | base | Ba(OH)2
+ferric sulfate | solid | ionic | salt | Fe2(SO4)3
