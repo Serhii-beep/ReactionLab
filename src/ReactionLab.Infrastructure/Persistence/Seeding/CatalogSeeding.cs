@@ -9,5 +9,6 @@ public static class CatalogSeeding
         await using var scope = services.CreateAsyncScope();
 
         await scope.ServiceProvider.GetRequiredService<CatalogSeeder>().SeedAsync(cancellationToken);
+        await scope.ServiceProvider.GetRequiredService<ReferenceSeeder>().SeedAsync(cancellationToken);
     }
 }

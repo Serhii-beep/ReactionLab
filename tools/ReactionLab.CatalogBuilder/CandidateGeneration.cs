@@ -12,13 +12,14 @@ internal static class CandidateGeneration
     public static void Run(string root)
     {
         var sources = Path.Combine(root, "data", "sources");
-        var table = ReferenceData.ReadIons(Path.Combine(sources, "ions.json"));
-        var series = ReferenceData.ReadActivitySeries(Path.Combine(sources, "activity-series.json"));
+        var reference = Path.Combine(sources, "reference");
+        var table = ReferenceData.ReadIons(Path.Combine(reference, "ions.json"));
+        var series = ReferenceData.ReadActivitySeries(Path.Combine(reference, "activity-series.json"));
 
         var catalog = Path.Combine(root, "data", "catalog", "v1", "substances.jsonl");
         var substances = ReadSubstances(catalog);
 
-        var thermodynamics = Path.Combine(sources, "thermodynamics.json");
+        var thermodynamics = Path.Combine(reference, "thermodynamics.json");
 
         var generator = new ReactionGenerator(
             new ReactionPredictor(

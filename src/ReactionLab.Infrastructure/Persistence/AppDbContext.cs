@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using ReactionLab.Application.Common.Abstractions;
 using ReactionLab.Domain.Elements;
 using ReactionLab.Domain.Reactions;
+using ReactionLab.Domain.Reference;
 using ReactionLab.Domain.Substances;
 
 namespace ReactionLab.Infrastructure.Persistence;
@@ -14,6 +15,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<Substance> Substances => Set<Substance>();
 
     public DbSet<Reaction> Reactions => Set<Reaction>();
+
+    public DbSet<ChemistryReference> ChemistryReferences => Set<ChemistryReference>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) =>
         optionsBuilder.UseSnakeCaseNamingConvention();

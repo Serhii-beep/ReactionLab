@@ -25,6 +25,7 @@ internal static class ReactionQueries
                 reaction.Energetics,
                 reaction.Conditions,
                 reaction.Visualization,
+                reaction.Provenance,
                 reaction.Translations,
                 reaction.Tags,
                 Participants = reaction.Participants
@@ -67,7 +68,9 @@ internal static class ReactionQueries
             row.Conditions.Catalyst,
             row.Visualization.PresetKey,
             row.Visualization.DurationMilliseconds,
-            row.Tags);
+            row.Tags,
+            row.Provenance.Rule,
+            row.Provenance.Confidence);
     }
 
     public static async Task<IReadOnlyList<ReactionSummaryResponse>> SummariesAsync(

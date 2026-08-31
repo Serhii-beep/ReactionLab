@@ -14,4 +14,9 @@ internal static class ResultExtensions
         result.IsSuccess
             ? Results.Created(location(result.Value), result.Value)
             : new ErrorResult(result.Error);
+
+    public static IResult ToRawJsonResult(this Result<string> result) =>
+        result.IsSuccess
+            ? Results.Text(result.Value, "application/json")
+            : new ErrorResult(result.Error);
 }

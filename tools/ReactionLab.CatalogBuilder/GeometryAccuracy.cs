@@ -11,7 +11,7 @@ internal static class GeometryAccuracy
 
     public static void Run(string root)
     {
-        var table = ReferenceData.ReadAtomicGeometry(Path.Combine(root, "data", "sources", "atomic-geometry.json"));
+        var table = ReferenceData.ReadAtomicGeometry(Path.Combine(root, "data", "sources", "reference", "atomic-geometry.json"));
 
         var rigid = new List<(string Formula, double Deviation)>();
         var flexible = new List<(string Formula, double Deviation)>();

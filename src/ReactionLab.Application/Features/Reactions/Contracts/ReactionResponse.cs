@@ -22,4 +22,6 @@ public sealed record ReactionResponse(
     string? Catalyst,
     string? EffectPresetKey,
     int? AnimationDurationMilliseconds,
-    IReadOnlyList<string> Tags);
+    IReadOnlyList<string> Tags,
+    string Rule,
+    decimal Confidence);

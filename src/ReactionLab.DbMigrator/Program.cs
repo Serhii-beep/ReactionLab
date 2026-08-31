@@ -8,6 +8,7 @@ var builder = Host.CreateApplicationBuilder(args);
 
 builder.AddServiceDefaults();
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddCatalogSeeding();
 builder.Services.AddHostedService<MigrationWorker>();
 builder.Services.AddHostedService<SeedWorker>();
 

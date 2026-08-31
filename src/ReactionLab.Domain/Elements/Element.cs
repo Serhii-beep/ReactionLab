@@ -14,10 +14,6 @@ public sealed class Element : AggregateRoot<ElementId>
         "Element.FBlockCannotHaveGroup",
         "Lanthanides and actinides are not assigned a periodic group.");
 
-    public static readonly Error BoilingPointBelowMeltingPoint = Error.Validation(
-        "Element.BoilingPointBelowMeltingPoint",
-        "Boiling point cannot be lower than melting point.");
-
     private Translations<ElementContent> _translations = null!;
 
     private Element(
@@ -126,12 +122,6 @@ public sealed class Element : AggregateRoot<ElementId>
         Temperature? meltingPoint,
         Temperature? boilingPoint)
     {
-        if (meltingPoint is not null && boilingPoint is not null
-            && boilingPoint.Kelvin < meltingPoint.Kelvin)
-        {
-            return Result.Failure(BoilingPointBelowMeltingPoint);
-        }
-
         Electronegativity = electronegativity;
         Radii = radii;
         MeltingPoint = meltingPoint;

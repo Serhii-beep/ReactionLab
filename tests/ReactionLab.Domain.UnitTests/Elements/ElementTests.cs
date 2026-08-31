@@ -44,19 +44,20 @@ public sealed class ElementTests
     }
 
     [Fact]
-    public void DescribePhysicalProperties_RejectsBoilingPointBelowMeltingPoint()
+    public void DescribePhysicalProperties_KeepsBothTemperaturesWhenAnElementSublimes()
     {
         var element = CreateElement().Value;
 
         var result = element.DescribePhysicalProperties(
-            electronegativity: null,
+            electronegativity: Electronegativity.Create(2.18m).Value,
             radii: null,
-            meltingPoint: Temperature.FromKelvin(500).Value,
-            boilingPoint: Temperature.FromKelvin(400).Value);
+            meltingPoint: Temperature.FromKelvin(1090).Value,
+            boilingPoint: Temperature.FromKelvin(887).Value);
 
-        result.IsFailure.ShouldBeTrue();
-        result.Error.ShouldBe(Element.BoilingPointBelowMeltingPoint);
-        element.MeltingPoint.ShouldBeNull();
+        result.IsSuccess.ShouldBeTrue();
+        element.MeltingPoint!.Kelvin.ShouldBe(1090);
+        element.BoilingPoint!.Kelvin.ShouldBe(887);
+        element.Electronegativity!.Pauling.ShouldBe(2.18m);
     }
 
     [Fact]

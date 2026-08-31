@@ -39,5 +39,6 @@ var api = app.MapGroup("/api/v1");
 api.MapElementEndpoints();
 api.MapSubstanceEndpoints();
 api.MapReactionEndpoints();
+api.MapChemistryEndpoints();
 
 await app.RunAsync();

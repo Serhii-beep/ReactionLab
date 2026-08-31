@@ -22,6 +22,8 @@ public static class CacheKeys
     public static string Reaction(Guid id, SupportedLocale locale) =>
         $"reaction:{id}:{locale.Code}";
 
+    public const string ChemistryReference = "chemistry:reference";
+
     public static string ReactionList(
         string? search,
         IReadOnlyCollection<Guid>? availableSubstanceIds,

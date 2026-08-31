@@ -7,4 +7,6 @@ public static class CacheTags
     public const string Substances = "substances";
 
     public const string Reactions = "reactions";
+
+    public const string ChemistryReference = "chemistry-reference";
 }

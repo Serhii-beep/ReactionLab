@@ -39,9 +39,6 @@ public static class DependencyInjection
 
         services.AddHealthChecks().AddDbContextCheck<AppDbContext>("database");
 
-        services.AddScoped<ICatalogSource, JsonCatalogSource>();
-        services.AddScoped<CatalogSeeder>();
-
         services.AddSingleton<ICatalogSearch, TrigramCatalogSearch>();
         services.AddSingleton<IReactionMatching, ReactantSignatureMatching>();
 
@@ -63,6 +60,15 @@ public static class DependencyInjection
         }
 
         services.AddHybridCache();
+
+        return services;
+    }
+
+    public static IServiceCollection AddCatalogSeeding(this IServiceCollection services)
+    {
+        services.AddScoped<ICatalogSource, JsonCatalogSource>();
+        services.AddScoped<CatalogSeeder>();
+        services.AddScoped<ReferenceSeeder>();
 
         return services;
     }

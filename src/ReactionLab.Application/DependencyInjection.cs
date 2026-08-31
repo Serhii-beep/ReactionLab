@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using ReactionLab.Application.Common.Caching;
+using ReactionLab.Application.Features.Chemistry.GetChemistryReference;
 using ReactionLab.Application.Features.Elements.GetElementById;
 using ReactionLab.Application.Features.Elements.GetElementBySymbol;
 using ReactionLab.Application.Features.Elements.ListElements;
@@ -20,6 +21,7 @@ public static class DependencyInjection
         services.AddElementHandlers();
         services.AddSubstanceHandlers();
         services.AddReactionHandlers();
+        services.AddChemistryHandlers();
 
         return services;
     }
@@ -46,6 +48,13 @@ public static class DependencyInjection
     {
         services.AddScoped<ListReactionsHandler>();
         services.AddScoped<GetReactionByIdHandler>();
+
+        return services;
+    }
+
+    private static IServiceCollection AddChemistryHandlers(this IServiceCollection services)
+    {
+        services.AddScoped<GetChemistryReferenceHandler>();
 
         return services;
     }

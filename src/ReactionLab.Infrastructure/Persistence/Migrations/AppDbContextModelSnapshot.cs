@@ -281,6 +281,41 @@ namespace ReactionLab.Infrastructure.Persistence.Migrations
                     b.ToTable("reactions", (string)null);
                 });
 
+            modelBuilder.Entity("ReactionLab.Domain.Reference.ChemistryReference", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("key");
+
+                    b.Property<string>("Payload")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("payload");
+
+                    b.Property<DateTimeOffset>("created_at")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset>("updated_at")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_chemistry_reference");
+
+                    b.HasIndex("Key")
+                        .IsUnique()
+                        .HasDatabaseName("ix_chemistry_reference_key");
+
+                    b.ToTable("chemistry_reference", (string)null);
+                });
+
             modelBuilder.Entity("ReactionLab.Domain.Substances.Substance", b =>
                 {
                     b.Property<Guid>("Id")

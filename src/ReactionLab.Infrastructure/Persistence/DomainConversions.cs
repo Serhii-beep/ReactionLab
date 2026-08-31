@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using ReactionLab.Domain.Elements;
 using ReactionLab.Domain.Enums;
 using ReactionLab.Domain.Reactions;
+using ReactionLab.Domain.Reference;
 using ReactionLab.Domain.SharedKernel;
 using ReactionLab.Domain.Substances;
 using ReactionLab.Infrastructure.Persistence.Converters;
@@ -16,6 +17,7 @@ internal static class DomainConversions
         builder.Properties<SubstanceId>().HaveConversion<StronglyTypedIdConverter<SubstanceId>>();
         builder.Properties<ReactionId>().HaveConversion<StronglyTypedIdConverter<ReactionId>>();
         builder.Properties<ReactionParticipantId>().HaveConversion<StronglyTypedIdConverter<ReactionParticipantId>>();
+        builder.Properties<ChemistryReferenceId>().HaveConversion<StronglyTypedIdConverter<ChemistryReferenceId>>();
 
         builder.Properties<ElementSymbol>().HaveConversion<ElementSymbolConverter>().HaveMaxLength(3);
         builder.Properties<AtomicNumber>().HaveConversion<AtomicNumberConverter>();
@@ -28,6 +30,7 @@ internal static class DomainConversions
         builder.Properties<ChemicalFormula>().HaveConversion<ChemicalFormulaConverter>().HaveMaxLength(ChemicalFormula.MaximumLength);
         builder.Properties<MolecularWeight>().HaveConversion<MolecularWeightConverter>().HavePrecision(12, 5);
         builder.Properties<DifficultyLevel>().HaveConversion<DifficultyLevelConverter>();
+        builder.Properties<ReferenceKey>().HaveConversion<ReferenceKeyConverter>().HaveMaxLength(ReferenceKey.MaximumLength);
 
         builder.Properties<ElementCategory>().HaveConversion<string>().HaveMaxLength(40);
         builder.Properties<MatterState>().HaveConversion<string>().HaveMaxLength(20);

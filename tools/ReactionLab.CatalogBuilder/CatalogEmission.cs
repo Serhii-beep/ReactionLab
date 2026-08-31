@@ -40,7 +40,7 @@ internal static class CatalogEmission
                 continue;
             }
 
-            records.Add(Generated(candidate, naming));
+            records.Add(Generated(candidate, naming, substances));
             taken.Add(candidate.Signature);
         }
 
@@ -61,7 +61,7 @@ internal static class CatalogEmission
         Console.WriteLine($"reactions: {ordered.Count} written to {output}");
     }
 
-    private static ReactionRecord Generated(Candidate candidate, ReactionNaming naming)
+    private static ReactionRecord Generated(Candidate candidate, ReactionNaming naming, IReadOnlyDictionary<string, string> substances)
     {
         var name = naming.Name(candidate);
 
@@ -82,9 +82,9 @@ internal static class CatalogEmission
             Participants =
             [
                 .. candidate.Reactants.Select(p => new ReactionRecord.ParticipantRecord(
-                    p.Formula, "Reactant", p.Coefficient, p.Phase, null)),
+                    p.Formula, "Reactant", p.Coefficient, p.Phase, Named(substances, p.Formula))),
                 .. candidate.Products.Select(p => new ReactionRecord.ParticipantRecord(
-                    p.Formula, "Product", p.Coefficient, p.Phase, null))
+                    p.Formula, "Product", p.Coefficient, p.Phase, Named(substances, p.Formula)))
             ],
             Translations = new Dictionary<string, ReactionRecord.ReactionText>
             {
@@ -165,4 +165,7 @@ internal static class CatalogEmission
             '-',
             new string([.. value.Select(c => char.IsLetterOrDigit(c) ? char.ToLowerInvariant(c) : ' ')])
                 .Split(' ', StringSplitOptions.RemoveEmptyEntries));
+
+    private static string? Named(IReadOnlyDictionary<string, string> substances, string formula) =>
+        substances.TryGetValue(formula, out var name) ? name : null;
 }
