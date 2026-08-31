@@ -1,9 +1,13 @@
 using ReactionLab.Chemistry.Balancing;
 using ReactionLab.Chemistry.Prediction;
+using ReactionLab.Chemistry.Thermochemistry;
 
 namespace ReactionLab.Chemistry.Generation;
 
-public sealed class ReactionGenerator(ReactionPredictor predictor)
+public sealed class ReactionGenerator(
+    ReactionPredictor predictor,
+    PhaseResolution phases,
+    EnergyEstimator energetics)
 {
     public IReadOnlyList<GeneratedReaction> From(IReadOnlyList<Reagent> substances)
     {
@@ -43,7 +47,7 @@ public sealed class ReactionGenerator(ReactionPredictor predictor)
         }
     }
 
-    private static bool TryBalance(
+    private bool TryBalance(
         PredictedReaction prediction, IReadOnlyList<Reagent> bag, out GeneratedReaction generated)
     {
         generated = null!;
@@ -70,14 +74,32 @@ public sealed class ReactionGenerator(ReactionPredictor predictor)
             return false;
         }
 
+        var reactantFormulas = reactants.Select(reactant => reactant.Formula).ToList();
+        var productFormulas = products.Select(product => product.Formula).ToList();
+
+        var placed = phases.TryResolve(
+            prediction.Rule, reactantFormulas, productFormulas, out var assignment);
+
+        decimal? enthalpy = null;
+        decimal? activation = null;
+
+        if (placed && energetics.TryEstimate(
+            prediction.Rule, balanced, assignment, reactantFormulas, productFormulas, out var computedEnthalpy, out var computedActivation))
+        {
+            enthalpy = computedEnthalpy;
+            activation = computedActivation;
+        }
+
         generated = new GeneratedReaction(
             [.. reactants.Select((reactant, index) =>
-                new GeneratedParticipant(reactant.Formula, balanced.ReactantCoefficients[index]))],
+                new GeneratedParticipant(reactant.Formula, balanced.ReactantCoefficients[index], assignment?.Reactants[index]))],
             [.. products.Select((product, index) =>
-                new GeneratedParticipant(product.Formula, balanced.ProductCoefficients[index]))],
+                new GeneratedParticipant(product.Formula, balanced.ProductCoefficients[index], assignment?.Products[index]))],
             prediction.Rule,
             prediction.Confidence,
-            prediction.MinimumKelvin);
+            prediction.MinimumKelvin,
+            enthalpy,
+            activation);
 
         return true;
     }

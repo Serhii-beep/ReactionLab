@@ -64,7 +64,7 @@
         { "MoleculeFormula": "O2", "Role": "Product", "Coefficient": 1, "State": "Gas" } ] },
 
     { "Name": "Decomposition of Hydrogen Peroxide", "ReactionType": "Decomposition", "DifficultyLevel": 1,
-      "EnthalpyChange": -196.0, "ActivationEnergy": 75, "CatalystInfo": "Manganese(IV) oxide",
+      "EnthalpyChange": -189.2, "ActivationEnergy": 75, "CatalystInfo": "Manganese(IV) oxide",
       "EffectPreset": "foaming-gas", "AnimationDurationMs": 3000,
       "Description": "Hydrogen peroxide breaks down into water and oxygen. A catalyst makes it dramatically fast.",
       "RealWorldExamples": ["Elephant's toothpaste", "Catalase in living cells"],
@@ -85,7 +85,7 @@
         { "MoleculeFormula": "CO2", "Role": "Product", "Coefficient": 1, "State": "Gas" } ] },
 
     { "Name": "Thermal Decomposition of Sodium Bicarbonate", "ReactionType": "Decomposition", "DifficultyLevel": 2,
-      "EnthalpyChange": 91.6, "RequiredTemperature": 473, "EffectPreset": "gentle-gas", "AnimationDurationMs": 3000,
+      "EnthalpyChange": 135.6, "RequiredTemperature": 473, "EffectPreset": "gentle-gas", "AnimationDurationMs": 3000,
       "Description": "Baking soda decomposes on heating, releasing carbon dioxide that raises a cake.",
       "RealWorldExamples": ["Baking", "Dry powder fire extinguishers"],
       "Tags": ["decomposition", "endothermic", "beginner"],
@@ -284,7 +284,7 @@
         { "MoleculeFormula": "NaCl", "Role": "Product", "Coefficient": 2, "State": "Aqueous" } ] },
 
     { "Name": "Cellular Respiration", "ReactionType": "Combustion", "DifficultyLevel": 3,
-      "EnthalpyChange": -2802.5, "EffectPreset": "gentle-glow", "AnimationDurationMs": 5000,
+      "EnthalpyChange": -2812.7, "EffectPreset": "gentle-glow", "AnimationDurationMs": 5000,
       "Description": "Glucose is oxidised to carbon dioxide and water, releasing the energy that powers every cell. Chemically this is combustion, run slowly in many small steps.",
       "RealWorldExamples": ["Every living cell", "Breathing"],
       "Tags": ["combustion", "exothermic", "biology"],
@@ -296,7 +296,7 @@
         { "MoleculeFormula": "H2O", "Role": "Product", "Coefficient": 6, "State": "Liquid" } ] },
 
     { "Name": "Photosynthesis", "ReactionType": "Synthesis", "DifficultyLevel": 3,
-      "EnthalpyChange": 2802.5, "EffectPreset": "sunlight-absorption", "AnimationDurationMs": 5000,
+      "EnthalpyChange": 2812.7, "EffectPreset": "sunlight-absorption", "AnimationDurationMs": 5000,
       "Description": "Plants run respiration backwards, using light rather than heat to drive the most endothermic reaction most students ever meet.",
       "RealWorldExamples": ["Every green plant", "The origin of atmospheric oxygen"],
       "Tags": ["synthesis", "endothermic", "biology"],

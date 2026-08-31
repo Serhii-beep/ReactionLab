@@ -1,6 +1,7 @@
 using ReactionLab.Chemistry.Generation;
 using ReactionLab.Chemistry.Prediction;
 using ReactionLab.Chemistry.Prediction.Rules;
+using ReactionLab.Chemistry.Thermochemistry;
 using ReactionLab.Chemistry.UnitTests.Ions;
 using Shouldly;
 using Xunit;
@@ -9,6 +10,18 @@ namespace ReactionLab.Chemistry.UnitTests.Generation;
 
 public sealed class ReactionGeneratorTests
 {
+    private static readonly EnergyEstimator Energetics = new(
+        new StandardStateTable(
+            [
+                new("CH4", Phase.Gas, -74.6m),
+                new("O2", Phase.Gas, 0m),
+                new("CO2", Phase.Gas, -393.5m),
+                new("H2O", Phase.Liquid, -285.8m)
+            ],
+            [],
+            TestIons.Table),
+        [new("combustion", 240m, 0.10m, 120m)]);
+
     [Fact]
     public void From_FindsReactionsOfOneReactantAndOfTwo()
     {
@@ -52,14 +65,14 @@ public sealed class ReactionGeneratorTests
     [Fact]
     public void From_DropsWhatTheBalancerRefuses()
     {
-        var generator = new ReactionGenerator(new ReactionPredictor([new ImpossibleRule()]));
+        var generator = new ReactionGenerator(new ReactionPredictor([new ImpossibleRule()]), new PhaseResolution(TestIons.Table, TestIons.StandardStates), Energetics);
 
         generator.From(Species.Reagents("H2 O2")).ShouldBeEmpty();
     }
 
     [Fact]
     public void From_FindsNothingInAnEmptyCatalogue() =>
-        new ReactionGenerator(new ReactionPredictor([new CombustionRule()])).From([]).ShouldBeEmpty();
+        new ReactionGenerator(new ReactionPredictor([new CombustionRule()]), new PhaseResolution(TestIons.Table, TestIons.StandardStates), Energetics).From([]).ShouldBeEmpty();
 
     private static IReadOnlyList<GeneratedReaction> Generated(string substances) =>
         new ReactionGenerator(new ReactionPredictor(
@@ -70,7 +83,7 @@ public sealed class ReactionGeneratorTests
             new SingleReplacementRule(TestIons.Series, TestIons.Table),
             new SynthesisRule(TestIons.Series, TestIons.Table),
             new DecompositionRule(TestIons.Table)
-        ])).From(Species.Reagents(substances));
+        ]), new PhaseResolution(TestIons.Table, TestIons.StandardStates), Energetics).From(Species.Reagents(substances));
 
     private sealed class ImpossibleRule : IReactionRule
     {

@@ -7,13 +7,17 @@ public sealed class GeneratedReaction
         IReadOnlyList<GeneratedParticipant> products,
         string rule,
         decimal confidence,
-        decimal? minimumKelvin)
+        decimal? minimumKelvin,
+        decimal? enthalpyKjPerMol,
+        decimal? activationEnergyKjPerMol)
     {
         Reactants = reactants;
         Products = products;
         Rule = rule;
         Confidence = confidence;
         MinimumKelvin = minimumKelvin;
+        EnthalpyKjPerMol = enthalpyKjPerMol;
+        ActivationEnergyKjPerMol = activationEnergyKjPerMol;
         Signature = Canonical(reactants) + " -> " + Canonical(products);
     }
 
@@ -26,6 +30,10 @@ public sealed class GeneratedReaction
     public decimal Confidence { get; }
 
     public decimal? MinimumKelvin { get; }
+
+    public decimal? EnthalpyKjPerMol { get; }
+
+    public decimal? ActivationEnergyKjPerMol { get; }
 
     public string Signature { get; }
 

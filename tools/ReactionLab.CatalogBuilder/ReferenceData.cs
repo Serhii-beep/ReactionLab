@@ -1,5 +1,6 @@
 using System.Text.Json;
 using ReactionLab.Chemistry.Ions;
+using ReactionLab.Chemistry.Thermochemistry;
 
 namespace ReactionLab.CatalogBuilder;
 
@@ -7,7 +8,7 @@ internal static class ReferenceData
 {
     public static IonTable ReadIons(string path)
     {
-        var document = JsonDocument.Parse(File.ReadAllText(path)).RootElement;
+        var document = Document(path);
         var behaviors = document.GetProperty("behaviors");
 
         return new IonTable(
@@ -28,7 +29,7 @@ internal static class ReferenceData
 
     public static ActivitySeries ReadActivitySeries(string path)
     {
-        var document = JsonDocument.Parse(File.ReadAllText(path)).RootElement;
+        var document = Document(path);
 
         return new ActivitySeries(
         [
@@ -38,6 +39,30 @@ internal static class ReferenceData
                 Enum.Parse<WaterReactivity>(metal.GetProperty("water").GetString()!)))
         ]);
     }
+
+    public static List<SpeciesEnthalpy> ReadSpeciesEnthalpy(string path) =>
+    [
+        .. Document(path).GetProperty("species").EnumerateArray().Select(entry => new SpeciesEnthalpy(
+            entry.GetProperty("formula").GetString()!,
+            Enum.Parse<Phase>(entry.GetProperty("phase").GetString()!),
+            entry.GetProperty("enthalpy").GetDecimal()))
+    ];
+
+    public static List<AqueousIon> ReadAqueousIons(string path) =>
+    [
+        .. Document(path).GetProperty("aqueousIons").EnumerateArray().Select(entry => new AqueousIon(
+            new Ion(entry.GetProperty("formula").GetString()!, entry.GetProperty("charge").GetInt32()),
+            entry.GetProperty("enthalpy").GetDecimal()))
+    ];
+
+    public static List<ActivationBarrier> ReadBarriers(string path) =>
+    [
+        .. Document(path).GetProperty("barriers").EnumerateArray().Select(entry => new ActivationBarrier(
+            entry.GetProperty("family").GetString()!,
+            entry.GetProperty("intrinsic").GetDecimal(),
+            entry.GetProperty("transfer").GetDecimal(),
+            entry.GetProperty("minimum").GetDecimal()))
+    ];
 
     private static List<Ion> Ions(JsonElement document, string name) =>
     [
@@ -55,4 +80,7 @@ internal static class ReferenceData
         rule.TryGetProperty(name, out var array)
             ? [.. array.EnumerateArray().Select(value => value.GetString()!)]
             : null;
+
+    private static JsonElement Document(string path) =>
+        JsonDocument.Parse(File.ReadAllText(path)).RootElement;
 }

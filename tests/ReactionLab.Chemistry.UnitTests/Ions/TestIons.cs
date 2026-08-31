@@ -1,4 +1,5 @@
 using ReactionLab.Chemistry.Ions;
+using ReactionLab.Chemistry.Thermochemistry;
 
 namespace ReactionLab.Chemistry.UnitTests.Ions;
 
@@ -49,4 +50,36 @@ internal static class TestIons
         new("Ag", 1, WaterReactivity.None),
         new("Au", 3, WaterReactivity.None),
     ]);
+
+    public static IReadOnlyDictionary<string, Phase> StandardStates { get; } = new Dictionary<string, Phase>(StringComparer.Ordinal)
+    {
+        ["H2"] = Phase.Gas,
+        ["O2"] = Phase.Gas,
+        ["N2"] = Phase.Gas,
+        ["Cl2"] = Phase.Gas,
+        ["CO2"] = Phase.Gas,
+        ["CO"] = Phase.Gas,
+        ["SO2"] = Phase.Gas,
+        ["H2O"] = Phase.Liquid,
+        ["HCl"] = Phase.Liquid,
+        ["CH4"] = Phase.Gas,
+        ["C2H6O"] = Phase.Liquid,
+        ["C"] = Phase.Solid,
+        ["S"] = Phase.Solid,
+        ["Na"] = Phase.Solid,
+        ["K"] = Phase.Solid,
+        ["Mg"] = Phase.Solid,
+        ["Ca"] = Phase.Solid,
+        ["Zn"] = Phase.Solid,
+        ["Fe"] = Phase.Solid,
+        ["Cu"] = Phase.Solid,
+        ["Ag"] = Phase.Solid,
+        ["Al"] = Phase.Solid,
+        ["MgO"] = Phase.Solid,
+        ["CaO"] = Phase.Solid,
+        ["CaCO3"] = Phase.Solid,
+        ["Na2CO3"] = Phase.Solid,
+        ["NaHCO3"] = Phase.Solid,
+        ["Ca(OH)2"] = Phase.Solid
+    };
 }
