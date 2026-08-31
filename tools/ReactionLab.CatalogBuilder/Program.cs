@@ -2,11 +2,18 @@ using System.Globalization;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
+using ReactionLab.CatalogBuilder;
 using ReactionLab.Domain.Elements;
 using ReactionLab.Domain.Substances;
 using ReactionLab.Infrastructure.Persistence.Seeding.Catalog;
 
 var root = FindRepositoryRoot();
+
+if (args.Contains("generate", StringComparer.OrdinalIgnoreCase))
+{
+    CandidateGeneration.Run(root);
+    return;
+}
 
 var sources = Path.Combine(root, "data", "sources");
 var output = Path.Combine(root, "data", "catalog", "v1");

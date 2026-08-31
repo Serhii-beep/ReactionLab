@@ -79,6 +79,10 @@ public sealed class SingleReplacementRuleTests
         }
     }
 
+    [Fact]
+    public void Predict_WillNotTakeAMetalOutOfASaltThatDoesNotDissolve() =>
+        Predictions("Cu AgCl").ShouldBeEmpty();
+
     private static IReadOnlyList<PredictedReaction> Predictions(string reactants) =>
         new ReactionPredictor([new SingleReplacementRule(TestIons.Series, TestIons.Table)])
             .Predict(Species.Reagents(reactants));

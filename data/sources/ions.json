@@ -52,6 +52,7 @@
       { "code": "halides", "solubility": "Soluble", "anions": ["Cl", "Br", "I"], "exceptCations": ["Ag", "Pb"] },
       { "code": "sulfates", "solubility": "Soluble", "anions": ["SO4"], "exceptCations": ["Ba", "Pb", "Ca", "Sr", "Ag"] },
       { "code": "hydroxides", "solubility": "Insoluble", "anions": ["OH"], "exceptCations": ["Ba", "Sr"] },
+      { "code": "permanganatesAndHydrogencarbonates", "solubility": "Soluble", "anions": ["MnO4", "HCO3"] },
       { "code": "carbonatesAndTheRest", "solubility": "Insoluble" }
     ]
   }

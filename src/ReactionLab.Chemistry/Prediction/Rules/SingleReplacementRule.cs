@@ -50,6 +50,7 @@ public sealed class SingleReplacementRule(ActivitySeries series, IonTable table)
         }
 
         return table.TrySplit(other.Formula, out var cation, out var saltAnion)
+            && table.SolubilityOf(cation, saltAnion, out _) == Solubility.Soluble
             && series.Displaces(metal.Symbol, cation.Formula)
                 ? [Displacement(
                     metalIndex, metal, otherIndex, saltAnion.Formula, saltAnion.Magnitude, cation.Formula, "metalAndSalt", 0.85m)]
