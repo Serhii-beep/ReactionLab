@@ -1,11 +1,11 @@
-import { Component, signal } from '@angular/core';
-import { RouterLink, RouterOutlet } from '@angular/router';
+import { Component } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
+import { TranslocoDirective } from '@jsverse/transloco';
 
 @Component({
+  imports: [RouterOutlet, TranslocoDirective],
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink],
+  styleUrl: './app.scss',
   templateUrl: './app.html',
-  styleUrl: './app.scss'
 })
-export class App {
-}
+export class App {}

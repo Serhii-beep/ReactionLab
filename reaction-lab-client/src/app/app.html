@@ -1,11 +1,9 @@
-<div class="app-container">
-  <header class="app-header">
-    <h1>Reaction Lab</h1>
-    <nav>
-      <a routerLink="/laboratory">Laboratory</a>
-    </nav>
-  </header>
-  <main class="app-main">
-    <router-outlet />
-  </main>
-</div>
+<header class="app-header">
+  <ng-container *transloco="let t; read: 'app'">
+    <h1>{{ t('title') }}</h1>
+  </ng-container>
+</header>
+
+<main class="app-main">
+  <router-outlet />
+</main>

@@ -1,99 +1,20 @@
-@use './styles/tokens';
-@use './styles/mixins';
-
-// RESET & BASE
-
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
-  margin: 0;
-  padding: 0;
 }
 
-html, body {
+html,
+body {
   height: 100%;
-  font-family: var(--font-sans);
-  font-size: var(--text-md);
-  line-height: var(--leading-normal);
-  color: var(--color-text-primary);
-  background: var(--color-bg-base);
+  margin: 0;
+  font-family: 'Inter Variable', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
-// TYPOGRAPHY
-
-h1, h2, h3, h4, h5, h6 {
-  @include mixins.text-heading;
-}
-
-h1 {
-  font-size: var(--text-2xl);
-}
-
-h2 {
-  font-size: var(--text-xl);
-}
-
-h3 {
-  font-size: var(--text-lg);
-}
-
-h4 {
-  font-size: var(--text-md);
-}
-
-a {
-  color: var(--color-primary);
-  text-decoration: none;
-  transition: color var(--transition-fast);
-
-  &:hover {
-    color: var(--color-primary-hover);
-  }
-}
-
-// FOCUS STATES (Accessibility)
-
-:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-}
-
-// SELECTION
-
-::selection {
-  background: var(--color-primary);
-  color: #000000;
-}
-
-// ANGULAR MATERIAL GLOBAL OVERRIDES
-
-.mat-mdc-tooltip {
-  --mdc-plain-tooltip-container-color: var(--color-bg-elevated);
-  --mdc-plain-tooltip-supporting-text-color: var(--color-text-primary);
-}
-
-.mat-mdc-snack-bar-container {
-  --mdc-snackbar-container-color: var(--color-bg-elevated);
-  --mdc-snackbar-supporting-text-color: var(--color-text-primary);
-}
-
-.mat-mdc-menu-panel {
-  background: var(--color-bg-elevated) !important;
-}
-
-.mat-mdc-option {
-  color: var(--color-text-primary) !important;
-
-  &:hover {
-    background: var(--color-bg-hover) !important;
-  }
-
-  &.mat-mdc-option-active {
-    background: var(--color-bg-active) !important;
-  }
-}
-
-.mat-mdc-select-panel {
-  background: var(--color-bg-elevated) !important;
+code,
+kbd,
+pre,
+samp {
+  font-family: 'JetBrains Mono Variable', ui-monospace, monospace;
 }
