@@ -1,14 +1,24 @@
+@use 'app/design-system/tokens';
+
 *,
 *::before,
 *::after {
   box-sizing: border-box;
 }
 
-html,
+html {
+    font-size: 100%;
+    color-scheme: light dark;
+}
+
 body {
   height: 100%;
   margin: 0;
-  font-family: 'Inter Variable', system-ui, sans-serif;
+  background: var(--surface-base);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--text-md);
+  line-height: var(--leading-normal);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -16,5 +26,10 @@ code,
 kbd,
 pre,
 samp {
-  font-family: 'JetBrains Mono Variable', ui-monospace, monospace;
+  font-family: var(--font-mono);
+}
+
+:focus-visible {
+    outline: none;
+    box-shadow: var(--ring-focus);
 }

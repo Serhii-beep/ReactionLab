@@ -1,0 +1,91 @@
+@mixin dark {
+    --surface-void: oklch(13% 0.008 255deg);
+    --surface-base: oklch(17% 0.008 255deg);
+    --surface-panel: oklch(20% 0.009 255deg);
+    --surface-raised: oklch(23% 0.01 255deg);
+    --surface-overlay: oklch(25% 0.01 255deg);
+    --surface-hover: oklch(27% 0.012 255deg);
+    --surface-active: oklch(31% 0.014 255deg);
+    --border-subtle: oklch(28% 0.01 255deg);
+    --border-default: oklch(34% 0.012 255deg);
+    --border-strong: oklch(58% 0.016 255deg);
+    --text-primary: oklch(96% 0.004 255deg);
+    --text-secondary: oklch(78% 0.01 255deg);
+    --text-tertiary: oklch(68% 0.014 255deg);
+    --text-disabled: oklch(52% 0.012 255deg);
+    --accent: oklch(74% 0.135 198deg);
+    --accent-hover: oklch(80% 0.13 198deg);
+    --accent-pressed: oklch(86% 0.12 198deg);
+    --accent-subtle: oklch(74% 0.135 198deg / 16%);
+    --accent-ring: oklch(74% 0.135 198deg / 45%);
+    --accent-contrast: oklch(17% 0.008 255deg);
+    --energy-exo: oklch(70% 0.15 45deg);
+    --energy-endo: oklch(68% 0.12 250deg);
+    --danger: oklch(70% 0.17 25deg);
+    --warning: oklch(69% 0.13 75deg);
+    --success: oklch(67% 0.13 150deg);
+    --state-solid: oklch(70% 0.03 255deg);
+    --state-liquid: oklch(72% 0.1 230deg);
+    --state-gas: oklch(74% 0.075 155deg);
+    --state-aqueous: oklch(73% 0.09 200deg);
+    --state-plasma: oklch(72% 0.16 320deg);
+    --glass-bg: oklch(20% 0.009 255deg / 72%);
+    --glass-border: oklch(100% 0 0deg / 8%);
+}
+
+:root {
+    --surface-void: oklch(90% 0.006 255deg);
+    --surface-base: oklch(97.5% 0.003 255deg);
+    --surface-panel: oklch(99% 0.002 255deg);
+    --surface-raised: oklch(100% 0 0deg);
+    --surface-overlay: oklch(100% 0 0deg);
+    --surface-hover: oklch(95.5% 0.005 255deg);
+    --surface-active: oklch(92.5% 0.008 255deg);
+    --border-subtle: oklch(92% 0.005 255deg);
+    --border-default: oklch(86% 0.008 255deg);
+    --border-strong: oklch(64% 0.012 255deg);
+    --text-primary: oklch(24% 0.012 255deg);
+    --text-secondary: oklch(44% 0.014 255deg);
+    --text-tertiary: oklch(51% 0.014 255deg);
+    --text-disabled: oklch(70% 0.01 255deg);
+    --accent: oklch(53% 0.14 198deg);
+    --accent-hover: oklch(47% 0.145 198deg);
+    --accent-pressed: oklch(41% 0.15 198deg);
+    --accent-subtle: oklch(53% 0.14 198deg / 10%);
+    --accent-ring: oklch(53% 0.14 198deg / 35%);
+    --accent-contrast: oklch(100% 0 0deg);
+    --energy-exo: oklch(53% 0.17 45deg);
+    --energy-endo: oklch(51% 0.14 250deg);
+    --danger: oklch(54% 0.2 25deg);
+    --warning: oklch(52% 0.15 75deg);
+    --success: oklch(49% 0.15 150deg);
+    --info: var(--accent);
+    --state-solid: oklch(50% 0.03 255deg);
+    --state-liquid: oklch(52% 0.11 230deg);
+    --state-gas: oklch(55% 0.08 155deg);
+    --state-aqueous: oklch(53% 0.1 200deg);
+    --state-plasma: oklch(52% 0.18 320deg);
+    --glass-bg: oklch(100% 0 0deg / 72%);
+    --glass-border: oklch(0% 0 0deg / 7%);
+    --cat-alkali: oklch(74% 0.13 25deg);
+    --cat-alkaline-earth: oklch(74% 0.13 55deg);
+    --cat-transition: oklch(74% 0.13 85deg);
+    --cat-post-transition: oklch(74% 0.13 130deg);
+    --cat-metalloid: oklch(74% 0.13 165deg);
+    --cat-nonmetal: oklch(74% 0.13 200deg);
+    --cat-halogen: oklch(74% 0.13 235deg);
+    --cat-noble: oklch(74% 0.13 275deg);
+    --cat-lanthanide: oklch(74% 0.13 310deg);
+    --cat-actinide: oklch(74% 0.13 340deg);
+    --cat-unknown: oklch(60% 0.02 255deg);
+}
+
+:root[data-theme='dark'] {
+    @include dark;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) {
+      @include dark;
+    }
+}

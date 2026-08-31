@@ -1,0 +1,18 @@
+:root {
+    --elevation-1: 0 0.0625rem 0.125rem oklch(0% 0 0deg / 5%), 0 0.0625rem 0.1875rem oklch(0% 0 0deg / 8%);
+    --elevation-2: 0 0.125rem 0.25rem oklch(0% 0 0deg / 6%), 0 0.25rem 0.75rem oklch(0% 0 0deg / 8%);
+    --elevation-3: 0 0.25rem 0.5rem oklch(0% 0 0deg / 8%), 0 0.75rem 1.75rem oklch(0% 0 0deg / 10%);
+    --elevation-4: 0 0.5rem 1rem oklch(0% 0 0deg / 10%), 0 1.5rem 3.5rem oklch(0% 0 0deg / 14%);
+    --ring-focus: 0 0 0 0.125rem var(--surface-base), 0 0 0 0.25rem var(--accent-ring);
+    --glass-blur: blur(1.25rem) saturate(1.4);
+}
+
+:root[data-theme='dark'],
+:root:not([data-theme='light']) {
+    @media (prefers-color-scheme: dark) {
+      --elevation-1: 0 0.0625rem 0.125rem oklch(0% 0 0deg / 30%), 0 0.0625rem 0.1875rem oklch(0% 0 0deg / 40%);
+      --elevation-2: 0 0.125rem 0.25rem oklch(0% 0 0deg / 32%), 0 0.25rem 0.75rem oklch(0% 0 0deg / 40%);
+      --elevation-3: 0 0.25rem 0.5rem oklch(0% 0 0deg / 36%), 0 0.75rem 1.75rem oklch(0% 0 0deg / 44%);
+      --elevation-4: 0 0.5rem 1rem oklch(0% 0 0deg / 40%), 0 1.5rem 3.5rem oklch(0% 0 0deg / 50%);
+    }
+}
