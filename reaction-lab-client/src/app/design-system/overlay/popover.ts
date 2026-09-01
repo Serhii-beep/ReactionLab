@@ -9,14 +9,14 @@ export type PopoverRole = 'dialog' | 'menu' | 'listbox';
     exportAs: 'rlPopover',
     host: {
         '[attr.aria-expanded]': 'isOpen()',
-        '[attr.aria-haspopup]': 'role()',
+        '[attr.aria-haspopup]': 'popupRole()',
         '(click)': 'toggle()'
     }
 })
 export class Popover {
     readonly content = input.required<TemplateRef<unknown>>({ alias: 'rlPopover' });
     readonly placement = input<Placement>('bottom');
-    readonly role = input<PopoverRole>('dialog');
+    readonly popupRole = input<PopoverRole>('dialog');
 
     private readonly overlay = new ConnectedOverlay();
     readonly isOpen = this.overlay.isOpen;

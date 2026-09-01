@@ -18,9 +18,9 @@ function positionFor(placement: Placement, offset: number): ConnectedPosition {
         case 'bottom':
             return { originX: 'center', originY: 'bottom', overlayX: 'center', overlayY: 'top', offsetY: offset };
         case 'left':
-            return { originX: 'start', originY: 'center', overlayX: 'end', overlayY: 'center', offsetY: -offset };
+            return { originX: 'start', originY: 'center', overlayX: 'end', overlayY: 'center', offsetX: -offset };
         case 'right':
-            return { originX: 'end', originY: 'center', overlayX: 'start', overlayY: 'center', offsetY: offset };
+            return { originX: 'end', originY: 'center', overlayX: 'start', overlayY: 'center', offsetX: offset };
     }
 }
 

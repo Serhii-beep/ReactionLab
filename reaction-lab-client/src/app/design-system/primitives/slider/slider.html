@@ -8,11 +8,11 @@
         [max]="max()"
         [step]="step()"
         [disabled]="disabled()"
-        [value]="value()"
+        [value]="current()"
         (input)="onInput($event)"
     />
 
     @if (showValue()) {
-        <output class="rl-slider-value">{{ value() }}{{ unit() }}</output>
+        <output class="rl-slider-value">{{ current() }}{{ unit() }}</output>
     }
 </div>

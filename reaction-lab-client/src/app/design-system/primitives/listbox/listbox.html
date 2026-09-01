@@ -11,6 +11,7 @@
             [attr.aria-disabled]="item.disabled || null"
             [attr.data-active]="index === activeIndex() || null"
             (click)="optionPicked.emit(index)"
+            (mousemove)="optionHovered.emit(index)"
         >
             <span class="rl-listbox-option-label">{{ item.label }}</span>
 

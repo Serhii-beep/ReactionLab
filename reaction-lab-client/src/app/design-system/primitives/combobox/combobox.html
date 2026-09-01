@@ -30,5 +30,6 @@
         [selectedIndex]="selectedIndex()"
         [emptyText]="emptyText()"
         (optionPicked)="pick($event)"
+        (optionHovered)="activeIndex.set($event)"
     ></rl-listbox>
 </ng-template>

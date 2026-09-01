@@ -31,6 +31,7 @@ export class Listbox {
     readonly emptyText = input('No matches');
 
     readonly optionPicked = output<number>();
+    readonly optionHovered = output<number>();
 
     protected readonly icons = icons;
 

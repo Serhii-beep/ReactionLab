@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input, model } from "@angular/core";
 import { fillPercent } from "./slider-fill";
-import { clamp } from "../number-field/number-stepping";
+import { clamp, snap } from "../number-field/number-stepping";
 
 @Component({
     selector: 'rl-slider',
@@ -18,7 +18,9 @@ export class Slider {
     readonly showValue = input(false);
     readonly disabled = input(false);
 
-    protected readonly fill = computed(() => `${fillPercent(this.value(), this.min(), this.max())}%`);
+    protected readonly current = computed(() => snap(this.value(), { min: this.min(), max: this.max(), step: this.step() }));
+
+    protected readonly fill = computed(() => `${fillPercent(this.current(), this.min(), this.max())}%`);
 
     protected onInput(event: Event): void {
         const raw = (event.target as HTMLInputElement).valueAsNumber;
