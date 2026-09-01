@@ -1,7 +1,9 @@
+import * as icons from '../../icons/icons.generated';
 import { ChangeDetectionStrategy, Component, computed, input, model } from "@angular/core";
 import { IconButton } from "../icon-button/icon-button";
 import { TextInput } from "../input/text-input";
 import { clamp, snap, StepBounds, stepBy } from "./number-stepping";
+import { Icon } from "../../icons/icon";
 
 const KEY_STEPS: Record<string, number> = {
     ArrowUp: 1,
@@ -14,7 +16,7 @@ const KEY_STEPS: Record<string, number> = {
     selector: 'rl-number-field',
     templateUrl: './number-field.html',
     styleUrl: './number-field.scss',
-    imports: [IconButton, TextInput],
+    imports: [IconButton, TextInput, Icon],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class NumberField {
@@ -25,6 +27,8 @@ export class NumberField {
     readonly step = input(1);
     readonly unit = input<string>();
     readonly disabled = input(false);
+
+    protected readonly icons = icons;
 
     protected readonly bounds = computed<StepBounds>(() => ({
         min: this.min(),

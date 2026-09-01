@@ -12,6 +12,8 @@
     />
 
     @if (value()) {
-        <button rlIconButton size="sm" label="Clear {{ label() }}" (click)="clear()">&#215;</button>
+        <button rlIconButton size="sm" label="Clear {{ label() }}" (click)="clear()">
+            <rl-icon [icon]="icons.x" size="sm"></rl-icon>
+        </button>
     }
 </div>

@@ -32,6 +32,7 @@
             ],
             "allowedCommonJsDependencies": ["@messageformat/core"],
             "styles": [
+              "node_modules/@angular/cdk/overlay-prebuilt.css",
               "node_modules/@fontsource-variable/inter/index.css",
               "node_modules/@fontsource-variable/jetbrains-mono/index.css",
               "src/styles.scss"

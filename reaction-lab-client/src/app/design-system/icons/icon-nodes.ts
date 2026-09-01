@@ -1,0 +1,1 @@
+export type IconNodes = readonly (readonly [string, Readonly<Record<string, string>>])[];

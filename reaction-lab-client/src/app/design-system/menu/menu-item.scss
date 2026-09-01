@@ -1,0 +1,32 @@
+.rl-menu-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    width: 100%;
+    padding: var(--space-1-5) var(--space-2);
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: var(--text-sm);
+    text-align: start;
+    text-decoration: none;
+    cursor: pointer;
+
+    &:hover:not(:disabled, [aria-disabled='true']) {
+        background: var(--surface-hover);
+    }
+
+    &:focus-visible {
+        outline: none;
+        background: var(--surface-hover);
+        box-shadow: var(--ring-focus);
+    }
+
+    &:disabled,
+    &[aria-disabled='true'] {
+        color: var(--text-disabled);
+        cursor: not-allowed;
+    }
+}

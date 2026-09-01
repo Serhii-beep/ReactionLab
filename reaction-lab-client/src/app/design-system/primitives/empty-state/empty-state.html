@@ -1,0 +1,9 @@
+<rl-icon class="rl-empty-state-icon" [icon]="icon()" size="lg"></rl-icon>
+
+<h3 class="rl-empty-state-heading">{{ heading() }}</h3>
+
+@if (description(); as description) {
+    <p class="rl-empty-state-description">{{ description }}</p>
+}
+
+<div class="rl-empty-state-actions"><ng-content /></div>

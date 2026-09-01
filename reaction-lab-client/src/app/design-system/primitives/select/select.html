@@ -1,0 +1,29 @@
+<button
+    #trigger
+    type="button"
+    class="rl-select-trigger"
+    role="combobox"
+    aria-haspopup="listbox"
+    [attr.aria-label]="label()"
+    [attr.aria-controls]="listboxId"
+    [attr.aria-expanded]="overlay.isOpen()"
+    [attr.aria-activedescendant]="activeDescendant()"
+    [attr.data-placeholder]="selectedLabel() ? null : true"
+    [disabled]="disabled()"
+    (click)="toggle()"
+    (keydown)="onKeydown($event)"
+>
+    <span class="rl-select-value">{{ selectedLabel() || placeholder() }}</span>
+    <rl-icon [icon]="icons.chevronDown" size="sm"></rl-icon>
+</button>
+
+<ng-template #panel>
+    <rl-listbox
+        [options]="options()"
+        [idPrefix]="listboxId"
+        [label]="label()"
+        [activeIndex]="activeIndex()"
+        [selectedIndex]="selectedIndex()"
+        (optionPicked)="pick($event)"
+    ></rl-listbox>
+</ng-template>

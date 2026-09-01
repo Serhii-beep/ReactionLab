@@ -1,0 +1,103 @@
+:host {
+    display: contents;
+}
+
+.rl-dialog {
+    inset: 0;
+    width: 100%;
+    max-width: 100%;
+    height: 100%;
+    max-height: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    overflow: hidden;
+
+    &::backdrop {
+        background: transparent;
+    }
+
+    &[open] {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    &[data-placement='start'],
+    &[data-placement='end'] {
+        align-items: stretch;
+    }
+
+    &[data-placement='start'] {
+        justify-content: flex-start;
+    }
+
+    &[data-placement='end'] {
+        justify-content: flex-end;
+    }
+
+    &[data-placement='bottom'] {
+        align-items: flex-end;
+    }
+
+    &[data-placement='start'] .rl-dialog-panel,
+    &[data-placement='end'] .rl-dialog-panel {
+        width: min(26rem, 100%);
+        max-height: 100%;
+        border-radius: 0;
+    }
+
+    &[data-placement='bottom'] .rl-dialog-panel {
+        width: 100%;
+        max-height: 90%;
+        border-radius: var(--radius-panel) var(--radius-panel) 0 0;
+    }
+}
+
+.rl-dialog-scrim {
+    position: absolute;
+    inset: 0;
+    background: var(--scrim);
+}
+
+.rl-dialog-panel {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    width: min(32rem, calc(100% - var(--space-8)));
+    max-height: calc(100% - var(--space-8));
+    padding: var(--space-5);
+    border-radius: var(--radius-panel);
+    background: var(--surface-panel);
+    box-shadow: var(--elevation-4);
+    color: var(--text-primary);
+}
+
+.rl-dialog-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-3);
+}
+
+.rl-dialog-title {
+    margin: 0;
+    font-size: var(--text-xl);
+    font-weight: 500;
+    line-height: var(--leading-tight);
+}
+
+.rl-dialog-body {
+    overflow-y: auto;
+}
+
+.rl-dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-2);
+
+    &:empty {
+        display: none;
+    }
+}

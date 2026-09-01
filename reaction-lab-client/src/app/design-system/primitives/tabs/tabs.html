@@ -1,0 +1,31 @@
+<div class="rl-tablist" role="tablist" [attr.aria-label]="label()">
+    @for (option of options(); track option.value; let index = $index) {
+        <button
+            #tab
+            type="button"
+            class="rl-tab"
+            role="tab"
+            [id]="tabElementId(option.value)"
+            [attr.aria-controls]="panelElementId(option.value)"
+            [attr.aria-selected]="index === activeIndex()"
+            [attr.aria-disabled]="option.disabled || null"
+            [attr.tabindex]="index === activeIndex() ? 0 : -1"
+            (click)="select(index)"
+            (keydown)="onKeydown($event)"
+        >
+            {{ option.label }}
+        </button>
+    }
+</div>
+
+@if (active(); as tab) {
+    <div
+        class="rl-tabpanel"
+        role="tabpanel"
+        tabindex="0"
+        [id]="panelElementId(tab.tabId())"
+        [attr.aria-labelledby]="tabElementId(tab.tabId())"
+    >
+        <ng-container [ngTemplateOutlet]="tab.content"></ng-container>
+    </div>
+}

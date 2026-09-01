@@ -1,0 +1,28 @@
+.rl-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1-5);
+    padding: var(--space-1) var(--space-2-5, var(--space-3));
+    border: 0.0625rem solid var(--border-default);
+    border-radius: var(--radius-full);
+    background: var(--surface-raised);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: var(--text-xs);
+    line-height: var(--leading-tight);
+    white-space: nowrap;
+
+    &[data-selected] {
+        border-color: var(--accent);
+        background: var(--accent-subtle);
+        color: var(--accent);
+    }
+}
+
+button.rl-chip {
+    cursor: pointer;
+
+    &:hover {
+        border-color: var(--border-strong);
+    }
+}

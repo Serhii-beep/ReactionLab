@@ -1,0 +1,43 @@
+:host {
+    --empty-state-icon: var(--text-tertiary);
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-8) var(--space-4);
+    text-align: center;
+}
+
+:host([data-tone='danger']) {
+    --empty-state-icon: var(--danger);
+}
+
+.rl-empty-state-icon {
+    color: var(--empty-state-icon);
+}
+
+.rl-empty-state-heading {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: var(--text-lg);
+    font-weight: 500;
+    line-height: var(--leading-tight);
+}
+
+.rl-empty-state-description {
+    max-width: 32rem;
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
+}
+
+.rl-empty-state-actions {
+    display: flex;
+    gap: var(--space-2);
+    margin-block-start: var(--space-2);
+
+    &:empty {
+        display: none;
+    }
+}

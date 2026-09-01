@@ -1,0 +1,26 @@
+<dialog
+    #root
+    class="rl-dialog"
+    [attr.data-placement]="placement()"
+    [attr.aria-label]="label()"
+    (cancel)="onCancel($event)"
+    (close)="dismiss()"
+>
+    <div class="rl-dialog-scrim" role="presentation" (click)="onScrimClick()"></div>
+
+    <div class="rl-dialog-panel">
+        <header class="rl-dialog-header">
+            <h2 class="rl-dialog-title">{{ label() }}</h2>
+
+            @if (!mandatory()) {
+                <button rlIconButton size="sm" [label]="closeLabel()" (click)="dismiss()">
+                    <rl-icon [icon]="icons.x" size="sm"></rl-icon>
+                </button>
+            }
+        </header>
+
+        <div class="rl-dialog-body"><ng-content /></div>
+
+        <footer class="rl-dialog-actions"><ng-content select="[rlDialogActions]" /></footer>
+    </div>
+</dialog>

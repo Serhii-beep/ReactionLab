@@ -1,0 +1,32 @@
+.rl-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-family: var(--font-sans);
+    font-size: var(--text-sm);
+
+    caption {
+        padding-block-end: var(--space-2);
+        color: var(--text-secondary);
+        text-align: start;
+    }
+
+    th,
+    td {
+        padding: var(--space-2) var(--space-3);
+        border-block-end: 0.0625rem solid var(--border-subtle);
+        text-align: start;
+    }
+
+    th {
+        position: sticky;
+        top: 0;
+        background: var(--surface-panel);
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+
+    tbody tr:hover {
+        background: var(--surface-hover);
+    }
+}

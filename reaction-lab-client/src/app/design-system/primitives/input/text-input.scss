@@ -32,19 +32,19 @@
     }
 
     &[data-size='sm'] {
-        height: 1.75rem;
+        height: var(--control-height-sm);
         padding-inline: var(--space-2);
         font-size: var(--text-xs);
     }
 
     &[data-size='md'] {
-        height: 2.125rem;
+        height: var(--control-height-md);
         padding-inline: var(--space-3);
         font-size: var(--text-sm);
     }
 
     &[data-size='lg'] {
-        height: 2.5rem;
+        height: var(--control-height-lg);
         padding-inline: var(--space-3);
         font-size: var(--text-md);
     }

@@ -1,5 +1,5 @@
 <header class="app-header">
-  <ng-container *transloco="let t; read: 'app'">
+  <ng-container *transloco="let t; prefix: 'app'">
     <h1>{{ t('title') }}</h1>
   </ng-container>
 </header>
@@ -7,3 +7,5 @@
 <main class="app-main">
   <router-outlet />
 </main>
+
+<rl-toast-host />

@@ -1,0 +1,13 @@
+<rl-icon class="rl-toast-icon" [icon]="icon()" size="sm"></rl-icon>
+
+<div class="rl-toast-text">
+    <p class="rl-toast-title">{{ title() }}</p>
+
+    @if (detail()) {
+        <p class="rl-toast-detail">{{ detail() }}</p>
+    }
+</div>
+
+<button rlIconButton size="sm" [label]="dismissLabel()" (click)="dismissed.emit()">
+    <rl-icon [icon]="icons.x" size="sm"></rl-icon>
+</button>

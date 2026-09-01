@@ -1,0 +1,12 @@
+.rl-tooltip {
+    max-width: 18rem;
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-xs);
+    background: var(--surface-overlay);
+    border: 0.0625rem solid var(--border-default);
+    box-shadow: var(--elevation-2);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: var(--text-xs);
+    line-height: var(--leading-tight);
+}

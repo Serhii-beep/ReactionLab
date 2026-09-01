@@ -1,0 +1,26 @@
+<div class="rl-listbox-options" role="listbox" [id]="idPrefix()" [attr.aria-label]="label()">
+    @for (item of options(); track item.value; let index = $index) {
+        <button
+            #option
+            type="button"
+            class="rl-listbox-option"
+            role="option"
+            tabindex="-1"
+            [id]="idFor(index)"
+            [attr.aria-selected]="index === selectedIndex()"
+            [attr.aria-disabled]="item.disabled || null"
+            [attr.data-active]="index === activeIndex() || null"
+            (click)="optionPicked.emit(index)"
+        >
+            <span class="rl-listbox-option-label">{{ item.label }}</span>
+
+            @if (index === selectedIndex()) {
+                <rl-icon [icon]="icons.check" size="sm"></rl-icon>
+            }
+        </button>
+    }
+</div>
+
+@if (options().length === 0) {
+    <p class="rl-listbox-empty">{{ emptyText() }}</p>
+}

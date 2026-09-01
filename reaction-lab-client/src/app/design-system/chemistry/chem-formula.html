@@ -1,0 +1,15 @@
+@for (part of parts(); track $index) {
+    @if (part.kind === 'subscript') {
+        <sub>{{ part.value }}</sub>
+    } @else {
+        {{ part.value }}
+    }
+}
+
+@if (chargeText(); as charge) {
+    <sup>{{ charge }}</sup>
+}
+
+@if (state(); as state) {
+    <span class="rl-chem-state" [attr.data-state]="state">({{ state }})</span>
+}

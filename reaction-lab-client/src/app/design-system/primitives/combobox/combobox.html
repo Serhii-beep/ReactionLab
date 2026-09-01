@@ -1,0 +1,34 @@
+<div class="rl-combobox">
+    <input
+        #field
+        rlInput
+        type="text"
+        role="combobox"
+        autocomplete="off"
+        aria-autocomplete="list"
+        [attr.aria-label]="label()"
+        [attr.aria-controls]="listboxId"
+        [attr.aria-expanded]="overlay.isOpen()"
+        [attr.aria-activedescendant]="activeDescendant()"
+        [placeholder]="placeholder()"
+        [disabled]="disabled()"
+        [value]="query()"
+        (input)="onInput($event)"
+        (click)="onClick()"
+        (keydown)="onKeydown($event)"
+    />
+
+    <rl-icon class="rl-combobox-chevron" [icon]="icons.chevronDown" size="sm"></rl-icon>
+</div>
+
+<ng-template #panel>
+    <rl-listbox
+        [options]="visible()"
+        [idPrefix]="listboxId"
+        [label]="label()"
+        [activeIndex]="activeIndex()"
+        [selectedIndex]="selectedIndex()"
+        [emptyText]="emptyText()"
+        (optionPicked)="pick($event)"
+    ></rl-listbox>
+</ng-template>

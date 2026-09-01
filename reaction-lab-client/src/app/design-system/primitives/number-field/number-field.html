@@ -6,7 +6,7 @@
         [disabled]="disabled() || atMin()"
         (click)="nudge(-1)"
     >
-        &#8722;
+        <rl-icon [icon]="icons.minus" size="sm"></rl-icon>
     </button>
 
     <input
@@ -36,6 +36,6 @@
         [disabled]="disabled() || atMax()"
         (click)="nudge(1)"
     >
-        &#43;
+        <rl-icon [icon]="icons.plus" size="sm"></rl-icon>
     </button>
 </div>

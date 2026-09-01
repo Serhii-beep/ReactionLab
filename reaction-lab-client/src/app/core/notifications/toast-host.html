@@ -1,0 +1,8 @@
+@for (item of items(); track item.id) {
+    <rl-toast
+        [tone]="item.tone"
+        [title]="item.title"
+        [detail]="item.detail"
+        (dismissed)="dismiss(item.id)"
+    ></rl-toast>
+}

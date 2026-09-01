@@ -31,6 +31,7 @@
     --state-plasma: oklch(72% 0.16 320deg);
     --glass-bg: oklch(20% 0.009 255deg / 72%);
     --glass-border: oklch(100% 0 0deg / 8%);
+    --scrim: oklch(0% 0 0deg / 62%);
 }
 
 :root {
@@ -67,6 +68,7 @@
     --state-plasma: oklch(52% 0.18 320deg);
     --glass-bg: oklch(100% 0 0deg / 72%);
     --glass-border: oklch(0% 0 0deg / 7%);
+    --scrim: oklch(0% 0 0deg / 45%);
     --cat-alkali: oklch(74% 0.13 25deg);
     --cat-alkaline-earth: oklch(74% 0.13 55deg);
     --cat-transition: oklch(74% 0.13 85deg);

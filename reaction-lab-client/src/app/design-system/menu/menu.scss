@@ -1,0 +1,13 @@
+:host {
+    display: block;
+    min-width: 11rem;
+    padding: var(--space-1);
+    border: 0.0625rem solid var(--border-default);
+    border-radius: var(--radius-md);
+    background: var(--surface-overlay);
+    box-shadow: var(--elevation-3);
+
+    &:focus-visible {
+        outline: none;
+    }
+}

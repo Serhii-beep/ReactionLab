@@ -1,0 +1,9 @@
+.rl-card {
+    display: block;
+    padding: var(--space-4);
+    border: 0.0625rem solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    background: var(--surface-panel);
+    box-shadow: var(--elevation-1);
+    color: var(--text-primary)
+}
