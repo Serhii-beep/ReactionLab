@@ -1,0 +1,16 @@
+<div class="rl-segmented" role="radiogroup" [attr.aria-label]="label()">
+    @for (option of options(); track option.value) {
+        <button
+            #option
+            type="button"
+            role="radio"
+            class="rl-segmented-option"
+            [attr.aria-checked]="option.value === value()"
+            [attr.tabindex]="option.value === value() ? 0 : -1"
+            (click)="select(option.value)"
+            (keydown)="onKeydown($event)"
+        >
+            {{ option.label }}
+        </button>
+    }
+</div>

@@ -1,0 +1,11 @@
+<label class="rl-checkbox" [attr.data-disabled]="disabled() || null">
+    <input
+        type="checkbox"
+        class="rl-checkbox-input"
+        [checked]="checked()"
+        [indeterminate]="indeterminate()"
+        [disabled]="disabled()"
+        (change)="onChange($event)"
+    />
+    <span class="rl-checkbox-text"><ng-content /></span>
+</label>

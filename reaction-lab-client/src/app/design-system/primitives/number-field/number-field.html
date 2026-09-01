@@ -1,0 +1,41 @@
+<div class="rl-number-field">
+    <button
+        rlIconButton
+        size="sm"
+        label="Decrease {{ label() }}"
+        [disabled]="disabled() || atMin()"
+        (click)="nudge(-1)"
+    >
+        &#8722;
+    </button>
+
+    <input
+        rlInput
+        size="sm"
+        type="number"
+        inputmode="decimal"
+        [attr.aria-label]="label()"
+        [attr.min]="min()"
+        [attr.max]="max()"
+        [step]="step()"
+        [disabled]="disabled()"
+        [value]="value()"
+        (input)="onInput($event)"
+        (blur)="onBlur()"
+        (keydown)="onKeydown($event)"
+    />
+
+    @if (unit(); as suffix) {
+        <span class="rl-number-field-unit">{{ suffix }}</span>
+    }
+
+    <button
+        rlIconButton
+        size="sm"
+        label="Increase {{ label() }}"
+        [disabled]="disabled() || atMax()"
+        (click)="nudge(1)"
+    >
+        &#43;
+    </button>
+</div>

@@ -1,0 +1,17 @@
+<div class="rl-search-field">
+    <input
+        #field
+        rlInput
+        type="search"
+        [attr.aria-label]="label()"
+        [placeholder]="placeholder()"
+        [disabled]="disabled()"
+        [value]="value()"
+        (input)="onInput($event)"
+        (keydown.escape)="clear()"
+    />
+
+    @if (value()) {
+        <button rlIconButton size="sm" label="Clear {{ label() }}" (click)="clear()">&#215;</button>
+    }
+</div>

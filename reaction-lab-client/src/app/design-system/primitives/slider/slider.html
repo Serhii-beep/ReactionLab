@@ -1,0 +1,18 @@
+<div class="rl-slider">
+    <input
+        type="range"
+        class="rl-slider-input"
+        [attr.aria-label]="label()"
+        [style.--rl-slider-fill]="fill()"
+        [min]="min()"
+        [max]="max()"
+        [step]="step()"
+        [disabled]="disabled()"
+        [value]="value()"
+        (input)="onInput($event)"
+    />
+
+    @if (showValue()) {
+        <output class="rl-slider-value">{{ value() }}{{ unit() }}</output>
+    }
+</div>

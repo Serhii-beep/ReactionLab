@@ -1,0 +1,43 @@
+:host {
+    display: inline-block;
+}
+
+.rl-number-field {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-0-5);
+    border: 0.0625rem solid var(--border-default);
+    border-radius: var(--radius-sm);
+    background: var(--surface-raised);
+
+    &:focus-within {
+        border-color: var(--accent);
+        box-shadow: var(--ring-focus);
+    }
+
+    .rl-input {
+        width: 4rem;
+        border: 0;
+        background: transparent;
+        text-align: center;
+        font-variant-numeric: tabular-nums;
+
+        &:focus-visible {
+            box-shadow: none;
+        }
+
+        &::-webkit-outer-spin-button,
+        &::-webkit-inner-spin-button {
+            appearance: none;
+        }
+
+        appearance: textfield;
+    }
+}
+
+.rl-number-field-unit {
+    padding-inline-end: var(--space-1);
+    color: var(--text-tertiary);
+    font-size: var(--text-xs);
+}
