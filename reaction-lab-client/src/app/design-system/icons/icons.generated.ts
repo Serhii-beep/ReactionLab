@@ -3,13 +3,18 @@
 
 import { IconNodes } from './icon-nodes';
 
+export const arrowRightLeft: IconNodes = [['path', {"d":"m16 3 4 4-4 4"}], ['path', {"d":"M20 7H4"}], ['path', {"d":"m8 21-4-4 4-4"}], ['path', {"d":"M4 17h16"}]];
+export const atom: IconNodes = [['circle', {"cx":"12","cy":"12","r":"1"}], ['path', {"d":"M20.2 20.2c2.04-2.03.02-7.36-4.5-11.9-4.54-4.52-9.87-6.54-11.9-4.5-2.04 2.03-.02 7.36 4.5 11.9 4.54 4.52 9.87 6.54 11.9 4.5Z"}], ['path', {"d":"M15.7 15.7c4.52-4.54 6.54-9.87 4.5-11.9-2.03-2.04-7.36-.02-11.9 4.5-4.52 4.54-6.54 9.87-4.5 11.9 2.03 2.04 7.36.02 11.9-4.5Z"}]];
 export const check: IconNodes = [['path', {"d":"M20 6 9 17l-5-5"}]];
 export const chevronDown: IconNodes = [['path', {"d":"m6 9 6 6 6-6"}]];
 export const circleAlert: IconNodes = [['circle', {"cx":"12","cy":"12","r":"10"}], ['line', {"x1":"12","x2":"12","y1":"8","y2":"12"}], ['line', {"x1":"12","x2":"12.01","y1":"16","y2":"16"}]];
+export const flaskConical: IconNodes = [['path', {"d":"M14 2v6a2 2 0 0 0 .245.96l5.51 10.08A2 2 0 0 1 18 22H6a2 2 0 0 1-1.755-2.96l5.51-10.08A2 2 0 0 0 10 8V2"}], ['path', {"d":"M6.453 15h11.094"}], ['path', {"d":"M8.5 2h7"}]];
 export const info: IconNodes = [['circle', {"cx":"12","cy":"12","r":"10"}], ['path', {"d":"M12 16v-4"}], ['path', {"d":"M12 8h.01"}]];
 export const loaderCircle: IconNodes = [['path', {"d":"M21 12a9 9 0 1 1-6.219-8.56"}]];
 export const minus: IconNodes = [['path', {"d":"M5 12h14"}]];
+export const monitor: IconNodes = [['rect', {"width":"20","height":"14","x":"2","y":"3","rx":"2"}], ['line', {"x1":"8","x2":"16","y1":"21","y2":"21"}], ['line', {"x1":"12","x2":"12","y1":"17","y2":"21"}]];
 export const plus: IconNodes = [['path', {"d":"M5 12h14"}], ['path', {"d":"M12 5v14"}]];
 export const search: IconNodes = [['path', {"d":"m21 21-4.34-4.34"}], ['circle', {"cx":"11","cy":"11","r":"8"}]];
+export const sunMoon: IconNodes = [['path', {"d":"M12 2v2"}], ['path', {"d":"M14.837 16.385a6 6 0 1 1-7.223-7.222c.624-.147.97.66.715 1.248a4 4 0 0 0 5.26 5.259c.589-.255 1.396.09 1.248.715"}], ['path', {"d":"M16 12a4 4 0 0 0-4-4"}], ['path', {"d":"m19 5-1.256 1.256"}], ['path', {"d":"M20 12h2"}]];
 export const triangleAlert: IconNodes = [['path', {"d":"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"}], ['path', {"d":"M12 9v4"}], ['path', {"d":"M12 17h.01"}]];
 export const x: IconNodes = [['path', {"d":"M18 6 6 18"}], ['path', {"d":"m6 6 12 12"}]];

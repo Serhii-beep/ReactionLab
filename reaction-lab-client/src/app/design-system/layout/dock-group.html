@@ -1,0 +1,33 @@
+@if (presentation() === 'docks') {
+    @for (panel of panels(); track panel.side()) {
+        <rl-dock
+            [side]="panel.side()"
+            [label]="panel.label()"
+            [minSize]="panel.minSize()"
+            [maxSize]="panel.maxSize()"
+            [defaultSize]="panel.defaultSize()"
+            [storageKey]="storageKey(panel)"
+        >
+            <ng-container [ngTemplateOutlet]="panel.content"></ng-container>
+        </rl-dock>
+    }
+} @else {
+    <nav class="rl-dock-rail" [attr.aria-label]="railLabel()">
+        @for (panel of panels(); track panel.side()) {
+            <button rlIconButton aria-haspopup="dialog" [label]="panel.label()" (click)="open(panel.side())">
+                <rl-icon [icon]="panel.icon()"></rl-icon>
+            </button>
+        }
+    </nav>
+
+    <rl-dialog
+        [label]="activePanel()?.label() ?? ''"
+        [placement]="sheetPlacement()"
+        [open]="openSide() !== null"
+        (openChange)="onSheetChange($event)"
+    >
+        @if (activePanel(); as panel) {
+            <ng-container [ngTemplateOutlet]="panel.content"></ng-container>
+        }
+    </rl-dialog>
+}

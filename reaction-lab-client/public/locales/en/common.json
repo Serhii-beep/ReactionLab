@@ -1,6 +1,36 @@
 {
     "app": {
         "title": "ReactionLab",
-        "tagLine": "An interactive chemistry laboratory"
+        "tagLine": "An interactive chemistry laboratory",
+        "experiment": {
+            "untitled": "Untitled experiment"
+        },
+        "theme": {
+            "label": "Theme",
+            "light": "Light",
+            "dark": "Dark",
+            "system": "System"
+        },
+        "compact": {
+            "heading": "ReactionLab needs a larger screen",
+            "description": "The laboratory is built for tablets and desktops. Rotate your device, or open it on a larger display."
+        }
+    },
+    "lab": {
+        "rail": "Panels",
+        "viewport": "The laboratory renders here.",
+        "pending": "The catalog is not connected yet.",
+        "elements": {
+            "label": "Elements",
+            "empty": "No elements loaded"
+        },
+        "substances": {
+            "label": "Substances",
+            "empty": "No substances loaded"
+        },
+        "reactions": {
+            "label": "Reactions",
+            "empty": "No reactions found"
+        }
     }
 }

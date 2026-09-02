@@ -1,0 +1,16 @@
+:host {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    block-size: 100dvh;
+    overflow: hidden;
+    background: var(--surface-void);
+}
+
+.rl-shell-body {
+    display: grid;
+    grid-template:
+        'dock-start content dock-end' 1fr
+        'dock-start dock-bottom dock-end' auto
+        / auto 1fr auto;
+    min-block-size: 0;
+}

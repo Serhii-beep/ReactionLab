@@ -1,0 +1,19 @@
+:host {
+    display: contents;
+}
+
+.rl-dock-rail {
+    grid-area: dock-start;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    padding: var(--space-2) var(--space-1);
+    border-inline-end: 0.0625rem solid var(--glass-border);
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+
+    button {
+        min-inline-size: 2.75rem;
+        min-block-size: 2.75rem;
+    }
+}

@@ -1,0 +1,41 @@
+:host {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    block-size: 3rem;
+    padding-inline: var(--space-4);
+    border-block-end: 0.0625rem solid var(--glass-border);
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    color: var(--text-primary);
+}
+
+.rl-command-bar-titles {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2);
+    min-inline-size: 0;
+}
+
+.rl-command-bar-heading {
+    margin: 0;
+    font-size: var(--text-md);
+    font-weight: 500;
+    line-height: var(--leading-tight);
+    white-space: nowrap;
+}
+
+.rl-command-bar-subheading {
+    overflow: hidden;
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.rl-command-bar-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+}

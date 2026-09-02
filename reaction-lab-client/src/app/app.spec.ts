@@ -3,7 +3,7 @@ import { App } from './app';
 import { TranslocoHttpLoader } from './core/i18n/transloco-http-loader';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideTransloco } from '@jsverse/transloco';
 
 describe('App', () => {
@@ -26,10 +26,17 @@ describe('App', () => {
     expect(TestBed.createComponent(App).componentInstance).toBeTruthy();
   });
 
-  it('renders a routed outlet', async () => {
+  it('renders the shell once translations arrive', async () => {
     const fixture = TestBed.createComponent(App);
+    const http = TestBed.inject(HttpTestingController);
+
+    fixture.detectChanges();
+    http.expectOne('/locales/en/common.json').flush({ app: { title: 'ReactionLab' } });
     await fixture.whenStable();
 
-    expect((fixture.nativeElement as HTMLElement).querySelector('router-outlet')).toBeTruthy();
+    const host = fixture.nativeElement as HTMLElement;
+
+    expect(host.querySelector('rl-app-shell')).toBeTruthy();
+    expect(host.querySelector('router-outlet')).toBeTruthy();
   });
 });

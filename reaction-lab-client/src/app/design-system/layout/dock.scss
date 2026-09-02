@@ -1,0 +1,112 @@
+:host {
+    --dock-rail-size: 2rem;
+    --dock-handle-size: 0.75rem;
+
+    position: relative;
+    display: flex;
+    min-inline-size: 0;
+    min-block-size: 0;
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    color: var(--text-primary);
+}
+
+:host([data-side='start']) {
+    grid-area: dock-start;
+    inline-size: var(--dock-size);
+    border-inline-end: 0.0625rem solid var(--glass-border);
+}
+
+:host([data-side='end']) {
+    grid-area: dock-end;
+    inline-size: var(--dock-size);
+    border-inline-start: 0.0625rem solid var(--glass-border);
+}
+
+:host([data-side='bottom']) {
+    grid-area: dock-bottom;
+    block-size: var(--dock-size);
+    border-block-start: 0.0625rem solid var(--glass-border);
+}
+
+:host([data-side='start'][data-collapsed]),
+:host([data-side='end'][data-collapsed]) {
+    inline-size: var(--dock-rail-size);
+}
+
+:host([data-side='bottom'][data-collapsed]) {
+    block-size: var(--dock-rail-size);
+}
+
+:host([data-collapsed]) .rl-dock-body {
+    display: none;
+}
+
+.rl-dock-body {
+    flex: 1;
+    min-inline-size: 0;
+    min-block-size: 0;
+    overflow: auto;
+}
+
+.rl-dock-handle {
+    position: absolute;
+    z-index: 1;
+    touch-action: none;
+
+    &::after {
+        position: absolute;
+        background: transparent;
+        transition: background var(--duration-fast) var(--ease-standard);
+        content: '';
+    }
+
+    &:hover::after,
+    &:focus-visible::after {
+        background: var(--accent);
+    }
+
+    &:focus-visible {
+        outline: none;
+        box-shadow: var(--ring-focus);
+    }
+}
+
+:host([data-side='start']) .rl-dock-handle {
+    inset-block: 0;
+    inset-inline-end: calc(var(--dock-handle-size) / -2);
+    inline-size: var(--dock-handle-size);
+    cursor: col-resize;
+}
+
+:host([data-side='end']) .rl-dock-handle {
+    inset-block: 0;
+    inset-inline-start: calc(var(--dock-handle-size) / -2);
+    inline-size: var(--dock-handle-size);
+    cursor: col-resize;
+}
+
+:host([data-side='bottom']) .rl-dock-handle {
+    inset-inline: 0;
+    inset-block-start: calc(var(--dock-handle-size) / -2);
+    block-size: var(--dock-handle-size);
+    cursor: row-resize;
+}
+
+:host([data-side='start']) .rl-dock-handle::after,
+:host([data-side='end']) .rl-dock-handle::after {
+    inset-block: 0;
+    inset-inline-start: calc(50% - 0.0625rem);
+    inline-size: 0.125rem;
+}
+
+:host([data-side='bottom']) .rl-dock-handle::after {
+    inset-inline: 0;
+    inset-block-start: calc(50% - 0.0625rem);
+    block-size: 0.125rem;
+}
+
+:host([data-side='start']),
+:host([data-side='end']) {
+    z-index: 1;
+}

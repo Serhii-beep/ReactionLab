@@ -1,0 +1,20 @@
+<div class="rl-dock-body"><ng-content /></div>
+
+@if (grabbable()) {
+    <div
+        class="rl-dock-handle"
+        role="separator"
+        tabindex="0"
+        [attr.aria-label]="'Resize ' + label()"
+        [attr.aria-orientation]="orientation()"
+        [attr.aria-valuenow]="state().collapsed ? 0 : state().size"
+        [attr.aria-valuemin]="collapsible() ? 0 : minSize()"
+        [attr.aria-valuemax]="maxSize()"
+        (pointerdown)="onPointerDown($event)"
+        (pointermove)="onPointerMove($event)"
+        (pointerup)="onPointerEnd($event)"
+        (pointercancel)="onPointerEnd($event)"
+        (dblclick)="toggle()"
+        (keydown)="onKeydown($event)"
+    ></div>
+}

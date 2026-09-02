@@ -1,0 +1,43 @@
+<ng-container *transloco="let t; prefix: 'lab'">
+    <main class="lab-viewport">
+        <p class="lab-viewport-note">{{ t('viewport') }}</p>
+    </main>
+
+    <rl-dock-group
+        storagePrefix="reactionlab.dock"
+        [presentation]="presentation()"
+        [railLabel]="t('rail')"
+    >
+        <ng-template rlDockPanel side="start" [label]="t('elements.label')" [icon]="icons.atom">
+            <rl-empty-state
+                [icon]="icons.atom"
+                [heading]="t('elements.empty')"
+                [description]="t('pending')"
+            ></rl-empty-state>
+        </ng-template>
+
+        <ng-template rlDockPanel side="end" [label]="t('substances.label')" [icon]="icons.flaskConical">
+            <rl-empty-state
+                [icon]="icons.flaskConical"
+                [heading]="t('substances.empty')"
+                [description]="t('pending')"
+            ></rl-empty-state>
+        </ng-template>
+
+        <ng-template
+            rlDockPanel
+            side="bottom"
+            [label]="t('reactions.label')"
+            [icon]="icons.arrowRightLeft"
+            [minSize]="8"
+            [maxSize]="24"
+            [defaultSize]="12"
+        >
+            <rl-empty-state
+                [icon]="icons.arrowRightLeft"
+                [heading]="t('reactions.empty')"
+                [description]="t('pending')"
+            ></rl-empty-state>
+        </ng-template>
+    </rl-dock-group>
+</ng-container>

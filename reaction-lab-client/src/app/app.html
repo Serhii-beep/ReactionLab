@@ -1,11 +1,25 @@
-<header class="app-header">
-  <ng-container *transloco="let t; prefix: 'app'">
-    <h1>{{ t('title') }}</h1>
-  </ng-container>
-</header>
+<ng-container *transloco="let t; prefix: 'app'">
+  @if (breakpoints.size() === 'compact') {
+    <rl-empty-state
+      class="app-compact"
+      [icon]="icons.monitor"
+      [heading]="t('compact.heading')"
+      [description]="t('compact.description')"
+    ></rl-empty-state>
+  } @else {
+    <rl-app-shell>
+      <rl-command-bar [heading]="t('title')" [subheading]="t('experiment.untitled')">
+        <rl-theme-toggle
+          [label]="t('theme.label')"
+          [lightLabel]="t('theme.light')"
+          [darkLabel]="t('theme.dark')"
+          [systemLabel]="t('theme.system')"
+        ></rl-theme-toggle>
+      </rl-command-bar>
 
-<main class="app-main">
-  <router-outlet />
-</main>
+      <router-outlet />
+    </rl-app-shell>
+  }
+</ng-container>
 
 <rl-toast-host />

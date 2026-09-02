@@ -1,0 +1,9 @@
+<div class="rl-command-bar-titles">
+    <h1 class="rl-command-bar-heading">{{ heading() }}</h1>
+
+    @if (subheading(); as subheading) {
+        <span class="rl-command-bar-subheading">{{ subheading }}</span>
+    }
+</div>
+
+<div class="rl-command-bar-actions"><ng-content /></div>

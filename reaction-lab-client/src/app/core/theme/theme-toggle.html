@@ -1,0 +1,14 @@
+<button rlIconButton size="sm" [label]="label()" [rlPopover]="panel">
+    <rl-icon [icon]="icons.sunMoon" size="sm"></rl-icon>
+</button>
+
+<ng-template #panel>
+    <rl-popover-panel>
+        <rl-segmented-control
+            [label]="label()"
+            [options]="options()"
+            [value]="theme.preference()"
+            (valueChange)="theme.prefer($event)"
+        ></rl-segmented-control>
+    </rl-popover-panel>
+</ng-template>

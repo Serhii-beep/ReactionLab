@@ -1,7 +1,8 @@
-.app-header {
-  padding: 1rem;
+:host {
+  display: block;
 }
 
-.app-main {
-  display: block;
+.app-compact {
+  justify-content: center;
+  min-block-size: 100dvh;
 }
