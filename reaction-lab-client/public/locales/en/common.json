@@ -52,7 +52,7 @@
             "retry": "Retry"
         },
         "bench": {
-            "empty": "Click a substance to put it on the bench",
+            "empty": "Drag a substance here, or click one in the Substances panel",
             "removeOne": "Remove one",
             "clear": "Clear the bench",
             "undo": "Undo",

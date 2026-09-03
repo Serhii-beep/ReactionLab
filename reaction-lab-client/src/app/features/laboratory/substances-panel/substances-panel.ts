@@ -10,6 +10,8 @@ import { SubstancesClient } from '../../../data/substances/substances-client';
 import { resourceError } from '../../../data/errors/resource-error';
 import { stateSymbol } from '../state-symbol';
 import { WorkspaceStore } from '../../../state/workspace-store';
+import { substanceDrag } from '../drag-payload';
+import { Draggable } from "../../../design-system/drag/draggable";
 
 const SKELETON_ROWS = [1, 2, 3, 4, 5, 6];
 
@@ -17,7 +19,7 @@ const SKELETON_ROWS = [1, 2, 3, 4, 5, 6];
     selector: 'app-substances-panel',
     templateUrl: './substances-panel.html',
     styleUrl: './substances-panel.scss',
-    imports: [Button, ChemFormula, EmptyState, SearchField, Skeleton, TranslocoDirective],
+    imports: [Button, ChemFormula, EmptyState, SearchField, Skeleton, TranslocoDirective, Draggable],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SubstancesPanel {
@@ -30,4 +32,5 @@ export class SubstancesPanel {
 
     protected readonly error = computed(() => resourceError(this.substances.page.error()));
     protected readonly firstPage = computed(() => this.substances.page.isLoading() && this.substances.items().length === 0);
+    protected readonly rows = computed(() => this.substances.items().map((substance) => ({ substance, payload: substanceDrag(substance) })));
 }

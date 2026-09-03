@@ -10,12 +10,18 @@ import { Bench } from "./bench/bench";
 import { ReactionsPanel } from "./reactions-panel/reactions-panel";
 import { SelectionStore } from '../../state/selection-store';
 import { WorkspaceStore } from '../../state/workspace-store';
+import { stateSymbol } from './state-symbol';
+import { DragSession } from '../../design-system/drag/drag-session';
+import { draggedSubstance } from './drag-payload';
+import { DropTarget } from "../../design-system/drag/drop-target";
+import { DragPreview } from "../../design-system/drag/drag-preview";
+import { ChemFormula } from '../../design-system/chemistry/chem-formula';
 
 @Component({
     selector: 'app-laboratory',
     templateUrl: './laboratory.html',
     styleUrl: './laboratory.scss',
-    imports: [DockGroup, DockPanel, TranslocoDirective, ElementsPanel, SubstancesPanel, Bench, ReactionsPanel],
+    imports: [DockGroup, DockPanel, TranslocoDirective, ElementsPanel, SubstancesPanel, Bench, ReactionsPanel, DropTarget, DragPreview, ChemFormula],
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: {
         '(document:keydown)': 'onKeydown($event)'
@@ -24,11 +30,15 @@ import { WorkspaceStore } from '../../state/workspace-store';
 export class Laboratory {
     protected readonly icons = icons;
 
+    protected readonly stateSymbol = stateSymbol;
+    protected readonly drag = inject(DragSession);
+
     private readonly breakpoints = inject(Breakpoints);
     private readonly selection = inject(SelectionStore);
     private readonly workspace = inject(WorkspaceStore);
 
     protected readonly presentation = computed<DockPresentation>(() => this.breakpoints.size() === 'tablet' ? 'sheets' : 'docks');
+    protected readonly dragged = computed(() => draggedSubstance(this.drag.payload()));
 
     private readonly shortcuts = new Map<string, () => void>([
         ['mod+z', () => this.workspace.undo()],
@@ -38,6 +48,14 @@ export class Laboratory {
         ['backspace', () => this.removeSelected()],
         ['escape', () => this.selection.clear()]
     ]);
+
+    protected onDropped(payload: unknown): void {
+        const substance = draggedSubstance(payload);
+
+        if (substance !== null) {
+            this.workspace.add(substance);
+        }
+    }
 
     protected onKeydown(event: KeyboardEvent): void {
         if (isTyping(event.target)) {

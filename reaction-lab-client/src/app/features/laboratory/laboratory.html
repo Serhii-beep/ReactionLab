@@ -1,5 +1,10 @@
 <ng-container *transloco="let t; prefix: 'lab'">
-    <main class="lab-viewport">
+    <main
+        rlDropTarget
+        class="lab-viewport"
+        [attr.data-dragging]="drag.isDragging() || null"
+        (dropped)="onDropped($event)"
+    >
         <app-bench></app-bench>
     </main>
 
@@ -28,4 +33,13 @@
             <app-reactions-panel></app-reactions-panel>
         </ng-template>
     </rl-dock-group>
+
+    <rl-drag-preview>
+        @if (dragged(); as substance) {
+            <rl-chem-formula
+                [formula]="substance.formula"
+                [state]="stateSymbol(substance.stateAtRoomTemperature)"
+            ></rl-chem-formula>
+        }
+    </rl-drag-preview>
 </ng-container>

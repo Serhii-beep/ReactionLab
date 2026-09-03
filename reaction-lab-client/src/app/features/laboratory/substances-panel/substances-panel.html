@@ -33,16 +33,21 @@
         <rl-empty-state [icon]="icons.search" [heading]="t('noMatches')"></rl-empty-state>
     } @else {
         <ul class="substances-panel-rows">
-            @for (substance of substances.items(); track substance.id) {
+            @for (row of rows(); track row.substance.id) {
                 <li>
-                    <button class="substances-panel-row" (click)="workspace.add(substance)">
+                    <button
+                        rlDraggable
+                        class="substances-panel-row"
+                        [dragPayload]="row.payload"
+                        (activated)="workspace.add(row.substance)"
+                    >
                         <rl-chem-formula
                             class="substances-panel-formula"
-                            [formula]="substance.formula"
-                            [state]="stateSymbol(substance.stateAtRoomTemperature)"
+                            [formula]="row.substance.formula"
+                            [state]="stateSymbol(row.substance.stateAtRoomTemperature)"
                         ></rl-chem-formula>
 
-                        <span class="substances-panel-name">{{ substance.name }}</span>
+                        <span class="substances-panel-name">{{ row.substance.name }}</span>
                     </button>
                 </li>
             }
