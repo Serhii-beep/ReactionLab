@@ -5,15 +5,13 @@
 .lab-viewport {
     grid-area: 1 / 1 / -1 / -1;
     display: grid;
-    place-content: center;
+    place-content: start center;
     min-inline-size: 0;
     min-block-size: 0;
     overflow: hidden;
     background: var(--surface-void);
 }
 
-.lab-viewport-note {
-    margin: 0;
-    color: var(--text-tertiary);
-    font-size: var(--text-sm);
+app-bench {
+    display: contents;
 }

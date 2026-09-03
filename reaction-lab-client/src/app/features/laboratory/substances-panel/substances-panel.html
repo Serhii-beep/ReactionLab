@@ -1,0 +1,53 @@
+<div class="substances-panel" *transloco="let t; prefix: 'lab.substances'">
+    <rl-search-field
+        [label]="t('search')"
+        [placeholder]="t('searchPlaceholder')"
+        [(value)]="substances.query"
+    ></rl-search-field>
+
+    @if (substances.needsMoreInput()) {
+        <rl-empty-state [icon]="icons.search" [heading]="t('keepTyping')"></rl-empty-state>
+    } @else if (firstPage()) {
+        <div class="substances-panel-rows">
+            @for (row of skeletonRows; track row) {
+                <span rlSkeleton class="substances-panel-skeleton"></span>
+            }
+        </div>
+    } @else if (error(); as failure) {
+        <rl-empty-state
+            tone="danger"
+            [icon]="icons.triangleAlert"
+            [heading]="t('failed')"
+            [description]="t('failedDetail')"
+        >
+            <button rlButton variant="primary" (click)="substances.page.reload()">{{ t('retry') }}</button>
+        </rl-empty-state>
+
+        <p class="substances-panel-support">
+            <span>{{ failure.code }}</span>
+            @if (failure.traceId; as traceId) {
+                <span>{{ traceId }}</span>
+            }
+        </p>
+    } @else if (substances.items().length === 0) {
+        <rl-empty-state [icon]="icons.search" [heading]="t('noMatches')"></rl-empty-state>
+    } @else {
+        <ul class="substances-panel-rows">
+            @for (substance of substances.items(); track substance.id) {
+                <li class="substances-panel-row" (click)="bench.add(substance)">
+                    <rl-chem-formula
+                        class="substances-panel-formula"
+                        [formula]="substance.formula"
+                        [state]="stateSymbol(substance.stateAtRoomTemperature)"
+                    ></rl-chem-formula>
+
+                    <span class="substances-panel-name">{{ substance.name }}</span>
+                </li>
+            }
+        </ul>
+
+        @if (substances.hasMore()) {
+            <button rlButton size="sm" (click)="substances.more()">{{ t('loadMore') }}</button>
+        }
+    }
+</div>

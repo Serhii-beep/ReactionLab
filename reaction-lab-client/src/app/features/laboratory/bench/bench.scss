@@ -1,0 +1,31 @@
+.bench {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: var(--space-3);
+    max-width: 48rem;
+    padding: var(--space-4);
+}
+
+.bench-note {
+    margin: 0;
+    color: var(--text-tertiary);
+    font-size: var(--text-sm);
+}
+
+.bench-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+}
+
+.bench-chip {
+    gap: var(--space-1);
+    padding-inline-end: var(--space-1);
+    font-size: var(--text-sm);
+}
+
+.bench-count {
+    color: var(--text-tertiary);
+    font-variant-numeric: tabular-nums;
+}

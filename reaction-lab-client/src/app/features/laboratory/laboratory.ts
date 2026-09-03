@@ -5,12 +5,16 @@ import { DockPanel } from '../../design-system/layout/dock-panel';
 import { EmptyState } from '../../design-system/primitives/empty-state/empty-state';
 import { TranslocoDirective } from '@jsverse/transloco';
 import { Breakpoints } from '../../core/layout/breakpoints';
+import { ElementsPanel } from "./elements-panel/elements-panel";
+import { SubstancesPanel } from "./substances-panel/substances-panel";
+import { Bench } from "./bench/bench";
+import { ReactionsPanel } from "./reactions-panel/reactions-panel";
 
 @Component({
     selector: 'app-laboratory',
     templateUrl: './laboratory.html',
     styleUrl: './laboratory.scss',
-    imports: [DockGroup, DockPanel, EmptyState, TranslocoDirective],
+    imports: [DockGroup, DockPanel, EmptyState, TranslocoDirective, ElementsPanel, SubstancesPanel, Bench, ReactionsPanel],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class Laboratory {

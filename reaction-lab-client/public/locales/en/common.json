@@ -22,15 +22,39 @@
         "pending": "The catalog is not connected yet.",
         "elements": {
             "label": "Elements",
-            "empty": "No elements loaded"
+            "search": "Search elements",
+            "searchPlaceholder": "Symbol or name",
+            "noMatches": "No elements match",
+            "failed": "Could not load the elements",
+            "failedDetail": "The catalog did not respond.",
+            "retry": "Retry"
         },
         "substances": {
             "label": "Substances",
-            "empty": "No substances loaded"
+            "search": "Search substances",
+            "searchPlaceholder": "Formula or name",
+            "keepTyping": "Keep typing to search",
+            "noMatches": "No substances match",
+            "failed": "Could not load the substances",
+            "failedDetail": "The catalog did not respond.",
+            "retry": "Retry",
+            "loadMore": "Load more"
         },
         "reactions": {
             "label": "Reactions",
-            "empty": "No reactions found"
+            "benchEmpty": "Put substances on the bench to see what they can do",
+            "none": "Nothing in the catalog involves these substances",
+            "ready": "Ready",
+            "needs": "Needs",
+            "yields": "yields",
+            "failed": "Could not load the reactions",
+            "failedDetail": "The catalog did not respond",
+            "retry": "Retry"
+        },
+        "bench": {
+            "empty": "Click a substance to put it on the bench",
+            "removeOne": "Remove one",
+            "clear": "Clear the bench"
         }
     }
 }

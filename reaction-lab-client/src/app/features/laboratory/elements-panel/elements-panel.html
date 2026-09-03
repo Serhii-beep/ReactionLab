@@ -1,0 +1,43 @@
+<div class="elements-panel" *transloco="let t; prefix: 'lab.elements'">
+    <rl-search-field
+        [label]="t('search')"
+        [placeholder]="t('searchPlaceholder')"
+        [(value)]="query"
+    ></rl-search-field>
+
+    @if (elements.all.isLoading()) {
+        <div class="elements-panel-rows">
+            @for (row of skeletonRows; track row) {
+                <span rlSkeleton class="elements-panel-skeleton"></span>
+            }
+        </div>
+    } @else if (error(); as failure) {
+        <rl-empty-state
+            tone="danger"
+            [icon]="icons.triangleAlert"
+            [heading]="t('failed')"
+            [description]="t('failedDetail')"
+        >
+            <button rlButton variant="primary" (click)="elements.all.reload()">{{ t('retry') }}</button>
+        </rl-empty-state>
+
+        <p class="elements-panel-support">
+            <span>{{ failure.code }}</span>
+            @if (failure.traceId; as traceId) {
+                <span>{{ traceId }}</span>
+            }
+        </p>
+    } @else if (visible().length === 0) {
+        <rl-empty-state [icon]="icons.search" [heading]="t('noMatches')"></rl-empty-state>
+    } @else {
+        <ul class="elements-panel-rows">
+            @for (element of visible(); track element.id) {
+                <li class="elements-panel-row" [attr.data-category]="element.category">
+                    <span class="elements-panel-symbol">{{ element.symbol }}</span>
+                    <span class="elements-panel-name">{{ element.name }}</span>
+                    <span class="elements-panel-number">{{ element.atomicNumber }}</span>
+                </li>
+            }
+        </ul>
+    }
+</div>

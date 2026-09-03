@@ -28,6 +28,14 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+:root {
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+* {
+  scrollbar-width: thin;
+}
+
 code,
 kbd,
 pre,

@@ -52,7 +52,7 @@ public sealed class ListReactionsHandler(
 
         var page = await cache.GetOrCreateAsync(
             CacheKeys.ReactionList(
-                query.Search, query.AvailableSubstanceIds, query.Page.Cursor, query.Page.Limit, query.Locale),
+                query.Search, query.AvailableSubstanceIds, query.Match, query.Page.Cursor, query.Page.Limit, query.Locale),
             async token => browsing
                 ? await BrowseAsync(cursor, query, token)
                 : await SearchAsync(cursor, query, token),
@@ -68,7 +68,7 @@ public sealed class ListReactionsHandler(
         var reactions = context.Reactions.AsNoTracking();
 
         return query.AvailableSubstanceIds is { Count: > 0 } available
-            ? matching.PossibleWith(reactions, available)
+            ? matching.PossibleWith(reactions, available, query.Match)
             : reactions;
     }
 
@@ -78,6 +78,23 @@ public sealed class ListReactionsHandler(
         CancellationToken cancellationToken)
     {
         var reactions = Candidates(query);
+
+        if (query.AvailableSubstanceIds is { Count: > 0 } available)
+        {
+            var ranked = await ReactionQueries.SummariesAsync(
+                matching.NearestFirst(reactions, available).Take(query.Page.Limit),
+                context.Substances.AsNoTracking(),
+                query.Locale,
+                cancellationToken);
+
+            return new CursorPagedResult<ReactionSummaryResponse>
+            {
+                Items = ranked,
+                PageSize = query.Page.Limit,
+                HasMore = false,
+                NextCursor = null
+            };
+        }
 
         if (cursor is not null)
         {

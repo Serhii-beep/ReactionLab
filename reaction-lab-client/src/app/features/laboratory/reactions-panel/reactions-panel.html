@@ -1,0 +1,57 @@
+<div class="reactions-panel" *transloco="let t; prefix: 'lab.reactions'">
+    @if (bench.isEmpty()) {
+        <rl-empty-state [icon]="icons.arrowRightLeft" [heading]="t('benchEmpty')"></rl-empty-state>
+    } @else if (reactions.page.isLoading()) {
+        <div class="reactions-panel-grid">
+            @for (row of skeletonRows; track row) {
+                <span rlSkeleton class="reactions-panel-skeleton"></span>
+            }
+        </div>
+    } @else if (error(); as failure) {
+        <rl-empty-state
+            tone="danger"
+            [icon]="icons.triangleAlert"
+            [heading]="t('failed')"
+            [description]="t('failedDetail')"
+        >
+            <button rlButton variant="primary" (click)="reactions.page.reload()">{{ t('retry') }}</button>
+        </rl-empty-state>
+
+        <p class="reactions-panel-support">
+            <span>{{ failure.code }}</span>
+            @if (failure.traceId; as traceId) {
+                <span>{{ traceId }}</span>
+            }
+        </p>
+    } @else if (scored().length === 0) {
+        <rl-empty-state [icon]="icons.search" [heading]="t('none')"></rl-empty-state>
+    } @else {
+        <div class="reactions-panel-grid">
+            @for (row of scored(); track row.reaction.id) {
+                <article class="reactions-panel-card" [attr.data-ready]="row.readiness.runnable || null">
+                    <rl-chem-equation
+                        [reactants]="row.reactants"
+                        [products]="row.products"
+                        [reversible]="row.reaction.isReversible"
+                        [arrowLabel]="t('yields')"
+                    ></rl-chem-equation>
+
+                    @if (row.readiness.runnable) {
+                        <span rlBadge tone="success">{{ t('ready') }}</span>
+                    } @else {
+                        <p class="reactions-panel-missing">
+                            <span class="reactions-panel-needs">{{ t('needs') }}</span>
+
+                            @for (missing of row.readiness.missing; track missing.substanceId) {
+                                <span rlBadge tone="warning">
+                                    {{ missing.required - missing.available }}&times;
+                                    <rl-chem-formula [formula]="missing.formula"></rl-chem-formula>
+                                </span>
+                            }
+                        </p>
+                    }
+                </article>
+            }
+        </div>
+    }
+</div>

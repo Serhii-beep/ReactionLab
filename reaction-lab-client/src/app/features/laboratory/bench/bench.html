@@ -1,0 +1,31 @@
+<div class="bench" *transloco="let t; prefix: 'lab.bench'">
+    @if (bench.isEmpty()) {
+        <p class="bench-note">{{ t('empty') }}</p>
+    } @else {
+        <div class="bench-items">
+            @for (entry of bench.entries(); track entry.substance.id) {
+                <span rlChip class="bench-chip">
+                    <rl-chem-formula
+                        [formula]="entry.substance.formula"
+                        [state]="stateSymbol(entry.substance.stateAtRoomTemperature)"
+                    ></rl-chem-formula>
+
+                    <span class="bench-count">&times;{{ entry.count }}</span>
+
+                    <button
+                        rlIconButton
+                        size="sm"
+                        [label]="t('removeOne')"
+                        (click)="bench.removeOne(entry.substance.id)"
+                        >
+                            <rl-icon [icon]="icons.minus" size="sm"></rl-icon>
+                        </button>
+                </span>
+            }
+        </div>
+
+        <button rlIconButton [label]="t('clear')" (click)="bench.clear()">
+            <rl-icon [icon]="icons.x"></rl-icon>
+        </button>
+    }
+</div>

@@ -1,3 +1,4 @@
+using ReactionLab.Application.Common.Abstractions;
 using ReactionLab.Domain.Localization;
 
 namespace ReactionLab.Application.Common.Caching;
@@ -27,10 +28,11 @@ public static class CacheKeys
     public static string ReactionList(
         string? search,
         IReadOnlyCollection<Guid>? availableSubstanceIds,
+        ReactantMatch match,
         string? cursor,
         int pageSize,
         SupportedLocale locale) =>
-        $"reactions:{Term(search)}:{Available(availableSubstanceIds)}:{cursor ?? "-"}:{pageSize}:{locale.Code}";
+        $"reactions:{Term(search)}:{Available(availableSubstanceIds)}:{match}:{cursor ?? "-"}:{pageSize}:{locale.Code}";
 
     private static string Term(string? search) =>
         string.IsNullOrWhiteSpace(search) ? "-" : search.Trim().ToUpperInvariant();

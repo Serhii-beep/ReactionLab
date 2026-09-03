@@ -1,6 +1,9 @@
-import { ChangeDetectionStrategy, Component, computed, DOCUMENT, effect, ElementRef, inject, input, linkedSignal } from "@angular/core";
+import * as icons from '../icons/icons.generated';
+import { ChangeDetectionStrategy, Component, computed, DOCUMENT, effect, ElementRef, inject, input, linkedSignal, signal } from "@angular/core";
 import { Directionality } from "@angular/cdk/bidi";
 import { clampSize, COLLAPSE_AT, DockBounds, DockState, parseDockState, resolveDrag } from "./dock-size";
+import { IconButton } from "../primitives/icon-button/icon-button";
+import { Icon } from "../icons/icon";
 
 export type DockSide = 'start' | 'end' | 'bottom';
 
@@ -21,8 +24,10 @@ interface DragAnchor {
         '[attr.aria-label]': 'label()',
         '[attr.data-side]': 'side()',
         '[attr.data-collapsed]': 'state().collapsed || null',
+        '[attr.data-dragging]': 'dragging() || null',
         '[style.--dock-size]': 'sizeCss()'
-    }
+    },
+    imports: [IconButton, Icon]
 })
 export class Dock {
     readonly label = input.required<string>();
@@ -34,11 +39,17 @@ export class Dock {
     readonly collapsible = input(true);
     readonly resizable = input(true);
     readonly storageKey = input<string>();
+    readonly collapseLabel = input('Collapse panel');
+    readonly expandLabel = input('Expand panel');
 
+    protected readonly icons = icons;
+
+    protected readonly dragging = signal(false);
     protected readonly state = linkedSignal(() => parseDockState(this.stored(), this.bounds(), this.defaultSize()));
     protected readonly sizeCss = computed(() => `${this.state().size}rem`);
     protected readonly orientation = computed(() => (this.side() === 'bottom' ? 'horizontal' : 'vertical'));
     protected readonly grabbable = computed(() => this.resizable() || this.collapsible());
+    protected readonly toggleLabel = computed(() => (this.state().collapsed ? this.expandLabel() : this.collapseLabel()));
 
     private readonly document = inject(DOCUMENT);
     private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
@@ -66,6 +77,7 @@ export class Dock {
         }
 
         this.anchor = this.anchorFor(this.host.nativeElement.getBoundingClientRect());
+        this.dragging.set(true);
         (event.target as HTMLElement).setPointerCapture(event.pointerId);
         event.preventDefault();
     }
@@ -89,6 +101,7 @@ export class Dock {
 
         (event.target as HTMLElement).releasePointerCapture(event.pointerId);
         this.anchor = null;
+        this.dragging.set(false);
     }
 
     protected onKeydown(event: KeyboardEvent): void {

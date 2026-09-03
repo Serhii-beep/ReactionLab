@@ -1,3 +1,13 @@
+<header class="rl-dock-header">
+    <span class="rl-dock-title">{{ label() }}</span>
+
+    @if (collapsible()) {
+        <button rlIconButton size="sm" [label]="toggleLabel()" (click)="toggle()">
+            <rl-icon class="rl-dock-chevron" [icon]="icons.chevronDown" size="sm"></rl-icon>
+        </button>
+    }
+</header>
+
 <div class="rl-dock-body"><ng-content /></div>
 
 @if (grabbable()) {

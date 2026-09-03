@@ -1,6 +1,6 @@
 <ng-container *transloco="let t; prefix: 'lab'">
     <main class="lab-viewport">
-        <p class="lab-viewport-note">{{ t('viewport') }}</p>
+        <app-bench></app-bench>
     </main>
 
     <rl-dock-group
@@ -9,19 +9,11 @@
         [railLabel]="t('rail')"
     >
         <ng-template rlDockPanel side="start" [label]="t('elements.label')" [icon]="icons.atom">
-            <rl-empty-state
-                [icon]="icons.atom"
-                [heading]="t('elements.empty')"
-                [description]="t('pending')"
-            ></rl-empty-state>
+            <app-elements-panel></app-elements-panel>
         </ng-template>
 
         <ng-template rlDockPanel side="end" [label]="t('substances.label')" [icon]="icons.flaskConical">
-            <rl-empty-state
-                [icon]="icons.flaskConical"
-                [heading]="t('substances.empty')"
-                [description]="t('pending')"
-            ></rl-empty-state>
+            <app-substances-panel></app-substances-panel>
         </ng-template>
 
         <ng-template
@@ -33,11 +25,7 @@
             [maxSize]="24"
             [defaultSize]="12"
         >
-            <rl-empty-state
-                [icon]="icons.arrowRightLeft"
-                [heading]="t('reactions.empty')"
-                [description]="t('pending')"
-            ></rl-empty-state>
+            <app-reactions-panel></app-reactions-panel>
         </ng-template>
     </rl-dock-group>
 </ng-container>

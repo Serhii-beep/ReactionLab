@@ -1,4 +1,5 @@
 using ReactionLab.API.Http;
+using ReactionLab.Application.Common.Abstractions;
 using ReactionLab.Application.Common.Pagination;
 using ReactionLab.Application.Features.Reactions.Contracts;
 using ReactionLab.Application.Features.Reactions.GetReactionById;
@@ -17,12 +18,13 @@ internal static class ReactionEndpoints
         group.MapGet("/", async (
             string? q,
             Guid[] available,
+            ReactantMatch? match,
             [AsParameters] CursorRequest page,
             HttpContext httpContext,
             ListReactionsHandler handler,
             CancellationToken cancellationToken) =>
         {
-            var query = new ListReactionsQuery(q, available, page, httpContext.ResolveLocale());
+            var query = new ListReactionsQuery(q, available, match ?? ReactantMatch.Complete, page, httpContext.ResolveLocale());
             var result = await handler.HandleAsync(query, cancellationToken);
 
             return result.ToHttpResult();

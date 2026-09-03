@@ -4,6 +4,7 @@
 
     position: relative;
     display: flex;
+    flex-direction: column;
     min-inline-size: 0;
     min-block-size: 0;
     background: var(--glass-bg);
@@ -38,8 +39,65 @@
     block-size: var(--dock-rail-size);
 }
 
-:host([data-collapsed]) .rl-dock-body {
+:host([data-collapsed]) .rl-dock-body,
+:host([data-collapsed]) .rl-dock-title {
     display: none;
+}
+
+:host([data-collapsed]) .rl-dock-header {
+    justify-content: center;
+    padding-inline: 0;
+}
+
+:host([data-side='end']) .rl-dock-header {
+    flex-direction: row-reverse;
+}
+
+.rl-dock-header {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    block-size: var(--dock-rail-size);
+    padding-inline: var(--space-1);
+    border-block-end: 0.0625rem solid var(--glass-border);
+}
+
+.rl-dock-title {
+    overflow: hidden;
+    padding-inline: var(--space-1);
+    color: var(--text-secondary);
+    font-size: var(--text-2xs);
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.rl-dock-chevron {
+    transition: rotate var(--duration-base) var(--ease-standard);
+}
+
+:host([data-side='start']) .rl-dock-chevron {
+    rotate: 90deg;
+}
+
+:host([data-side='start'][data-collapsed]) .rl-dock-chevron {
+    rotate: -90deg;
+}
+
+:host([data-side='end']) .rl-dock-chevron {
+    rotate: -90deg;
+}
+
+:host([data-side='end'][data-collapsed]) .rl-dock-chevron {
+    rotate: 90deg;
+}
+
+:host([data-side='bottom'][data-collapsed]) .rl-dock-chevron {
+    rotate: 180deg;
 }
 
 .rl-dock-body {
@@ -109,4 +167,13 @@
 :host([data-side='start']),
 :host([data-side='end']) {
     z-index: 1;
+    transition: inline-size var(--duration-base) var(--ease-standard);
+}
+
+:host([data-side='bottom']) {
+    transition: block-size var(--duration-base) var(--ease-standard);
+}
+
+:host([data-dragging]) {
+    transition: none;
 }
