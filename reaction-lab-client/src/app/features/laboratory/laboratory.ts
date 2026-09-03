@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import * as icons from '../../design-system/icons/icons.generated';
 import { DockGroup, DockPresentation } from '../../design-system/layout/dock-group';
 import { DockPanel } from '../../design-system/layout/dock-panel';
-import { EmptyState } from '../../design-system/primitives/empty-state/empty-state';
 import { TranslocoDirective } from '@jsverse/transloco';
 import { Breakpoints } from '../../core/layout/breakpoints';
 import { ElementsPanel } from "./elements-panel/elements-panel";
@@ -14,7 +13,7 @@ import { ReactionsPanel } from "./reactions-panel/reactions-panel";
     selector: 'app-laboratory',
     templateUrl: './laboratory.html',
     styleUrl: './laboratory.scss',
-    imports: [DockGroup, DockPanel, EmptyState, TranslocoDirective, ElementsPanel, SubstancesPanel, Bench, ReactionsPanel],
+    imports: [DockGroup, DockPanel, TranslocoDirective, ElementsPanel, SubstancesPanel, Bench, ReactionsPanel],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class Laboratory {

@@ -34,14 +34,16 @@
     } @else {
         <ul class="substances-panel-rows">
             @for (substance of substances.items(); track substance.id) {
-                <li class="substances-panel-row" (click)="bench.add(substance)">
-                    <rl-chem-formula
-                        class="substances-panel-formula"
-                        [formula]="substance.formula"
-                        [state]="stateSymbol(substance.stateAtRoomTemperature)"
-                    ></rl-chem-formula>
+                <li>
+                    <button class="substances-panel-row" (click)="bench.add(substance)">
+                        <rl-chem-formula
+                            class="substances-panel-formula"
+                            [formula]="substance.formula"
+                            [state]="stateSymbol(substance.stateAtRoomTemperature)"
+                        ></rl-chem-formula>
 
-                    <span class="substances-panel-name">{{ substance.name }}</span>
+                        <span class="substances-panel-name">{{ substance.name }}</span>
+                    </button>
                 </li>
             }
         </ul>

@@ -4,6 +4,7 @@ const { defineConfig } = require('eslint/config');
 const tseslint = require('typescript-eslint');
 const angular = require('angular-eslint');
 const prettier = require('eslint-config-prettier/flat');
+const boundaries = /** @type {import('eslint').ESLint.Plugin} */ (require('eslint-plugin-boundaries'));
 
 module.exports = defineConfig([
   {
@@ -42,6 +43,41 @@ module.exports = defineConfig([
   {
     files: ['**/*.spec.ts'],
     rules: { 'max-lines': 'off', 'max-lines-per-function': 'off' }
+  },
+  {
+    files: ['src/app/**/*.ts'],
+    plugins: { boundaries },
+    settings: {
+      'import/resolver': { node: { extensions: ['.ts'] } },
+      'boundaries/elements': [
+        { type: 'design-system', pattern: 'src/app/design-system/**', partialMatch: false },
+        { type: 'data', pattern: 'src/app/data/**', partialMatch: false },
+        { type: 'state', pattern: 'src/app/state/**', partialMatch: false },
+        { type: 'core', pattern: 'src/app/core/**', partialMatch: false },
+        { type: 'feature', pattern: 'src/app/features/*/**', partialMatch: false, capture: ['name'] }
+      ]
+    },
+    rules: {
+      'boundaries/dependencies': [
+        'error',
+        {
+          default: 'disallow',
+          policies: [
+            { from: [{ element: { type: 'design-system' } }], allow: [{ to: { element: { type: 'design-system' } } }] },
+            { from: [{ element: { type: 'data' } }], allow: [{ to: { element: { type: 'data' } } }] },
+            { from: [{ element: { type: 'state' } }], allow: [{ to: { element: { type: ['state', 'data'] } } }] },
+            { from: [{ element: { type: 'core' } }], allow: [{ to: { element: { type: ['core', 'data', 'design-system'] } } }] },
+            {
+              from: [{ element: { type: 'feature' } }],
+              allow: [
+                { to: { element: { type: ['data', 'state', 'core', 'design-system'] } } },
+                { to: { element: { type: 'feature', captured: { name: '{{from.name}}' } } } }
+              ]
+            }
+          ]
+        }
+      ]
+    }
   },
   {
     files: ['**/*.html'],
