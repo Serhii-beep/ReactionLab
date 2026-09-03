@@ -1,31 +1,46 @@
 <div class="bench" *transloco="let t; prefix: 'lab.bench'">
-    @if (bench.isEmpty()) {
+    <div class="bench-tools">
+        <button rlIconButton size="sm" [label]="t('undo')" [disabled]="!workspace.canUndo()" (click)="workspace.undo()">
+            <rl-icon [icon]="icons.undo2" size="sm"></rl-icon>
+        </button>
+
+        <button rlIconButton size="sm" [label]="t('redo')" [disabled]="!workspace.canRedo()" (click)="workspace.redo()">
+            <rl-icon [icon]="icons.redo2" size="sm"></rl-icon>
+        </button>
+
+        <button rlIconButton size="sm" [label]="t('clear')" [disabled]="workspace.isEmpty()" (click)="workspace.clear()">
+            <rl-icon [icon]="icons.trash2" size="sm"></rl-icon>
+        </button>
+    </div>
+    
+    @if (workspace.isEmpty()) {
         <p class="bench-note">{{ t('empty') }}</p>
     } @else {
         <div class="bench-items">
-            @for (entry of bench.entries(); track entry.substance.id) {
-                <span rlChip class="bench-chip">
+            @for (item of workspace.entries(); track item.substance.id) {
+                <button
+                    rlChip
+                    class="bench-chip"
+                    [selected]="selection.isSelected(item.substance.id)"
+                    (selectedChange)="selection.toggle(item.substance.id)"
+                >
                     <rl-chem-formula
-                        [formula]="entry.substance.formula"
-                        [state]="stateSymbol(entry.substance.stateAtRoomTemperature)"
+                        [formula]="item.substance.formula"
+                        [state]="stateSymbol(item.substance.stateAtRoomTemperature)"
                     ></rl-chem-formula>
 
-                    <span class="bench-count">&times;{{ entry.count }}</span>
+                    <span class="bench-count">&times;{{ item.count }}</span>
 
                     <button
                         rlIconButton
                         size="sm"
                         [label]="t('removeOne')"
-                        (click)="bench.removeOne(entry.substance.id)"
-                        >
-                            <rl-icon [icon]="icons.minus" size="sm"></rl-icon>
-                        </button>
-                </span>
+                        (click)="$event.stopPropagation(); workspace.removeOne(item.substance.id)"
+                    >
+                        <rl-icon [icon]="icons.minus" size="sm"></rl-icon>
+                    </button>
+                </button>
             }
         </div>
-
-        <button rlIconButton [label]="t('clear')" (click)="bench.clear()">
-            <rl-icon [icon]="icons.x"></rl-icon>
-        </button>
     }
 </div>

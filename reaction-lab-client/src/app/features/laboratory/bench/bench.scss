@@ -1,14 +1,22 @@
 .bench {
     display: flex;
     align-items: flex-start;
-    justify-content: center;
     gap: var(--space-3);
     max-width: 48rem;
     padding: var(--space-4);
 }
 
+.bench-tools {
+    display: flex;
+    flex: none;
+    gap: var(--space-1);
+    padding-inline-end: var(--space-2);
+    border-inline-end: 0.0625rem solid var(--border-subtle);
+}
+
 .bench-note {
     margin: 0;
+    padding-block: var(--space-1);
     color: var(--text-tertiary);
     font-size: var(--text-sm);
 }

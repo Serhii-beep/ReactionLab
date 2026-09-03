@@ -54,7 +54,9 @@
         "bench": {
             "empty": "Click a substance to put it on the bench",
             "removeOne": "Remove one",
-            "clear": "Clear the bench"
+            "clear": "Clear the bench",
+            "undo": "Undo",
+            "redo": "Redo"
         }
     }
 }

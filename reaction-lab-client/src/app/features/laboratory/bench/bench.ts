@@ -5,8 +5,9 @@ import { Chip } from '../../../design-system/primitives/chip/chip';
 import { Icon } from '../../../design-system/icons/icon';
 import { IconButton } from '../../../design-system/primitives/icon-button/icon-button';
 import { TranslocoDirective } from '@jsverse/transloco';
-import { BenchStore } from '../../../state/bench-store';
 import { stateSymbol } from '../state-symbol';
+import { WorkspaceStore } from '../../../state/workspace-store';
+import { SelectionStore } from '../../../state/selection-store';
 
 @Component({
     selector: 'app-bench',
@@ -16,7 +17,8 @@ import { stateSymbol } from '../state-symbol';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class Bench {
-    protected readonly bench = inject(BenchStore);
+    protected readonly workspace = inject(WorkspaceStore);
+    protected readonly selection = inject(SelectionStore);
 
     protected readonly icons = icons;
     protected readonly stateSymbol = stateSymbol;

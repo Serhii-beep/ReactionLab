@@ -35,7 +35,7 @@
         <ul class="substances-panel-rows">
             @for (substance of substances.items(); track substance.id) {
                 <li>
-                    <button class="substances-panel-row" (click)="bench.add(substance)">
+                    <button class="substances-panel-row" (click)="workspace.add(substance)">
                         <rl-chem-formula
                             class="substances-panel-formula"
                             [formula]="substance.formula"

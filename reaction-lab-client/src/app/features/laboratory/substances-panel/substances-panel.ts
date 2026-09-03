@@ -8,8 +8,8 @@ import { Skeleton } from '../../../design-system/primitives/skeleton/skeleton';
 import { TranslocoDirective } from '@jsverse/transloco';
 import { SubstancesClient } from '../../../data/substances/substances-client';
 import { resourceError } from '../../../data/errors/resource-error';
-import { BenchStore } from '../../../state/bench-store';
 import { stateSymbol } from '../state-symbol';
+import { WorkspaceStore } from '../../../state/workspace-store';
 
 const SKELETON_ROWS = [1, 2, 3, 4, 5, 6];
 
@@ -22,7 +22,7 @@ const SKELETON_ROWS = [1, 2, 3, 4, 5, 6];
 })
 export class SubstancesPanel {
     protected readonly substances = inject(SubstancesClient);
-    protected readonly bench = inject(BenchStore);
+    protected readonly workspace = inject(WorkspaceStore);
 
     protected readonly icons = icons;
     protected readonly skeletonRows = SKELETON_ROWS;
