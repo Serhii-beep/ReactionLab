@@ -42,4 +42,23 @@
             ></rl-chem-formula>
         }
     </rl-drag-preview>
+
+    <app-lab-palette
+        [label]="t('palette.label')"
+        [placeholder]="t('palette.placeholder')"
+        [emptyText]="t('palette.empty')"
+        [substancesLabel]="t('palette.substances')"
+        [elementsLabel]="t('palette.elements')"
+    >
+        <span class="lab-palette-hint">
+            <kbd rlKbd><rl-icon [icon]="icons.arrowUp" size="sm" [label]="t('palette.up')"></rl-icon></kbd>
+            <kbd rlKbd><rl-icon [icon]="icons.arrowDown" size="sm" [label]="t('palette.down')"></rl-icon></kbd>
+            {{ t('palette.navigate') }}
+        </span>
+        <span class="lab-palette-hint">
+            <kbd rlKbd><rl-icon [icon]="icons.cornerDownLeft" size="sm" [label]="t('palette.enter')"></rl-icon></kbd>
+            {{ t('palette.add') }}
+        </span>
+        <span class="lab-palette-hint"><kbd rlKbd>Esc</kbd>{{ t('palette.close') }}</span>
+    </app-lab-palette>
 </ng-container>

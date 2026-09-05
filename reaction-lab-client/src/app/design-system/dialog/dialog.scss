@@ -40,6 +40,20 @@
         align-items: flex-end;
     }
 
+    &[data-placement='top'] {
+        align-items: flex-start;
+    }
+
+    &[data-placement='top'] .rl-dialog-panel {
+        margin-block-start: 12vh;
+    }
+
+    &[data-chrome='none'] .rl-dialog-panel {
+        gap: 0;
+        padding: 0;
+        overflow: hidden;
+    }
+
     &[data-placement='start'] .rl-dialog-panel,
     &[data-placement='end'] .rl-dialog-panel {
         width: min(26rem, 100%);

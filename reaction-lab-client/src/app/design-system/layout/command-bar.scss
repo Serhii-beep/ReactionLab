@@ -1,7 +1,7 @@
 :host {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
-    justify-content: space-between;
     gap: var(--space-4);
     block-size: 3rem;
     padding-inline: var(--space-4);
@@ -37,5 +37,12 @@
 .rl-command-bar-actions {
     display: flex;
     align-items: center;
+    justify-content: flex-end;
     gap: var(--space-1);
+}
+
+.rl-command-bar-search {
+    display: flex;
+    justify-content: center;
+    min-inline-size: 0;
 }

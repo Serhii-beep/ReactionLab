@@ -3,11 +3,15 @@
 
 import { IconNodes } from './icon-nodes';
 
+export const arrowDown: IconNodes = [['path', {"d":"M12 5v14"}], ['path', {"d":"m19 12-7 7-7-7"}]];
 export const arrowRightLeft: IconNodes = [['path', {"d":"m16 3 4 4-4 4"}], ['path', {"d":"M20 7H4"}], ['path', {"d":"m8 21-4-4 4-4"}], ['path', {"d":"M4 17h16"}]];
+export const arrowUp: IconNodes = [['path', {"d":"m5 12 7-7 7 7"}], ['path', {"d":"M12 19V5"}]];
 export const atom: IconNodes = [['circle', {"cx":"12","cy":"12","r":"1"}], ['path', {"d":"M20.2 20.2c2.04-2.03.02-7.36-4.5-11.9-4.54-4.52-9.87-6.54-11.9-4.5-2.04 2.03-.02 7.36 4.5 11.9 4.54 4.52 9.87 6.54 11.9 4.5Z"}], ['path', {"d":"M15.7 15.7c4.52-4.54 6.54-9.87 4.5-11.9-2.03-2.04-7.36-.02-11.9 4.5-4.52 4.54-6.54 9.87-4.5 11.9 2.03 2.04 7.36.02 11.9-4.5Z"}]];
 export const check: IconNodes = [['path', {"d":"M20 6 9 17l-5-5"}]];
 export const chevronDown: IconNodes = [['path', {"d":"m6 9 6 6 6-6"}]];
 export const circleAlert: IconNodes = [['circle', {"cx":"12","cy":"12","r":"10"}], ['line', {"x1":"12","x2":"12","y1":"8","y2":"12"}], ['line', {"x1":"12","x2":"12.01","y1":"16","y2":"16"}]];
+export const command: IconNodes = [['path', {"d":"M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3"}]];
+export const cornerDownLeft: IconNodes = [['path', {"d":"M20 4v7a4 4 0 0 1-4 4H4"}], ['path', {"d":"m9 10-5 5 5 5"}]];
 export const flaskConical: IconNodes = [['path', {"d":"M14 2v6a2 2 0 0 0 .245.96l5.51 10.08A2 2 0 0 1 18 22H6a2 2 0 0 1-1.755-2.96l5.51-10.08A2 2 0 0 0 10 8V2"}], ['path', {"d":"M6.453 15h11.094"}], ['path', {"d":"M8.5 2h7"}]];
 export const info: IconNodes = [['circle', {"cx":"12","cy":"12","r":"10"}], ['path', {"d":"M12 16v-4"}], ['path', {"d":"M12 8h.01"}]];
 export const loaderCircle: IconNodes = [['path', {"d":"M21 12a9 9 0 1 1-6.219-8.56"}]];

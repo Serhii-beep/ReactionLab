@@ -16,12 +16,30 @@ import { draggedSubstance } from './drag-payload';
 import { DropTarget } from "../../design-system/drag/drop-target";
 import { DragPreview } from "../../design-system/drag/drag-preview";
 import { ChemFormula } from '../../design-system/chemistry/chem-formula';
+import { Kbd } from '../../design-system/primitives/kbd/kbd';
+import { LabPalette } from './palette/lab-palette';
+import { UiStore } from '../../state/ui-store';
+import { Icon } from '../../design-system/icons/icon';
 
 @Component({
     selector: 'app-laboratory',
     templateUrl: './laboratory.html',
     styleUrl: './laboratory.scss',
-    imports: [DockGroup, DockPanel, TranslocoDirective, ElementsPanel, SubstancesPanel, Bench, ReactionsPanel, DropTarget, DragPreview, ChemFormula],
+    imports: [
+        DockGroup,
+        DockPanel,
+        TranslocoDirective,
+        ElementsPanel,
+        SubstancesPanel,
+        Bench,
+        ReactionsPanel,
+        DropTarget,
+        Kbd,
+        LabPalette,
+        DragPreview,
+        ChemFormula,
+        Icon
+    ],
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: {
         '(document:keydown)': 'onKeydown($event)'
@@ -36,11 +54,13 @@ export class Laboratory {
     private readonly breakpoints = inject(Breakpoints);
     private readonly selection = inject(SelectionStore);
     private readonly workspace = inject(WorkspaceStore);
+    private readonly ui = inject(UiStore);
 
     protected readonly presentation = computed<DockPresentation>(() => this.breakpoints.size() === 'tablet' ? 'sheets' : 'docks');
     protected readonly dragged = computed(() => draggedSubstance(this.drag.payload()));
 
     private readonly shortcuts = new Map<string, () => void>([
+        ['mod+k', () => this.ui.openPalette()],
         ['mod+z', () => this.workspace.undo()],
         ['mod+shift+z', () => this.workspace.redo()],
         ['mod+y', () => this.workspace.redo()],
@@ -58,11 +78,13 @@ export class Laboratory {
     }
 
     protected onKeydown(event: KeyboardEvent): void {
-        if (isTyping(event.target)) {
+        const combo = shortcut(event);
+
+        if (combo !== 'mod+k' && isTyping(event.target)) {
             return;
         }
 
-        const action = this.shortcuts.get(shortcut(event));
+        const action = this.shortcuts.get(combo);
 
         if (action) {
             event.preventDefault();

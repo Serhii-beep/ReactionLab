@@ -2,7 +2,7 @@ using ReactionLab.Domain.Enums;
 
 namespace ReactionLab.Application.Features.Reactions.Contracts;
 
-public sealed record ReactionparticipantResponse(
+public sealed record ReactionParticipantResponse(
     Guid SubstanceId,
     string Formula,
     string Name,

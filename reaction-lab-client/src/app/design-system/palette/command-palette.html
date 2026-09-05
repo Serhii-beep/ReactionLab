@@ -1,0 +1,40 @@
+<rl-dialog [(open)]="open" [label]="label()" placement="top" chrome="none">
+    <div class="rl-palette-field">
+        <rl-icon [icon]="icons.search" size="sm"></rl-icon>
+
+        <input
+            rlInput
+            size="lg"
+            type="text"
+            role="combobox"
+            autocomplete="off"
+            aria-autocomplete="list"
+            aria-expanded="true"
+            [attr.aria-label]="label()"
+            [attr.aria-controls]="listboxId"
+            [attr.aria-activedescendant]="activeDescendant()"
+            [placeholder]="placeholder()"
+            [value]="query()"
+            (input)="onInput($event)"
+            (keydown)="onKeydown($event)"
+        />
+
+        @if (busy()) {
+            <rl-icon class="rl-palette-busy" [icon]="icons.loaderCircle" size="sm"></rl-icon>
+        }
+    </div>
+
+    <rl-listbox
+        [embedded]="true"
+        [options]="options()"
+        [idPrefix]="listboxId"
+        [label]="label()"
+        [activeIndex]="activeIndex()"
+        [emptyText]="emptyText()"
+        [optionTemplate]="optionTemplate()"
+        (optionPicked)="pick($event)"
+        (optionHovered)="activeIndex.set($event)"
+    ></rl-listbox>
+
+    <div class="rl-palette-hint"><ng-content /></div>
+</rl-dialog>

@@ -1,0 +1,32 @@
+<rl-command-palette
+    [(open)]="ui.paletteOpen"
+    [(query)]="query"
+    [options]="options()"
+    [label]="label()"
+    [placeholder]="placeholder()"
+    [emptyText]="emptyText()"
+    [busy]="busy()"
+    [optionTemplate]="option"
+    (picked)="onPicked($event)"
+>
+    <ng-content />
+</rl-command-palette>
+
+<ng-template #option let-item>
+    @if (item.value.kind === 'substance') {
+        <span class="lab-palette-row">
+            <rl-chem-formula
+                [formula]="item.value.substance.formula"
+                [state]="stateSymbol(item.value.substance.stateAtRoomTemperature)"
+            ></rl-chem-formula>
+
+            <span class="lab-palette-name">{{ item.value.substance.name }}</span>
+        </span>
+    } @else {
+        <span class="lab-palette-row">
+            <span class="lab-palette-symbol">{{ item.value.element.symbol }}</span>
+
+            <span class="lab-palette-name">{{ item.value.element.name }}</span>
+        </span>
+    }
+</ng-template>

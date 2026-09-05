@@ -3,7 +3,8 @@ import { ChangeDetectionStrategy, Component, effect, ElementRef, input, model, v
 import { Icon } from "../icons/icon";
 import { IconButton } from "../primitives/icon-button/icon-button";
 
-export type DialogPlacement = 'center' | 'start' | 'end' | 'bottom'
+export type DialogPlacement = 'center' | 'top' | 'start' | 'end' | 'bottom'
+export type DialogChrome = 'header' | 'none';
 
 @Component({
     selector: 'rl-dialog',
@@ -18,6 +19,7 @@ export class Dialog {
     readonly closeLabel = input('Close');
     readonly placement = input<DialogPlacement>('center');
     readonly mandatory = input(false);
+    readonly chrome = input<DialogChrome>('header');
 
     protected readonly icons = icons;
 

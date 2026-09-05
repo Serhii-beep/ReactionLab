@@ -1,5 +1,9 @@
 <div class="rl-listbox-options" role="listbox" [id]="idPrefix()" [attr.aria-label]="label()">
     @for (item of options(); track item.value; let index = $index) {
+        @if (item.group && item.group !== options()[index - 1]?.group) {
+            <div class="rl-listbox-group" role="presentation">{{ item.group }}</div>
+        }
+
         <button
             #option
             type="button"
@@ -13,7 +17,11 @@
             (click)="optionPicked.emit(index)"
             (mousemove)="optionHovered.emit(index)"
         >
-            <span class="rl-listbox-option-label">{{ item.label }}</span>
+            @if (optionTemplate(); as template) {
+                <ng-container *ngTemplateOutlet="template; context: { $implicit: item }" />
+            } @else {
+                <span class="rl-listbox-option-label">{{ item.label }}</span>
+            }
 
             @if (index === selectedIndex()) {
                 <rl-icon [icon]="icons.check" size="sm"></rl-icon>

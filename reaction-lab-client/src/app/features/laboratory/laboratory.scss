@@ -22,6 +22,12 @@
     }
 }
 
+.lab-palette-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+}
+
 app-bench {
     display: contents;
 }

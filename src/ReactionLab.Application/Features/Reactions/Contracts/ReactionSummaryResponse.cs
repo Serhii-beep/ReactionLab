@@ -11,4 +11,4 @@ public sealed record ReactionSummaryResponse(
     decimal? EnthalpyKilojoulesPerMole,
     bool? IsExothermic,
     IReadOnlyList<string> Tags,
-    IReadOnlyList<ReactionparticipantResponse> Participants);
+    IReadOnlyList<ReactionParticipantResponse> Participants);

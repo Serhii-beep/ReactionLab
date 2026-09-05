@@ -114,9 +114,9 @@ internal static class ReactionQueries
             Map(row.Participants, locale)));
     }
 
-    private static List<ReactionparticipantResponse> Map(
+    private static List<ReactionParticipantResponse> Map(
         List<ParticipantRow> rows, SupportedLocale locale) =>
-        rows.ConvertAll(row => new ReactionparticipantResponse(
+        rows.ConvertAll(row => new ReactionParticipantResponse(
             row.SubstanceId.Value,
             row.Formula.Value,
             row.Translations.Resolve(locale).Name,

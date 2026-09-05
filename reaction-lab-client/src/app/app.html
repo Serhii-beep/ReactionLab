@@ -9,6 +9,21 @@
   } @else {
     <rl-app-shell>
       <rl-command-bar [heading]="t('title')" [subheading]="t('experiment.untitled')">
+        <button rlSearchCue rlCommandBarSearch (click)="ui.openPalette()">
+          <rl-icon [icon]="icons.search" size="sm"></rl-icon>
+          <span class="rl-search-cue-text">{{ t('search') }}</span>
+          <span class="rl-search-cue-keys">
+            <kbd rlKbd>
+              @if (isApple) {
+                <rl-icon [icon]="icons.command" size="sm" [label]="t('commandKey')"></rl-icon>
+              } @else {
+                Ctrl
+              }
+            </kbd>
+            <kbd rlKbd>K</kbd>
+          </span>
+        </button>
+
         <rl-theme-toggle
           [label]="t('theme.label')"
           [lightLabel]="t('theme.light')"

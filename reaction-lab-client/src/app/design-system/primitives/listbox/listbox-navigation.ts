@@ -2,6 +2,7 @@ export interface ListboxOption<T> {
     readonly value: T;
     readonly label: string;
     readonly disabled?: boolean;
+    readonly group?: string;
 }
 
 export function nextEnabled<T>(options: readonly ListboxOption<T>[], from: number, direction: 1 | -1): number {

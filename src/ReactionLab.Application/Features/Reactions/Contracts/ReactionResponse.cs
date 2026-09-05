@@ -12,7 +12,7 @@ public sealed record ReactionResponse(
     ReactionType Type,
     int Difficulty,
     bool IsReversible,
-    IReadOnlyList<ReactionparticipantResponse> Participants,
+    IReadOnlyList<ReactionParticipantResponse> Participants,
     decimal? EnthalpyKilojoulesPerMole,
     decimal? ActivationEnergyKilojoulesPerMole,
     decimal? ReverseActivationEnergyKilojoulesPerMole,

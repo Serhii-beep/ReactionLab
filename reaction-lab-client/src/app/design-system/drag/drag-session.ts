@@ -71,8 +71,6 @@ export class DragSession {
             return null;
         }
 
-        let match: number | null = null;
-
         for (const [id, zone] of this.zones) {
             if (zone.element.contains(target)) {
                 return id;

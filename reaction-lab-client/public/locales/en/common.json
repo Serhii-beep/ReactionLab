@@ -2,6 +2,8 @@
     "app": {
         "title": "ReactionLab",
         "tagLine": "An interactive chemistry laboratory",
+        "search": "Search substances and elements",
+        "commandKey": "Command",
         "experiment": {
             "untitled": "Untitled experiment"
         },
@@ -57,6 +59,19 @@
             "clear": "Clear the bench",
             "undo": "Undo",
             "redo": "Redo"
+        },
+        "palette": {
+            "label": "Search the catalog",
+            "placeholder": "Type a formula, a name, or an element",
+            "empty": "Nothing in the catalog matches",
+            "substances": "Substances",
+            "elements": "Elements",
+            "navigate": "navigate",
+            "add": "add to bench",
+            "close": "close",
+            "up": "Up arrow",
+            "down": "Down arrow",
+            "enter": "Enter"
         }
     }
 }
