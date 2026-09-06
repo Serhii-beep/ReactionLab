@@ -1,0 +1,11 @@
+@mixin until-desktop {
+    @media (width < 80rem) {
+        @content;
+    }
+}
+
+@mixin portrait {
+    @media (width < 64rem) {
+        @content;
+    }
+}

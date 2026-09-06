@@ -45,6 +45,7 @@
                         rlDraggable
                         class="element-detail-row"
                         [dragPayload]="row.payload"
+                        [dragDisabled]="tapToAdd()"
                         (activated)="workspace.add(row.substance)"
                     >
                         <rl-chem-formula
@@ -59,10 +60,13 @@
                     </button>
                 </li>
             }
-        </ul>
 
-        @if (substances.hasMore()) {
-            <button rlButton size="sm" (click)="substances.more()">{{ t('more') }}</button>
-        }
+            
+            @if (substances.hasMore()) {
+                <li class="element-detail-more">
+                    <button rlButton size="sm" (click)="substances.more()">{{ t('more') }}</button>
+                </li>
+            }
+        </ul>
     }
 </div>

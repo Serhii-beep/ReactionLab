@@ -20,6 +20,7 @@
 }
 
 button.rl-chip {
+    min-height: var(--control-height-sm);
     cursor: pointer;
 
     &:hover {

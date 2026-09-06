@@ -49,6 +49,7 @@
         },
         "palette": {
             "label": "Search the catalog",
+            "cancel": "Cancel",
             "placeholder": "Type a formula, a name, or an element",
             "empty": "Nothing in the catalog matches",
             "substances": "Substances",

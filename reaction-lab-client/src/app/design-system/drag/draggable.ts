@@ -17,6 +17,7 @@ const THRESHOLD = 4;
 })
 export class Draggable {
     readonly dragPayload = input.required<unknown>();
+    readonly dragDisabled = input(false);
 
     readonly activated = output<void>();
 
@@ -35,7 +36,7 @@ export class Draggable {
     }
 
     protected onPointerDown(event: PointerEvent): void {
-        if (!event.isPrimary || event.button !== 0) {
+        if (this.dragDisabled() || !event.isPrimary || event.button !== 0) {
             return;
         }
 

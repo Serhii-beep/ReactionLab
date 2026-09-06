@@ -1,8 +1,15 @@
+@use '../tokens/breakpoints' as *;
+
 .rl-search-cue {
     display: inline-flex;
     align-items: center;
     gap: var(--space-2);
     width: 28rem;
+
+    @include until-desktop {
+        width: 20rem;
+    }
+
     height: var(--control-height-sm);
     padding-inline: var(--space-2) var(--space-1);
     border: 0.0625rem solid var(--border-default);
@@ -35,4 +42,8 @@
 .rl-search-cue-keys {
     display: inline-flex;
     gap: var(--space-1);
+
+    @include until-desktop {
+        display: none;
+    }
 }

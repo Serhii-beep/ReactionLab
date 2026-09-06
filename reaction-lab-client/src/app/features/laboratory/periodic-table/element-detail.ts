@@ -13,6 +13,7 @@ import { ElementSummary } from "../../../data/elements/element";
 import { WorkspaceStore } from "../../../state/workspace-store";
 import { stateSymbol } from '../state-symbol';
 import { substanceDrag } from '../drag-payload';
+import { Breakpoints } from '../../../core/layout/breakpoints';
 
 const SKELETON_ROWS = [1, 2, 3, 4];
 
@@ -30,12 +31,15 @@ export class ElementDetail {
     protected readonly substances = inject(SubstancesClient);
     protected readonly workspace = inject(WorkspaceStore);
 
+    private readonly breakpoints = inject(Breakpoints);
+
     protected readonly icons = icons;
     protected readonly skeletonRows = SKELETON_ROWS;
     protected readonly stateSymbol = stateSymbol;
 
     protected readonly rows = computed(() =>
-    this.substances.items().map((substance) => ({ substance, payload: substanceDrag(substance) })));
+        this.substances.items().map((substance) => ({ substance, payload: substanceDrag(substance) })));
+    protected readonly tapToAdd = computed(() => this.breakpoints.size() === 'tablet');
 
     constructor() {
         this.substances.bindElement(() => this.element().symbol);

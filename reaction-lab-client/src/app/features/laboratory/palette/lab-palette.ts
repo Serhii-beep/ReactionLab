@@ -38,6 +38,7 @@ export class LabPalette {
     readonly substancesLabel = input.required<string>();
     readonly elementsLabel = input.required<string>();
     readonly reactionsLabel = input.required<string>();
+    readonly cancelLabel = input.required<string>();
 
     protected readonly ui = inject(UiStore);
     protected readonly query = signal('');

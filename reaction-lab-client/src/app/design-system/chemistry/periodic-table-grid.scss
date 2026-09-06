@@ -1,3 +1,4 @@
+@use '../tokens/breakpoints' as *;
 @use 'element-category' as *;
 
 :host {
@@ -51,4 +52,10 @@
     font-size: var(--text-2xs);
     font-weight: 400;
     opacity: 0.62;
+}
+
+@include portrait {
+    .rl-periodic-cell-number {
+        display: none;
+    }
 }

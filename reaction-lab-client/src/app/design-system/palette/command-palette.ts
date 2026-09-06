@@ -5,12 +5,13 @@ import { Icon } from '../icons/icon';
 import { Listbox, ListboxOptionContext, nextListboxId, optionId } from '../primitives/listbox/listbox';
 import { TextInput } from '../primitives/input/text-input';
 import { firstEnabled, lastEnabled, ListboxOption, nextEnabled } from '../primitives/listbox/listbox-navigation';
+import { Button } from '../primitives/button/button';
 
 @Component({
     selector: 'rl-command-palette',
     templateUrl: './command-palette.html',
     styleUrl: './command-palette.scss',
-    imports: [Dialog, Icon, Listbox, TextInput],
+    imports: [Dialog, Icon, Listbox, TextInput, Button],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CommandPalette<T> {
@@ -21,6 +22,7 @@ export class CommandPalette<T> {
     readonly placeholder = input('');
     readonly emptyText = input('No matches');
     readonly busy = input(false);
+    readonly cancelLabel = input<string>();
     readonly optionTemplate = input<TemplateRef<ListboxOptionContext<unknown>>>();
 
     readonly picked = output<T>();

@@ -1,3 +1,5 @@
+@use '../tokens/breakpoints' as *;
+
 .rl-palette-field {
     display: flex;
     align-items: center;
@@ -34,6 +36,21 @@
     font-size: var(--text-2xs);
 
     &:empty {
+        display: none;
+    }
+}
+
+.rl-palette-cancel {
+    display: none;
+    margin-inline-end: var(--space-2);
+
+    @include until-desktop {
+        display: inline-flex;
+    }
+}
+
+@include until-desktop {
+    .rl-palette-hint {
         display: none;
     }
 }

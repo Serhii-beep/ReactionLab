@@ -22,6 +22,10 @@
         @if (busy()) {
             <rl-icon class="rl-palette-busy" [icon]="icons.loaderCircle" size="sm"></rl-icon>
         }
+
+        @if (cancelLabel(); as label) {
+            <button rlButton variant="ghost" size="sm" class="rl-palette-cancel" (click)="open.set(false)">{{ label }}</button>
+        }
     </div>
 
     <rl-listbox

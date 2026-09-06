@@ -1,3 +1,5 @@
+@use '../tokens/breakpoints' as *;
+
 :host {
     display: contents;
 }
@@ -46,6 +48,12 @@
 
     &[data-placement='top'] .rl-dialog-panel {
         margin-block-start: 12vh;
+    }
+
+    @include until-desktop {
+        &[data-placement='top'] .rl-dialog-panel {
+            margin-block-start: var(--space-3);
+        }
     }
 
     &[data-chrome='none'] .rl-dialog-panel {

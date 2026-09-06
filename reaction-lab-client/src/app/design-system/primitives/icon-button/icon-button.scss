@@ -3,15 +3,15 @@
     aspect-ratio: 1;
 
     &[data-size='sm'] {
-        width: 1.75rem;
+        width: var(--control-height-sm);
     }
 
     &[data-size='md'] {
-        width: 2.125rem;
+        width: var(--control-height-md);
     }
 
     &[data-size='lg'] {
-        width: 2.5rem;
+        width: var(--control-height-lg);
     }
 
     svg {
