@@ -41,6 +41,7 @@ internal sealed class SearchProjectionInterceptor : SaveChangesInterceptor
         foreach (var entry in context.ChangeTracker.Entries<Substance>().Where(IsWrite))
         {
             entry.Property<string>(PersistenceColumns.SearchText).CurrentValue = SearchTextFor(entry.Entity);
+            entry.Property<string[]>(PersistenceColumns.ElementSymbols).CurrentValue = ElementSymbolFor(entry.Entity);
         }
 
         foreach (var entry in context.ChangeTracker.Entries<Reaction>().Where(IsWrite))
@@ -69,6 +70,9 @@ internal sealed class SearchProjectionInterceptor : SaveChangesInterceptor
 
     public static string SearchTextFor(Reaction reaction) =>
         Join(reaction.Locales.Select(locale => reaction.Content(locale).Name));
+
+    public static string[] ElementSymbolFor(Substance substance) =>
+        [.. substance.Formula.Composition.Select(quantity => quantity.Symbol.Value).Distinct().Order()];
 
     private static bool IsWrite<TEntity>(EntityEntry<TEntity> entry)
         where TEntity : class =>

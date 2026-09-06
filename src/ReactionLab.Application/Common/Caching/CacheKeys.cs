@@ -17,8 +17,8 @@ public static class CacheKeys
     public static string Substance(Guid id, SupportedLocale locale) =>
         $"substance:{id}:{locale.Code}";
 
-    public static string SubstanceList(string? search, string? cursor, int pageSize, SupportedLocale locale) =>
-        $"substances:{Term(search)}:{cursor ?? "-"}:{pageSize}:{locale.Code}";
+    public static string SubstanceList(string? search, string? element, string? cursor, int pageSize, SupportedLocale locale) =>
+        $"substances:{Term(search)}:{element ?? "-"}:{cursor ?? "-"}:{pageSize}:{locale.Code}";
 
     public static string Reaction(Guid id, SupportedLocale locale) =>
         $"reaction:{id}:{locale.Code}";

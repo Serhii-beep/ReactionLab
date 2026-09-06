@@ -1,0 +1,43 @@
+@mixin category-fills {
+    --element-color: var(--cat-unknown);
+
+    &[data-category='AlkaliMetal'] {
+        --element-color: var(--cat-alkali);
+    }
+
+    &[data-category='AlkalineEarthMetal'] {
+        --element-color: var(--cat-alkaline-earth);
+    }
+
+    &[data-category='TransitionMetal'] {
+        --element-color: var(--cat-transition);
+    }
+
+    &[data-category='PostTransitionMetal'] {
+        --element-color: var(--cat-post-transition);
+    }
+
+    &[data-category='Metalloid'] {
+        --element-color: var(--cat-metalloid);
+    }
+
+    &[data-category='NonMetal'] {
+        --element-color: var(--cat-nonmetal);
+    }
+
+    &[data-category='Halogen'] {
+        --element-color: var(--cat-halogen);
+    }
+
+    &[data-category='NobleGas'] {
+        --element-color: var(--cat-noble);
+    }
+
+    &[data-category='Lanthanide'] {
+        --element-color: var(--cat-lanthanide);
+    }
+
+    &[data-category='Actinide'] {
+        --element-color: var(--cat-actinide);
+    }
+}

@@ -1,0 +1,54 @@
+@use 'element-category' as *;
+
+:host {
+    display: grid;
+    padding: var(--space-1);
+    grid-template-columns: repeat(18, minmax(0, 1fr));
+    grid-template-rows: repeat(7, 2.75rem) var(--space-3) repeat(2, 2.75rem);
+    gap: 0.1875rem;
+}
+
+.rl-periodic-cell {
+    @include category-fills;
+
+    position: relative;
+    display: grid;
+    place-content: center;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-xs);
+    background: var(--element-color);
+    color: var(--cat-ink);
+    font-family: var(--font-sans);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    letter-spacing: var(--tracking-tight);
+    cursor: pointer;
+    transition: filter var(--duration-fast) var(--ease-standard);
+
+    &:hover {
+        filter: brightness(1.06);
+    }
+
+    &:focus-visible {
+        outline: none;
+        box-shadow: var(--ring-focus);
+        z-index: 1;
+    }
+
+    &[aria-pressed='true'] {
+        box-shadow: 0 0 0 0.125rem var(--surface-panel), 0 0 0 0.25rem var(--accent);
+        z-index: 1;
+    }
+}
+
+.rl-periodic-cell-number {
+    position: absolute;
+    inset-block-start: 0.125rem;
+    inset-inline-start: 0.1875rem;
+    font-family: var(--font-mono);
+    font-size: var(--text-2xs);
+    font-weight: 400;
+    opacity: 0.62;
+}

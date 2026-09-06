@@ -12,6 +12,8 @@
             >
                 <button rlButton variant="primary" (click)="ui.openPalette()">{{ t('empty.search') }}</button>
             </rl-empty-state>
+
+            <button rlButton variant="secondary" (click)="ui.openTable()">{{ t('empty.table') }}</button>
         } @else {
             <app-bench-scene></app-bench-scene>
             <app-bench></app-bench>
@@ -19,6 +21,8 @@
     </main>
 
     <app-reactions-sheet></app-reactions-sheet>
+
+    <app-periodic-table-sheet></app-periodic-table-sheet>
 
     <rl-drag-preview>
         @if (dragged(); as substance) {

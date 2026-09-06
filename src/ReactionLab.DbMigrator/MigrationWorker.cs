@@ -22,6 +22,12 @@ internal sealed class MigrationWorker(
             logger.LogInformation("Applying {PendingCount} database migration(s).", pending.Count);
 
             await context.Database.MigrateAsync(cancellationToken);
+            var filled = await ProjectionBackfill.FillElementSymbolsAsync(context, cancellationToken);
+
+            if (filled > 0)
+            {
+                logger.LogInformation("Filled element symbols for {Count} existing substance(s).", filled);
+            }
 
             logger.LogInformation("Database schema is up to date.");
         }

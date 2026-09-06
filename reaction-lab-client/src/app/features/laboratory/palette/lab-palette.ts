@@ -84,7 +84,8 @@ export class LabPalette {
                 this.ui.paletteOpen.set(false);
                 break;
             case 'element':
-                this.query.set(choice.element.name);
+                this.ui.paletteOpen.set(false);
+                this.ui.openTable(choice.element.symbol);
                 break;
             case 'reaction':
                 this.ui.paletteOpen.set(false);

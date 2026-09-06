@@ -11,4 +11,5 @@ public sealed record ElementSummaryResponse(
     ElementCategory Category,
     int Period,
     int? Group,
-    string DisplayColor);
+    string DisplayColor,
+    decimal? Electronegativity);

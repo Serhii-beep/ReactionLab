@@ -20,4 +20,5 @@ export interface ElementSummary {
     readonly category: ElementCategory;
     readonly period: number;
     readonly group: number | null;
+    readonly electronegativity: number | null;
 }

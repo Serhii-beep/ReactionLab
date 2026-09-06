@@ -1,0 +1,34 @@
+<ng-container *transloco="let t; prefix: 'lab.table'">
+    <rl-dialog
+        placement="bottom"
+        [(open)]="ui.tableOpen"
+        [modal]="false"
+        [label]="t('label')"
+        [closeLabel]="t('close')"
+    >
+        <div class="table-sheet">
+            <div class="table-sheet-main">
+                <rl-periodic-table-grid
+                    [cells]="cells()"
+                    [label]="t('label')"
+                    [(selected)]="ui.tableElement"
+                ></rl-periodic-table-grid>
+
+                <ul class="table-sheet-legend">
+                    @for (category of categories; track category) {
+                        <li class="table-sheet-legend-item">
+                            <rl-element-tile symbol="" [category]="category" size="sm"></rl-element-tile>
+                            {{ t('categories.' + category) }}
+                        </li>
+                    }
+                </ul>
+            </div>
+
+            @if (selected(); as element) {
+                <app-element-detail [element]="element"></app-element-detail>
+            } @else {
+                <p class="table-sheet-hint">{{ t('hint') }}</p>
+            }
+        </div>
+    </rl-dialog>
+</ng-container>

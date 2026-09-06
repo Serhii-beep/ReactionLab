@@ -1,0 +1,18 @@
+@for (cell of placed(); track cell.symbol) {
+    <button
+        #cell
+        type="button"
+        class="rl-periodic-cell"
+        [attr.data-symbol]="cell.symbol"
+        [attr.data-category]="cell.category"
+        [attr.aria-label]="cell.symbol + ' ' + cell.name"
+        [attr.aria-pressed]="cell.symbol === selected()"
+        [tabindex]="cell.symbol === focusable() ? 0 : -1"
+        [style.grid-row]="cell.cssRow"
+        [style.grid-column]="cell.column"
+        (click)="selected.set(cell.symbol)"
+    >
+        <span class="rl-periodic-cell-number">{{ cell.atomicNumber }}</span>
+        <span class="rl-periodic-cell-symbol">{{ cell.symbol }}</span>
+    </button>
+}

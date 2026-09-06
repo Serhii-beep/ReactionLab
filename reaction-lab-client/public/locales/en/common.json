@@ -4,6 +4,7 @@
         "tagLine": "An interactive chemistry laboratory",
         "search": "Search substances and elements",
         "commandKey": "Command",
+        "periodicTable": "Periodic table",
         "experiment": {
             "untitled": "Untitled experiment"
         },
@@ -43,7 +44,8 @@
         "empty": {
             "heading": "Your bench is empty",
             "description": "Add a substance to see what if can react with. Everything you put here becomes an object in the scene.",
-            "search": "Search substances"
+            "search": "Search substances",
+            "table": "Open the periodic table"
         },
         "palette": {
             "label": "Search the catalog",
@@ -58,6 +60,31 @@
             "up": "Up arrow",
             "down": "Down arrow",
             "enter": "Enter"
+        },
+        "table": {
+            "label": "Periodic table",
+            "close": "Close",
+            "hint": "Pick an element to see what you can build with it.",
+            "atomicNumber": "Atomic number",
+            "mass": "Mass (u)",
+            "electronegativity": "Electronegativity",
+            "position": "Period · group",
+            "build": "Substances you can build",
+            "none": "Nothing in the catalog contains this element yet.",
+            "more": "Show more",
+            "categories": {
+                "AlkaliMetal": "Alkali metal",
+                "AlkalineEarthMetal": "Alkaline earth metal",
+                "TransitionMetal": "Transition metal",
+                "PostTransitionMetal": "Post-transition metal",
+                "Metalloid": "Metalloid",
+                "NonMetal": "Nonmetal",
+                "Halogen": "Halogen",
+                "NobleGas": "Noble gas",
+                "Lanthanide": "Lanthanide",
+                "Actinide": "Actinide",
+                "Unknown": "Unknown"
+            }
         }
     }
 }

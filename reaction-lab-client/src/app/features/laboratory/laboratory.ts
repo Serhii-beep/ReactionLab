@@ -18,6 +18,7 @@ import { EmptyState } from '../../design-system/primitives/empty-state/empty-sta
 import { Button } from "../../design-system/primitives/button/button";
 import { BenchScene } from "./bench-scene/bench-scene";
 import { ReactionsSheet } from './reactions-sheet/reactions-sheet';
+import { PeriodicTableSheet } from './periodic-table/periodic-table-sheet';
 
 @Component({
     selector: 'app-laboratory',
@@ -35,7 +36,8 @@ import { ReactionsSheet } from './reactions-sheet/reactions-sheet';
         EmptyState,
         Button,
         BenchScene,
-        ReactionsSheet
+        ReactionsSheet,
+        PeriodicTableSheet
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: {

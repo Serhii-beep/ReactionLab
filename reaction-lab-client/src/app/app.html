@@ -24,6 +24,11 @@
           </span>
         </button>
 
+        <button rlButton variant="ghost" size="sm" (click)="ui.toggleTable()">
+          <rl-icon [icon]="icons.atom" size="sm"></rl-icon>
+          <span>{{ t('periodicTable') }}</span>
+        </button>
+
         <rl-theme-toggle
           [label]="t('theme.label')"
           [lightLabel]="t('theme.light')"

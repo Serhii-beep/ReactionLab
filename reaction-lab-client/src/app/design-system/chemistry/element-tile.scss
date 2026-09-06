@@ -1,0 +1,35 @@
+@use 'element-category' as *;
+
+:host {
+    @include category-fills;
+
+    display: inline-grid;
+    place-content: center;
+    flex: none;
+    border-radius: var(--radius-sm);
+    background: var(--element-color);
+    color: var(--cat-ink);
+    font-family: var(--font-sans);
+    font-weight: 600;
+    line-height: var(--leading-none);
+}
+
+:host([data-size='sm']) {
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: var(--radius-xs);
+    font-size: var(--text-2xs);
+}
+
+:host([data-size='md']) {
+    width: 2rem;
+    height: 2rem;
+    font-size: var(--text-sm);
+}
+
+:host([data-size='lg']) {
+    width: 3rem;
+    height: 3rem;
+    border-radius: var(--radius-md);
+    font-size: var(--text-2xl);
+}

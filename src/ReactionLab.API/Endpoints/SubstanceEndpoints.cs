@@ -16,18 +16,19 @@ internal static class SubstanceEndpoints
 
         group.MapGet("/", async (
             string? q,
+            string? element,
             [AsParameters] CursorRequest page,
             HttpContext httpContext,
             ListSubstancesHandler handler,
             CancellationToken cancellationToken) =>
         {
-            var query = new ListSubstancesQuery(q, page, httpContext.ResolveLocale());
+            var query = new ListSubstancesQuery(q, element, page, httpContext.ResolveLocale());
             var result = await handler.HandleAsync(query, cancellationToken);
 
             return result.ToHttpResult();
         })
         .WithName("ListSubstances")
-        .WithSummary("Browse the substances catalog, or search it with q.")
+        .WithSummary("Browse the substances catalog, search it with q, or narrow it to one element.")
         .Produces<CursorPagedResult<SubstanceSummaryResponse>>()
         .ProducesProblem(StatusCodes.Status400BadRequest);
 

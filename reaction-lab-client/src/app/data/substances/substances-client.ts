@@ -21,6 +21,9 @@ const EMPTY_PAGE: CursorPage<SubstanceSummary> = {
 export class SubstancesClient {
     readonly query = signal('');
 
+    private readonly elementSource = signal<() => string | null>(() => null);
+    readonly element = computed(() => this.elementSource()());
+
     private readonly debounced = toSignal(
         toObservable(this.query).pipe(debounceTime(DEBOUNCE_MS)),
         { initialValue: '' }
@@ -32,18 +35,20 @@ export class SubstancesClient {
         return value.length >= MINIMUM_QUERY ? value : '';
     });
 
+    private readonly scope = computed(() => `${this.search()}|${this.element() ?? ''}`);
+
     private readonly cursor = linkedSignal<string, string | null>({
-        source: () => this.search(),
+        source: () => this.scope(),
         computation: () => null
     });
 
     private readonly loaded = linkedSignal<string, readonly SubstanceSummary[]>({
-        source: () => this.search(),
+        source: () => this.scope(),
         computation: () => []
     });
 
     readonly page = httpResource<CursorPage<SubstanceSummary>>(
-        () => this.url(this.search(), this.cursor()),
+        () => this.url(this.search(), this.element(), this.cursor()),
         { defaultValue: EMPTY_PAGE }
     );
 
@@ -58,6 +63,10 @@ export class SubstancesClient {
         return value.length > 0 && value.length < MINIMUM_QUERY;
     });
 
+    bindElement(source: () => string | null): void {
+        this.elementSource.set(source);
+    }
+
     more(): void {
         const page = this.page.value();
 
@@ -69,11 +78,15 @@ export class SubstancesClient {
         this.cursor.set(page.nextCursor);
     }
 
-    private url(search: string, cursor: string | null): string {
+    private url(search: string, element: string | null, cursor: string | null): string {
         const params = new URLSearchParams({ pageSize: String(PAGE_SIZE) });
 
         if (search !== '') {
             params.set('q', search);
+        }
+
+        if (element !== null) {
+            params.set('element', element);
         }
 
         if (cursor !== null) {

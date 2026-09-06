@@ -367,6 +367,11 @@ namespace ReactionLab.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
+                    b.PrimitiveCollection<string[]>("element_symbols")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("element_symbols");
+
                     b.Property<string>("search_text")
                         .IsRequired()
                         .HasColumnType("text")
@@ -384,6 +389,11 @@ namespace ReactionLab.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("Formula")
                         .HasDatabaseName("ix_substances_formula");
+
+                    b.HasIndex("element_symbols")
+                        .HasDatabaseName("ix_substances_element_symbols");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("element_symbols"), "gin");
 
                     b.HasIndex("search_text")
                         .HasDatabaseName("ix_substances_search_text");

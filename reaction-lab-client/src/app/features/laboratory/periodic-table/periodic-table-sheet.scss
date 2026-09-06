@@ -1,0 +1,47 @@
+:host {
+    display: contents;
+}
+
+.table-sheet {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 17rem;
+    gap: var(--space-4);
+}
+
+.table-sheet-main {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    min-width: 0;
+}
+
+.table-sheet-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-4);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.table-sheet-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--text-secondary);
+    font-size: var(--text-2xs);
+}
+
+.table-sheet-hint {
+    margin: 0;
+    padding: var(--space-3);
+    color: var(--text-tertiary);
+    font-size: var(--text-sm);
+}
+
+app-element-detail {
+    block-size: 0;
+    min-block-size: 100%;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+}

@@ -13,6 +13,7 @@ import { Kbd } from './design-system/primitives/kbd/kbd';
 import { SearchCue } from './design-system/palette/search-cue';
 import { UiStore } from './state/ui-store';
 import { isApplePlatform } from './core/platform/modifier-key';
+import { Button } from './design-system/primitives/button/button';
 
 @Component({
   selector: 'app-root',
@@ -28,7 +29,8 @@ import { isApplePlatform } from './core/platform/modifier-key';
     SearchCue,
     ThemeToggle,
     ToastHost,
-    TranslocoDirective
+    TranslocoDirective,
+    Button
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })

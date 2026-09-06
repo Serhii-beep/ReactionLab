@@ -1,0 +1,68 @@
+<div class="element-detail" *transloco="let t; prefix: 'lab.table'">
+    <div class="element-detail-head">
+        <rl-element-tile [symbol]="element().symbol" [category]="element().category" size="lg"></rl-element-tile>
+
+        <div>
+            <h3 class="element-detail-name">{{ element().name }}</h3>
+            <p class="element-detail-category">{{ t('categories.' + element().category) }}</p>
+        </div>
+    </div>
+
+    <dl class="element-detail-facts">
+        <div class="element-detail-fact">
+            <dt>{{ t('atomicNumber') }}</dt>
+            <dd>{{ element().atomicNumber }}</dd>
+        </div>
+        <div class="element-detail-fact">
+            <dt>{{ t('mass') }}</dt>
+            <dd>{{ element().mass | number: '1.0-3' }}</dd>
+        </div>
+        <div class="element-detail-fact">
+            <dt>{{ t('electronegativity') }}</dt>
+            <dd>{{ element().electronegativity === null ? '-' : (element().electronegativity | number: '1.2-2') }}</dd>
+        </div>
+        <div class="element-detail-fact">
+            <dt>{{ t('position') }}</dt>
+            <dd>{{ element().period }} · {{ element().group ?? '-' }}</dd>
+        </div>
+    </dl>
+
+    <h4 class="element-detail-heading">{{ t('build') }}</h4>
+
+    @if (substances.page.isLoading() && rows().length === 0) {
+        <div class="element-detail-rows">
+            @for (row of skeletonRows; track row) {
+                <span rlSkeleton class="element-detail-skeleton"></span>
+            }
+        </div>
+    } @else if (rows().length === 0) {
+        <p class="element-detail-none">{{ t('none') }}</p>
+    } @else {
+        <ul class="element-detail-rows">
+            @for (row of rows(); track row.substance.id) {
+                <li>
+                    <button
+                        rlDraggable
+                        class="element-detail-row"
+                        [dragPayload]="row.payload"
+                        (activated)="workspace.add(row.substance)"
+                    >
+                        <rl-chem-formula
+                            class="element-detail-formula"
+                            [formula]="row.substance.formula"
+                            [state]="stateSymbol(row.substance.stateAtRoomTemperature)"
+                        ></rl-chem-formula>
+
+                        <span class="element-detail-row-name">{{ row.substance.name }}</span>
+
+                        <rl-icon [icon]="icons.plus" size="sm"></rl-icon>
+                    </button>
+                </li>
+            }
+        </ul>
+
+        @if (substances.hasMore()) {
+            <button rlButton size="sm" (click)="substances.more()">{{ t('more') }}</button>
+        }
+    }
+</div>

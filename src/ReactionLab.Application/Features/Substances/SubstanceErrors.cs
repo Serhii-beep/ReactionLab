@@ -14,4 +14,11 @@ public static class SubstanceErrors
             "Search results are limited. Narrow the term rather than paging further",
             field: "Cursor")
             .WithArgs(("max", maximum));
+
+    public static Error InvalidElement(string value) =>
+        Error.Validation(
+            "Substance.InvalidElement",
+            "Element must be a symbol.",
+            field: "Element")
+        .WithArgs(("value", value));
 }

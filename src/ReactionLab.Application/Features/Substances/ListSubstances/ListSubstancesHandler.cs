@@ -5,11 +5,16 @@ using ReactionLab.Application.Common.Caching;
 using ReactionLab.Application.Common.Pagination;
 using ReactionLab.Application.Features.Substances.Contracts;
 using ReactionLab.Domain.Common;
+using ReactionLab.Domain.Elements;
 using ReactionLab.Domain.Substances;
 
 namespace ReactionLab.Application.Features.Substances.ListSubstances;
 
-public sealed class ListSubstancesHandler(IAppDbContext context, ICatalogSearch search, HybridCache cache)
+public sealed class ListSubstancesHandler(
+    IAppDbContext context,
+    ICatalogSearch search,
+    ISubstanceFiltering filtering,
+    HybridCache cache)
     : IQueryHandler<ListSubstancesQuery, CursorPagedResult<SubstanceSummaryResponse>>
 {
     private const int MaximumSearchDepth = 1000;
@@ -29,6 +34,17 @@ public sealed class ListSubstancesHandler(IAppDbContext context, ICatalogSearch 
             cursor = decoded.Value;
         }
 
+        ElementSymbol? element = null;
+
+        if (!string.IsNullOrWhiteSpace(query.Element))
+        {
+            element = ElementSymbol.Match(query.Element);
+            if (element is null)
+            {
+                return Result.Failure<CursorPagedResult<SubstanceSummaryResponse>>(SubstanceErrors.InvalidElement(query.Element));
+            }
+        }
+
         var browsing = string.IsNullOrWhiteSpace(query.Search);
 
         if (cursor is not null && cursor.IsKeyset != browsing)
@@ -43,10 +59,10 @@ public sealed class ListSubstancesHandler(IAppDbContext context, ICatalogSearch 
         }
 
         var page = await cache.GetOrCreateAsync(
-            CacheKeys.SubstanceList(query.Search, query.Page.Cursor, query.Page.Limit, query.Locale),
+            CacheKeys.SubstanceList(query.Search, element?.Value, query.Page.Cursor, query.Page.Limit, query.Locale),
             async token => browsing
-                ? await BrowseAsync(cursor, query, token)
-                : await SearchAsync(cursor, query, token),
+                ? await BrowseAsync(cursor, element, query, token)
+                : await SearchAsync(cursor, element, query, token),
             browsing ? CachePolicies.Catalog : CachePolicies.Query,
             [CacheTags.Substances],
             cancellationToken);
@@ -54,12 +70,20 @@ public sealed class ListSubstancesHandler(IAppDbContext context, ICatalogSearch 
         return Result.Success(page);
     }
 
+    private IQueryable<Substance> Scope(ElementSymbol? element)
+    {
+        var substances = context.Substances.AsNoTracking();
+
+        return element is null ? substances : filtering.Containing(substances, element);
+    }
+
     private async Task<CursorPagedResult<SubstanceSummaryResponse>> BrowseAsync(
         Cursor? cursor,
+        ElementSymbol? element,
         ListSubstancesQuery query,
         CancellationToken cancellationToken)
     {
-        var substances = context.Substances.AsNoTracking();
+        var substances = Scope(element);
         if (cursor is not null)
         {
             var after = SubstanceId.From(cursor.AfterId);
@@ -76,13 +100,14 @@ public sealed class ListSubstancesHandler(IAppDbContext context, ICatalogSearch 
 
     private async Task<CursorPagedResult<SubstanceSummaryResponse>> SearchAsync(
         Cursor? cursor,
+        ElementSymbol? element,
         ListSubstancesQuery query,
         CancellationToken cancellationToken)
     {
         var skip = cursor?.Skip ?? 0;
 
         var rows = await SubstanceQueries.SummariesAsync(
-            search.Matching(context.Substances.AsNoTracking(), query.Search!.Trim())
+            search.Matching(Scope(element), query.Search!.Trim())
                 .ThenBy(substance => substance.Id)
                 .Skip(skip)
                 .Take(query.Page.Limit + 1),

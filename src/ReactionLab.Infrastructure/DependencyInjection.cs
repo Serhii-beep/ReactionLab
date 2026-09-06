@@ -41,6 +41,7 @@ public static class DependencyInjection
 
         services.AddSingleton<ICatalogSearch, TrigramCatalogSearch>();
         services.AddSingleton<IReactionMatching, ReactantSignatureMatching>();
+        services.AddSingleton<ISubstanceFiltering, ElementSymbolFiltering>();
 
         var redis = configuration.GetConnectionString("Redis");
 

@@ -16,6 +16,9 @@ internal sealed class SubstanceConfiguration : IEntityTypeConfiguration<Substanc
         builder.Property(s => s.Formula).IsRequired();
         builder.HasIndex(s => s.Formula);
 
+        builder.Property<string[]>(PersistenceColumns.ElementSymbols).IsRequired();
+        builder.HasIndex(PersistenceColumns.ElementSymbols).HasMethod("gin");
+
         builder.Property(s => s.Kind).IsRequired();
         builder.Property(s => s.StateAtRoomTemperature).IsRequired();
         builder.Property(s => s.IsOrganic).IsRequired();

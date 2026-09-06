@@ -75,6 +75,7 @@ internal static class ElementQueries
                 element.Category,
                 element.Position,
                 element.DisplayColor,
+                element.Electronegativity,
                 element.Translations
             })
             .ToListAsync(cancellationToken);
@@ -88,6 +89,7 @@ internal static class ElementQueries
             row.Category,
             row.Position.Period,
             row.Position.Group,
-            row.DisplayColor.Value));
+            row.DisplayColor.Value,
+            row.Electronegativity?.Pauling));
     }
 }
