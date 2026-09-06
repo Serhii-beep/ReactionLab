@@ -1,7 +1,9 @@
 <ng-container *transloco="let t; prefix: 'lab'">
     <main
         rlDropTarget
+        id="laboratory"
         class="lab-viewport"
+        tabindex="-1"
         (dropped)="onDropped($event)"
     >
         @if (workspace.isEmpty()) {

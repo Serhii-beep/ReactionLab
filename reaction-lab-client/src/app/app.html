@@ -1,4 +1,4 @@
-<ng-container *transloco="let t; prefix: 'app'">
+<ng-container *transloco="let t; prefix: 'app'; loadingTpl: loading">
   @if (breakpoints.size() === 'compact') {
     <rl-empty-state
       class="app-compact"
@@ -7,6 +7,7 @@
       [description]="t('compact.description')"
     ></rl-empty-state>
   } @else {
+    <a href="#laboratory" class="app-skip" (click)="skipToLaboratory($event)">{{ t('skip') }}</a>
     <rl-app-shell>
       <rl-command-bar [heading]="t('title')" [subheading]="t('experiment.untitled')">
         <button rlSearchCue rlCommandBarSearch (click)="ui.openPalette()">
@@ -29,6 +30,8 @@
           <span>{{ t('periodicTable') }}</span>
         </button>
 
+        <rl-language-toggle [label]="t('language.label')"></rl-language-toggle>
+
         <rl-theme-toggle
           [label]="t('theme.label')"
           [lightLabel]="t('theme.light')"
@@ -43,3 +46,9 @@
 </ng-container>
 
 <rl-toast-host />
+
+<ng-template #loading>
+  <div class="app-loading" aria-busy="true">
+    <span rlSkeleton class="app-loading-bar"></span>
+  </div>
+</ng-template>

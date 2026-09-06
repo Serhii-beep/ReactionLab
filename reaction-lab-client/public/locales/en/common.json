@@ -17,6 +17,18 @@
         "compact": {
             "heading": "ReactionLab needs a larger screen",
             "description": "The laboratory is built for tablets and desktops. Rotate your device, or open it on a larger display."
+        },
+        "offline": {
+            "title": "You are offline",
+            "detail": "The catalog can't be reached. Anything already loaded keeps working."
+        },
+        "errors": {
+            "unexpected": "Something went wrong",
+            "unexpectedDetail": "Unexpected error occurred."
+        },
+        "skip": "Skip to the laboratory",
+        "language": {
+            "label": "Language"
         }
     },
     "lab": {
@@ -86,6 +98,13 @@
                 "Actinide": "Actinide",
                 "Unknown": "Unknown"
             }
+        },
+        "announce": {
+            "added": "{name} added to the bench, {count, plural, one {# on it now} other {# on it now}}",
+            "removed": "{name} removed from the bench, {count, plural, =0 {none left} one {# left} other {# left}}",
+            "cleared": "Bench cleared",
+            "changed": "Bench updated, {size, plural, one {# substance on it} other {# substances on it}}",
+            "reactions": "{count, plural, =0 {No reactions involve the bench} one {# reaction involves the bench} other {# reactions involve the bench}}, {ready, plural, =0 {none ready} one {# ready} other {# ready}}"
         }
     }
 }

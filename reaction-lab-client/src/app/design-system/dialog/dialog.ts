@@ -29,6 +29,8 @@ export class Dialog {
 
     private readonly root = viewChild.required<ElementRef<HTMLDialogElement>>('root');
 
+    private opener: Element | null = null;
+
     constructor() {
         effect(() => this.sync(this.root().nativeElement, this.open()));
     }
@@ -68,10 +70,20 @@ export class Dialog {
 
         if (!open) {
             element.close();
+            this.restoreFocus();
         } else if (this.modal()) {
             element.showModal();
         } else {
+            this.opener = document.activeElement;
             element.show();
         }
+    }
+
+    private restoreFocus(): void {
+        if (this.opener instanceof HTMLElement && this.opener.isConnected) {
+            this.opener.focus();
+        }
+
+        this.opener = null;
     }
 }

@@ -11,7 +11,7 @@
 }
 
 .rl-segmented-option {
-    height: 1.75rem;
+    height: var(--control-height-sm);
     padding-inline: var(--space-3);
     border: 0;
     border-radius: var(--radius-sm);
@@ -35,6 +35,6 @@
     &[aria-checked='true'] {
         background: var(--surface-raised);
         color: var(--text-primary);
-        box-shadow: var(--elevation-1);
+        box-shadow: inset 0 0 0 0.0625rem var(--border-default);
     }
 }

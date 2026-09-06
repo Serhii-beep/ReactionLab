@@ -1,9 +1,9 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, untracked } from '@angular/core';
 import * as icons from '../../design-system/icons/icons.generated';
-import { TranslocoDirective } from '@jsverse/transloco';
+import { TranslocoDirective, TranslocoService } from '@jsverse/transloco';
 import { Bench } from "./bench/bench";
 import { SelectionStore } from '../../state/selection-store';
-import { WorkspaceStore } from '../../state/workspace-store';
+import { WorkspaceItem, WorkspaceStore } from '../../state/workspace-store';
 import { stateSymbol } from './state-symbol';
 import { DragSession } from '../../design-system/drag/drag-session';
 import { draggedSubstance } from './drag-payload';
@@ -19,6 +19,9 @@ import { Button } from "../../design-system/primitives/button/button";
 import { BenchScene } from "./bench-scene/bench-scene";
 import { ReactionsSheet } from './reactions-sheet/reactions-sheet';
 import { PeriodicTableSheet } from './periodic-table/periodic-table-sheet';
+import { ReactionStore } from '../../state/reaction-store';
+import { LiveAnnouncer } from '@angular/cdk/a11y';
+import { BenchDelta, benchDelta } from './bench-delta';
 
 @Component({
     selector: 'app-laboratory',
@@ -52,6 +55,12 @@ export class Laboratory {
     protected readonly workspace = inject(WorkspaceStore);
 
     private readonly selection = inject(SelectionStore);
+    private readonly reactions = inject(ReactionStore);
+    private readonly announcer = inject(LiveAnnouncer);
+    private readonly transloco = inject(TranslocoService);
+
+    private previousBench: readonly WorkspaceItem[] = [];
+    private announcedReactions = '';
 
     protected readonly dragged = computed(() => draggedSubstance(this.drag.payload()));
 
@@ -62,8 +71,37 @@ export class Laboratory {
         ['mod+y', () => this.workspace.redo()],
         ['delete', () => this.removeSelected()],
         ['backspace', () => this.removeSelected()],
-        ['escape', () => this.selection.clear()]
+        ['escape', () => this.dismiss()]
     ]);
+
+    constructor() {
+        effect(() => {
+            const bench = this.workspace.entries();
+            const delta = benchDelta(this.previousBench, bench);
+
+            this.previousBench = bench;
+
+            if (delta !== null) {
+                this.announce(this.describe(delta));
+            }
+        });
+
+        effect(() => {
+            if (this.reactions.isLoading() || this.workspace.isEmpty()) {
+                return;
+            }
+
+            const message = this.transloco.translate('lab.announce.reactions', {
+                count: this.reactions.scored().length,
+                ready: this.reactions.readyCount()
+            });
+
+            if (message !== untracked(() => this.announcedReactions)) {
+                this.announcedReactions = message;
+                this.announce(message);
+            }
+        })
+    }
 
     protected onDropped(payload: unknown): void {
         const substance = draggedSubstance(payload);
@@ -99,6 +137,23 @@ export class Laboratory {
     private dismiss(): void {
         this.selection.clear();
         this.ui.dismiss();
+    }
+
+    private describe(delta: BenchDelta): string {
+        switch (delta.kind) {
+            case 'added':
+                return this.transloco.translate('lab.announce.added', { name: delta.name, count: delta.count });
+            case 'removed':
+                return this.transloco.translate('lab.announce.removed', { name: delta.name, count: delta.count });
+            case 'cleared':
+                return this.transloco.translate('lab.announce.cleared');
+            case 'changed':
+                return this.transloco.translate('lab.announce.changed', { size: delta.size });
+        }
+    }
+
+    private announce(message: string): void {
+        void this.announcer.announce(message, 'polite');
     }
 }
 

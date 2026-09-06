@@ -10,3 +10,35 @@
 router-outlet {
   display: contents;
 }
+
+.app-loading {
+  display: grid;
+  grid-template-rows: var(--bar-height) 1fr;
+  min-block-size: 100dvh;
+  background: var(--surface-void);
+}
+
+.app-loading-bar {
+  border-radius: 0;
+}
+
+.app-skip {
+  position: absolute;
+  inset-block-start: var(--space-2);
+  inset-inline-start: var(--space-2);
+  z-index: 3;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  text-decoration: none;
+  transform: translateY(-200%);
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--ring-focus);
+    transform: none;
+  }
+}

@@ -5,12 +5,13 @@ export interface Notification {
     readonly tone: ToastTone;
     readonly title: string;
     readonly detail?: string;
+    readonly sticky?: boolean;
 }
 
 export const MAX_VISIBLE = 4;
 
 export function isTransient(notification: Notification): boolean {
-    return notification.tone !== 'danger';
+    return notification.tone !== 'danger' && !notification.sticky;
 }
 
 export function enqueue(items: readonly Notification[], next: Notification): readonly Notification[] {

@@ -47,13 +47,13 @@
     --border-strong: oklch(64% 0.012 255deg);
     --text-primary: oklch(24% 0.012 255deg);
     --text-secondary: oklch(44% 0.014 255deg);
-    --text-tertiary: oklch(51% 0.014 255deg);
+    --text-tertiary: oklch(49% 0.014 255deg);
     --text-disabled: oklch(70% 0.01 255deg);
     --accent: oklch(51% 0.14 198deg);
     --accent-hover: oklch(47% 0.145 198deg);
     --accent-pressed: oklch(41% 0.15 198deg);
     --accent-subtle: oklch(51% 0.14 198deg / 10%);
-    --accent-ring: oklch(51% 0.14 198deg / 35%);
+    --accent-ring: oklch(51% 0.14 198deg / 90%);
     --accent-contrast: oklch(100% 0 0deg);
     --energy-exo: oklch(53% 0.17 45deg);
     --energy-endo: oklch(51% 0.14 250deg);
@@ -79,7 +79,7 @@
     --cat-noble: oklch(74% 0.13 275deg);
     --cat-lanthanide: oklch(74% 0.13 310deg);
     --cat-actinide: oklch(74% 0.13 340deg);
-    --cat-unknown: oklch(60% 0.02 255deg);
+    --cat-unknown: oklch(74% 0.015 255deg);
     --cat-ink: oklch(22% 0.03 255deg);
 }
 

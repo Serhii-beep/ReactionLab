@@ -42,7 +42,7 @@
     <div class="bench-separator" role="presentation"></div>
 
     <button class="bench-peek" (click)="ui.openReactions()">
-        <rl-icon [icon]="icons.chevronUp" size="sm"></rl-icon>
+        <rl-icon class="bench-peek-icon" [icon]="icons.chevronUp" size="sm"></rl-icon>
         <span>{{ t('peek', { count: reactions.scored().length }) }}</span>
 
         @if (reactions.readyCount(); as ready) {

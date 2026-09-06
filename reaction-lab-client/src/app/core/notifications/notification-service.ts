@@ -32,10 +32,10 @@ export class NotificationService {
         return this.show('danger', title, detail);
     }
 
-    show(tone: ToastTone, title: string, detail?: string): number {
+    show(tone: ToastTone, title: string, detail?: string, sticky = false): number {
         this.sequence += 1;
 
-        const notification: Notification = { id: this.sequence, tone, title, detail };
+        const notification: Notification = { id: this.sequence, tone, title, detail, sticky };
         const before = this.items();
         const after = enqueue(before, notification);
 

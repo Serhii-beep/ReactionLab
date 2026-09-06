@@ -63,5 +63,14 @@ jobs:
       - name: Install
         run: npm ci
       
+      - name: Lint
+        run: npm run lint
+      
+      - name: Lint styles
+        run: npm run lint:styles
+      
+      - name: Contrast
+        run: npm run check:contrast
+      
       - name: Build
         run: npm run build

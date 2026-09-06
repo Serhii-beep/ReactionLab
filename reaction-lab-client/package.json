@@ -11,7 +11,8 @@
     "lint:styles": "stylelint \"src/**/*.scss\"",
     "format": "prettier --write \"src/**/*.{ts,html,scss,json}\"",
     "format:check": "prettier --check \"src/**/*.{ts,html,scss,json}\"",
-    "icons": "node tools/generate-icons.mjs"
+    "icons": "node tools/generate-icons.mjs",
+    "check:contrast": "node tools/check-contrast.mjs"
   },
   "private": true,
   "packageManager": "npm@11.17.0",

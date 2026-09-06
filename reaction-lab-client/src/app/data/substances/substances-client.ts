@@ -1,10 +1,11 @@
-import { computed, linkedSignal, Service, signal } from "@angular/core";
+import { computed, inject, linkedSignal, Service, signal } from "@angular/core";
 import { CursorPage } from "../cursor-page";
 import { SubstanceSummary } from "./substance";
 import { toObservable, toSignal } from "@angular/core/rxjs-interop";
 import { debounceTime } from "rxjs";
 import { httpResource } from "@angular/common/http";
 import { environment } from "../../../environments/environment";
+import { RequestLocale } from "../i18n/request-locale";
 
 const MINIMUM_QUERY = 2;
 const DEBOUNCE_MS = 500;
@@ -20,6 +21,8 @@ const EMPTY_PAGE: CursorPage<SubstanceSummary> = {
 @Service()
 export class SubstancesClient {
     readonly query = signal('');
+
+    private readonly locale = inject(RequestLocale);
 
     private readonly elementSource = signal<() => string | null>(() => null);
     readonly element = computed(() => this.elementSource()());
@@ -48,7 +51,7 @@ export class SubstancesClient {
     });
 
     readonly page = httpResource<CursorPage<SubstanceSummary>>(
-        () => this.url(this.search(), this.element(), this.cursor()),
+        () => ({ url: this.url(this.search(), this.element(), this.cursor()), headers: this.locale.headers() }),
         { defaultValue: EMPTY_PAGE }
     );
 
