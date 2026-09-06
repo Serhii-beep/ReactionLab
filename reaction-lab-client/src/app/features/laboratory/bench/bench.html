@@ -1,5 +1,5 @@
 <div class="bench" *transloco="let t; prefix: 'lab.bench'">
-    <div class="bench-tools">
+    <div class="bench-group">
         <button rlIconButton size="sm" [label]="t('undo')" [disabled]="!workspace.canUndo()" (click)="workspace.undo()">
             <rl-icon [icon]="icons.undo2" size="sm"></rl-icon>
         </button>
@@ -8,16 +8,16 @@
             <rl-icon [icon]="icons.redo2" size="sm"></rl-icon>
         </button>
 
-        <button rlIconButton size="sm" [label]="t('clear')" [disabled]="workspace.isEmpty()" (click)="workspace.clear()">
+        <button rlIconButton size="sm" [label]="t('clear')" (click)="workspace.clear()">
             <rl-icon [icon]="icons.trash2" size="sm"></rl-icon>
         </button>
     </div>
-    
-    @if (workspace.isEmpty()) {
-        <p class="bench-note">{{ t('empty') }}</p>
-    } @else {
-        <div class="bench-items">
-            @for (item of workspace.entries(); track item.substance.id) {
+
+    <div class="bench-separator" role="presentation"></div>
+
+    <ul class="bench-items">
+        @for (item of workspace.entries(); track item.substance.id) {
+            <li class="bench-item">
                 <button
                     rlChip
                     class="bench-chip"
@@ -30,17 +30,23 @@
                     ></rl-chem-formula>
 
                     <span class="bench-count">&times;{{ item.count }}</span>
-
-                    <button
-                        rlIconButton
-                        size="sm"
-                        [label]="t('removeOne')"
-                        (click)="$event.stopPropagation(); workspace.removeOne(item.substance.id)"
-                    >
-                        <rl-icon [icon]="icons.minus" size="sm"></rl-icon>
-                    </button>
                 </button>
-            }
-        </div>
-    }
+
+                <button rlIconButton size="sm" [label]="t('removeOne', { name: item.substance.name})" (click)="workspace.removeOne(item.substance.id)">
+                    <rl-icon [icon]="icons.minus" size="sm"></rl-icon>
+                </button>
+            </li>
+        }
+    </ul>
+
+    <div class="bench-separator" role="presentation"></div>
+
+    <button class="bench-peek" (click)="ui.openReactions()">
+        <rl-icon [icon]="icons.chevronUp" size="sm"></rl-icon>
+        <span>{{ t('peek', { count: reactions.scored().length }) }}</span>
+
+        @if (reactions.readyCount(); as ready) {
+            <span class="bench-peek-ready">{{ t('ready', { count: ready }) }}</span>
+        }
+    </button>
 </div>

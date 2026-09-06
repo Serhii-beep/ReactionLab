@@ -3,11 +3,14 @@
     class="rl-dialog"
     [attr.data-placement]="placement()"
     [attr.data-chrome]="chrome()"
+    [attr.data-modal]="modal()"
     [attr.aria-label]="label()"
     (cancel)="onCancel($event)"
     (close)="dismiss()"
 >
-    <div class="rl-dialog-scrim" role="presentation" (click)="onScrimClick()"></div>
+    @if (modal()) {
+        <div class="rl-dialog-scrim" role="presentation" (click)="onScrimClick()"></div>
+    }
 
     <div class="rl-dialog-panel">
         @if (chrome() === 'header') {

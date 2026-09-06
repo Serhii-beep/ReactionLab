@@ -22,11 +22,18 @@
 
             <span class="lab-palette-name">{{ item.value.substance.name }}</span>
         </span>
-    } @else {
+    } @else if (item.value.kind === 'element') {
         <span class="lab-palette-row">
             <span class="lab-palette-symbol">{{ item.value.element.symbol }}</span>
 
             <span class="lab-palette-name">{{ item.value.element.name }}</span>
         </span>
+    } @else {
+        <rl-chem-equation
+            class="lab-palette-equation"
+            [reactants]="item.value.reactants"
+            [products]="item.value.products"
+            [reversible]="item.value.reaction.isReversible"
+        ></rl-chem-equation>
     }
 </ng-template>

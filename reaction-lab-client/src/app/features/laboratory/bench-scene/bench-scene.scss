@@ -1,0 +1,68 @@
+.bench-scene {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-8);
+    max-width: 48rem;
+    margin: 0;
+    padding: 0 var(--space-4) var(--space-16);
+    list-style: none;
+}
+
+.bench-object {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    cursor: pointer;
+
+    &:focus-visible {
+        outline: none;
+    }
+
+    &:focus-visible .bench-object-body,
+    &[aria-pressed='true'] .bench-object-body {
+        box-shadow: 0 0 0 0.125rem var(--surface-void), 0 0 0 0.25rem var(--accent);
+    }
+}
+
+.bench-object-body {
+    position: relative;
+    display: grid;
+    place-content: center;
+    width: 5.5rem;
+    height: 5.5rem;
+    border-radius: var(--radius-full);
+    background: radial-gradient(circle at 35% 30%, var(--surface-raised), var(--surface-active) 70%);
+    box-shadow: var(--elevation-3);
+    transition: box-shadow var(--duration-fast) var(--ease-standard);
+}
+
+.bench-object-formula {
+    font-size: var(--text-lg);
+    font-weight: 600;
+}
+
+.bench-object-count {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-end: 0;
+    padding: 0 var(--space-1-5);
+    border-radius: var(--radius-full);
+    background: var(--surface-raised);
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+    font-size: var(--text-2xs);
+    line-height: 1.25rem;
+    box-shadow: var(--elevation-2);
+}
+
+.bench-object-name {
+    color: var(--text-secondary);
+    font-size: var(--text-xs);
+}

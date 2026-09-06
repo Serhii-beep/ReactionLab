@@ -2,37 +2,23 @@
     <main
         rlDropTarget
         class="lab-viewport"
-        [attr.data-dragging]="drag.isDragging() || null"
         (dropped)="onDropped($event)"
     >
-        <app-bench></app-bench>
+        @if (workspace.isEmpty()) {
+            <rl-empty-state
+                [icon]="icons.flaskConical"
+                [heading]="t('empty.heading')"
+                [description]="t('empty.description')"
+            >
+                <button rlButton variant="primary" (click)="ui.openPalette()">{{ t('empty.search') }}</button>
+            </rl-empty-state>
+        } @else {
+            <app-bench-scene></app-bench-scene>
+            <app-bench></app-bench>
+        }
     </main>
 
-    <rl-dock-group
-        storagePrefix="reactionlab.dock"
-        [presentation]="presentation()"
-        [railLabel]="t('rail')"
-    >
-        <ng-template rlDockPanel side="start" [label]="t('elements.label')" [icon]="icons.atom">
-            <app-elements-panel></app-elements-panel>
-        </ng-template>
-
-        <ng-template rlDockPanel side="end" [label]="t('substances.label')" [icon]="icons.flaskConical">
-            <app-substances-panel></app-substances-panel>
-        </ng-template>
-
-        <ng-template
-            rlDockPanel
-            side="bottom"
-            [label]="t('reactions.label')"
-            [icon]="icons.arrowRightLeft"
-            [minSize]="8"
-            [maxSize]="24"
-            [defaultSize]="12"
-        >
-            <app-reactions-panel></app-reactions-panel>
-        </ng-template>
-    </rl-dock-group>
+    <app-reactions-sheet></app-reactions-sheet>
 
     <rl-drag-preview>
         @if (dragged(); as substance) {
@@ -49,6 +35,7 @@
         [emptyText]="t('palette.empty')"
         [substancesLabel]="t('palette.substances')"
         [elementsLabel]="t('palette.elements')"
+        [reactionsLabel]="t('palette.reactions')"
     >
         <span class="lab-palette-hint">
             <kbd rlKbd><rl-icon [icon]="icons.arrowUp" size="sm" [label]="t('palette.up')"></rl-icon></kbd>

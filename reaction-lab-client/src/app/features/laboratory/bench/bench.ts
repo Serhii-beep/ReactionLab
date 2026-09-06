@@ -8,6 +8,8 @@ import { TranslocoDirective } from '@jsverse/transloco';
 import { stateSymbol } from '../state-symbol';
 import { WorkspaceStore } from '../../../state/workspace-store';
 import { SelectionStore } from '../../../state/selection-store';
+import { ReactionStore } from '../../../state/reaction-store';
+import { UiStore } from '../../../state/ui-store';
 
 @Component({
     selector: 'app-bench',
@@ -19,6 +21,8 @@ import { SelectionStore } from '../../../state/selection-store';
 export class Bench {
     protected readonly workspace = inject(WorkspaceStore);
     protected readonly selection = inject(SelectionStore);
+    protected readonly reactions = inject(ReactionStore);
+    protected readonly ui = inject(UiStore);
 
     protected readonly icons = icons;
     protected readonly stateSymbol = stateSymbol;

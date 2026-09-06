@@ -3,18 +3,14 @@
 }
 
 .lab-viewport {
-    grid-area: 1 / 1 / -1 / -1;
+    position: relative;
     display: grid;
-    place-content: start center;
+    place-items: center;
     min-inline-size: 0;
     min-block-size: 0;
     overflow: hidden;
     background: var(--surface-void);
     transition: background var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
-
-    &[data-dragging] {
-        box-shadow: inset 0 0 0 0.0625rem var(--border-strong);
-    }
 
     &[data-drop-over] {
         background: var(--accent-subtle);
@@ -26,8 +22,4 @@
     display: inline-flex;
     align-items: center;
     gap: var(--space-1);
-}
-
-app-bench {
-    display: contents;
 }

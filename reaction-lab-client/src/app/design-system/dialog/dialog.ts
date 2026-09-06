@@ -11,7 +11,10 @@ export type DialogChrome = 'header' | 'none';
     templateUrl: './dialog.html',
     styleUrl: './dialog.scss',
     imports: [Icon, IconButton],
-    changeDetection: ChangeDetectionStrategy.OnPush
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    host: {
+        '(keydown.escape)': 'onEscape()'
+    }
 })
 export class Dialog {
     readonly open = model(false);
@@ -20,6 +23,7 @@ export class Dialog {
     readonly placement = input<DialogPlacement>('center');
     readonly mandatory = input(false);
     readonly chrome = input<DialogChrome>('header');
+    readonly modal = input(true);
 
     protected readonly icons = icons;
 
@@ -45,6 +49,12 @@ export class Dialog {
         }
     }
 
+    protected onEscape(): void {
+        if (!this.modal() && !this.mandatory()) {
+            this.dismiss();
+        }
+    }
+
     private sync(element: HTMLDialogElement, open: boolean): void {
         if (open === element.open) {
             return;
@@ -56,10 +66,12 @@ export class Dialog {
             return;
         }
 
-        if (open) {
+        if (!open) {
+            element.close();
+        } else if (this.modal()) {
             element.showModal();
         } else {
-            element.close();
+            element.show();
         }
     }
 }

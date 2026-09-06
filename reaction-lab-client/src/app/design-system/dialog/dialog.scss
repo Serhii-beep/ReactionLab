@@ -54,6 +54,16 @@
         overflow: hidden;
     }
 
+    &[data-modal='false'] {
+        position: fixed;
+        z-index: 2;
+        pointer-events: none;
+    }
+
+    &[data-modal='false'] .rl-dialog-panel {
+        pointer-events: auto;
+    }
+
     &[data-placement='start'] .rl-dialog-panel,
     &[data-placement='end'] .rl-dialog-panel {
         width: min(26rem, 100%);

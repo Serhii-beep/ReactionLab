@@ -1,13 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import * as icons from '../../design-system/icons/icons.generated';
-import { DockGroup, DockPresentation } from '../../design-system/layout/dock-group';
-import { DockPanel } from '../../design-system/layout/dock-panel';
 import { TranslocoDirective } from '@jsverse/transloco';
-import { Breakpoints } from '../../core/layout/breakpoints';
-import { ElementsPanel } from "./elements-panel/elements-panel";
-import { SubstancesPanel } from "./substances-panel/substances-panel";
 import { Bench } from "./bench/bench";
-import { ReactionsPanel } from "./reactions-panel/reactions-panel";
 import { SelectionStore } from '../../state/selection-store';
 import { WorkspaceStore } from '../../state/workspace-store';
 import { stateSymbol } from './state-symbol';
@@ -20,25 +14,28 @@ import { Kbd } from '../../design-system/primitives/kbd/kbd';
 import { LabPalette } from './palette/lab-palette';
 import { UiStore } from '../../state/ui-store';
 import { Icon } from '../../design-system/icons/icon';
+import { EmptyState } from '../../design-system/primitives/empty-state/empty-state';
+import { Button } from "../../design-system/primitives/button/button";
+import { BenchScene } from "./bench-scene/bench-scene";
+import { ReactionsSheet } from './reactions-sheet/reactions-sheet';
 
 @Component({
     selector: 'app-laboratory',
     templateUrl: './laboratory.html',
     styleUrl: './laboratory.scss',
     imports: [
-        DockGroup,
-        DockPanel,
         TranslocoDirective,
-        ElementsPanel,
-        SubstancesPanel,
         Bench,
-        ReactionsPanel,
         DropTarget,
         Kbd,
         LabPalette,
         DragPreview,
         ChemFormula,
-        Icon
+        Icon,
+        EmptyState,
+        Button,
+        BenchScene,
+        ReactionsSheet
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: {
@@ -47,16 +44,13 @@ import { Icon } from '../../design-system/icons/icon';
 })
 export class Laboratory {
     protected readonly icons = icons;
-
     protected readonly stateSymbol = stateSymbol;
     protected readonly drag = inject(DragSession);
+    protected readonly ui = inject(UiStore);
+    protected readonly workspace = inject(WorkspaceStore);
 
-    private readonly breakpoints = inject(Breakpoints);
     private readonly selection = inject(SelectionStore);
-    private readonly workspace = inject(WorkspaceStore);
-    private readonly ui = inject(UiStore);
 
-    protected readonly presentation = computed<DockPresentation>(() => this.breakpoints.size() === 'tablet' ? 'sheets' : 'docks');
     protected readonly dragged = computed(() => draggedSubstance(this.drag.payload()));
 
     private readonly shortcuts = new Map<string, () => void>([
@@ -98,6 +92,11 @@ export class Laboratory {
         if (selected !== null) {
             this.workspace.removeOne(selected);
         }
+    }
+
+    private dismiss(): void {
+        this.selection.clear();
+        this.ui.dismiss();
     }
 }
 

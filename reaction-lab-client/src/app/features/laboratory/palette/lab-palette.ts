@@ -9,19 +9,25 @@ import { stateSymbol } from "../state-symbol";
 import { ElementsClient } from "../../../data/elements/elements-client";
 import { WorkspaceStore } from "../../../state/workspace-store";
 import { ListboxOption } from "../../../design-system/primitives/listbox/listbox-navigation";
+import { ReactionSummary } from "../../../data/reactions/reaction";
+import { ChemEquation, EquationTerm } from "../../../design-system/chemistry/chem-equation";
+import { ReactionStore } from "../../../state/reaction-store";
+import { equationTerms } from "../equation-terms";
 
 const SUBSTANCE_LIMIT = 8;
 const ELEMENT_LIMIT = 3;
+const REACTION_LIMIT = 3;
 
 export type PaletteChoice =
     | { readonly kind: 'substance'; readonly substance: SubstanceSummary }
-    | { readonly kind: 'element'; readonly element: ElementSummary };
+    | { readonly kind: 'element'; readonly element: ElementSummary }
+    | { readonly kind: 'reaction'; readonly reaction: ReactionSummary; readonly reactants: readonly EquationTerm[]; readonly products: readonly EquationTerm[] };
 
 @Component({
     selector: 'app-lab-palette',
     templateUrl: './lab-palette.html',
     styleUrl: './lab-palette.scss',
-    imports: [ChemFormula, CommandPalette],
+    imports: [ChemEquation, ChemFormula, CommandPalette],
     providers: [SubstancesClient],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -31,6 +37,7 @@ export class LabPalette {
     readonly emptyText = input.required<string>();
     readonly substancesLabel = input.required<string>();
     readonly elementsLabel = input.required<string>();
+    readonly reactionsLabel = input.required<string>();
 
     protected readonly ui = inject(UiStore);
     protected readonly query = signal('');
@@ -38,6 +45,7 @@ export class LabPalette {
 
     private readonly substances = inject(SubstancesClient);
     private readonly elements = inject(ElementsClient);
+    private readonly reactions = inject(ReactionStore);
     private readonly workspace = inject(WorkspaceStore);
 
     protected readonly busy = computed(() => this.substances.page.isLoading());
@@ -52,6 +60,16 @@ export class LabPalette {
             value: { kind: 'element' as const, element },
             label: `${element.symbol} ${element.name}`,
             group: this.elementsLabel()
+        })),
+        ...matchingReactions(this.reactions.scored().map((scored) => scored.reaction), this.query()).slice(0, REACTION_LIMIT).map((reaction) => ({
+            value: {
+                kind: 'reaction' as const,
+                reaction,
+                reactants: equationTerms(reaction, 'Reactant'),
+                products: equationTerms(reaction, 'Product')
+            },
+            label: reaction.name,
+            group: this.reactionsLabel()
         }))
     ]);
 
@@ -60,11 +78,18 @@ export class LabPalette {
     }
 
     protected onPicked(choice: PaletteChoice): void {
-        if (choice.kind === 'substance') {
-            this.workspace.add(choice.substance);
-            this.ui.paletteOpen.set(false);
-        } else {
-            this.query.set(choice.element.name);
+        switch (choice.kind) {
+            case 'substance':
+                this.workspace.add(choice.substance);
+                this.ui.paletteOpen.set(false);
+                break;
+            case 'element':
+                this.query.set(choice.element.name);
+                break;
+            case 'reaction':
+                this.ui.paletteOpen.set(false);
+                this.ui.openReactions();
+                break;
         }
     }
 }
@@ -78,4 +103,16 @@ function matchingElements(elements: readonly ElementSummary[], query: string): r
 
     return elements.filter((element) =>
         element.symbol.toLocaleLowerCase() === needle || element.name.toLocaleLowerCase().startsWith(needle));
+}
+
+function matchingReactions(reactions: readonly ReactionSummary[], query: string): readonly ReactionSummary[] {
+    const needle = query.trim().toLocaleLowerCase();
+
+    if (needle === '') {
+        return [];
+    }
+
+    return reactions.filter((reaction) =>
+        reaction.name.toLocaleLowerCase().includes(needle)
+        || reaction.participants.some((participant) => participant.formula.toLocaleLowerCase().startsWith(needle)));
 }
