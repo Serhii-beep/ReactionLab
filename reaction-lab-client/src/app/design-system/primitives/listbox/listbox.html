@@ -1,4 +1,10 @@
-<div class="rl-listbox-options" role="listbox" [id]="idPrefix()" [attr.aria-label]="label()">
+<div
+    class="rl-listbox-options"
+    role="listbox"
+    [id]="idPrefix()"
+    [attr.aria-label]="label()"
+    [attr.aria-busy]="busy() || null"
+>
     @for (item of options(); track item.value; let index = $index) {
         @if (item.group && item.group !== options()[index - 1]?.group) {
             <div class="rl-listbox-group" role="presentation">{{ item.group }}</div>
@@ -30,6 +36,6 @@
     }
 </div>
 
-@if (options().length === 0) {
+@if (options().length === 0 && !busy()) {
     <p class="rl-listbox-empty">{{ emptyText() }}</p>
 }

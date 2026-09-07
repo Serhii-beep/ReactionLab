@@ -23,7 +23,6 @@
 
 .rl-palette-busy {
     margin-inline-end: var(--space-4);
-    animation: rl-palette-spin 0.9s linear infinite;
 }
 
 .rl-palette-hint {
@@ -52,17 +51,5 @@
 @include until-desktop {
     .rl-palette-hint {
         display: none;
-    }
-}
-
-@keyframes rl-palette-spin {
-    to {
-        rotate: 1turn;
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .rl-palette-busy {
-        animation: none;
     }
 }

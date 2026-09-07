@@ -20,6 +20,7 @@ import { ElementsClient } from './data/elements/elements-client';
 import { ReactionsClient } from './data/reactions/reactions-client';
 import { Skeleton } from "./design-system/primitives/skeleton/skeleton";
 import { LanguageToggle } from './core/i18n/language-toggle';
+import { Spinner } from "./design-system/primitives/spinner/spinner";
 
 @Component({
   selector: 'app-root',
@@ -38,7 +39,8 @@ import { LanguageToggle } from './core/i18n/language-toggle';
     TranslocoDirective,
     Button,
     Skeleton,
-    LanguageToggle
+    LanguageToggle,
+    Spinner
 ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })

@@ -20,7 +20,7 @@
         />
 
         @if (busy()) {
-            <rl-icon class="rl-palette-busy" [icon]="icons.loaderCircle" size="sm"></rl-icon>
+            <rl-spinner class="rl-palette-busy" size="sm"></rl-spinner>
         }
 
         @if (cancelLabel(); as label) {
@@ -30,6 +30,7 @@
 
     <rl-listbox
         [embedded]="true"
+        [busy]="busy()"
         [options]="options()"
         [idPrefix]="listboxId"
         [label]="label()"

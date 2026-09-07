@@ -22,6 +22,11 @@ router-outlet {
   border-radius: 0;
 }
 
+.app-loading-spinner {
+  place-self: center;
+  color: var(--text-tertiary);
+}
+
 .app-skip {
   position: absolute;
   inset-block-start: var(--space-2);

@@ -38,6 +38,7 @@ export class Listbox {
     readonly selectedIndex = input(-1);
     readonly emptyText = input('No matches');
     readonly embedded = input(false);
+    readonly busy = input(false);
     readonly optionTemplate = input<TemplateRef<ListboxOptionContext<unknown>>>();
 
     readonly optionPicked = output<number>();

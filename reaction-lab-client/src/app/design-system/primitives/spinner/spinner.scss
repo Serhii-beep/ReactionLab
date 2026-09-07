@@ -1,0 +1,216 @@
+:host {
+    display: inline-flex;
+    animation: rl-spinner-appear var(--duration-fast) var(--ease-standard) var(--delay-busy) both;
+}
+
+.rl-spinner {
+    display: block;
+    overflow: visible;
+
+    &[data-size='sm'] {
+        inline-size: 1.5rem;
+        block-size: 1rem;
+    }
+
+    &[data-size='md'] {
+        inline-size: 2.25rem;
+        block-size: 1.5rem;
+    }
+
+    &[data-size='lg'] {
+        inline-size: 3.75rem;
+        block-size: 2.5rem;
+    }
+}
+
+.rl-spinner-flask,
+.rl-spinner-liquid {
+    animation: 4.8s ease-in-out infinite;
+}
+
+.rl-spinner-flask-a {
+    animation-name: rl-spinner-tilt-a;
+}
+
+.rl-spinner-flask-b {
+    animation-name: rl-spinner-tilt-b;
+}
+
+.rl-spinner-liquid-a {
+    animation-name: rl-spinner-liquid-a;
+}
+
+.rl-spinner-liquid-b {
+    animation-name: rl-spinner-liquid-b;
+}
+
+.rl-spinner-stream {
+    stroke-width: 1.4;
+    stroke-dasharray: 100 100;
+    stroke-dashoffset: 100;
+    animation: 4.8s ease-in-out infinite;
+}
+
+.rl-spinner-stream-ab {
+    animation-name: rl-spinner-stream-ab;
+}
+
+.rl-spinner-stream-ba {
+    animation-name: rl-spinner-stream-ba;
+}
+
+@keyframes rl-spinner-appear {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* stylelint-disable unit-disallowed-list */
+
+@keyframes rl-spinner-tilt-a {
+    0%,
+    6% {
+        transform: translate(0, 0) rotate(0deg);
+    }
+
+    16%,
+    36% {
+        transform: translate(16.2px, -5px) rotate(100deg);
+    }
+
+    46%,
+    100% {
+        transform: translate(0, 0) rotate(0deg);
+    }
+}
+
+@keyframes rl-spinner-tilt-b {
+    0%,
+    56% {
+        transform: translate(0, 0) rotate(0deg);
+    }
+
+    66%,
+    86% {
+        transform: translate(-16.2px, -5px) rotate(-100deg);
+    }
+
+    96%,
+    100% {
+        transform: translate(0, 0) rotate(0deg);
+    }
+}
+
+@keyframes rl-spinner-liquid-a {
+    0%,
+    6% {
+        transform: rotate(0deg) translateY(0);
+    }
+
+    16% {
+        transform: rotate(-100deg) translateY(0);
+    }
+
+    36% {
+        transform: rotate(-100deg) translateY(1.6px);
+    }
+
+    46%,
+    66% {
+        transform: rotate(0deg) translateY(5px);
+    }
+
+    86%,
+    100% {
+        transform: rotate(0deg) translateY(0);
+    }
+}
+
+@keyframes rl-spinner-liquid-b {
+    0%,
+    16% {
+        transform: rotate(0deg) translateY(5px);
+    }
+
+    36%,
+    56% {
+        transform: rotate(0deg) translateY(0);
+    }
+
+    66% {
+        transform: rotate(100deg) translateY(0);
+    }
+
+    86% {
+        transform: rotate(100deg) translateY(1.6px);
+    }
+
+    96%,
+    100% {
+        transform: rotate(0deg) translateY(5px);
+    }
+}
+
+@keyframes rl-spinner-stream-ab {
+    0%,
+    16% {
+        stroke-dashoffset: 100;
+    }
+
+    20%,
+    34% {
+        stroke-dashoffset: 0;
+    }
+
+    38%,
+    100% {
+        stroke-dashoffset: -100;
+    }
+}
+
+@keyframes rl-spinner-stream-ba {
+    0%,
+    66% {
+        stroke-dashoffset: 100;
+    }
+
+    70%,
+    84% {
+        stroke-dashoffset: 0;
+    }
+
+    88%,
+    100% {
+        stroke-dashoffset: -100;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .rl-spinner-flask,
+    .rl-spinner-liquid,
+    .rl-spinner-stream {
+        animation: none;
+    }
+
+    .rl-spinner-flask-a {
+        transform: translate(16.2px, -5px) rotate(100deg);
+    }
+
+    .rl-spinner-liquid-a {
+        transform: rotate(-100deg) translateY(0.6px);
+    }
+
+    .rl-spinner-liquid-b {
+        transform: translateY(2.6px);
+    }
+
+    .rl-spinner-stream-ab {
+        stroke-dashoffset: 0;
+    }
+}
+
+/* stylelint-enable unit-disallowed-list */

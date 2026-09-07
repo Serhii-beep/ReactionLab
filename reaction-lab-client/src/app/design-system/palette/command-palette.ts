@@ -6,12 +6,13 @@ import { Listbox, ListboxOptionContext, nextListboxId, optionId } from '../primi
 import { TextInput } from '../primitives/input/text-input';
 import { firstEnabled, lastEnabled, ListboxOption, nextEnabled } from '../primitives/listbox/listbox-navigation';
 import { Button } from '../primitives/button/button';
+import { Spinner } from "../primitives/spinner/spinner";
 
 @Component({
     selector: 'rl-command-palette',
     templateUrl: './command-palette.html',
     styleUrl: './command-palette.scss',
-    imports: [Dialog, Icon, Listbox, TextInput, Button],
+    imports: [Dialog, Icon, Listbox, TextInput, Button, Spinner],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CommandPalette<T> {
