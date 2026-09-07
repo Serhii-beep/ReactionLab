@@ -3,6 +3,7 @@ import { DisposalScope } from "./core/disposal-scope";
 import { EngineContext } from "./core/engine-context";
 import { ViewportObserver } from "./core/viewport-observer";
 import { RenderLoop } from "./core/render-loop";
+import { BenchStage } from "./scene/bench-stage";
 
 export function provideEngine(): Provider[] {
     return [
@@ -38,6 +39,10 @@ export function provideEngine(): Provider[] {
 
                 return loop;
             }
+        },
+        {
+            provide: BenchStage,
+            useFactory: () => inject(DisposalScope).add(new BenchStage(inject(EngineContext)))
         }
     ];
 }

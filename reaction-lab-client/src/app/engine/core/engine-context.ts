@@ -1,6 +1,7 @@
 import { Color, PerspectiveCamera, Scene, WebGLRenderer } from 'three';
 import { Disposable } from './disposal-scope';
 import { disposeObject } from './dispose-object';
+import { applyRendererSettings } from '../rendering/renderer-settings';
 
 export class EngineContext implements Disposable {
     readonly renderer = new WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
@@ -8,6 +9,7 @@ export class EngineContext implements Disposable {
     readonly camera = new PerspectiveCamera(40, 1, 0.1, 200);
 
     constructor() {
+        applyRendererSettings(this.renderer);
         this.renderer.setClearColor(new Color(0x000000), 0);
 
         const canvas = this.renderer.domElement;
