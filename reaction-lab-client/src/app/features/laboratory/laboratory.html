@@ -6,6 +6,7 @@
         tabindex="-1"
         (dropped)="onDropped($event)"
     >
+        <app-scene-canvas></app-scene-canvas>
         @if (workspace.isEmpty()) {
             <rl-empty-state
                 [icon]="icons.flaskConical"

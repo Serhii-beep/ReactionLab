@@ -22,26 +22,28 @@ import { PeriodicTableSheet } from './periodic-table/periodic-table-sheet';
 import { ReactionStore } from '../../state/reaction-store';
 import { LiveAnnouncer } from '@angular/cdk/a11y';
 import { BenchDelta, benchDelta } from './bench-delta';
+import { SceneCanvas } from "./scene/scene-canvas";
 
 @Component({
     selector: 'app-laboratory',
     templateUrl: './laboratory.html',
     styleUrl: './laboratory.scss',
     imports: [
-        TranslocoDirective,
-        Bench,
-        DropTarget,
-        Kbd,
-        LabPalette,
-        DragPreview,
-        ChemFormula,
-        Icon,
-        EmptyState,
-        Button,
-        BenchScene,
-        ReactionsSheet,
-        PeriodicTableSheet
-    ],
+    TranslocoDirective,
+    Bench,
+    DropTarget,
+    Kbd,
+    LabPalette,
+    DragPreview,
+    ChemFormula,
+    Icon,
+    EmptyState,
+    Button,
+    BenchScene,
+    ReactionsSheet,
+    PeriodicTableSheet,
+    SceneCanvas
+],
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: {
         '(document:keydown)': 'onKeydown($event)'

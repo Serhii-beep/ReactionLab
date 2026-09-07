@@ -54,6 +54,7 @@ module.exports = defineConfig([
         { type: 'data', pattern: 'src/app/data/**', partialMatch: false },
         { type: 'state', pattern: 'src/app/state/**', partialMatch: false },
         { type: 'core', pattern: 'src/app/core/**', partialMatch: false },
+        { type: 'engine', pattern: 'src/app/engine/**', partialMatch: false },
         { type: 'feature', pattern: 'src/app/features/*/**', partialMatch: false, capture: ['name'] }
       ]
     },
@@ -67,10 +68,11 @@ module.exports = defineConfig([
             { from: [{ element: { type: 'data' } }], allow: [{ to: { element: { type: 'data' } } }] },
             { from: [{ element: { type: 'state' } }], allow: [{ to: { element: { type: ['state', 'data'] } } }] },
             { from: [{ element: { type: 'core' } }], allow: [{ to: { element: { type: ['core', 'data', 'design-system'] } } }] },
+            { from: [{ element: { type: 'engine' } }], allow: [{ to: { element: { type: 'engine' } } }] },
             {
               from: [{ element: { type: 'feature' } }],
               allow: [
-                { to: { element: { type: ['data', 'state', 'core', 'design-system'] } } },
+                { to: { element: { type: ['data', 'state', 'core', 'design-system', 'engine'] } } },
                 { to: { element: { type: 'feature', captured: { name: '{{from.name}}' } } } }
               ]
             }

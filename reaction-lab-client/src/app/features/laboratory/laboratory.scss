@@ -4,6 +4,7 @@
 
 .lab-viewport {
     position: relative;
+    isolation: isolate;
     display: grid;
     place-items: center;
     min-inline-size: 0;
