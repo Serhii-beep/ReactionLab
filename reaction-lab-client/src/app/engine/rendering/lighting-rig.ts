@@ -1,4 +1,4 @@
-import { Color, DirectionalLight, Group, HemisphereLight } from "three";
+import { Box3, Color, DirectionalLight, Group, HemisphereLight, Sphere } from "three";
 import { Look } from "./look";
 
 export type TokenResolver = (token: string) => Color;
@@ -9,6 +9,7 @@ export class LightingRig extends Group {
     private readonly key = new DirectionalLight();
     private readonly fill = new HemisphereLight();
     private readonly rim = new DirectionalLight();
+    private readonly sphere = new Sphere();
 
     constructor() {
         super();
@@ -45,6 +46,18 @@ export class LightingRig extends Group {
 
         this.rim.intensity = look.rim.intensity;
         this.rim.color.set(look.rim.color);
+    }
+
+    fitShadow(bounds: Box3): void {
+        const radius = bounds.isEmpty() ? 0 : bounds.getBoundingSphere(this.sphere).radius;
+        const extent = Math.max(SHADOW_EXTENT, radius * 1.4);
+        const camera = this.key.shadow.camera;
+
+        camera.left = -extent;
+        camera.right = extent;
+        camera.top = extent;
+        camera.bottom = -extent;
+        camera.updateProjectionMatrix();
     }
 
     dispose(): void {

@@ -22,4 +22,5 @@ export interface ElementSummary {
     readonly group: number | null;
     readonly displayColor: string;
     readonly electronegativity: number | null;
+    readonly covalentRadiusPicometers: number | null;
 }

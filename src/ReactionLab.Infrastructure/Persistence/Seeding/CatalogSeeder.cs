@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using ReactionLab.Domain.Elements;
 using ReactionLab.Domain.Localization;
 using ReactionLab.Domain.Reactions;
 using ReactionLab.Domain.Substances;
@@ -31,12 +32,25 @@ internal sealed class CatalogSeeder(
 
     private async Task<int> SeedElementsAsync(CatalogBatch batch, CancellationToken cancellationToken)
     {
-        var existing = await context.Elements
-            .Select(e => e.Symbol.Value)
-            .ToListAsync(cancellationToken);
+        var existing = await context.Elements.ToDictionaryAsync(e => e.Symbol.Value, StringComparer.OrdinalIgnoreCase, cancellationToken);
+        var missing = new List<Element>();
 
-        var known = existing.ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var missing = batch.Elements.Where(e => !known.Contains(e.Symbol.Value)).ToList();
+        foreach (var element in batch.Elements)
+        {
+            if (!existing.TryGetValue(element.Symbol.Value, out var known))
+            {
+                missing.Add(element);
+            }
+            else if (known.Radii is null && element.Radii is not null)
+            {
+                var updated = known.UpdateAppearance(known.DisplayColor, element.Radii);
+
+                if (updated.IsFailure)
+                {
+                    logger.LogWarning("Skipping radii for {Symbol}: {Error}", known.Symbol.Value, updated.Error);
+                }
+            }
+        }
 
         context.Elements.AddRange(missing);
         await context.SaveChangesAsync(cancellationToken);

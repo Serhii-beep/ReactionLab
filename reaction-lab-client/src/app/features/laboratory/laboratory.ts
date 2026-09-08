@@ -16,7 +16,6 @@ import { UiStore } from '../../state/ui-store';
 import { Icon } from '../../design-system/icons/icon';
 import { EmptyState } from '../../design-system/primitives/empty-state/empty-state';
 import { Button } from "../../design-system/primitives/button/button";
-import { BenchScene } from "./bench-scene/bench-scene";
 import { ReactionsSheet } from './reactions-sheet/reactions-sheet';
 import { PeriodicTableSheet } from './periodic-table/periodic-table-sheet';
 import { ReactionStore } from '../../state/reaction-store';
@@ -39,7 +38,6 @@ import { SceneCanvas } from "./scene/scene-canvas";
     Icon,
     EmptyState,
     Button,
-    BenchScene,
     ReactionsSheet,
     PeriodicTableSheet,
     SceneCanvas

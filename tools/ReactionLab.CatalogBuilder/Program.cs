@@ -5,7 +5,6 @@ using System.Text.Json;
 using ReactionLab.CatalogBuilder;
 using ReactionLab.Chemistry.Formulas;
 using ReactionLab.Domain.Elements;
-using ReactionLab.Domain.Reactions;
 using ReactionLab.Domain.Substances;
 using ReactionLab.Infrastructure.Persistence.Seeding.Catalog;
 
@@ -39,8 +38,15 @@ http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("ReactionLab
 var elements = await ReadJsonAsync<List<SourceElement>>(Path.Combine(sources, "elements.json"));
 var atomicMasses = elements.ToDictionary(
     element => element.Symbol, element => element.AtomicMass, StringComparer.Ordinal);
+var radii = await ReadJsonAsync<AtomicRadiiSource>(Path.Combine(sources, "atomic-radii.json"));
 
 await BuildElementsAsync();
+
+if (args.Contains("elements", StringComparer.OrdinalIgnoreCase))
+{
+    return;
+}
+
 await BuildSubstancesAsync();
 
 Console.WriteLine($"Catalog written to {output}");
@@ -59,6 +65,7 @@ async Task BuildElementsAsync()
         DisplayColor = element.DisplayColor,
         ElectronConfiguration = element.ElectronConfiguration,
         Electronegativity = element.Electronegativity,
+        CovalentRadiusPm = radii.CovalentRadiusPm.TryGetValue(element.Symbol, out var covalent) ? covalent : null,
         MeltingPointK = element.MeltingPoint,
         BoilingPointK = element.BoilingPoint,
         Translations = new Dictionary<string, ElementRecord.ElementText>
@@ -323,6 +330,8 @@ internal sealed record SourceElement(
     int? Group, string? ElectronConfiguration, decimal? Electronegativity, decimal? MeltingPoint,
     decimal? BoilingPoint, string StateAtRoomTemp, string DisplayColor, string? DiscoveryInfo,
     List<string>? InterestingFacts);
+
+internal sealed record AtomicRadiiSource(string Source, string Unit, Dictionary<string, decimal> CovalentRadiusPm);
 
 internal sealed record SourceReaction(
     string Name, string ReactionType, decimal? RequiredTemperature, string? CatalystInfo, decimal? EnthalpyChange,

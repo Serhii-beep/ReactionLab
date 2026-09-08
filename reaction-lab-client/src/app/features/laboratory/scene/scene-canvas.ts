@@ -1,22 +1,26 @@
-import { afterNextRender, afterRenderEffect, ChangeDetectionStrategy, Component, DOCUMENT, effect, ElementRef, inject, isDevMode } from "@angular/core";
+import { afterNextRender, afterRenderEffect, ChangeDetectionStrategy, Component, computed, DOCUMENT, effect, ElementRef, inject, untracked } from "@angular/core";
 import { provideEngine } from "../../../engine/engine-providers";
+import { Color } from "three";
 import { Theme } from "../../../core/theme/theme";
+import { WorkspaceStore } from "../../../state/workspace-store";
+import { ElementsClient } from "../../../data/elements/elements-client";
+import { SubstanceDetailsClient } from "../../../data/substances/substance-details-client";
 import { EngineContext } from "../../../engine/core/engine-context";
 import { RenderLoop } from "../../../engine/core/render-loop";
-import { ViewportObserver } from "../../../engine/core/viewport-observer";
-import { tokenColor } from "../../../engine/core/css-color";
 import { BenchStage } from "../../../engine/scene/bench-stage";
-import { ActivatedRoute } from "@angular/router";
-import { DisposalScope } from "../../../engine/core/disposal-scope";
-import { CalibrationProbe } from "../../../engine/objects/calibration-probe";
+import { AtomRenderer } from "../../../engine/objects/atom-renderer";
+import { AtomLabels } from "../../../engine/objects/atom-labels";
+import { buildBenchUnits } from "./bench-units";
+import { ViewportObserver } from "../../../engine/core/viewport-observer";
 import { LOOKS } from "../../../engine/rendering/look";
-import { ElementsClient } from "../../../data/elements/elements-client";
-import { GeometryCache } from "../../../engine/resources/geometry-cache";
-import { MaterialCache } from "../../../engine/resources/material-cache";
-import { LabelAtlas } from "../../../engine/resources/label-atlas";
-import { Color } from "three";
+import { tokenColor } from "../../../engine/core/css-color";
+import { layoutBench, PlacedAtom } from "../../../engine/scene/bench-layout";
+import { frameBounds } from "../../../engine/core/camera-framing";
+import { lodFor } from "../../../engine/resources/geometry-cache";
+import { projectedRadius } from "../../../engine/core/projection";
 
-const PROBE_SYMBOLS = ['H', 'C', 'N', 'O', 'S', 'Cl', 'Na', 'Fe'];
+const LIGHT_INK = new Color(0xffffff);
+const REFERENCE_HEIGHT = 900;
 
 @Component({
     selector: 'app-scene-canvas',
@@ -29,23 +33,31 @@ export class SceneCanvas {
     private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
     private readonly view = inject(DOCUMENT).defaultView ?? window;
     private readonly theme = inject(Theme);
+    private readonly workspace = inject(WorkspaceStore);
     private readonly elements = inject(ElementsClient);
-    private readonly scope = inject(DisposalScope);
+    private readonly details = inject(SubstanceDetailsClient);
     private readonly context = inject(EngineContext);
     private readonly loop = inject(RenderLoop);
     private readonly stage = inject(BenchStage);
-    private readonly geometries = inject(GeometryCache);
-    private readonly materials = inject(MaterialCache);
-    private readonly labels = inject(LabelAtlas);
-    private probe: CalibrationProbe | null = null;
+    private readonly atoms = inject(AtomRenderer);
+    private readonly labels = inject(AtomLabels);
+
+    private readonly units = computed(() =>
+        buildBenchUnits(this.workspace.entries(), this.details.loaded(), this.elements.all.value()));
 
     constructor() {
-        inject(ViewportObserver);
+        inject(ViewportObserver).onResize(() => this.rebuild());
 
-        if (isDevMode() && inject(ActivatedRoute).snapshot.queryParamMap.has('probe')) {
-            effect(() => this.buildProbe());
-        }
+        this.context.scene.add(this.atoms.root, this.labels.root);
 
+        effect(() => {
+            for (const entry of this.workspace.entries()) {
+                untracked(() => this.details.ensure(entry.substance.id));
+            }
+        });
+
+        effect(() => this.rebuild());
+        
         afterRenderEffect(() => {
             const look = LOOKS[this.theme.resolved()];
 
@@ -54,26 +66,28 @@ export class SceneCanvas {
 
         afterNextRender(() => {
             this.host.nativeElement.append(this.context.canvas);
+            this.loop.onRender(() => this.labels.update(this.context.camera, this.context.canvas.clientHeight));
             this.loop.start();
         });
     }
 
-    private buildProbe(): void {
-        const elements = this.elements.all.value();
+    private rebuild(): void {
+        const { atoms, bounds } = layoutBench(this.units());
+        const distance = frameBounds(this.context.camera, bounds);
+        const height = this.context.canvas.clientHeight || REFERENCE_HEIGHT;
 
-        if (this.probe || elements.length === 0) {
-            return;
-        }
-
-        const samples = PROBE_SYMBOLS.flatMap((symbol) => {
-            const element = elements.find((candidate) => candidate.symbol === symbol);
-
-            return element ? [{ symbol, color: new Color(element.displayColor) }] : [];
-        });
-
-        const labelColor = tokenColor(this.host.nativeElement, '--text-primary', this.view);
-
-        this.probe = this.scope.add(new CalibrationProbe(samples, this.geometries, this.materials, this.labels, labelColor));
-        this.context.scene.add(this.probe);
+        this.stage.fit(distance, bounds);
+        this.atoms.render(atoms, lodFor(projectedRadius(smallestRadius(atoms), distance, this.context.camera.fov, height)));
+        this.labels.render(atoms, { dark: tokenColor(this.host.nativeElement, '--cat-ink', this.view), light: LIGHT_INK });
     }
+}
+
+function smallestRadius(atoms: readonly PlacedAtom[]): number {
+    let smallest = Infinity;
+
+    for (const atom of atoms) {
+        smallest = Math.min(smallest, atom.radius);
+    }
+
+    return smallest;
 }

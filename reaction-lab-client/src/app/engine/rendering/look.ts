@@ -18,12 +18,12 @@ export interface Look {
 
 export const LOOKS: Readonly<Record<LookName, Look>> = {
     light: {
-        exposure: 0.95,
-        environmentIntensity: 0.7,
-        key: { intensity: 2.4, color: 0xfff1e0 },
-        rim: { intensity: 1.0, color: 0xffffff },
-        fill: { intensity: 0.8, sky: '--surface-raised', ground: '--surface-void' },
-        shadowIntensity: 0.7,
+        exposure: 0.92,
+        environmentIntensity: 0.5,
+        key: { intensity: 2.6, color: 0xfff1e0 },
+        rim: { intensity: 1.2, color: 0xffffff },
+        fill: { intensity: 0.7, sky: '--surface-raised', ground: '--surface-void' },
+        shadowIntensity: 0.85,
         ground: '--surface-raised',
         fog: { token: '--surface-void', near: 20, far: 46 }
     },

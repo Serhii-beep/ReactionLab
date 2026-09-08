@@ -15,6 +15,17 @@ const CYLINDER_SEGMENTS: Readonly<Record<Lod, number>> = {
     low: 8
 };
 
+const HIGH_LOD_PIXELS = 20;
+const MEDIUM_LOD_PIXELS = 8;
+
+export function lodFor(pixels: number): Lod {
+    if (pixels >= HIGH_LOD_PIXELS) {
+        return 'high';
+    }
+
+    return pixels >= MEDIUM_LOD_PIXELS ? 'medium' : 'low';
+}
+
 export class GeometryCache implements Disposable {
     private readonly geometries = new Map<string, BufferGeometry>();
 

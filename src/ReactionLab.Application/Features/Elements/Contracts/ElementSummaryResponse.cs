@@ -12,4 +12,5 @@ public sealed record ElementSummaryResponse(
     int Period,
     int? Group,
     string DisplayColor,
-    decimal? Electronegativity);
+    decimal? Electronegativity,
+    decimal? CovalentRadiusPicometers);
