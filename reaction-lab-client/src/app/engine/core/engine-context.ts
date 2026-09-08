@@ -7,6 +7,7 @@ export class EngineContext implements Disposable {
     readonly renderer = new WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
     readonly scene = new Scene();
     readonly camera = new PerspectiveCamera(40, 1, 0.1, 200);
+    private persistentTextures = 0;
 
     constructor() {
         applyRendererSettings(this.renderer);
@@ -30,6 +31,10 @@ export class EngineContext implements Disposable {
         this.renderer.render(this.scene, this.camera);
     }
 
+    expectPersistentTextures(count: number): void {
+        this.persistentTextures += count;
+    }
+
     dispose(): void {
         this.renderer.setAnimationLoop(null);
         this.scene.traverse(disposeObject);
@@ -39,7 +44,7 @@ export class EngineContext implements Disposable {
 
         const { geometries, textures } = this.renderer.info.memory;
 
-        if (geometries > 0 || textures > 0) {
+        if (geometries > 0 || textures > this.persistentTextures) {
             console.warn('EngineContext: GPU resources retained after dispose', { geometries, textures });
         }
     }

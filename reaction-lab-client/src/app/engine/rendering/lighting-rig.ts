@@ -27,6 +27,7 @@ export class LightingRig extends Group {
         this.key.shadow.camera.updateProjectionMatrix();
         this.key.shadow.bias = -0.0004;
         this.key.shadow.normalBias = 0.02;
+        this.key.shadow.radius = 3;
 
         this.rim.position.set(-10, 8, -12);
 

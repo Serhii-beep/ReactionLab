@@ -4,6 +4,9 @@ import { EngineContext } from "./core/engine-context";
 import { ViewportObserver } from "./core/viewport-observer";
 import { RenderLoop } from "./core/render-loop";
 import { BenchStage } from "./scene/bench-stage";
+import { GeometryCache } from "./resources/geometry-cache";
+import { MaterialCache } from "./resources/material-cache";
+import { LabelAtlas } from "./resources/label-atlas";
 
 export function provideEngine(): Provider[] {
     return [
@@ -43,6 +46,18 @@ export function provideEngine(): Provider[] {
         {
             provide: BenchStage,
             useFactory: () => inject(DisposalScope).add(new BenchStage(inject(EngineContext)))
+        },
+        {
+            provide: GeometryCache,
+            useFactory: () => inject(DisposalScope).add(new GeometryCache())
+        },
+        {
+            provide: MaterialCache,
+            useFactory: () => inject(DisposalScope).add(new MaterialCache())
+        },
+        {
+            provide: LabelAtlas,
+            useFactory: () => inject(DisposalScope).add(new LabelAtlas(inject(EngineContext)))
         }
     ];
 }

@@ -28,6 +28,11 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "inter-latin-600-normal.woff",
+                "input": "node_modules/@fontsource/inter/files",
+                "output": "fonts"
               }
             ],
             "allowedCommonJsDependencies": ["@messageformat/core"],

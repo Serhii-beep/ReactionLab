@@ -1,33 +1,51 @@
-import { Group, Mesh, MeshStandardMaterial, SphereGeometry } from "three";
+import { Color, Group, Mesh } from "three";
+import { Disposable } from "../core/disposal-scope";
+import { GeometryCache } from "../resources/geometry-cache";
+import { MaterialCache } from "../resources/material-cache";
+import { LabelAtlas } from "../resources/label-atlas";
 
-const CPK = [0xffffff, 0x909090, 0x3050f8, 0xff0d0d, 0xffff30, 0x1ff01f, 0xab5cf2, 0xe06633];
+export interface ProbeSample {
+    symbol: string;
+    color: Color;
+}
+
 const RADIUS = 0.8;
 const SPACING = 2.2;
 
-export class CalibrationProbe extends Group {
-    private readonly geometry = new SphereGeometry(RADIUS, 48, 32);
-    private readonly materials = CPK.map((color) => new MeshStandardMaterial({ color, roughness: 0.4, metalness: 0 }));
+export class CalibrationProbe extends Group implements Disposable {
+    private readonly releases: (() => void)[] = [];
 
-    constructor() {
+    constructor(
+        samples: readonly ProbeSample[],
+        geometries: GeometryCache,
+        materials: MaterialCache,
+        labels: LabelAtlas,
+        labelColor: Color
+    ) {
         super();
 
         this.name = 'calibration-probe';
+        
+        samples.forEach((sample, index) => {
+            const x = (index - (samples.length - 1) / 2) * SPACING;
+            const sphere = new Mesh(geometries.sphere('high'), materials.atom(sample.symbol, 'solid', sample.color));
+            const label = labels.create(sample.symbol, { size: 0.55, color: labelColor });
 
-        this.materials.forEach((material, index) => {
-            const sphere = new Mesh(this.geometry, material);
-
-            sphere.position.set((index - (CPK.length - 1) / 2) * SPACING, RADIUS, 0);
+            sphere.position.set(x, RADIUS, 0);
+            sphere.scale.setScalar(RADIUS);
             sphere.castShadow = true;
-            this.add(sphere);
-        });
+            label.position.set(x, RADIUS * 2 + 0.6, 0);
+
+            this.releases.push(() => labels.release(label));
+            this.add(sphere, label);
+        })
     }
 
     dispose(): void {
         this.removeFromParent();
-        this.geometry.dispose();
-
-        for (const material of this.materials) {
-            material.dispose();
+        
+        for (const release of this.releases) {
+            release();
         }
     }
 }
