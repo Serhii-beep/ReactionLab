@@ -22,27 +22,29 @@ import { ReactionStore } from '../../state/reaction-store';
 import { LiveAnnouncer } from '@angular/cdk/a11y';
 import { BenchDelta, benchDelta } from './bench-delta';
 import { SceneCanvas } from "./scene/scene-canvas";
+import { SceneViewport } from './scene/scene-viewport';
 
 @Component({
     selector: 'app-laboratory',
     templateUrl: './laboratory.html',
     styleUrl: './laboratory.scss',
     imports: [
-    TranslocoDirective,
-    Bench,
-    DropTarget,
-    Kbd,
-    LabPalette,
-    DragPreview,
-    ChemFormula,
-    Icon,
-    EmptyState,
-    Button,
-    ReactionsSheet,
-    PeriodicTableSheet,
-    SceneCanvas
-],
+        TranslocoDirective,
+        Bench,
+        DropTarget,
+        Kbd,
+        LabPalette,
+        DragPreview,
+        ChemFormula,
+        Icon,
+        EmptyState,
+        Button,
+        ReactionsSheet,
+        PeriodicTableSheet,
+        SceneCanvas
+    ],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    providers: [SceneViewport],
     host: {
         '(document:keydown)': 'onKeydown($event)'
     }
@@ -53,6 +55,7 @@ export class Laboratory {
     protected readonly drag = inject(DragSession);
     protected readonly ui = inject(UiStore);
     protected readonly workspace = inject(WorkspaceStore);
+    protected readonly viewport = inject(SceneViewport);
 
     private readonly selection = inject(SelectionStore);
     private readonly reactions = inject(ReactionStore);
@@ -71,7 +74,8 @@ export class Laboratory {
         ['mod+y', () => this.workspace.redo()],
         ['delete', () => this.removeSelected()],
         ['backspace', () => this.removeSelected()],
-        ['escape', () => this.dismiss()]
+        ['escape', () => this.dismiss()],
+        ['home', () => this.viewport.requestFit()]
     ]);
 
     constructor() {

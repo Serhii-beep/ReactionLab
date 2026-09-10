@@ -1,6 +1,6 @@
 import { BufferGeometry, Group, Matrix4, Quaternion, Vector3 } from "three";
 import { BondKind, PlacedAtom, PlacedBond } from "../scene/bench-layout";
-import { MaterialCache, Phase } from "../resources/material-cache";
+import { MaterialCache } from "../resources/material-cache";
 import { Disposable } from "../core/disposal-scope";
 import { BatchRequest, commit, InstancedBatches } from "./instanced-batches";
 import { GeometryCache, Lod } from "../resources/geometry-cache";

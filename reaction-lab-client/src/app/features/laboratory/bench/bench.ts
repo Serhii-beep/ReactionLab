@@ -10,6 +10,7 @@ import { WorkspaceStore } from '../../../state/workspace-store';
 import { SelectionStore } from '../../../state/selection-store';
 import { ReactionStore } from '../../../state/reaction-store';
 import { UiStore } from '../../../state/ui-store';
+import { SceneViewport } from '../scene/scene-viewport';
 
 @Component({
     selector: 'app-bench',
@@ -23,6 +24,7 @@ export class Bench {
     protected readonly selection = inject(SelectionStore);
     protected readonly reactions = inject(ReactionStore);
     protected readonly ui = inject(UiStore);
+    protected readonly viewport = inject(SceneViewport);
 
     protected readonly icons = icons;
     protected readonly stateSymbol = stateSymbol;

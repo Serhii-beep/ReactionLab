@@ -10,6 +10,7 @@ import { LabelAtlas } from "./resources/label-atlas";
 import { AtomRenderer } from "./objects/atom-renderer";
 import { AtomLabels } from "./objects/atom-labels";
 import { BondRenderer } from "./objects/bond-renderer";
+import { CameraController } from "./interaction/camera-controller";
 
 export function provideEngine(): Provider[] {
     return [
@@ -35,6 +36,7 @@ export function provideEngine(): Provider[] {
 
             return loop;
         }),
+        owned(CameraController, () => new CameraController(inject(EngineContext), inject<ElementRef<HTMLElement>>(ElementRef).nativeElement)),
         owned(BenchStage, () => new BenchStage(inject(EngineContext))),
         owned(GeometryCache, () => new GeometryCache()),
         owned(MaterialCache, () => new MaterialCache()),

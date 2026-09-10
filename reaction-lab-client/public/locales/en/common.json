@@ -50,6 +50,7 @@
             "clear": "Clear the bench",
             "undo": "Undo",
             "redo": "Redo",
+            "fitView": "Fit the view to the bench",
             "peek": "{count, plural, =0 {No reactions yet} one {# reaction} other {# reactions}}",
             "ready": "· {count} ready"
         },

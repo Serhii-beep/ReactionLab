@@ -11,6 +11,10 @@
         <button rlIconButton size="sm" [label]="t('clear')" (click)="workspace.clear()">
             <rl-icon [icon]="icons.trash2" size="sm"></rl-icon>
         </button>
+
+        <button rlIconButton size="sm" [label]="t('fitView')" (click)="viewport.requestFit()">
+            <rl-icon [icon]="icons.scan" size="sm"></rl-icon>
+        </button>
     </div>
 
     <div class="bench-separator" role="presentation"></div>

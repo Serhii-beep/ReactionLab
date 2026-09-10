@@ -3,5 +3,9 @@
     inset: 0;
     z-index: -1;
     display: block;
-    pointer-events: none;
+    cursor: grab;
+
+    &:active {
+        cursor: grabbing;
+    }
 }
