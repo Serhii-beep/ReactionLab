@@ -18,6 +18,7 @@ import { layoutBench, PlacedAtom } from "../../../engine/scene/bench-layout";
 import { frameBounds } from "../../../engine/core/camera-framing";
 import { lodFor } from "../../../engine/resources/geometry-cache";
 import { projectedRadius } from "../../../engine/core/projection";
+import { BondRenderer } from "../../../engine/objects/bond-renderer";
 
 const LIGHT_INK = new Color(0xffffff);
 const REFERENCE_HEIGHT = 900;
@@ -40,6 +41,7 @@ export class SceneCanvas {
     private readonly loop = inject(RenderLoop);
     private readonly stage = inject(BenchStage);
     private readonly atoms = inject(AtomRenderer);
+    private readonly bonds = inject(BondRenderer);
     private readonly labels = inject(AtomLabels);
 
     private readonly units = computed(() =>
@@ -48,7 +50,7 @@ export class SceneCanvas {
     constructor() {
         inject(ViewportObserver).onResize(() => this.rebuild());
 
-        this.context.scene.add(this.atoms.root, this.labels.root);
+        this.context.scene.add(this.atoms.root, this.bonds.root, this.labels.root);
 
         effect(() => {
             for (const entry of this.workspace.entries()) {
@@ -72,12 +74,14 @@ export class SceneCanvas {
     }
 
     private rebuild(): void {
-        const { atoms, bounds } = layoutBench(this.units());
+        const { atoms, bonds, bounds } = layoutBench(this.units());
         const distance = frameBounds(this.context.camera, bounds);
         const height = this.context.canvas.clientHeight || REFERENCE_HEIGHT;
+        const lod = lodFor(projectedRadius(smallestRadius(atoms), distance, this.context.camera.fov, height));
 
         this.stage.fit(distance, bounds);
-        this.atoms.render(atoms, lodFor(projectedRadius(smallestRadius(atoms), distance, this.context.camera.fov, height)));
+        this.atoms.render(atoms, lod);
+        this.bonds.render(bonds, lod);
         this.labels.render(atoms, { dark: tokenColor(this.host.nativeElement, '--cat-ink', this.view), light: LIGHT_INK });
     }
 }

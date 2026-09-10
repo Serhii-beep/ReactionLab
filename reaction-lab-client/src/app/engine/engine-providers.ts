@@ -9,6 +9,7 @@ import { MaterialCache } from "./resources/material-cache";
 import { LabelAtlas } from "./resources/label-atlas";
 import { AtomRenderer } from "./objects/atom-renderer";
 import { AtomLabels } from "./objects/atom-labels";
+import { BondRenderer } from "./objects/bond-renderer";
 
 export function provideEngine(): Provider[] {
     return [
@@ -39,6 +40,7 @@ export function provideEngine(): Provider[] {
         owned(MaterialCache, () => new MaterialCache()),
         owned(LabelAtlas, () => new LabelAtlas(inject(EngineContext))),
         owned(AtomRenderer, () => new AtomRenderer(inject(GeometryCache), inject(MaterialCache))),
+        owned(BondRenderer, () => new BondRenderer(inject(GeometryCache), inject(MaterialCache))),
         owned(AtomLabels, () => new AtomLabels(inject(LabelAtlas)))
     ];
 }

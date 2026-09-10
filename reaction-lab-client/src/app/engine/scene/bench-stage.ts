@@ -38,6 +38,7 @@ export class BenchStage implements Disposable {
 
     fit(distance: number, bounds: Box3): void {
         this.fogScale = distance / DEFAULT_DISTANCE;
+        this.ground.scale.setScalar(this.fogScale);
 
         if (this.look) {
             this.fog.near = this.look.fog.near * this.fogScale;

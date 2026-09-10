@@ -41,6 +41,10 @@ export class GeometryCache implements Disposable {
         return this.get(`cylinder:${lod}`, () => new CylinderGeometry(1, 1, 1, CYLINDER_SEGMENTS[lod], 1, true));
     }
 
+    dash(lod: Lod): BufferGeometry {
+        return this.get(`dash:${lod}`, () => new CylinderGeometry(1, 1, 1, CYLINDER_SEGMENTS[lod], 1, false));
+    }
+
     dispose(): void {
         for (const geometry of this.geometries.values()) {
             geometry.dispose();

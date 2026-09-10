@@ -1,6 +1,8 @@
 import { Box3, Color, Vector3 } from "three";
 import { Phase } from "../resources/material-cache";
 
+export type BondKind = 'single' | 'double' | 'triple' | 'aromatic' | 'ionic' | 'hydrogen' | 'metallic';
+
 export interface UnitAtom {
     readonly symbol: string;
     readonly phase: Phase;
@@ -9,10 +11,17 @@ export interface UnitAtom {
     readonly position: Vector3;
 }
 
+export interface UnitBond {
+    readonly from: number;
+    readonly to: number;
+    readonly kind: BondKind;
+}
+
 export interface LayoutUnit {
     readonly id: string;
     readonly substanceId: string;
     readonly atoms: readonly UnitAtom[];
+    readonly bonds: readonly UnitBond[];
 }
 
 export interface PlacedAtom extends UnitAtom {
@@ -20,8 +29,16 @@ export interface PlacedAtom extends UnitAtom {
     readonly substanceId: string;
 }
 
+export interface PlacedBond {
+    readonly from: PlacedAtom;
+    readonly to: PlacedAtom;
+    readonly kind: BondKind;
+    readonly centroid: Vector3;
+}
+
 export interface BenchLayout {
     readonly atoms: readonly PlacedAtom[];
+    readonly bonds: readonly PlacedBond[];
     readonly bounds: Box3;
 }
 
@@ -32,30 +49,38 @@ interface Measure {
 }
 
 const GAP = 1.6;
+const RING_SPREAD = 1.85;
 
 export function layoutBench(units: readonly LayoutUnit[]): BenchLayout {
     const atoms: PlacedAtom[] = [];
+    const bonds: PlacedBond[] = [];
+    const centroids: Vector3[] = [];
     const bounds = new Box3();
     let cursor = 0;
 
     for (const unit of units) {
         const { center, radius, floor } = measure(unit);
         const offset = new Vector3(cursor + radius - center.x, -floor, -center.z);
+        const placed = unit.atoms.map((atom) => place(atom, unit, offset));
+        const centroid = center.clone().add(offset);
 
-        for (const atom of unit.atoms) {
-            const position = atom.position.clone().add(offset);
-
-            atoms.push({ ...atom, position, unit: unit.id, substanceId: unit.substanceId });
-            bounds.expandByPoint(position.clone().addScalar(atom.radius));
-            bounds.expandByPoint(position.clone().subScalar(atom.radius));
+        for (const atom of placed) {
+            atoms.push(atom);
+            bounds.expandByPoint(atom.position.clone().addScalar(atom.radius));
+            bounds.expandByPoint(atom.position.clone().subScalar(atom.radius));
         }
 
+        for (const bond of unit.bonds) {
+            bonds.push({ from: placed[bond.from], to: placed[bond.to], kind: bond.kind, centroid });
+        }
+
+        centroids.push(centroid);
         cursor += radius * 2 + GAP;
     }
 
-    recenter(atoms, bounds, (cursor - GAP) / 2);
+    recenter(atoms, centroids, bounds, (cursor - GAP) / 2);
 
-    return { atoms, bounds };
+    return { atoms, bonds, bounds };
 }
 
 export function ringPositions(radii: readonly number[]): Vector3[] {
@@ -66,13 +91,17 @@ export function ringPositions(radii: readonly number[]): Vector3[] {
     }
 
     const mean = radii.reduce((sum, radius) => sum + radius, 0) / count;
-    const ring = count === 2 ? mean : mean / Math.sin(Math.PI / count);
+    const ring = (count === 2 ? mean : mean / Math.sin(Math.PI / count)) * RING_SPREAD;
 
     return radii.map((_, index) => {
         const angle = (index / count) * Math.PI * 2;
 
         return new Vector3(Math.cos(angle) * ring, Math.sin(angle) * ring, 0);
     });
+}
+
+function place(atom: UnitAtom, unit: LayoutUnit, offset: Vector3): PlacedAtom {
+    return { ...atom, position: atom.position.clone().add(offset), unit: unit.id, substanceId: unit.substanceId };
 }
 
 function measure(unit: LayoutUnit): Measure {
@@ -94,13 +123,17 @@ function measure(unit: LayoutUnit): Measure {
     return { center, radius, floor: Number.isFinite(floor) ? floor : 0 };
 }
 
-function recenter(atoms: readonly PlacedAtom[], bounds: Box3, shift: number): void {
+function recenter(atoms: readonly PlacedAtom[], centroids: readonly Vector3[], bounds: Box3, shift: number): void {
     if (bounds.isEmpty()) {
         return;
     }
 
     for (const atom of atoms) {
         atom.position.x -= shift;
+    }
+
+    for (const centroid of centroids) {
+        centroid.x -= shift;
     }
 
     bounds.min.x -= shift;
