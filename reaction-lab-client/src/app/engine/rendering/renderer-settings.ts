@@ -6,4 +6,5 @@ export function applyRendererSettings(renderer: WebGLRenderer): void {
     renderer.toneMappingExposure = 1;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = PCFShadowMap;
+    renderer.info.autoReset = false;
 }

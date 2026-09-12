@@ -9,6 +9,9 @@ export class ViewportObserver implements Disposable {
     private readonly observer: ResizeObserver;
     private readonly listeners = new Set<ResizeListener>();
 
+    private latestEntry: ResizeObserverEntry | null = null;
+    private resolutionScale = 1;
+
     constructor(
         host: HTMLElement,
         private readonly context: EngineContext,
@@ -29,6 +32,18 @@ export class ViewportObserver implements Disposable {
         return () => this.listeners.delete(listener);
     }
 
+    setResolutionScale(scale: number): void {
+        if (scale === this.resolutionScale) {
+            return;
+        }
+
+        this.resolutionScale = scale;
+
+        if (this.latestEntry) {
+            this.resize(this.latestEntry);
+        }
+    }
+
     dispose(): void {
         this.observer.disconnect();
         this.listeners.clear();
@@ -38,7 +53,9 @@ export class ViewportObserver implements Disposable {
         const { width, height } = entry.contentRect;
         const pixels = entry.devicePixelContentBoxSize?.[0];
         const ratio = this.view.devicePixelRatio;
-        const scale = Math.min(1, MAX_PIXEL_RATIO / ratio);
+        const scale = Math.min(1, MAX_PIXEL_RATIO / ratio) * this.resolutionScale;
+
+        this.latestEntry = entry;
 
         if (pixels) {
             this.context.setSize(Math.round(pixels.inlineSize * scale), Math.round(pixels.blockSize * scale), 1);

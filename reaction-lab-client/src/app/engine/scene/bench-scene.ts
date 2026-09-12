@@ -10,9 +10,10 @@ import { BondRenderer } from "../objects/bond-renderer";
 import { SelectionOutline } from "../objects/selection-outline";
 import { layoutBench, LayoutUnit, PlacedAtom, PlacedBond } from "./bench-layout";
 import { BenchStage } from "./bench-stage";
-import { lodFor } from "../resources/geometry-cache";
-import { projectedRadius, worldPerPixel } from "../core/projection";
+import { Lod } from "../resources/geometry-cache";
+import { worldPerPixel } from "../core/projection";
 import { distanceFor, framingFor } from "../core/camera-framing";
+import { LodController } from "../performance/lod-controller";
 
 export interface BenchSceneCollaborators {
     readonly context: EngineContext;
@@ -24,6 +25,7 @@ export interface BenchSceneCollaborators {
     readonly outline: SelectionOutline;
     readonly highlight: HighlightFade;
     readonly picking: PickingService;
+    readonly lod: LodController;
 }
 
 const OUTLINE_PIXELS = 2.5;
@@ -37,6 +39,9 @@ export class BenchScene implements Disposable {
     private sphereByUnitId: ReadonlyMap<string, Sphere> = new Map();
     private ink: LabelInk | null = null;
     private viewportHeight = REFERENCE_HEIGHT;
+    private lodInUse: Lod = 'high';
+    private cameraWasMoving = false;
+    private needsRender = true;
     private outlineDirty = true;
 
     constructor(private readonly collaborators: BenchSceneCollaborators) {
@@ -48,6 +53,7 @@ export class BenchScene implements Disposable {
     setViewportHeight(height: number): void {
         if (height > 0) {
             this.viewportHeight = height;
+            this.needsRender = true;
         }
     }
 
@@ -57,28 +63,30 @@ export class BenchScene implements Disposable {
 
     setAccent(color: Color): void {
         this.collaborators.outline.setAccent(color);
+        this.needsRender = true;
     }
 
     setLabelInk(ink: LabelInk): void {
         this.ink = ink;
         this.collaborators.labels.render(this.atoms, this.bonds, ink);
+        this.needsRender = true;
     }
 
-    setUnits(units: readonly LayoutUnit[], transition: boolean): void {
+    setUnits(units: readonly LayoutUnit[], animated: boolean): void {
         const layout = layoutBench(units);
-        const { context, stage, atoms, bonds, labels, outline } = this.collaborators;
+        const { context, stage, atoms, bonds, labels, outline, lod } = this.collaborators;
 
         this.atoms = layout.atoms;
         this.bonds = layout.bonds;
         this.bounds = layout.bounds;
         this.sphereByUnitId = layout.units;
 
-        const distance = this.frame(transition);
-        const lod = lodFor(projectedRadius(smallestRadius(this.atoms), distance, context.camera.fov, this.viewportHeight));
+        const distance = this.frame(animated);
 
+        this.lodInUse = lod.choose(smallestRadius(this.atoms), distance, context.camera.fov, this.viewportHeight);
         stage.fit(distance, this.bounds);
-        atoms.render(this.atoms, lod);
-        bonds.render(this.bonds, lod);
+        atoms.render(this.atoms, this.lodInUse);
+        bonds.render(this.bonds, this.lodInUse);
         outline.render(this.atoms, this.bonds);
         this.outlineDirty = true;
 
@@ -95,38 +103,70 @@ export class BenchScene implements Disposable {
         return this.collaborators.picking.pick(this.atoms, clientX, clientY);
     }
 
-    frame(transition: boolean): number {
+    frame(animated: boolean): number {
         const { context, camera } = this.collaborators;
         const framing = framingFor(context.camera, this.bounds);
 
-        camera.frame(framing.center, framing.distance, this.bounds, transition);
+        camera.frame(framing.center, framing.distance, this.bounds, animated);
+        this.needsRender = true;
 
         return framing.distance;
     }
 
-    focusUnit(unitId: string, transition: boolean): boolean {
+    focusUnit(unitId: string, animated: boolean): boolean {
         const sphere = this.sphereByUnitId.get(unitId);
 
         if (!sphere) {
             return false;
         }
 
-        this.collaborators.camera.focus(sphere.center, distanceFor(this.collaborators.context.camera, sphere.radius, FOCUS_MARGIN), transition);
+        const { context, camera } = this.collaborators;
+
+        camera.focus(sphere.center, distanceFor(context.camera, sphere.radius, FOCUS_MARGIN), animated);
+        this.needsRender = true;
 
         return true;
     }
 
-    update(delta: number): void {
+    refreshLod(): void {
+        const { context, camera, atoms, bonds, lod } = this.collaborators;
+        const chosen = lod.choose(smallestRadius(this.atoms), camera.distance, context.camera.fov, this.viewportHeight);
+
+        if (chosen === this.lodInUse) {
+            return;
+        }
+
+        this.lodInUse = chosen;
+        atoms.render(this.atoms, chosen);
+        bonds.render(this.bonds, chosen);
+        this.needsRender = true;
+    }
+
+    update(deltaSeconds: number): boolean {
         const { context, camera, highlight, outline, labels } = this.collaborators;
-        const moved = camera.update(delta);
-        const fading = highlight.update(delta);
+        const moved = camera.update(deltaSeconds);
+        const fading = highlight.update(deltaSeconds);
+
+        if (this.cameraWasMoving && !moved) {
+            this.refreshLod();
+        }
+
+        this.cameraWasMoving = moved;
 
         if (moved || fading || this.outlineDirty) {
             outline.update(highlight.highlightLevels, OUTLINE_PIXELS * worldPerPixel(camera.distance, context.camera.fov, this.viewportHeight));
             this.outlineDirty = false;
         }
 
-        labels.update(context.camera, this.viewportHeight);
+        if (moved || this.needsRender) {
+            labels.update(context.camera, this.viewportHeight);
+        }
+
+        const present = moved || fading || this.needsRender;
+
+        this.needsRender = false;
+
+        return present;
     }
 
     dispose(): void {

@@ -1,4 +1,4 @@
-import { afterNextRender, afterRenderEffect, ChangeDetectionStrategy, Component, computed, DestroyRef, DOCUMENT, effect, ElementRef, inject, signal, untracked } from "@angular/core";
+import { afterNextRender, afterRenderEffect, ChangeDetectionStrategy, Component, computed, DestroyRef, DOCUMENT, effect, ElementRef, inject, isDevMode, signal, untracked } from "@angular/core";
 import { provideEngine } from "../../../engine/engine-providers";
 import { Color } from "three";
 import { Theme } from "../../../core/theme/theme";
@@ -17,7 +17,12 @@ import { SceneViewport } from "./scene-viewport";
 import { SelectionStore } from "../../../state/selection-store";
 import { PointerInput } from "../../../engine/interaction/pointer-input";
 import { BenchScene } from "../../../engine/scene/bench-scene";
-import { PostProcessingPipeline } from "../../../engine/rendering/post-processing-pipeline";
+import { ActivatedRoute } from "@angular/router";
+import { QualityGovernor } from "../../../engine/performance/quality-governor";
+import { ContextGuard } from "../../../engine/core/context-guard";
+import { NotificationService } from "../../../core/notifications/notification-service";
+import { TranslocoService } from "@jsverse/transloco";
+import { SceneStats } from "./scene-stats";
 
 type HighlightLevelsByUnitId = ReadonlyMap<string, number>;
 
@@ -27,16 +32,18 @@ const SELECTED = 1;
 
 @Component({
     selector: 'app-scene-canvas',
-    template: '',
+    template: '@if (showStats) { <app-scene-stats /> }',
     styleUrl: './scene-canvas.scss',
     providers: [provideEngine()],
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: {
         '[class.scene-hovering]': 'hovered() !== null'
-    }
+    },
+    imports: [SceneStats]
 })
 export class SceneCanvas {
     protected readonly hovered = signal<PlacedAtom | null>(null);
+    protected readonly showStats = isDevMode() && inject(ActivatedRoute).snapshot.queryParamMap.has('stats');
 
     private readonly viewport = inject(SceneViewport);
     private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
@@ -51,7 +58,10 @@ export class SceneCanvas {
     private readonly stage = inject(BenchStage);
     private readonly scene = inject(BenchScene);
     private readonly pointer = inject(PointerInput);
-    private readonly pipeline = inject(PostProcessingPipeline);
+    private readonly governor = inject(QualityGovernor);
+    private readonly guard = inject(ContextGuard);
+    private readonly notifications = inject(NotificationService);
+    private readonly transloco = inject(TranslocoService);
     private readonly reducedMotion = this.view.matchMedia('(prefers-reduced-motion: reduce)');
 
     private readonly units = computed(() =>
@@ -76,6 +86,7 @@ export class SceneCanvas {
     }, { equal: sameLevels });
 
     private started = false;
+    private graphicsNotice: number | null = null;
 
     constructor() {
         inject(ViewportObserver).onResize((_, height) => {
@@ -124,8 +135,15 @@ export class SceneCanvas {
     private start(): void {
         this.host.nativeElement.append(this.context.canvas);
         this.scene.setReducedMotion(!this.animated());
-        this.loop.onRender((delta) => this.scene.update(delta));
-        this.pipeline.setQuality('high');
+        this.loop.onRender((deltaSeconds) => this.scene.update(deltaSeconds));
+        this.loop.onPresent((intervalSeconds) => this.governor.sample(intervalSeconds));
+        this.governor.onChange(() => {
+            this.scene.refreshLod();
+            this.loop.invalidate();
+        });
+        this.guard.onLost(() => this.graphicsLost());
+        this.guard.onRestored(() => this.graphicsRestored());
+        this.governor.apply(0);
         this.loop.start();
         this.started = true;
     }
@@ -137,6 +155,8 @@ export class SceneCanvas {
         this.stage.applyLook(look, resolve);
         this.scene.setAccent(resolve('--accent'));
         this.scene.setLabelInk({ dark: resolve('--cat-ink'), light: LIGHT_INK });
+
+        this.loop.invalidate();
     }
 
     private animated(): boolean {
@@ -169,6 +189,24 @@ export class SceneCanvas {
         const last = this.pointer.lastPosition;
 
         this.hovered.set(last ? this.scene.pick(last.x, last.y) : null);
+    }
+
+    private graphicsLost(): void {
+        this.graphicsNotice = this.notifications.show(
+            'warning',
+            this.transloco.translate('lab.graphics.lost'),
+            this.transloco.translate('lab.graphics.lostDetail'),
+            true
+        );
+    }
+
+    private graphicsRestored(): void {
+        if (this.graphicsNotice !== null) {
+            this.notifications.dismiss(this.graphicsNotice);
+            this.graphicsNotice = null;
+        }
+
+        this.notifications.show('success', this.transloco.translate('lab.graphics.restored'));
     }
 }
 

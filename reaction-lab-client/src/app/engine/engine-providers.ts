@@ -17,6 +17,9 @@ import { SelectionOutline } from "./objects/selection-outline";
 import { HighlightFade } from "./interaction/highlight-fade";
 import { BenchScene } from "./scene/bench-scene";
 import { PostProcessingPipeline } from "./rendering/post-processing-pipeline";
+import { ContextGuard } from "./core/context-guard";
+import { LodController } from "./performance/lod-controller";
+import { QualityGovernor } from "./performance/quality-governor";
 
 const HIGHLIGHT_RISE = 0.2;
 const HIGHLIGHT_FALL = 0.3;
@@ -50,24 +53,12 @@ function coreProviders(): Provider[] {
 
             return loop;
         }),
+        owned(ContextGuard, () => new ContextGuard(inject(EngineContext), inject(RenderLoop))),
         owned(CameraController, () => new CameraController(inject(EngineContext), hostElement())),
         owned(PointerInput, () => new PointerInput(hostElement())),
         owned(GeometryCache, () => new GeometryCache()),
         owned(MaterialCache, () => new MaterialCache()),
-        owned(LabelAtlas, () => new LabelAtlas(inject(EngineContext))),
-        { provide: HighlightFade, useFactory: () => new HighlightFade(HIGHLIGHT_RISE, HIGHLIGHT_FALL) },
-        { provide: PickingService, useFactory: () => new PickingService(inject(EngineContext)) },
-        owned(BenchScene, () => new BenchScene({
-            context: inject(EngineContext),
-            camera: inject(CameraController),
-            stage: inject(BenchStage),
-            atoms: inject(AtomRenderer),
-            bonds: inject(BondRenderer),
-            labels: inject(AtomLabels),
-            outline: inject(SelectionOutline),
-            highlight: inject(HighlightFade),
-            picking: inject(PickingService)
-        }))
+        owned(LabelAtlas, () => new LabelAtlas(inject(EngineContext)))
     ];
 }
 
@@ -78,6 +69,22 @@ function sceneProviders(): Provider[] {
         owned(BondRenderer, () => new BondRenderer(inject(GeometryCache), inject(MaterialCache))),
         owned(AtomLabels, () => new AtomLabels(inject(LabelAtlas))),
         owned(SelectionOutline, () => new SelectionOutline(inject(GeometryCache))),
+        { provide: HighlightFade, useFactory: () => new HighlightFade(HIGHLIGHT_RISE, HIGHLIGHT_FALL) },
+        { provide: PickingService, useFactory: () => new PickingService(inject(EngineContext)) },
+        { provide: LodController, useFactory: () => new LodController() },
+        { provide: QualityGovernor, useFactory: () => new QualityGovernor(inject(PostProcessingPipeline), inject(ViewportObserver), inject(LodController)) },
+        owned(BenchScene, () => new BenchScene({
+            context: inject(EngineContext),
+            camera: inject(CameraController),
+            stage: inject(BenchStage),
+            atoms: inject(AtomRenderer),
+            bonds: inject(BondRenderer),
+            labels: inject(AtomLabels),
+            outline: inject(SelectionOutline),
+            highlight: inject(HighlightFade),
+            picking: inject(PickingService),
+            lod: inject(LodController)
+        }))
     ];
 }
 

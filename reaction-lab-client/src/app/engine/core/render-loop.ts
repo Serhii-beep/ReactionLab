@@ -1,20 +1,26 @@
 import { Disposable } from "./disposal-scope";
 import { EngineContext } from "./engine-context";
 
-export type FrameListener = (seconds: number) => void;
+export type UpdateListener = (stepSeconds: number) => void;
+export type RenderListener = (deltaSeconds: number) => boolean;
+export type PresentListener = (intervalSeconds: number) => void;
 
 const FIXED_STEP = 1 / 60;
 const MAX_FRAME = 0.25;
 const MAX_STEPS = 5;
 
 export class RenderLoop implements Disposable {
-    private readonly updates = new Set<FrameListener>();
-    private readonly renders = new Set<FrameListener>();
+    private readonly updates = new Set<UpdateListener>();
+    private readonly renders = new Set<RenderListener>();
+    private readonly presents = new Set<PresentListener>();
+
     private accumulator = 0;
     private last: number | null = null;
     private running = false;
     private suspended = false;
-    private frame = 0;
+    private invalidated = true;
+    private presentedLastTick = false;
+    private presentedFrames = 0;
 
     constructor(
         private readonly context: EngineContext,
@@ -22,19 +28,29 @@ export class RenderLoop implements Disposable {
     ) {}
 
     get frames(): number {
-        return this.frame;
+        return this.presentedFrames;
     }
 
-    onUpdate(listener: FrameListener): () => void {
+    onUpdate(listener: UpdateListener): () => void {
         this.updates.add(listener);
 
         return () => this.updates.delete(listener);
     }
 
-    onRender(listener: FrameListener): () => void {
+    onRender(listener: RenderListener): () => void {
         this.renders.add(listener);
 
         return () => this.renders.delete(listener);
+    }
+
+    onPresent(listener: PresentListener): () => void {
+        this.presents.add(listener);
+
+        return () => this.presents.delete(listener);
+    }
+
+    invalidate(): void {
+        this.invalidated = true;
     }
 
     start(): void {
@@ -58,6 +74,7 @@ export class RenderLoop implements Disposable {
         this.stop();
         this.updates.clear();
         this.renders.clear();
+        this.presents.clear();
     }
 
     private apply(): void {
@@ -67,6 +84,7 @@ export class RenderLoop implements Disposable {
 
         if (!active) {
             this.last = null;
+            this.presentedLastTick = false;
         }
     }
 
@@ -94,11 +112,30 @@ export class RenderLoop implements Disposable {
             this.accumulator = 0;
         }
 
+        let mustPresent = this.invalidated;
+
+        this.invalidated = false;
+
         for (const render of this.renders) {
-            render(delta);
+            mustPresent = render(delta) || mustPresent;
         }
 
+        if (mustPresent) {
+            this.presentFrame(delta);
+        }
+
+        this.presentedLastTick = mustPresent;
+    }
+
+    private presentFrame(deltaSeconds: number): void {
+        this.context.renderer.info.reset();
         this.context.render();
-        this.frame++;
+        this.presentedFrames++;
+
+        if (this.presentedLastTick) {
+            for (const listener of this.presents) {
+                listener(deltaSeconds);
+            }
+        }
     }
 }

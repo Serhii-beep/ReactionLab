@@ -1,0 +1,14 @@
+<dl class="scene-stats">
+    <dt>fps</dt>
+    <dd>{{ snapshot().framesPerSecond }}</dd>
+    <dt>frame</dt>
+    <dd>{{ snapshot().frameMilliseconds }}</dd>
+    <dt>quality</dt>
+    <dd>{{ snapshot().qualityLevel }}</dd>
+    <dt>calls</dt>
+    <dd>{{ snapshot().drawCalls }}</dd>
+    <dt>tris</dt>
+    <dd>{{ snapshot().triangles }}</dd>
+    <dt>resident</dt>
+    <dd>{{ snapshot().geometries }} g - {{ snapshot().textures }} t</dd>
+</dl>
