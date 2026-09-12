@@ -105,7 +105,8 @@
             "removed": "{name} removed from the bench, {count, plural, =0 {none left} one {# left} other {# left}}",
             "cleared": "Bench cleared",
             "changed": "Bench updated, {size, plural, one {# substance on it} other {# substances on it}}",
-            "reactions": "{count, plural, =0 {No reactions involve the bench} one {# reaction involves the bench} other {# reactions involve the bench}}, {ready, plural, =0 {none ready} one {# ready} other {# ready}}"
+            "reactions": "{count, plural, =0 {No reactions involve the bench} one {# reaction involves the bench} other {# reactions involve the bench}}, {ready, plural, =0 {none ready} one {# ready} other {# ready}}",
+            "selected": "{name} selected"
         }
     }
 }

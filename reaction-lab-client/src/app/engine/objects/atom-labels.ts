@@ -10,12 +10,12 @@ export interface LabelInk {
     readonly light: Color;
 }
 
-interface Stick {
+interface BondFromAtom {
     readonly direction: Vector3;
     readonly half: number;
 }
 
-type Sticks = Map<PlacedAtom, Stick[]>;
+type BondsByAtom = Map<PlacedAtom, BondFromAtom[]>;
 
 const MIN_PIXELS = 12;
 const SIZE_FACTOR = 1.1;
@@ -24,6 +24,7 @@ const SURFACE_OFFSET = 1.02;
 const FOOTPRINT = 0.6;
 const STICK_RADIUS = 0.1;
 const RAMP = 0.1;
+const NO_STICKS: readonly BondFromAtom[] = [];
 
 export class AtomLabels implements Disposable {
     readonly root = new Group();
@@ -32,7 +33,7 @@ export class AtomLabels implements Disposable {
     private readonly toCamera = new Vector3();
     private readonly cameraUp = new Vector3();
     private atoms: readonly PlacedAtom[] = [];
-    private sticks: Sticks = new Map();
+    private sticks: BondsByAtom = new Map();
 
     constructor(private readonly atlas: LabelAtlas) {
         this.root.name = 'atom-labels';
@@ -92,7 +93,7 @@ export class AtomLabels implements Disposable {
         const clearance = FOOTPRINT * atom.radius + STICK_RADIUS;
         let offset = base;
 
-        for (const stick of this.sticks.get(atom) ?? []) {
+        for (const stick of this.sticks.get(atom) ?? NO_STICKS) {
             const along = stick.direction.dot(this.toCamera);
 
             if (along <= 0) {
@@ -119,8 +120,8 @@ export class AtomLabels implements Disposable {
     }
 }
 
-function sticksOf(bonds: readonly PlacedBond[]): Sticks {
-    const sticks: Sticks = new Map();
+function sticksOf(bonds: readonly PlacedBond[]): BondsByAtom {
+    const sticks: BondsByAtom = new Map();
 
     for (const bond of bonds) {
         const direction = bond.to.position.clone().sub(bond.from.position);
@@ -138,7 +139,7 @@ function sticksOf(bonds: readonly PlacedBond[]): Sticks {
     return sticks;
 }
 
-function stick(sticks: Sticks, atom: PlacedAtom, entry: Stick): void {
+function stick(sticks: BondsByAtom, atom: PlacedAtom, entry: BondFromAtom): void {
     const list = sticks.get(atom);
 
     if (list) {

@@ -39,10 +39,24 @@ export class CameraController implements Disposable {
         this.controls.touches.three = CameraControls.ACTION.TOUCH_TRUCK;
     }
 
+    get distance(): number {
+        return this.controls.distance;
+    }
+
     frame(center: Vector3, distance: number, bounds: Box3, transition: boolean): void {
-        this.fence.copy(bounds.isEmpty() ? new Box3(center, center) : bounds).expandByScalar(FENCE);
+        if (bounds.isEmpty()) {
+            this.fence.set(center, center);
+        } else {
+            this.fence.copy(bounds);
+        }
+
+        this.fence.expandByScalar(FENCE);
         this.fence.min.y = Math.max(this.fence.min.y, 0);
         this.controls.setBoundary(this.fence);
+        this.focus(center, distance, transition);
+    }
+
+    focus(center: Vector3, distance: number, transition: boolean): void {
         this.controls.setTarget(center.x, center.y, center.z, transition);
         this.controls.dollyTo(distance, transition);
     }
@@ -53,6 +67,5 @@ export class CameraController implements Disposable {
 
     dispose(): void {
         this.controls.dispose();
-        this.context.camera.updateMatrixWorld();
     }
 }

@@ -41,11 +41,9 @@ export class ViewportObserver implements Disposable {
         const scale = Math.min(1, MAX_PIXEL_RATIO / ratio);
 
         if (pixels) {
-            this.context.renderer.setPixelRatio(1);
-            this.context.renderer.setSize(Math.round(pixels.inlineSize * scale), Math.round(pixels.blockSize * scale), false);
+            this.context.setSize(Math.round(pixels.inlineSize * scale), Math.round(pixels.blockSize * scale), 1);
         } else {
-            this.context.renderer.setPixelRatio(ratio * scale);
-            this.context.renderer.setSize(width, height, false);
+            this.context.setSize(width, height, ratio * scale);
         }
 
         if (height > 0) {

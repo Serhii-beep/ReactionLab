@@ -1,5 +1,5 @@
-import { Box3, Color, Vector3 } from "three";
-import { Phase } from "../resources/material-cache";
+import { Box3, Color, Sphere, Vector3 } from "three";
+import { Phase } from "../core/matter";
 
 export type BondKind = 'single' | 'double' | 'triple' | 'aromatic' | 'ionic' | 'hydrogen' | 'metallic';
 
@@ -25,7 +25,7 @@ export interface LayoutUnit {
 }
 
 export interface PlacedAtom extends UnitAtom {
-    readonly unit: string;
+    readonly unitId: string;
     readonly substanceId: string;
 }
 
@@ -40,9 +40,10 @@ export interface BenchLayout {
     readonly atoms: readonly PlacedAtom[];
     readonly bonds: readonly PlacedBond[];
     readonly bounds: Box3;
+    readonly units: ReadonlyMap<string, Sphere>;
 }
 
-interface Measure {
+interface UnitExtent {
     readonly center: Vector3;
     readonly radius: number;
     readonly floor: number;
@@ -50,17 +51,20 @@ interface Measure {
 
 const GAP = 1.6;
 const RING_SPREAD = 1.85;
+const FLOOR_CLEARANCE = 0.12;
 
 export function layoutBench(units: readonly LayoutUnit[]): BenchLayout {
+    const measures = units.map(measureUnit);
+    const width = measures.reduce((sum, item) => sum + item.radius * 2, 0) + GAP * Math.max(units.length - 1, 0);
     const atoms: PlacedAtom[] = [];
     const bonds: PlacedBond[] = [];
-    const centroids: Vector3[] = [];
     const bounds = new Box3();
-    let cursor = 0;
+    const sphereByUnitId = new Map<string, Sphere>();
+    let cursor = -width / 2;
 
-    for (const unit of units) {
-        const { center, radius, floor } = measure(unit);
-        const offset = new Vector3(cursor + radius - center.x, -floor, -center.z);
+    units.forEach((unit, index) => {
+        const { center, radius, floor } = measures[index];
+        const offset = new Vector3(cursor + radius - center.x, FLOOR_CLEARANCE -floor, -center.z);
         const placed = unit.atoms.map((atom) => place(atom, unit, offset));
         const centroid = center.clone().add(offset);
 
@@ -74,13 +78,11 @@ export function layoutBench(units: readonly LayoutUnit[]): BenchLayout {
             bonds.push({ from: placed[bond.from], to: placed[bond.to], kind: bond.kind, centroid });
         }
 
-        centroids.push(centroid);
+        sphereByUnitId.set(unit.id, new Sphere(centroid.clone(), radius));
         cursor += radius * 2 + GAP;
-    }
+    });
 
-    recenter(atoms, centroids, bounds, (cursor - GAP) / 2);
-
-    return { atoms, bonds, bounds };
+    return { atoms, bonds, bounds, units: sphereByUnitId };
 }
 
 export function ringPositions(radii: readonly number[]): Vector3[] {
@@ -101,10 +103,10 @@ export function ringPositions(radii: readonly number[]): Vector3[] {
 }
 
 function place(atom: UnitAtom, unit: LayoutUnit, offset: Vector3): PlacedAtom {
-    return { ...atom, position: atom.position.clone().add(offset), unit: unit.id, substanceId: unit.substanceId };
+    return { ...atom, position: atom.position.clone().add(offset), unitId: unit.id, substanceId: unit.substanceId };
 }
 
-function measure(unit: LayoutUnit): Measure {
+function measureUnit(unit: LayoutUnit): UnitExtent {
     const center = new Vector3();
     let radius = 0;
     let floor = Infinity;
@@ -121,21 +123,4 @@ function measure(unit: LayoutUnit): Measure {
     }
 
     return { center, radius, floor: Number.isFinite(floor) ? floor : 0 };
-}
-
-function recenter(atoms: readonly PlacedAtom[], centroids: readonly Vector3[], bounds: Box3, shift: number): void {
-    if (bounds.isEmpty()) {
-        return;
-    }
-
-    for (const atom of atoms) {
-        atom.position.x -= shift;
-    }
-
-    for (const centroid of centroids) {
-        centroid.x -= shift;
-    }
-
-    bounds.min.x -= shift;
-    bounds.max.x -= shift;
 }

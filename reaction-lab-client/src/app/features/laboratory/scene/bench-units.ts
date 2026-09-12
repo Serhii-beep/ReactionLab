@@ -1,10 +1,10 @@
 import { Color, Vector3 } from "three";
 import { ElementSummary } from "../../../data/elements/element";
 import { BondType, MatterState, SubstanceDetail, SubstanceKind } from "../../../data/substances/substance";
-import { Phase } from "../../../engine/resources/material-cache";
 import { BondKind, LayoutUnit, ringPositions, UnitAtom, UnitBond } from "../../../engine/scene/bench-layout";
 import { WorkspaceItem } from "../../../state/workspace-store";
 import { parseHillFormula } from "./hill-formula";
+import { Phase } from "../../../engine/core/matter";
 
 type Elements = ReadonlyMap<string, ElementSummary>;
 

@@ -1,0 +1,1 @@
+export type Phase = 'solid' | 'liquid' | 'gas' | 'aqueous' | 'plasma';

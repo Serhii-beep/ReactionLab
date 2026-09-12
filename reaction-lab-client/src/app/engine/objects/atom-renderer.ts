@@ -34,10 +34,10 @@ export class AtomRenderer implements Disposable {
 
         const requests = new Map<string, BatchRequest>();
 
-        for (const [key, [sample, ...rest]] of groups) {
-            const material = this.materials.atom(sample.symbol, sample.phase, sample.color);
+        for (const [key, group] of groups) {
+            const material = this.materials.atom(group[0].symbol, group[0].phase, group[0].color);
 
-            requests.set(key, { material, count: rest.length + 1, castShadow: true });
+            requests.set(key, { material, count: group.length, castShadow: true });
         }
 
         const meshes = this.batches.sync(this.geometries.sphere(lod), requests);

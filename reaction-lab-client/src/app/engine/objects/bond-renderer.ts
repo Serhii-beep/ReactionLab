@@ -1,9 +1,10 @@
-import { BufferGeometry, Group, Matrix4, Quaternion, Vector3 } from "three";
+import { BufferGeometry, Group, Vector3 } from "three";
 import { BondKind, PlacedAtom, PlacedBond } from "../scene/bench-layout";
 import { MaterialCache } from "../resources/material-cache";
 import { Disposable } from "../core/disposal-scope";
 import { BatchRequest, commit, InstancedBatches } from "./instanced-batches";
 import { GeometryCache, Lod } from "../resources/geometry-cache";
+import { CylinderTransform } from "./cylinder-transform";
 
 
 type Stroke = 'solid' | 'dashed' | 'dotted';
@@ -19,14 +20,14 @@ interface Pattern {
     readonly duty: number;
 }
 
-interface Piece {
+interface BondPiece {
     readonly atom: PlacedAtom;
     readonly start: Vector3;
     readonly end: Vector3;
     readonly radius: number;
 }
 
-type Pieces = Map<string, Piece[]>;
+type BondPieces = Map<string, BondPiece[]>;
 
 const LINES: Readonly<Record<BondKind, readonly Line[]>> = {
     single: [{ offset: 0, radius: 0.08, stroke: 'solid' }],
@@ -50,6 +51,10 @@ const PATTERNS: Readonly<Record<Exclude<Stroke, 'solid'>, Pattern>> = {
 const UP = new Vector3(0, 1, 0);
 const RIGHT = new Vector3(1, 0, 0);
 
+export function bondExtent(kind: BondKind): number {
+    return Math.max(...LINES[kind].map((line) => Math.abs(line.offset) + line.radius));
+}
+
 export class BondRenderer implements Disposable {
     readonly root = new Group();
 
@@ -59,9 +64,7 @@ export class BondRenderer implements Disposable {
     private readonly axis = new Vector3();
     private readonly center = new Vector3();
     private readonly perpendicular = new Vector3();
-    private readonly quaternion = new Quaternion();
-    private readonly scale = new Vector3();
-    private readonly matrix = new Matrix4();
+    private readonly cylinder = new CylinderTransform();
 
     constructor(
         private readonly geometries: GeometryCache,
@@ -72,7 +75,7 @@ export class BondRenderer implements Disposable {
     }
 
     render(bonds: readonly PlacedBond[], lod: Lod): void {
-        const pieces: Record<Stroke, Pieces> = { solid: new Map(), dashed: new Map(), dotted: new Map() };
+        const pieces: Record<Stroke, BondPieces> = { solid: new Map(), dashed: new Map(), dotted: new Map() };
 
         for (const bond of bonds) {
             const perpendicular = this.perpendicularOf(bond).clone();
@@ -99,7 +102,7 @@ export class BondRenderer implements Disposable {
         this.root.removeFromParent();
     }
 
-    private draw(batches: InstancedBatches, geometry: BufferGeometry, groups: Pieces): void {
+    private draw(batches: InstancedBatches, geometry: BufferGeometry, groups: BondPieces): void {
         const requests = new Map<string, BatchRequest>();
 
         for (const [key, [sample, ...rest]] of groups) {
@@ -117,7 +120,7 @@ export class BondRenderer implements Disposable {
                 continue;
             }
 
-            group.forEach((piece, index) => mesh.setMatrixAt(index, this.transform(piece)));
+            group.forEach((piece, index) => mesh.setMatrixAt(index, this.cylinder.between(piece.start, piece.end, piece.radius)));
             commit(mesh);
         }
     }
@@ -134,25 +137,9 @@ export class BondRenderer implements Disposable {
 
         return this.perpendicular.normalize();
     }
-
-    private transform(piece: Piece): Matrix4 {
-        this.axis.copy(piece.end).sub(piece.start);
-
-        const length = this.axis.length();
-
-        if (length === 0) {
-            return this.matrix.compose(piece.start, this.quaternion.identity(), this.scale.setScalar(piece.radius));
-        }
-
-        this.quaternion.setFromUnitVectors(UP, this.axis.divideScalar(length));
-        this.center.copy(piece.start).add(piece.end).multiplyScalar(0.5);
-        this.scale.set(piece.radius, length, piece.radius);
-
-        return this.matrix.compose(this.center, this.quaternion, this.scale);
-    }
 }
 
-function collect(groups: Pieces, piece: Piece): void {
+function collect(groups: BondPieces, piece: BondPiece): void {
     const key = `${piece.atom.symbol}|${piece.atom.phase}`;
     const group = groups.get(key);
 
@@ -163,7 +150,7 @@ function collect(groups: Pieces, piece: Piece): void {
     }
 }
 
-function halves(bond: PlacedBond, line: Line, shift: Vector3): Piece[] {
+function halves(bond: PlacedBond, line: Line, shift: Vector3): BondPiece[] {
     const middle = bond.from.position.clone().add(bond.to.position).multiplyScalar(0.5).add(shift);
 
     return [
@@ -172,7 +159,7 @@ function halves(bond: PlacedBond, line: Line, shift: Vector3): Piece[] {
     ];
 }
 
-function patterned(bond: PlacedBond, line: Line, shift: Vector3, pattern: Pattern): Piece[] {
+function patterned(bond: PlacedBond, line: Line, shift: Vector3, pattern: Pattern): BondPiece[] {
     const axis = bond.to.position.clone().sub(bond.from.position);
     const distance = axis.length();
     const span = distance - bond.from.radius - bond.to.radius;
@@ -186,7 +173,7 @@ function patterned(bond: PlacedBond, line: Line, shift: Vector3, pattern: Patter
     const count = Math.max(1, Math.round(span / pattern.period));
     const step = span / count;
     const half = axis.clone().multiplyScalar((pattern.duty * step) / 2);
-    const pieces: Piece[] = [];
+    const pieces: BondPiece[] = [];
 
     for (let index = 0; index < count; index++) {
         const along = bond.from.radius + step * (index + 0.5);

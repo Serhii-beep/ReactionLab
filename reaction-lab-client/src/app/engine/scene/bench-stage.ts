@@ -5,7 +5,7 @@ import { Environment } from "../rendering/environment";
 import { LightingRig, TokenResolver } from "../rendering/lighting-rig";
 import { EngineContext } from "../core/engine-context";
 import { Look } from "../rendering/look";
-import { DEFAULT_DISTANCE } from "../core/camera-framing";
+import { referenceDistance } from "../core/camera-framing";
 
 export class BenchStage implements Disposable {
     readonly ground = new Ground();
@@ -37,7 +37,7 @@ export class BenchStage implements Disposable {
     }
 
     fit(distance: number, bounds: Box3): void {
-        this.fogScale = distance / DEFAULT_DISTANCE;
+        this.fogScale = distance / referenceDistance(this.context.camera);
         this.ground.scale.setScalar(this.fogScale);
 
         if (this.look) {

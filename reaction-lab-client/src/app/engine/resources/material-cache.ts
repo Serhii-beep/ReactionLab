@@ -1,7 +1,6 @@
 import { Color, MeshPhysicalMaterial } from "three";
 import { Disposable } from "../core/disposal-scope";
-
-export type Phase = 'solid' | 'liquid' | 'gas' | 'aqueous' | 'plasma';
+import { Phase } from "../core/matter";
 
 interface Finish {
     roughness: number;

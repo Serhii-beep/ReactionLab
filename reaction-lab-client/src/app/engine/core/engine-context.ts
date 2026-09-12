@@ -3,11 +3,21 @@ import { Disposable } from './disposal-scope';
 import { disposeObject } from './dispose-object';
 import { applyRendererSettings } from '../rendering/renderer-settings';
 
+export interface Presenter {
+    render(): void;
+    setSize(width: number, height: number): void;
+}
+
 export class EngineContext implements Disposable {
     readonly renderer = new WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
     readonly scene = new Scene();
     readonly camera = new PerspectiveCamera(40, 1, 0.1, 200);
     private persistentTextures = 0;
+
+    private presenter: Presenter = {
+        render: () => this.renderer.render(this.scene, this.camera),
+        setSize: () => undefined
+    };
 
     constructor() {
         applyRendererSettings(this.renderer);
@@ -28,7 +38,17 @@ export class EngineContext implements Disposable {
     }
 
     render(): void {
-        this.renderer.render(this.scene, this.camera);
+        this.presenter.render();
+    }
+
+    setSize(width: number, height: number, pixelRatio: number): void {
+        this.renderer.setPixelRatio(pixelRatio);
+        this.renderer.setSize(width, height, false);
+        this.presenter.setSize(width, height);
+    }
+
+    setPresenter(presenter: Presenter): void {
+        this.presenter = presenter;
     }
 
     expectPersistentTextures(count: number): void {

@@ -8,4 +8,8 @@
     &:active {
         cursor: grabbing;
     }
+
+    &.scene-hovering {
+        cursor: pointer;
+    }
 }

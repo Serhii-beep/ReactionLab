@@ -1,6 +1,6 @@
-import { afterNextRender, afterRenderEffect, ChangeDetectionStrategy, Component, computed, DOCUMENT, effect, ElementRef, inject, untracked } from "@angular/core";
+import { afterNextRender, afterRenderEffect, ChangeDetectionStrategy, Component, computed, DestroyRef, DOCUMENT, effect, ElementRef, inject, signal, untracked } from "@angular/core";
 import { provideEngine } from "../../../engine/engine-providers";
-import { Box3, Color } from "three";
+import { Color } from "three";
 import { Theme } from "../../../core/theme/theme";
 import { WorkspaceStore } from "../../../state/workspace-store";
 import { ElementsClient } from "../../../data/elements/elements-client";
@@ -8,23 +8,21 @@ import { SubstanceDetailsClient } from "../../../data/substances/substance-detai
 import { EngineContext } from "../../../engine/core/engine-context";
 import { RenderLoop } from "../../../engine/core/render-loop";
 import { BenchStage } from "../../../engine/scene/bench-stage";
-import { AtomRenderer } from "../../../engine/objects/atom-renderer";
-import { AtomLabels } from "../../../engine/objects/atom-labels";
 import { buildBenchUnits } from "./bench-units";
 import { ViewportObserver } from "../../../engine/core/viewport-observer";
 import { LOOKS } from "../../../engine/rendering/look";
 import { tokenColor } from "../../../engine/core/css-color";
-import { layoutBench, PlacedAtom } from "../../../engine/scene/bench-layout";
-import { lodFor } from "../../../engine/resources/geometry-cache";
-import { projectedRadius } from "../../../engine/core/projection";
-import { BondRenderer } from "../../../engine/objects/bond-renderer";
+import { PlacedAtom } from "../../../engine/scene/bench-layout";
 import { SceneViewport } from "./scene-viewport";
-import { CameraController } from "../../../engine/interaction/camera-controller";
-import { framingFor } from "../../../engine/core/camera-framing";
-import { prefersReducedMotion } from "../../../core/platform/reduced-motion";
+import { SelectionStore } from "../../../state/selection-store";
+import { PointerInput } from "../../../engine/interaction/pointer-input";
+import { BenchScene } from "../../../engine/scene/bench-scene";
+
+type HighlightLevelsByUnitId = ReadonlyMap<string, number>;
 
 const LIGHT_INK = new Color(0xffffff);
-const REFERENCE_HEIGHT = 900;
+const HOVER = 0.6;
+const SELECTED = 1;
 
 @Component({
     selector: 'app-scene-canvas',
@@ -33,36 +31,62 @@ const REFERENCE_HEIGHT = 900;
     providers: [provideEngine()],
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: {
-        '(dblclick)': 'viewport.requestFit()'
+        '[class.scene-hovering]': 'hovered() !== null'
     }
 })
 export class SceneCanvas {
-    protected readonly viewport = inject(SceneViewport);
+    protected readonly hovered = signal<PlacedAtom | null>(null);
 
+    private readonly viewport = inject(SceneViewport);
     private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
     private readonly view = inject(DOCUMENT).defaultView ?? window;
     private readonly theme = inject(Theme);
     private readonly workspace = inject(WorkspaceStore);
+    private readonly selection = inject(SelectionStore);
     private readonly elements = inject(ElementsClient);
     private readonly details = inject(SubstanceDetailsClient);
     private readonly context = inject(EngineContext);
     private readonly loop = inject(RenderLoop);
-    private readonly camera = inject(CameraController);
     private readonly stage = inject(BenchStage);
-    private readonly atoms = inject(AtomRenderer);
-    private readonly bonds = inject(BondRenderer);
-    private readonly labels = inject(AtomLabels);
+    private readonly scene = inject(BenchScene);
+    private readonly pointer = inject(PointerInput);
+    private readonly reducedMotion = this.view.matchMedia('(prefers-reduced-motion: reduce)');
 
     private readonly units = computed(() =>
         buildBenchUnits(this.workspace.entries(), this.details.loaded(), this.elements.all.value()));
 
-    private bounds = new Box3();
+    private readonly highlightLevels = computed<HighlightLevelsByUnitId>(() => {
+        const selected = this.selection.selectedId();
+        const hovered = this.hovered();
+        const highlightLevels = new Map<string, number>();
+
+        for (const unit of this.units()) {
+            if (unit.substanceId === selected) {
+                highlightLevels.set(unit.id, SELECTED);
+            }
+        }
+
+        if (hovered && !highlightLevels.has(hovered.unitId)) {
+            highlightLevels.set(hovered.unitId, HOVER);
+        }
+
+        return highlightLevels;
+    }, { equal: sameLevels });
+
     private started = false;
 
     constructor() {
-        inject(ViewportObserver).onResize(() => this.frame(false));
+        inject(ViewportObserver).onResize((_, height) => {
+            this.scene.setViewportHeight(height);
+            this.scene.frame(false);
+        });
 
-        this.context.scene.add(this.atoms.root, this.bonds.root, this.labels.root);
+        inject(DestroyRef).onDestroy(this.pointer.bind({
+            move: (x, y) => this.hovered.set(this.scene.pick(x, y)),
+            leave: () => this.hovered.set(null),
+            click: (x, y) => this.select(this.scene.pick(x, y)),
+            doubleClick: (x, y) => this.focus(this.scene.pick(x, y))
+        }));
 
         effect(() => {
             for (const entry of this.workspace.entries()) {
@@ -70,59 +94,91 @@ export class SceneCanvas {
             }
         });
 
-        effect(() => this.rebuild());
+        effect(() => {
+            const units = this.units();
+
+            untracked(() => {
+                this.scene.setUnits(units, this.started && this.animated());
+                this.repick();
+            });
+        });
+
+        effect(() => {
+            const highlightLevels = this.highlightLevels();
+
+            untracked(() => this.scene.setHighlight(highlightLevels));
+        });
 
         effect(() => {
             this.viewport.fitRequests();
-            untracked(() => this.frame(true));
+            untracked(() => this.scene.frame(this.animated()));
         })
         
-        afterRenderEffect(() => {
-            const look = LOOKS[this.theme.resolved()];
+        afterRenderEffect(() => this.applyTheme());
 
-            this.stage.applyLook(look, (token) => tokenColor(this.host.nativeElement, token, this.view));
-        });
-
-        afterNextRender(() => {
-            this.host.nativeElement.append(this.context.canvas);
-            this.loop.onRender((delta) => this.camera.update(delta));
-            this.loop.onRender(() => this.labels.update(this.context.camera, this.context.canvas.clientHeight));
-            this.loop.start();
-            this.started = true;
-        });
+        afterNextRender(() => this.start());
     }
 
-    private rebuild(): void {
-        const { atoms, bonds, bounds } = layoutBench(this.units());
-        const height = this.context.canvas.clientHeight || REFERENCE_HEIGHT;
-
-        this.bounds = bounds;
-
-        const distance = this.frame(this.started);
-
-        this.stage.fit(distance, bounds);
-        const lod = lodFor(projectedRadius(smallestRadius(atoms), distance, this.context.camera.fov, height));
-
-        this.atoms.render(atoms, lod);
-        this.bonds.render(bonds, lod);
-        this.labels.render(atoms, bonds, { dark: tokenColor(this.host.nativeElement, '--cat-ink', this.view), light: LIGHT_INK });
+    private start(): void {
+        this.host.nativeElement.append(this.context.canvas);
+        this.scene.setReducedMotion(!this.animated());
+        this.loop.onRender((delta) => this.scene.update(delta));
+        this.loop.start();
+        this.started = true;
     }
 
-    private frame(transition: boolean): number {
-        const framing = framingFor(this.context.camera, this.bounds);
+    private applyTheme(): void {
+        const look = LOOKS[this.theme.resolved()];
+        const resolve = (token: string) => tokenColor(this.host.nativeElement, token, this.view);
 
-        this.camera.frame(framing.center, framing.distance, this.bounds, transition && !prefersReducedMotion(this.view));
+        this.stage.applyLook(look, resolve);
+        this.scene.setAccent(resolve('--accent'));
+        this.scene.setLabelInk({ dark: resolve('--cat-ink'), light: LIGHT_INK });
+    }
 
-        return framing.distance;
+    private animated(): boolean {
+        return !this.reducedMotion.matches;
+    }
+
+    private select(atom: PlacedAtom | null): void {
+        if (atom) {
+            this.selection.toggle(atom.substanceId);
+        } else {
+            this.selection.clear();
+        }
+    }
+
+    private focus(atom: PlacedAtom | null): void {
+        if (!atom) {
+            this.viewport.requestFit();
+
+            return;
+        }
+
+        if (!this.selection.isSelected(atom.substanceId)) {
+            this.selection.toggle(atom.substanceId);
+        }
+
+        this.scene.focusUnit(atom.unitId, this.animated());
+    }
+
+    private repick(): void {
+        const last = this.pointer.lastPosition;
+
+        this.hovered.set(last ? this.scene.pick(last.x, last.y) : null);
     }
 }
 
-function smallestRadius(atoms: readonly PlacedAtom[]): number {
-    let smallest = Infinity;
-
-    for (const atom of atoms) {
-        smallest = Math.min(smallest, atom.radius);
+function sameLevels(a: HighlightLevelsByUnitId, b: HighlightLevelsByUnitId): boolean {
+    if (a.size !== b.size) {
+        return false;
     }
 
-    return smallest;
+    for (const [id, level] of a) {
+        if (b.get(id) !== level) {
+            return false;
+        }
+    }
+
+    return true;
 }

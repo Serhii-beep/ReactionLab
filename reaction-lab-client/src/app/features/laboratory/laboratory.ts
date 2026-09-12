@@ -104,7 +104,16 @@ export class Laboratory {
                 this.announcedReactions = message;
                 this.announce(message);
             }
-        })
+        });
+
+        effect(() => {
+            const id = this.selection.selectedId();
+            const item = this.workspace.entries().find((entry) => entry.substance.id === id);
+
+            if (item) {
+                this.announce(this.transloco.translate('lab.announce.selected', { name: item.substance.name }));
+            }
+        });
     }
 
     protected onDropped(payload: unknown): void {
