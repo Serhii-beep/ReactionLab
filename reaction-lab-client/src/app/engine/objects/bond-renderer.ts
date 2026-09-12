@@ -20,7 +20,7 @@ interface Pattern {
     readonly duty: number;
 }
 
-interface BondPiece {
+export interface BondPiece {
     readonly atom: PlacedAtom;
     readonly start: Vector3;
     readonly end: Vector3;
@@ -51,8 +51,35 @@ const PATTERNS: Readonly<Record<Exclude<Stroke, 'solid'>, Pattern>> = {
 const UP = new Vector3(0, 1, 0);
 const RIGHT = new Vector3(1, 0, 0);
 
-export function bondExtent(kind: BondKind): number {
-    return Math.max(...LINES[kind].map((line) => Math.abs(line.offset) + line.radius));
+export function bondPerpendicular(bond: PlacedBond): Vector3 {
+    const axis = bond.to.position.clone().sub(bond.from.position).normalize();
+    const center = bond.from.position.clone().add(bond.to.position).multiplyScalar(0.5);
+    const perpendicular = bond.centroid.clone().sub(center);
+
+    perpendicular.addScaledVector(axis, -perpendicular.dot(axis));
+
+    if (perpendicular.lengthSq() < 1e-6) {
+        perpendicular.crossVectors(axis, Math.abs(axis.y) < 0.9 ? UP : RIGHT);
+    }
+
+    return perpendicular.normalize();
+}
+
+export function bondPieces(bond: PlacedBond): BondPiece[] {
+    const perpendicular = bondPerpendicular(bond);
+    const pieces: BondPiece[] = [];
+
+    for (const line of LINES[bond.kind]) {
+        const shift = perpendicular.clone().multiplyScalar(line.offset);
+
+        if (line.stroke === 'solid') {
+            pieces.push({ atom: bond.from, start: bond.from.position.clone().add(shift), end: bond.to.position.clone().add(shift), radius: line.radius });
+        } else {
+            pieces.push(...patterned(bond, line, shift, PATTERNS[line.stroke]));
+        }
+    }
+
+    return pieces;
 }
 
 export class BondRenderer implements Disposable {
@@ -61,9 +88,6 @@ export class BondRenderer implements Disposable {
     private readonly lines = new InstancedBatches('bond-lines');
     private readonly dashes = new InstancedBatches('bond-dashes');
     private readonly dots = new InstancedBatches('bond-dots');
-    private readonly axis = new Vector3();
-    private readonly center = new Vector3();
-    private readonly perpendicular = new Vector3();
     private readonly cylinder = new CylinderTransform();
 
     constructor(
@@ -78,7 +102,7 @@ export class BondRenderer implements Disposable {
         const pieces: Record<Stroke, BondPieces> = { solid: new Map(), dashed: new Map(), dotted: new Map() };
 
         for (const bond of bonds) {
-            const perpendicular = this.perpendicularOf(bond).clone();
+            const perpendicular = bondPerpendicular(bond);
 
             for (const line of LINES[bond.kind]) {
                 const shift = perpendicular.clone().multiplyScalar(line.offset);
@@ -123,19 +147,6 @@ export class BondRenderer implements Disposable {
             group.forEach((piece, index) => mesh.setMatrixAt(index, this.cylinder.between(piece.start, piece.end, piece.radius)));
             commit(mesh);
         }
-    }
-
-    private perpendicularOf(bond: PlacedBond): Vector3 {
-        this.axis.copy(bond.to.position).sub(bond.from.position).normalize();
-        this.center.copy(bond.from.position).add(bond.to.position).multiplyScalar(0.5);
-        this.perpendicular.copy(bond.centroid).sub(this.center);
-        this.perpendicular.addScaledVector(this.axis, -this.perpendicular.dot(this.axis));
-
-        if (this.perpendicular.lengthSq() < 1e-6) {
-            this.perpendicular.crossVectors(this.axis, Math.abs(this.axis.y) < 0.9 ? UP : RIGHT);
-        }
-
-        return this.perpendicular.normalize();
     }
 }
 

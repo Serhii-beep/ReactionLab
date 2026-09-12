@@ -6,6 +6,9 @@ import { LightingRig, TokenResolver } from "../rendering/lighting-rig";
 import { EngineContext } from "../core/engine-context";
 import { Look } from "../rendering/look";
 import { referenceDistance } from "../core/camera-framing";
+import { PostProcessingPipeline } from "../rendering/post-processing-pipeline";
+
+const OCCLUSION_DARKENING = 0.3;
 
 export class BenchStage implements Disposable {
     readonly ground = new Ground();
@@ -17,7 +20,10 @@ export class BenchStage implements Disposable {
     private look: Look | null = null;
     private fogScale = 1;
 
-    constructor(private readonly context: EngineContext) {
+    constructor(
+        private readonly context: EngineContext,
+        private readonly pipeline: PostProcessingPipeline
+    ) {
         this.environment = new Environment(context);
         context.scene.fog = this.fog;
         context.scene.add(this.ground, this.lights);
@@ -34,6 +40,9 @@ export class BenchStage implements Disposable {
 
         this.ground.setColor(resolve(look.ground));
         this.lights.apply(look, resolve);
+
+        this.pipeline.setVignette(look.vignette);
+        this.pipeline.setOcclusionColor(resolve(look.fog.token).multiplyScalar(OCCLUSION_DARKENING));
     }
 
     fit(distance: number, bounds: Box3): void {

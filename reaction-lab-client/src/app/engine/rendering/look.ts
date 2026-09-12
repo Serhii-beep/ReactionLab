@@ -14,6 +14,7 @@ export interface Look {
     shadowIntensity: number;
     ground: string;
     fog: { token: string; near: number; far: number; }
+    vignette: number;
 }
 
 export const LOOKS: Readonly<Record<LookName, Look>> = {
@@ -25,7 +26,8 @@ export const LOOKS: Readonly<Record<LookName, Look>> = {
         fill: { intensity: 0.7, sky: '--surface-raised', ground: '--surface-void' },
         shadowIntensity: 0.85,
         ground: '--surface-raised',
-        fog: { token: '--surface-void', near: 20, far: 46 }
+        fog: { token: '--surface-void', near: 20, far: 46 },
+        vignette: 0.3
     },
     dark: {
         exposure: 1.0,
@@ -35,6 +37,7 @@ export const LOOKS: Readonly<Record<LookName, Look>> = {
         fill: { intensity: 0.5, sky: '--surface-active', ground: '--surface-void' },
         shadowIntensity: 0.8,
         ground: '--surface-base',
-        fog: { token: '--surface-void', near: 20, far: 46 }
+        fog: { token: '--surface-void', near: 20, far: 46 },
+        vignette: 0.45
     }
 };

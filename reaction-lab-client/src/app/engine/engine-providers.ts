@@ -16,6 +16,7 @@ import { PointerInput } from "./interaction/pointer-input";
 import { SelectionOutline } from "./objects/selection-outline";
 import { HighlightFade } from "./interaction/highlight-fade";
 import { BenchScene } from "./scene/bench-scene";
+import { PostProcessingPipeline } from "./rendering/post-processing-pipeline";
 
 const HIGHLIGHT_RISE = 0.2;
 const HIGHLIGHT_FALL = 0.3;
@@ -37,6 +38,7 @@ function coreProviders(): Provider[] {
             }
         },
         owned(EngineContext, () => new EngineContext()),
+        owned(PostProcessingPipeline, () => new PostProcessingPipeline(inject(EngineContext))),
         owned(ViewportObserver, () => new ViewportObserver(
             hostElement(),
             inject(EngineContext),
@@ -71,7 +73,7 @@ function coreProviders(): Provider[] {
 
 function sceneProviders(): Provider[] {
     return [
-        owned(BenchStage, () => new BenchStage(inject(EngineContext))),
+        owned(BenchStage, () => new BenchStage(inject(EngineContext), inject(PostProcessingPipeline))),
         owned(AtomRenderer, () => new AtomRenderer(inject(GeometryCache), inject(MaterialCache))),
         owned(BondRenderer, () => new BondRenderer(inject(GeometryCache), inject(MaterialCache))),
         owned(AtomLabels, () => new AtomLabels(inject(LabelAtlas))),

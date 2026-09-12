@@ -17,6 +17,7 @@ import { SceneViewport } from "./scene-viewport";
 import { SelectionStore } from "../../../state/selection-store";
 import { PointerInput } from "../../../engine/interaction/pointer-input";
 import { BenchScene } from "../../../engine/scene/bench-scene";
+import { PostProcessingPipeline } from "../../../engine/rendering/post-processing-pipeline";
 
 type HighlightLevelsByUnitId = ReadonlyMap<string, number>;
 
@@ -50,6 +51,7 @@ export class SceneCanvas {
     private readonly stage = inject(BenchStage);
     private readonly scene = inject(BenchScene);
     private readonly pointer = inject(PointerInput);
+    private readonly pipeline = inject(PostProcessingPipeline);
     private readonly reducedMotion = this.view.matchMedia('(prefers-reduced-motion: reduce)');
 
     private readonly units = computed(() =>
@@ -123,6 +125,7 @@ export class SceneCanvas {
         this.host.nativeElement.append(this.context.canvas);
         this.scene.setReducedMotion(!this.animated());
         this.loop.onRender((delta) => this.scene.update(delta));
+        this.pipeline.setQuality('high');
         this.loop.start();
         this.started = true;
     }

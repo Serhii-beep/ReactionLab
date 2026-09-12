@@ -1,4 +1,4 @@
-import { Color, PerspectiveCamera, Scene, WebGLRenderer } from 'three';
+import { Color, PerspectiveCamera, Scene, Vector2, WebGLRenderer } from 'three';
 import { Disposable } from './disposal-scope';
 import { disposeObject } from './dispose-object';
 import { applyRendererSettings } from '../rendering/renderer-settings';
@@ -14,10 +14,13 @@ export class EngineContext implements Disposable {
     readonly camera = new PerspectiveCamera(40, 1, 0.1, 200);
     private persistentTextures = 0;
 
-    private presenter: Presenter = {
+    private readonly direct: Presenter = {
         render: () => this.renderer.render(this.scene, this.camera),
         setSize: () => undefined
     };
+
+    private presenter: Presenter = this.direct;
+    private readonly size = this.renderer.getSize(new Vector2());
 
     constructor() {
         applyRendererSettings(this.renderer);
@@ -44,11 +47,13 @@ export class EngineContext implements Disposable {
     setSize(width: number, height: number, pixelRatio: number): void {
         this.renderer.setPixelRatio(pixelRatio);
         this.renderer.setSize(width, height, false);
+        this.size.set(width, height);
         this.presenter.setSize(width, height);
     }
 
-    setPresenter(presenter: Presenter): void {
-        this.presenter = presenter;
+    setPresenter(presenter: Presenter | null): void {
+        this.presenter = presenter ?? this.direct;
+        this.presenter.setSize(this.size.width, this.size.height);
     }
 
     expectPersistentTextures(count: number): void {
