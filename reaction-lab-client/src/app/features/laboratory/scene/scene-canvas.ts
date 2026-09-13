@@ -1,4 +1,4 @@
-import { afterNextRender, afterRenderEffect, ChangeDetectionStrategy, Component, computed, DestroyRef, DOCUMENT, effect, ElementRef, inject, isDevMode, signal, untracked } from "@angular/core";
+import { afterNextRender, afterRenderEffect, ChangeDetectionStrategy, Component, computed, DestroyRef, DOCUMENT, effect, ElementRef, inject, isDevMode, signal, untracked, viewChild } from "@angular/core";
 import { provideEngine } from "../../../engine/engine-providers";
 import { Color } from "three";
 import { Theme } from "../../../core/theme/theme";
@@ -23,6 +23,8 @@ import { ContextGuard } from "../../../engine/core/context-guard";
 import { NotificationService } from "../../../core/notifications/notification-service";
 import { TranslocoService } from "@jsverse/transloco";
 import { SceneStats } from "./scene-stats";
+import { ObjectHud, ObjectHudMode } from "./object-hud";
+import { resolveHudUnitId } from "./object-hud-anchor";
 
 type HighlightLevelsByUnitId = ReadonlyMap<string, number>;
 
@@ -32,22 +34,34 @@ const SELECTED = 1;
 
 @Component({
     selector: 'app-scene-canvas',
-    template: '@if (showStats) { <app-scene-stats /> }',
+    templateUrl: './scene-canvas.html',
     styleUrl: './scene-canvas.scss',
     providers: [provideEngine()],
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: {
         '[class.scene-hovering]': 'hovered() !== null'
     },
-    imports: [SceneStats]
+    imports: [SceneStats, ObjectHud]
 })
 export class SceneCanvas {
     protected readonly hovered = signal<PlacedAtom | null>(null);
     protected readonly showStats = isDevMode() && inject(ActivatedRoute).snapshot.queryParamMap.has('stats');
+    protected readonly hudMode = computed<ObjectHudMode>(() => this.selection.selectedId() === null ? 'hover' : 'selected');
+    protected readonly hudUnitId = computed(() =>
+        resolveHudUnitId(this.selection.selectedId(), this.clickedUnitId(), this.hovered()?.unitId ?? null, this.units()));
+    protected readonly hudSubstance = computed(() => {
+        const substanceId = this.selection.selectedId() ?? this.hovered()?.substanceId ?? null;
 
+        return this.workspace.entries().find((entry) => entry.substance.id === substanceId)?.substance ?? null;
+    });
+    protected readonly hudCount = computed(() => this.workspace.counts().get(this.hudSubstance()?.id ?? '') ?? 0);
+
+    private readonly clickedUnitId = signal<string | null>(null);
+    private readonly hud = viewChild.required(ObjectHud);
+    private readonly document = inject(DOCUMENT);
     private readonly viewport = inject(SceneViewport);
     private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
-    private readonly view = inject(DOCUMENT).defaultView ?? window;
+    private readonly view = this.document.defaultView ?? window;
     private readonly theme = inject(Theme);
     private readonly workspace = inject(WorkspaceStore);
     private readonly selection = inject(SelectionStore);
@@ -89,8 +103,8 @@ export class SceneCanvas {
     private graphicsNotice: number | null = null;
 
     constructor() {
-        inject(ViewportObserver).onResize((_, height) => {
-            this.scene.setViewportHeight(height);
+        inject(ViewportObserver).onResize((width, height) => {
+            this.scene.setViewportSize(width, height);
             this.scene.frame(false);
         });
 
@@ -132,10 +146,47 @@ export class SceneCanvas {
         afterNextRender(() => this.start());
     }
 
+    protected focusAnchored(): void {
+        const unitId = this.hudUnitId();
+
+        if (unitId !== null) {
+            this.scene.focusUnit(unitId, this.animated());
+        }
+    }
+
+    protected addAnchored(): void {
+        const substance = this.hudSubstance();
+
+        if (substance) {
+            this.workspace.add(substance);
+        }
+    }
+
+    protected removeAnchored(): void {
+        const substance = this.hudSubstance();
+
+        if (substance) {
+            this.workspace.removeOne(substance.id);
+        }
+    }
+
+    protected deselect(): void {
+        const substance = this.hudSubstance();
+
+        this.selection.clear();
+        this.document.getElementById(`bench-chip-${substance?.id}`)?.focus();
+    }
+
     private start(): void {
         this.host.nativeElement.append(this.context.canvas);
         this.scene.setReducedMotion(!this.animated());
-        this.loop.onRender((deltaSeconds) => this.scene.update(deltaSeconds));
+        this.loop.onRender((deltaSeconds) => {
+            const mustPresent = this.scene.update(deltaSeconds);
+
+            this.hud().place();
+
+            return mustPresent;
+        });
         this.loop.onPresent((intervalSeconds) => this.governor.sample(intervalSeconds));
         this.governor.onChange(() => {
             this.scene.refreshLod();
@@ -165,6 +216,7 @@ export class SceneCanvas {
 
     private select(atom: PlacedAtom | null): void {
         if (atom) {
+            this.clickedUnitId.set(atom.unitId);
             this.selection.toggle(atom.substanceId);
         } else {
             this.selection.clear();
@@ -177,6 +229,8 @@ export class SceneCanvas {
 
             return;
         }
+
+        this.clickedUnitId.set(atom.unitId);
 
         if (!this.selection.isSelected(atom.substanceId)) {
             this.selection.toggle(atom.substanceId);

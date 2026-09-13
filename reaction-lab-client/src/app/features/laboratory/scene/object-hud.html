@@ -1,0 +1,36 @@
+<ng-container *transloco="let t; prefix: 'lab.object'">
+    @if (substance(); as substance) {
+        @if (mode() === 'selected') {
+            <div #toolbar class="object-hud-toolbar" role="toolbar" [attr.aria-label]="t('label')">
+                <button rlIconButton size="sm" [label]="t('focus')" (click)="focusRequested.emit()">
+                    <rl-icon [icon]="icons.crosshair" size="sm"></rl-icon>
+                </button>
+                <button rlIconButton size="sm" [label]="t('addOne')" (click)="addRequested.emit()">
+                    <rl-icon [icon]="icons.plus" size="sm"></rl-icon>
+                </button>
+                <button rlIconButton size="sm" [label]="t('removeOne')" (click)="removeRequested.emit()">
+                    <rl-icon [icon]="icons.minus" size="sm"></rl-icon>
+                </button>
+                <button rlIconButton size="sm" [label]="t('deselect')" (click)="deselectRequested.emit()">
+                    <rl-icon [icon]="icons.x" size="sm"></rl-icon>
+                </button>
+            </div>
+        }
+
+        <div #caption class="object-hud-caption" [class.object-hud-caption-hover]="mode() === 'hover'">
+            <rl-chem-formula
+                class="object-hud-formula"
+                [formula]="substance.formula"
+                [state]="stateSymbol(substance.stateAtRoomTemperature)"
+            ></rl-chem-formula>
+            <span class="object-hud-name">{{ substance.name }}</span>
+            @if (count() > 1) {
+                <span class="object-hud-meta">{{ t('copies', { count: count() }) }}</span>
+            }
+
+            @if(mode() === 'selected' && substance.weightGramsPerMole !== null) {
+                <span class="object-hud-meta">{{ t('mass', { mass: (substance.weightGramsPerMole | number: '1.0-3') }) }}</span>
+            }
+        </div>
+    }
+</ng-container>

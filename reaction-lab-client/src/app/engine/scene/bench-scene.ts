@@ -1,4 +1,4 @@
-import { Box3, Color, Sphere } from "three";
+import { Box3, Color, Sphere, Vector3 } from "three";
 import { Disposable } from "../core/disposal-scope";
 import { EngineContext } from "../core/engine-context";
 import { CameraController } from "../interaction/camera-controller";
@@ -11,7 +11,7 @@ import { SelectionOutline } from "../objects/selection-outline";
 import { layoutBench, LayoutUnit, PlacedAtom, PlacedBond } from "./bench-layout";
 import { BenchStage } from "./bench-stage";
 import { Lod } from "../resources/geometry-cache";
-import { worldPerPixel } from "../core/projection";
+import { projectedRadius, worldPerPixel } from "../core/projection";
 import { distanceFor, framingFor } from "../core/camera-framing";
 import { LodController } from "../performance/lod-controller";
 
@@ -28,9 +28,20 @@ export interface BenchSceneCollaborators {
     readonly lod: LodController;
 }
 
+export interface UnitAnchor {
+    readonly centerX: number;
+    readonly centerY: number;
+    readonly radiusPixels: number;
+    readonly viewportWidth: number;
+    readonly viewportHeight: number;
+    readonly onScreen: boolean;
+}
+
 const OUTLINE_PIXELS = 2.5;
 const FOCUS_MARGIN = 2.4;
+const OFFSET_MARGIN = 1.5;
 const REFERENCE_HEIGHT = 900;
+const REFERENCE_WIDTH = 1600;
 
 export class BenchScene implements Disposable {
     private atoms: readonly PlacedAtom[] = [];
@@ -38,11 +49,14 @@ export class BenchScene implements Disposable {
     private bounds = new Box3();
     private sphereByUnitId: ReadonlyMap<string, Sphere> = new Map();
     private ink: LabelInk | null = null;
+    private viewportWidth = REFERENCE_WIDTH;
     private viewportHeight = REFERENCE_HEIGHT;
     private lodInUse: Lod = 'high';
     private cameraWasMoving = false;
     private needsRender = true;
     private outlineDirty = true;
+
+    private readonly projectedCenter = new Vector3();
 
     constructor(private readonly collaborators: BenchSceneCollaborators) {
         const { context, atoms, bonds, outline, labels } = collaborators;
@@ -50,8 +64,9 @@ export class BenchScene implements Disposable {
         context.scene.add(atoms.root, bonds.root, outline.root, labels.root);
     }
 
-    setViewportHeight(height: number): void {
-        if (height > 0) {
+    setViewportSize(width: number, height: number): void {
+        if (width > 0 && height > 0) {
+            this.viewportWidth = width;
             this.viewportHeight = height;
             this.needsRender = true;
         }
@@ -128,6 +143,26 @@ export class BenchScene implements Disposable {
         return true;
     }
 
+    anchorFor(unitId: string): UnitAnchor | null {
+        const sphere = this.sphereByUnitId.get(unitId);
+
+        if (!sphere) {
+            return null;
+        }
+
+        const camera = this.collaborators.context.camera;
+        const ndc = this.projectedCenter.copy(sphere.center).project(camera);
+
+        return {
+            centerX: ((ndc.x + 1) / 2) * this.viewportWidth,
+            centerY: ((1 - ndc.y) / 2) * this.viewportHeight,
+            radiusPixels: projectedRadius(sphere.radius, camera.position.distanceTo(sphere.center), camera.fov, this.viewportHeight),
+            viewportWidth: this.viewportWidth,
+            viewportHeight: this.viewportHeight,
+            onScreen: ndc.z < 1 && Math.abs(ndc.x) <= OFFSET_MARGIN && Math.abs(ndc.y) <= OFFSET_MARGIN
+        };
+    }
+
     refreshLod(): void {
         const { context, camera, atoms, bonds, lod } = this.collaborators;
         const chosen = lod.choose(smallestRadius(this.atoms), camera.distance, context.camera.fov, this.viewportHeight);
@@ -145,13 +180,14 @@ export class BenchScene implements Disposable {
     update(deltaSeconds: number): boolean {
         const { context, camera, highlight, outline, labels } = this.collaborators;
         const moved = camera.update(deltaSeconds);
-        const fading = highlight.update(deltaSeconds);
 
-        if (this.cameraWasMoving && !moved) {
-            this.refreshLod();
+        if (moved) {
+            context.camera.updateMatrixWorld();
         }
 
-        this.cameraWasMoving = moved;
+        const fading = highlight.update(deltaSeconds);
+
+        this.settleLod(moved);
 
         if (moved || fading || this.outlineDirty) {
             outline.update(highlight.highlightLevels, OUTLINE_PIXELS * worldPerPixel(camera.distance, context.camera.fov, this.viewportHeight));
@@ -173,6 +209,14 @@ export class BenchScene implements Disposable {
         const { context, atoms, bonds, outline, labels } = this.collaborators;
 
         context.scene.remove(atoms.root, bonds.root, outline.root, labels.root);
+    }
+
+    private settleLod(moved: boolean) {
+        if (this.cameraWasMoving && !moved) {
+            this.refreshLod();
+        }
+
+        this.cameraWasMoving = moved;
     }
 }
 

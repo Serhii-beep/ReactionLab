@@ -24,6 +24,7 @@
             <li class="bench-item">
                 <button
                     rlChip
+                    [id]="'bench-chip-' + item.substance.id"
                     class="bench-chip"
                     [selected]="selection.isSelected(item.substance.id)"
                     (selectedChange)="selection.toggle(item.substance.id)"

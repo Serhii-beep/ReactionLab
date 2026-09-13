@@ -13,6 +13,7 @@ export const chevronUp: IconNodes = [['path', {"d":"m18 15-6-6-6 6"}]];
 export const circleAlert: IconNodes = [['circle', {"cx":"12","cy":"12","r":"10"}], ['line', {"x1":"12","x2":"12","y1":"8","y2":"12"}], ['line', {"x1":"12","x2":"12.01","y1":"16","y2":"16"}]];
 export const command: IconNodes = [['path', {"d":"M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3"}]];
 export const cornerDownLeft: IconNodes = [['path', {"d":"M20 4v7a4 4 0 0 1-4 4H4"}], ['path', {"d":"m9 10-5 5 5 5"}]];
+export const crosshair: IconNodes = [['circle', {"cx":"12","cy":"12","r":"10"}], ['line', {"x1":"22","x2":"18","y1":"12","y2":"12"}], ['line', {"x1":"6","x2":"2","y1":"12","y2":"12"}], ['line', {"x1":"12","x2":"12","y1":"6","y2":"2"}], ['line', {"x1":"12","x2":"12","y1":"22","y2":"18"}]];
 export const flaskConical: IconNodes = [['path', {"d":"M14 2v6a2 2 0 0 0 .245.96l5.51 10.08A2 2 0 0 1 18 22H6a2 2 0 0 1-1.755-2.96l5.51-10.08A2 2 0 0 0 10 8V2"}], ['path', {"d":"M6.453 15h11.094"}], ['path', {"d":"M8.5 2h7"}]];
 export const info: IconNodes = [['circle', {"cx":"12","cy":"12","r":"10"}], ['path', {"d":"M12 16v-4"}], ['path', {"d":"M12 8h.01"}]];
 export const minus: IconNodes = [['path', {"d":"M5 12h14"}]];

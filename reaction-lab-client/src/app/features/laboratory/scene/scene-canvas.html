@@ -1,0 +1,14 @@
+<app-object-hud
+    [unitId]="hudUnitId()"
+    [mode]="hudMode()"
+    [substance]="hudSubstance()"
+    [count]="hudCount()"
+    (focusRequested)="focusAnchored()"
+    (addRequested)="addAnchored()"
+    (removeRequested)="removeAnchored()"
+    (deselectRequested)="deselect()"
+></app-object-hud>
+
+@if (showStats) {
+    <app-scene-stats></app-scene-stats>
+}

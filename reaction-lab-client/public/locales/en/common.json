@@ -112,6 +112,15 @@
             "lost": "Graphics were interrupted",
             "lostDetail": "The scene is recovering.",
             "restored": "Graphics recovered"
+        },
+        "object": {
+            "label": "Selected molecule",
+            "focus": "Focus",
+            "addOne": "Add one more",
+            "removeOne": "Remove one",
+            "deselect": "Deselect",
+            "copies": "x{count}",
+            "mass": "{mass} g/mol"
         }
     }
 }

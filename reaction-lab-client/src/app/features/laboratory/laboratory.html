@@ -6,7 +6,6 @@
         tabindex="-1"
         (dropped)="onDropped($event)"
     >
-        <app-scene-canvas></app-scene-canvas>
         @if (workspace.isEmpty()) {
             <rl-empty-state
                 [icon]="icons.flaskConical"
@@ -20,6 +19,7 @@
         } @else {
             <app-bench></app-bench>
         }
+        <app-scene-canvas></app-scene-canvas>
     </main>
 
     <app-reactions-sheet></app-reactions-sheet>
