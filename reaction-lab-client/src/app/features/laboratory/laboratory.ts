@@ -23,6 +23,7 @@ import { LiveAnnouncer } from '@angular/cdk/a11y';
 import { BenchDelta, benchDelta } from './bench-delta';
 import { SceneCanvas } from "./scene/scene-canvas";
 import { SceneViewport } from './scene/scene-viewport';
+import { AboutSheet } from './about-sheet/about-sheet';
 
 @Component({
     selector: 'app-laboratory',
@@ -41,7 +42,8 @@ import { SceneViewport } from './scene/scene-viewport';
         Button,
         ReactionsSheet,
         PeriodicTableSheet,
-        SceneCanvas
+        SceneCanvas,
+        AboutSheet
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
     providers: [SceneViewport],

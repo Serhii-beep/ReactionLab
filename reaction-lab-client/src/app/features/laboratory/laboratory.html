@@ -4,6 +4,7 @@
         id="laboratory"
         class="lab-viewport"
         tabindex="-1"
+        [class.lab-viewport-shifted]="ui.aboutOpen()"
         (dropped)="onDropped($event)"
     >
         @if (workspace.isEmpty()) {
@@ -25,6 +26,7 @@
     <app-reactions-sheet></app-reactions-sheet>
 
     <app-periodic-table-sheet></app-periodic-table-sheet>
+    <app-about-sheet></app-about-sheet>
 
     <rl-drag-preview>
         @if (dragged(); as substance) {

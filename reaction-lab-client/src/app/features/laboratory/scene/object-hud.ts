@@ -34,6 +34,7 @@ export class ObjectHud {
     readonly count = input(1);
 
     readonly focusRequested = output<void>();
+    readonly aboutRequested = output<void>();
     readonly addRequested = output<void>();
     readonly removeRequested = output<void>();
     readonly deselectRequested = output<void>();

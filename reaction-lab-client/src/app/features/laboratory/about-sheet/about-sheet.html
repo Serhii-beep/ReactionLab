@@ -1,0 +1,153 @@
+<ng-container *transloco="let t; prefix: 'lab.about'">
+    <rl-dialog
+        placement="end"
+        chrome="none"
+        [(open)]="ui.aboutOpen"
+        [modal]="false"
+        [label]="name() === null ? t('labelPending') : t('label', { name: name() })"
+        (keydown.escape)="$event.stopPropagation()"
+    >
+        <div class="about-sheet">
+            <header class="about-head">
+                @if (detail(); as detail) {
+                    <div class="about-titles">
+                        <h2 class="about-title">
+                            <rl-chem-formula
+                                [formula]="detail.formula"
+                                [state]="stateSymbol(detail.stateAtRoomTemperature)"
+                            ></rl-chem-formula>
+                        </h2>
+                        <p class="about-name">{{ detail.name }}</p>
+                        @if (detail.iupacName; as iupacName) {
+                            <p class="about-iupac">{{ iupacName }}</p>
+                        }
+                    </div>
+                } @else {
+                    <span rlSkeleton class="about-title-skeleton"></span>
+                }
+
+                <button rlIconButton size="sm" class="about-close" [label]="t('close')" (click)="ui.closeAbout()">
+                    <rl-icon [icon]="icons.x" size="sm"></rl-icon>
+                </button>
+            </header>
+
+            @if (detail(); as detail) {
+                <section class="about-section">
+                    <h3 class="about-heading">{{ t('properties') }}</h3>
+
+                    <dl class="about-properties">
+                        @if (detail.weightGramsPerMole !== null) {
+                            <dt>{{ t('molarMass') }}</dt>
+                            <dd>{{ t('gramsPerMole', { mass: (detail.weightGramsPerMole | number: '1.0-3') }) }}</dd>
+                        }
+
+                        <dt>{{ t('state') }}</dt>
+                        <dd>{{ t('states.' + detail.stateAtRoomTemperature) }}</dd>
+
+                        <dt>{{ t('kind') }}</dt>
+                        <dd>
+                            {{ t('kinds.' + detail.kind) }}
+                            @if (detail.isOrganic) {
+                                <span class="about-organic">{{ t('organic') }}</span>
+                            }
+                        </dd>
+
+                        @if (detail.category; as category) {
+                            <dt>{{ t('category') }}</dt>
+                            <dd>{{ readableCategory(category) }}</dd>
+                        }
+
+                        @if (detail.structure; as structure) {
+                            <dt>{{ t('size') }}</dt>
+                            <dd>{{ t('atomsAndBonds', { atoms: structure.atoms.length, bonds: structure.bonds.length}) }}</dd>
+                        }
+                    </dl>
+                </section>
+
+                @if (constituents().length > 0) {
+                    <section class="about-section">
+                        <h3 class="about-heading">{{ t('madeOf') }}</h3>
+
+                        <ul class="about-elements">
+                            @for (constituent of constituents(); track constituent.element.symbol) {
+                                <li>
+                                    <span rlChip class="about-element">
+                                        <rl-element-tile
+                                            [symbol]="constituent.element.symbol"
+                                            [category]="constituent.element.category"
+                                            size="sm"
+                                        ></rl-element-tile>
+                                        {{ constituent.element.name }}
+                                        <span class="about-element-atoms">&times;{{ constituent.atoms }}</span>
+                                    </span>
+                                </li>
+                            }
+                        </ul>
+                    </section>
+                }
+
+                @if (detail.safetyInformation; as safety) {
+                    <p class="about-safety">
+                        <rl-icon class="about-safety-icon" [icon]="icons.triangleAlert" size="sm" [label]="t('safety')"></rl-icon>
+                        <span>{{ safety }}</span>
+                    </p>
+                }
+
+                @if (detail.description; as description) {
+                    <section class="about-section">
+                        <h3 class="about-heading">{{ t('description') }}</h3>
+                        <p class="about-prose">{{ description }}</p>
+                    </section>
+                }
+
+                @if (otherNames(); as otherNames) {
+                    <section class="about-section">
+                        <h3 class="about-heading">{{ t('alsoKnownAs') }}</h3>
+                        <p class="about-prose">{{ otherNames }}</p>
+                    </section>
+                }
+
+                @if (detail.uses.length > 0) {
+                    <section class="about-section">
+                        <h3 class="about-heading">{{ t('uses') }}</h3>
+                        <ul class="about-list">
+                            @for (use of detail.uses; track use) {
+                                <li>{{ use }}</li>
+                            }
+                        </ul>
+                    </section>
+                }
+
+                @if (detail.interestingFacts.length > 0) {
+                    <section class="about-section">
+                        <h3 class="about-heading">{{ t('didYouKnow') }}</h3>
+                        <ul class="about-list">
+                            @for (fact of detail.interestingFacts; track fact) {
+                                <li>{{ fact }}</li>
+                            }
+                        </ul>
+                    </section>
+                }
+
+                @if (!hasCuratedText()) {
+                    <p class="about-pending">{{ t('noCuratedText') }}</p>
+                }
+            } @else if (failed()) {
+                <rl-empty-state
+                    tone="danger"
+                    [icon]="icons.triangleAlert"
+                    [heading]="t('failed')"
+                    [description]="t('failedDetail')"
+                >
+                    <button rlButton variant="primary" (click)="retry()">{{ t('retry') }}</button>
+                </rl-empty-state>
+            } @else {
+                <div class="about-skeleton">
+                    @for (row of skeletonRows; track row) {
+                        <span rlSkeleton class="about-skeleton-row"></span>
+                    }
+                </div>
+            }
+        </div>
+    </rl-dialog>
+</ng-container>

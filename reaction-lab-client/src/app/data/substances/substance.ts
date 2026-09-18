@@ -35,5 +35,11 @@ export interface MolecularStructure {
 
 export interface SubstanceDetail extends SubstanceSummary {
     readonly hillFormula: string;
+    readonly iupacName: string | null;
+    readonly description: string | null;
+    readonly safetyInformation: string | null;
+    readonly commonNames: readonly string[];
+    readonly uses: readonly string[];
+    readonly interestingFacts: readonly string[];
     readonly structure: MolecularStructure | null;
 }

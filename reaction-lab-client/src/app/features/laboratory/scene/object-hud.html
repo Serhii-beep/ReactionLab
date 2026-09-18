@@ -5,6 +5,9 @@
                 <button rlIconButton size="sm" [label]="t('focus')" (click)="focusRequested.emit()">
                     <rl-icon [icon]="icons.crosshair" size="sm"></rl-icon>
                 </button>
+                <button rlIconButton size="sm" [label]="t('about')" (click)="aboutRequested.emit()">
+                    <rl-icon [icon]="icons.info" size="sm"></rl-icon>
+                </button>
                 <button rlIconButton size="sm" [label]="t('addOne')" (click)="addRequested.emit()">
                     <rl-icon [icon]="icons.plus" size="sm"></rl-icon>
                 </button>

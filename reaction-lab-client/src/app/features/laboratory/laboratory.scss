@@ -4,6 +4,7 @@
 
 .lab-viewport {
     position: relative;
+    --lab-inset-inline-end: 0;
     isolation: isolate;
     display: grid;
     place-items: center;
@@ -21,6 +22,10 @@
         background: var(--accent-subtle);
         box-shadow: inset 0 0 0 0.125rem var(--accent);
     }
+}
+
+.lab-viewport-shifted {
+    --lab-inset-inline-end: min(var(--sheet-inline-size), 100%);
 }
 
 .lab-palette-hint {

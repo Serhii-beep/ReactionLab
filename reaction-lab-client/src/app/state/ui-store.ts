@@ -6,6 +6,8 @@ export class UiStore {
     readonly reactionsOpen = signal(false);
     readonly tableOpen = signal(false);
     readonly tableElement = signal<string | null>(null);
+    readonly aboutOpen = signal(false);
+    readonly aboutSubstanceId = signal<string | null>(null);
 
     openPalette(): void {
         this.paletteOpen.set(true);
@@ -13,6 +15,7 @@ export class UiStore {
 
     openReactions(): void {
         this.tableOpen.set(false);
+        this.aboutOpen.set(false);
         this.reactionsOpen.set(true);
     }
 
@@ -22,7 +25,19 @@ export class UiStore {
         }
 
         this.reactionsOpen.set(false);
+        this.aboutOpen.set(false);
         this.tableOpen.set(true);
+    }
+
+    openAbout(substanceId: string): void {
+        this.aboutSubstanceId.set(substanceId);
+        this.reactionsOpen.set(false);
+        this.tableOpen.set(false);
+        this.aboutOpen.set(true);
+    }
+
+    closeAbout(): void {
+        this.aboutOpen.set(false);
     }
 
     toggleTable(): void {
@@ -36,5 +51,6 @@ export class UiStore {
     dismiss(): void {
         this.reactionsOpen.set(false);
         this.tableOpen.set(false);
+        this.aboutOpen.set(false);
     }
 }

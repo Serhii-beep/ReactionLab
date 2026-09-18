@@ -74,7 +74,7 @@
 
     &[data-placement='start'] .rl-dialog-panel,
     &[data-placement='end'] .rl-dialog-panel {
-        width: min(26rem, 100%);
+        width: min(var(--sheet-inline-size), 100%);
         max-height: 100%;
         border-radius: 0;
     }

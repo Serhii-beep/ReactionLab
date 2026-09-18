@@ -25,6 +25,7 @@ import { TranslocoService } from "@jsverse/transloco";
 import { SceneStats } from "./scene-stats";
 import { ObjectHud, ObjectHudMode } from "./object-hud";
 import { resolveHudUnitId } from "./object-hud-anchor";
+import { UiStore } from "../../../state/ui-store";
 
 type HighlightLevelsByUnitId = ReadonlyMap<string, number>;
 
@@ -65,6 +66,7 @@ export class SceneCanvas {
     private readonly theme = inject(Theme);
     private readonly workspace = inject(WorkspaceStore);
     private readonly selection = inject(SelectionStore);
+    private readonly ui = inject(UiStore);
     private readonly elements = inject(ElementsClient);
     private readonly details = inject(SubstanceDetailsClient);
     private readonly context = inject(EngineContext);
@@ -151,6 +153,14 @@ export class SceneCanvas {
 
         if (unitId !== null) {
             this.scene.focusUnit(unitId, this.animated());
+        }
+    }
+
+    protected showAbout(): void {
+        const substance = this.hudSubstance();
+
+        if (substance) {
+            this.ui.openAbout(substance.id);
         }
     }
 

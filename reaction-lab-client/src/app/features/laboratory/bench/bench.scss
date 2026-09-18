@@ -1,11 +1,12 @@
 :host {
     position: absolute;
-    inset-inline: 0;
+    inset-inline: 0 var(--lab-inset-inline-end, 0);
     inset-block-end: var(--space-4);
     display: flex;
     justify-content: center;
     padding-inline: var(--space-4);
     pointer-events: none;
+    transition: inset-inline-end var(--duration-fast) var(--ease-standard);
 }
 
 .bench {

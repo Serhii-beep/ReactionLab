@@ -116,11 +116,50 @@
         "object": {
             "label": "Selected molecule",
             "focus": "Focus",
+            "about": "About",
             "addOne": "Add one more",
             "removeOne": "Remove one",
             "deselect": "Deselect",
             "copies": "x{count}",
             "mass": "{mass} g/mol"
+        },
+        "about": {
+            "label": "About {name}",
+            "labelPending": "About this substance",
+            "close": "Close",
+            "properties": "Properties",
+            "molarMass": "Molar mass",
+            "gramsPerMole": "{mass} g/mol",
+            "state": "State at 25 °C",
+            "kind": "Kind",
+            "organic": "organic",
+            "category": "Category",
+            "size": "Size",
+            "atomsAndBonds": "{atoms, plural, one {# atom} other {# atoms}} · {bonds, plural, =0 {no bonds} one {# bond} other {# bonds}}",
+            "madeOf": "Made of",
+            "safety": "Safety",
+            "description": "About",
+            "alsoKnownAs": "Also known as",
+            "uses": "Uses",
+            "didYouKnow": "Did you know",
+            "noCuratedText": "Description, safety notes, uses and facts appear here once the catalog carries them.",
+            "failed": "Could not load this substance",
+            "failedDetail": "The catalog did not respond",
+            "retry": "Retry",
+            "kinds": {
+                "Molecular": "molecular",
+                "Ionic": "ionic",
+                "Metallic": "metallic",
+                "Monatomic": "monatomic",
+                "NetworkCovalent": "network covalent"
+            },
+            "states": {
+                "Solid": "solid",
+                "Liquid": "liquid",
+                "Gas": "gas",
+                "Aqueous": "aqueous",
+                "Plasma": "plasma"
+            }
         }
     }
 }
