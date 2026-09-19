@@ -20,6 +20,7 @@ import { PostProcessingPipeline } from "./rendering/post-processing-pipeline";
 import { ContextGuard } from "./core/context-guard";
 import { LodController } from "./performance/lod-controller";
 import { QualityGovernor } from "./performance/quality-governor";
+import { ReactionDirector } from "./animation/reaction-director";
 
 const HIGHLIGHT_RISE = 0.2;
 const HIGHLIGHT_FALL = 0.3;
@@ -73,6 +74,7 @@ function sceneProviders(): Provider[] {
         { provide: PickingService, useFactory: () => new PickingService(inject(EngineContext)) },
         { provide: LodController, useFactory: () => new LodController() },
         { provide: QualityGovernor, useFactory: () => new QualityGovernor(inject(PostProcessingPipeline), inject(ViewportObserver), inject(LodController)) },
+        { provide: ReactionDirector, useFactory: () => new ReactionDirector() },
         owned(BenchScene, () => new BenchScene({
             context: inject(EngineContext),
             camera: inject(CameraController),
@@ -83,7 +85,8 @@ function sceneProviders(): Provider[] {
             outline: inject(SelectionOutline),
             highlight: inject(HighlightFade),
             picking: inject(PickingService),
-            lod: inject(LodController)
+            lod: inject(LodController),
+            director: inject(ReactionDirector)
         }))
     ];
 }

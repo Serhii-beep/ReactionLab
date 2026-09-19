@@ -24,6 +24,7 @@ import { BenchDelta, benchDelta } from './bench-delta';
 import { SceneCanvas } from "./scene/scene-canvas";
 import { SceneViewport } from './scene/scene-viewport';
 import { AboutSheet } from './about-sheet/about-sheet';
+import { ReactionRun } from './run/reaction-run';
 
 @Component({
     selector: 'app-laboratory',
@@ -46,7 +47,7 @@ import { AboutSheet } from './about-sheet/about-sheet';
         AboutSheet
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    providers: [SceneViewport],
+    providers: [SceneViewport, ReactionRun],
     host: {
         '(document:keydown)': 'onKeydown($event)'
     }
@@ -63,6 +64,7 @@ export class Laboratory {
     private readonly reactions = inject(ReactionStore);
     private readonly announcer = inject(LiveAnnouncer);
     private readonly transloco = inject(TranslocoService);
+    private readonly run = inject(ReactionRun);
 
     private previousBench: readonly WorkspaceItem[] = [];
     private announcedReactions = '';
@@ -77,7 +79,8 @@ export class Laboratory {
         ['delete', () => this.removeSelected()],
         ['backspace', () => this.removeSelected()],
         ['escape', () => this.dismiss()],
-        ['home', () => this.viewport.requestFit()]
+        ['home', () => this.viewport.requestFit()],
+        [' ', () => this.run.togglePause()]
     ]);
 
     constructor() {
@@ -133,6 +136,10 @@ export class Laboratory {
             return;
         }
 
+        if (combo === ' ' && (!this.run.active() || event.target instanceof HTMLButtonElement)) {
+            return;
+        }
+
         const action = this.shortcuts.get(combo);
 
         if (action) {
@@ -150,6 +157,7 @@ export class Laboratory {
     }
 
     private dismiss(): void {
+        this.run.stop();
         this.selection.clear();
         this.ui.dismiss();
     }

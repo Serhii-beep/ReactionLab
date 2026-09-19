@@ -14,6 +14,9 @@ import { Lod } from "../resources/geometry-cache";
 import { projectedRadius, worldPerPixel } from "../core/projection";
 import { distanceFor, framingFor } from "../core/camera-framing";
 import { LodController } from "../performance/lod-controller";
+import { ReactionDirector } from "../animation/reaction-director";
+import { ReactionMotion, StagedBench } from "../animation/reaction-motion";
+import { ReactionScript } from "../animation/reaction-script";
 
 export interface BenchSceneCollaborators {
     readonly context: EngineContext;
@@ -26,6 +29,7 @@ export interface BenchSceneCollaborators {
     readonly highlight: HighlightFade;
     readonly picking: PickingService;
     readonly lod: LodController;
+    readonly director: ReactionDirector;
 }
 
 export interface UnitAnchor {
@@ -48,6 +52,7 @@ export class BenchScene implements Disposable {
     private bonds: readonly PlacedBond[] = [];
     private bounds = new Box3();
     private sphereByUnitId: ReadonlyMap<string, Sphere> = new Map();
+    private motion: ReactionMotion | null = null;
     private ink: LabelInk | null = null;
     private viewportWidth = REFERENCE_WIDTH;
     private viewportHeight = REFERENCE_HEIGHT;
@@ -89,25 +94,25 @@ export class BenchScene implements Disposable {
 
     setUnits(units: readonly LayoutUnit[], animated: boolean): void {
         const layout = layoutBench(units);
-        const { context, stage, atoms, bonds, labels, outline, lod } = this.collaborators;
-
-        this.atoms = layout.atoms;
-        this.bonds = layout.bonds;
+        
+        this.motion = null;
         this.bounds = layout.bounds;
-        this.sphereByUnitId = layout.units;
+        this.fitBench(layout.atoms, animated);
+        this.show(layout);
+    }
 
-        const distance = this.frame(animated);
+    beginRun(script: ReactionScript, animated: boolean): void {
+        const motion = new ReactionMotion(script, layoutBench(script.unitsBefore), layoutBench(script.unitsAfter));
+        const opening = motion.frameAt(0);
 
-        this.lodInUse = lod.choose(smallestRadius(this.atoms), distance, context.camera.fov, this.viewportHeight);
-        stage.fit(distance, this.bounds);
-        atoms.render(this.atoms, this.lodInUse);
-        bonds.render(this.bonds, this.lodInUse);
-        outline.render(this.atoms, this.bonds);
-        this.outlineDirty = true;
+        this.motion = motion;
+        this.bounds = motion.bounds;
+        this.fitBench(opening.atoms, animated);
+        this.show(opening);
+    }
 
-        if (this.ink) {
-            labels.render(this.atoms, this.bonds, this.ink);
-        }
+    endRun(): void {
+        this.motion = null;
     }
 
     setHighlight(targetLevels: ReadonlyMap<string, number>): void {
@@ -188,6 +193,7 @@ export class BenchScene implements Disposable {
         const fading = highlight.update(deltaSeconds);
 
         this.settleLod(moved);
+        this.advanceRun();
 
         if (moved || fading || this.outlineDirty) {
             outline.update(highlight.highlightLevels, OUTLINE_PIXELS * worldPerPixel(camera.distance, context.camera.fov, this.viewportHeight));
@@ -209,6 +215,40 @@ export class BenchScene implements Disposable {
         const { context, atoms, bonds, outline, labels } = this.collaborators;
 
         context.scene.remove(atoms.root, bonds.root, outline.root, labels.root);
+    }
+
+    private fitBench(atoms: readonly PlacedAtom[], animated: boolean): void {
+        const { context, stage, lod } = this.collaborators;
+        const distance = this.frame(animated);
+
+        this.lodInUse = lod.choose(smallestRadius(atoms), distance, context.camera.fov, this.viewportHeight);
+        stage.fit(distance, this.bounds);
+    }
+
+    private show(staged: StagedBench): void {
+        const { atoms, bonds, labels, outline } = this.collaborators;
+        const differentAtoms = staged.atoms !== this.atoms;
+
+        this.atoms = staged.atoms;
+        this.bonds = staged.bonds;
+        this.sphereByUnitId = staged.sphereByUnitId;
+        atoms.render(this.atoms, this.lodInUse);
+        bonds.render(this.bonds, this.lodInUse);
+        outline.render(this.atoms, this.bonds);
+        this.outlineDirty = true;
+        this.needsRender = true;
+
+        if (differentAtoms && this.ink) {
+            labels.render(this.atoms, this.bonds, this.ink);
+        }
+    }
+
+    private advanceRun(): void {
+        const { director } = this.collaborators;
+
+        if (this.motion !== null && director.consumeMovement()) {
+            this.show(this.motion.frameAt(director.elapsedSeconds));
+        }
     }
 
     private settleLod(moved: boolean) {

@@ -26,6 +26,8 @@ import { SceneStats } from "./scene-stats";
 import { ObjectHud, ObjectHudMode } from "./object-hud";
 import { resolveHudUnitId } from "./object-hud-anchor";
 import { UiStore } from "../../../state/ui-store";
+import { RunConductor } from "../run/run-conductor";
+import { ReactionRun } from "../run/reaction-run";
 
 type HighlightLevelsByUnitId = ReadonlyMap<string, number>;
 
@@ -37,7 +39,7 @@ const SELECTED = 1;
     selector: 'app-scene-canvas',
     templateUrl: './scene-canvas.html',
     styleUrl: './scene-canvas.scss',
-    providers: [provideEngine()],
+    providers: [provideEngine(), RunConductor],
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: {
         '[class.scene-hovering]': 'hovered() !== null'
@@ -78,6 +80,8 @@ export class SceneCanvas {
     private readonly guard = inject(ContextGuard);
     private readonly notifications = inject(NotificationService);
     private readonly transloco = inject(TranslocoService);
+    private readonly conductor = inject(RunConductor);
+    private readonly run = inject(ReactionRun);
     private readonly reducedMotion = this.view.matchMedia('(prefers-reduced-motion: reduce)');
 
     private readonly units = computed(() =>
@@ -125,10 +129,13 @@ export class SceneCanvas {
 
         effect(() => {
             const units = this.units();
+            const running = this.run.active();
 
             untracked(() => {
-                this.scene.setUnits(units, this.started && this.animated());
-                this.repick();
+                if (!running) {
+                    this.scene.setUnits(units, this.started && this.animated());
+                    this.repick();
+                }
             });
         });
 
@@ -205,6 +212,7 @@ export class SceneCanvas {
         this.guard.onLost(() => this.graphicsLost());
         this.guard.onRestored(() => this.graphicsRestored());
         this.governor.apply(0);
+        this.conductor.bind(() => this.animated());
         this.loop.start();
         this.started = true;
     }

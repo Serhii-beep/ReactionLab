@@ -9,6 +9,9 @@ public sealed record ReactionSummaryResponse(
     int Difficulty,
     bool IsReversible,
     decimal? EnthalpyKilojoulesPerMole,
+    decimal? ActivationEnergyKilojoulesPerMole,
     bool? IsExothermic,
+    string? EffectPresetKey,
+    int? AnimationDurationMilliseconds,
     IReadOnlyList<string> Tags,
     IReadOnlyList<ReactionParticipantResponse> Participants);

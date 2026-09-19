@@ -1,57 +1,61 @@
 <div class="bench" *transloco="let t; prefix: 'lab.bench'">
-    <div class="bench-group">
-        <button rlIconButton size="sm" [label]="t('undo')" [disabled]="!workspace.canUndo()" (click)="workspace.undo()">
-            <rl-icon [icon]="icons.undo2" size="sm"></rl-icon>
+    @if (run.active()) {
+        <app-run-transport></app-run-transport>
+    } @else {
+        <div class="bench-group">
+            <button rlIconButton size="sm" [label]="t('undo')" [disabled]="!workspace.canUndo()" (click)="workspace.undo()">
+                <rl-icon [icon]="icons.undo2" size="sm"></rl-icon>
+            </button>
+
+            <button rlIconButton size="sm" [label]="t('redo')" [disabled]="!workspace.canRedo()" (click)="workspace.redo()">
+                <rl-icon [icon]="icons.redo2" size="sm"></rl-icon>
+            </button>
+
+            <button rlIconButton size="sm" [label]="t('clear')" (click)="workspace.clear()">
+                <rl-icon [icon]="icons.trash2" size="sm"></rl-icon>
+            </button>
+
+            <button rlIconButton size="sm" [label]="t('fitView')" (click)="viewport.requestFit()">
+                <rl-icon [icon]="icons.scan" size="sm"></rl-icon>
+            </button>
+        </div>
+
+        <div class="bench-separator" role="presentation"></div>
+
+        <ul class="bench-items">
+            @for (item of workspace.entries(); track item.substance.id) {
+                <li class="bench-item">
+                    <button
+                        rlChip
+                        [id]="'bench-chip-' + item.substance.id"
+                        class="bench-chip"
+                        [selected]="selection.isSelected(item.substance.id)"
+                        (selectedChange)="selection.toggle(item.substance.id)"
+                    >
+                        <rl-chem-formula
+                            [formula]="item.substance.formula"
+                            [state]="stateSymbol(item.substance.stateAtRoomTemperature)"
+                        ></rl-chem-formula>
+
+                        <span class="bench-count">&times;{{ item.count }}</span>
+                    </button>
+
+                    <button rlIconButton size="sm" [label]="t('removeOne', { name: item.substance.name})" (click)="workspace.removeOne(item.substance.id)">
+                        <rl-icon [icon]="icons.minus" size="sm"></rl-icon>
+                    </button>
+                </li>
+            }
+        </ul>
+
+        <div class="bench-separator" role="presentation"></div>
+
+        <button class="bench-peek" (click)="ui.openReactions()">
+            <rl-icon class="bench-peek-icon" [icon]="icons.chevronUp" size="sm"></rl-icon>
+            <span>{{ t('peek', { count: reactions.scored().length }) }}</span>
+
+            @if (reactions.readyCount(); as ready) {
+                <span class="bench-peek-ready">{{ t('ready', { count: ready }) }}</span>
+            }
         </button>
-
-        <button rlIconButton size="sm" [label]="t('redo')" [disabled]="!workspace.canRedo()" (click)="workspace.redo()">
-            <rl-icon [icon]="icons.redo2" size="sm"></rl-icon>
-        </button>
-
-        <button rlIconButton size="sm" [label]="t('clear')" (click)="workspace.clear()">
-            <rl-icon [icon]="icons.trash2" size="sm"></rl-icon>
-        </button>
-
-        <button rlIconButton size="sm" [label]="t('fitView')" (click)="viewport.requestFit()">
-            <rl-icon [icon]="icons.scan" size="sm"></rl-icon>
-        </button>
-    </div>
-
-    <div class="bench-separator" role="presentation"></div>
-
-    <ul class="bench-items">
-        @for (item of workspace.entries(); track item.substance.id) {
-            <li class="bench-item">
-                <button
-                    rlChip
-                    [id]="'bench-chip-' + item.substance.id"
-                    class="bench-chip"
-                    [selected]="selection.isSelected(item.substance.id)"
-                    (selectedChange)="selection.toggle(item.substance.id)"
-                >
-                    <rl-chem-formula
-                        [formula]="item.substance.formula"
-                        [state]="stateSymbol(item.substance.stateAtRoomTemperature)"
-                    ></rl-chem-formula>
-
-                    <span class="bench-count">&times;{{ item.count }}</span>
-                </button>
-
-                <button rlIconButton size="sm" [label]="t('removeOne', { name: item.substance.name})" (click)="workspace.removeOne(item.substance.id)">
-                    <rl-icon [icon]="icons.minus" size="sm"></rl-icon>
-                </button>
-            </li>
-        }
-    </ul>
-
-    <div class="bench-separator" role="presentation"></div>
-
-    <button class="bench-peek" (click)="ui.openReactions()">
-        <rl-icon class="bench-peek-icon" [icon]="icons.chevronUp" size="sm"></rl-icon>
-        <span>{{ t('peek', { count: reactions.scored().length }) }}</span>
-
-        @if (reactions.readyCount(); as ready) {
-            <span class="bench-peek-ready">{{ t('ready', { count: ready }) }}</span>
-        }
-    </button>
+    }
 </div>

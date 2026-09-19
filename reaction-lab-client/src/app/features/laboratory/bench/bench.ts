@@ -11,12 +11,14 @@ import { SelectionStore } from '../../../state/selection-store';
 import { ReactionStore } from '../../../state/reaction-store';
 import { UiStore } from '../../../state/ui-store';
 import { SceneViewport } from '../scene/scene-viewport';
+import { ReactionRun } from '../run/reaction-run';
+import { RunTransport } from '../run/run-transport';
 
 @Component({
     selector: 'app-bench',
     templateUrl: './bench.html',
     styleUrl: './bench.scss',
-    imports: [ChemFormula, Chip, Icon, IconButton, TranslocoDirective],
+    imports: [ChemFormula, Chip, Icon, IconButton, TranslocoDirective, RunTransport],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class Bench {
@@ -25,6 +27,7 @@ export class Bench {
     protected readonly reactions = inject(ReactionStore);
     protected readonly ui = inject(UiStore);
     protected readonly viewport = inject(SceneViewport);
+    protected readonly run = inject(ReactionRun);
 
     protected readonly icons = icons;
     protected readonly stateSymbol = stateSymbol;

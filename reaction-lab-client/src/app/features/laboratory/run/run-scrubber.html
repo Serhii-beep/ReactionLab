@@ -1,0 +1,27 @@
+<div class="run-scrubber" (pointermove)="onPointerMove($event)" (pointerleave)="onPointerLeave()">
+    <input
+        #track
+        type="range"
+        class="run-scrubber-track"
+        min="0"
+        step="0.01"
+        [max]="timeline().durationSeconds"
+        [value]="elapsedSeconds()"
+        [disabled]="disabled()"
+        [attr.aria-label]="label()"
+        [attr.aria-valuetext]="valueText()"
+        [style.--run-scrubber-fill]="fill()"
+        (input)="onInput($event)"
+        (keydown)="onKeydown($event)"
+        (pointerdown)="scrubStarted.emit()"
+        (change)="scrubEnded.emit()"
+    />
+
+    @for (tick of ticks(); track tick) {
+        <span class="run-scrubber-tick" [style.inset-inline-start]="tick"></span>
+    }
+
+    @if (hoverPhase(); as hovered) {
+        <span class="run-scrubber-hint" [style.inset-inline-start.%]="hovered.fraction * 100">{{ hovered.label }}</span>
+    }
+</div>

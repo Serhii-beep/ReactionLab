@@ -22,5 +22,9 @@
     "corner-down-left",
     "chevron-up",
     "scan",
-    "crosshair"
+    "crosshair",
+    "play",
+    "pause",
+    "rotate-ccw",
+    "square"
 ]

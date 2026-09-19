@@ -1,4 +1,4 @@
-import { computed, inject, Service, signal } from "@angular/core";
+import { computed, inject, linkedSignal, Service, signal } from "@angular/core";
 import { CursorPage } from "../cursor-page";
 import { ReactantMatch, ReactionSummary } from "./reaction";
 import { httpResource } from "@angular/common/http";
@@ -31,7 +31,12 @@ export class ReactionsClient {
         { defaultValue: EMPTY_PAGE }
     );
 
-    readonly reactions = computed(() => this.page.value().items);
+    private readonly pageState = computed(() => ({ page: this.page.value(), loading: this.page.isLoading() }));
+
+    readonly reactions = linkedSignal<{ page: CursorPage<ReactionSummary>; loading: boolean }, readonly ReactionSummary[]>({
+        source: this.pageState,
+        computation: ({ page, loading }, previous) => (loading && previous !== undefined ? previous.value : page.items)
+    });
 
     private url(ids: readonly string[], match: ReactantMatch): string {
         const params = new URLSearchParams({ pageSize: String(PAGE_SIZE), match });

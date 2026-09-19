@@ -1,0 +1,74 @@
+:host {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-inline-size: 36rem;
+    max-inline-size: 100%;
+}
+
+.run-transport-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+}
+
+.run-transport-separator {
+    align-self: stretch;
+    inline-size: 0.0625rem;
+    background: var(--border-default);
+}
+
+.run-transport-body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--space-1-5);
+    min-inline-size: 0;
+    padding-inline: var(--space-1);
+}
+
+.run-transport-line {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-3);
+    font-size: var(--text-sm);
+}
+
+.run-transport-clock {
+    color: var(--text-tertiary);
+    font-family: var(--font-mono);
+    font-size: var(--text-2xs);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.run-transport-result {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: var(--text-xs);
+}
+
+.run-transport-yield {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+}
+
+.run-transport-plus {
+    color: var(--text-tertiary);
+}
+
+.run-transport-energy {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+
+    &::before {
+        content: '·';
+        margin-inline-end: var(--space-2);
+        color: var(--text-tertiary);
+    }
+}

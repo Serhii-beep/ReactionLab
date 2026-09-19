@@ -43,7 +43,7 @@ const BALL_BASE = 0.22;
 const BALL_SCALE = 0.32;
 const FALLBACK_COVALENT = 0.75;
 const FALLBACK_COLOR = '#909090';
-const MAX_COPIES = 8;
+const MAX_COPIES = 64;
 
 export function buildBenchUnits(
     entries: readonly WorkspaceItem[],

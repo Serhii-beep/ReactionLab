@@ -32,6 +32,9 @@ export interface ReactionSummary {
     readonly difficulty: number;
     readonly isReversible: boolean;
     readonly enthalpyKilojoulesPerMole: number | null;
+    readonly activationEnergyKilojoulesPerMole: number | null;
+    readonly effectPresetKey: string | null;
+    readonly animationDurationMilliseconds: number | null;
     readonly isExothermic: boolean | null;
     readonly tags: readonly string[];
     readonly participants: readonly ReactionParticipant[];
