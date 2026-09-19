@@ -15,7 +15,8 @@ import { projectedRadius, worldPerPixel } from "../core/projection";
 import { distanceFor, framingFor } from "../core/camera-framing";
 import { LodController } from "../performance/lod-controller";
 import { ReactionDirector } from "../animation/reaction-director";
-import { ReactionMotion, StagedBench } from "../animation/reaction-motion";
+import { ReactionMotion } from "../animation/reaction-motion";
+import { StagedBench } from "../animation/unit-gathering";
 import { ReactionScript } from "../animation/reaction-script";
 
 export interface BenchSceneCollaborators {
@@ -240,6 +241,8 @@ export class BenchScene implements Disposable {
 
         if (differentAtoms && this.ink) {
             labels.render(this.atoms, this.bonds, this.ink);
+        } else if (this.motion !== null) {
+            labels.refreshSticks(this.bonds);
         }
     }
 

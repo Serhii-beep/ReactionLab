@@ -16,12 +16,18 @@ export interface ReactionTimeline {
 
 export const DEFAULT_RUN_SECONDS = 3;
 
-export function reactionTimeline(durationSeconds: number): ReactionTimeline {
-    const approach = phase('approach', 0, 0.25 * durationSeconds);
-    const collision = phase('collision', approach.endSeconds, 0.1 * durationSeconds);
-    const bondsBreak = phase('bondsBreak', collision.endSeconds, 0.15 * durationSeconds);
-    const transitionState = phase('transitionState', bondsBreak.endSeconds, 0.1 * durationSeconds);
-    const bondsForm = phase('bondsForm', transitionState.endSeconds, 0.15 * durationSeconds);
+const INNER_SHARE_WITHOUT_BARRIER = 0.5;
+const INNER_SHARE_PER_BARRIER = 0.2;
+const INNER_WEIGHTS = { collision: 0.2, bondsBreak: 0.3, transitionState: 0.2, bondsForm: 0.3 };
+const BARRIER_REFERENCE_KILOJOULES_PER_MOLE = 250;
+
+export function reactionTimeline(durationSeconds: number, activationBarrier = 0): ReactionTimeline {
+    const innerSeconds = (INNER_SHARE_WITHOUT_BARRIER + INNER_SHARE_PER_BARRIER * activationBarrier) * durationSeconds;
+    const approach = phase('approach', 0, (durationSeconds - innerSeconds) / 2);
+    const collision = phase('collision', approach.endSeconds, innerSeconds * INNER_WEIGHTS.collision);
+    const bondsBreak = phase('bondsBreak', collision.endSeconds, innerSeconds * INNER_WEIGHTS.bondsBreak);
+    const transitionState = phase('transitionState', bondsBreak.endSeconds, innerSeconds * INNER_WEIGHTS.transitionState);
+    const bondsForm = phase('bondsForm', transitionState.endSeconds, innerSeconds * INNER_WEIGHTS.bondsForm);
     const separation = phase('separation', bondsForm.endSeconds, durationSeconds - bondsForm.endSeconds);
 
     return {
@@ -37,6 +43,12 @@ export function phaseAt(timeline: ReactionTimeline, seconds: number): ReactionPh
 
 export function runSecondsOf(reaction: ReactionSummary): number {
     return reaction.animationDurationMilliseconds === null ? DEFAULT_RUN_SECONDS : reaction.animationDurationMilliseconds / 1000;
+}
+
+export function activationBarrierOf(reaction: ReactionSummary): number {
+    const energy = reaction.activationEnergyKilojoulesPerMole ?? 0;
+
+    return Math.min(Math.max(energy / BARRIER_REFERENCE_KILOJOULES_PER_MOLE, 0), 1);
 }
 
 function phase(name: ReactionPhaseName, startSeconds: number, lengthSeconds: number): ReactionPhase {

@@ -25,6 +25,7 @@ const FOOTPRINT = 0.6;
 const STICK_RADIUS = 0.1;
 const RAMP = 0.1;
 const NO_STICKS: readonly BondFromAtom[] = [];
+const STICK_STRENGTH = 0.5;
 
 export class AtomLabels implements Disposable {
     readonly root = new Group();
@@ -56,6 +57,10 @@ export class AtomLabels implements Disposable {
         for (const label of this.pool.slice(atoms.length)) {
             label.visible = false;
         }
+    }
+
+    refreshSticks(bonds: readonly PlacedBond[]): void {
+        this.sticks = sticksOf(bonds);
     }
 
     update(camera: PerspectiveCamera, viewportHeight: number): void {
@@ -127,7 +132,7 @@ function sticksOf(bonds: readonly PlacedBond[]): BondsByAtom {
         const direction = bond.to.position.clone().sub(bond.from.position);
         const length = direction.length();
 
-        if (length === 0) {
+        if (length === 0 || bond.strength < STICK_STRENGTH) {
             continue;
         }
 

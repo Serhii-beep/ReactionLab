@@ -20,14 +20,13 @@ import { BenchScene } from "../../../engine/scene/bench-scene";
 import { ActivatedRoute } from "@angular/router";
 import { QualityGovernor } from "../../../engine/performance/quality-governor";
 import { ContextGuard } from "../../../engine/core/context-guard";
-import { NotificationService } from "../../../core/notifications/notification-service";
-import { TranslocoService } from "@jsverse/transloco";
 import { SceneStats } from "./scene-stats";
 import { ObjectHud, ObjectHudMode } from "./object-hud";
 import { resolveHudUnitId } from "./object-hud-anchor";
 import { UiStore } from "../../../state/ui-store";
 import { RunConductor } from "../run/run-conductor";
 import { ReactionRun } from "../run/reaction-run";
+import { GraphicsNotices } from "./graphics-notices";
 
 type HighlightLevelsByUnitId = ReadonlyMap<string, number>;
 
@@ -39,7 +38,7 @@ const SELECTED = 1;
     selector: 'app-scene-canvas',
     templateUrl: './scene-canvas.html',
     styleUrl: './scene-canvas.scss',
-    providers: [provideEngine(), RunConductor],
+    providers: [provideEngine(), RunConductor, GraphicsNotices],
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: {
         '[class.scene-hovering]': 'hovered() !== null'
@@ -78,8 +77,7 @@ export class SceneCanvas {
     private readonly pointer = inject(PointerInput);
     private readonly governor = inject(QualityGovernor);
     private readonly guard = inject(ContextGuard);
-    private readonly notifications = inject(NotificationService);
-    private readonly transloco = inject(TranslocoService);
+    private readonly graphicsNotices = inject(GraphicsNotices);
     private readonly conductor = inject(RunConductor);
     private readonly run = inject(ReactionRun);
     private readonly reducedMotion = this.view.matchMedia('(prefers-reduced-motion: reduce)');
@@ -106,7 +104,6 @@ export class SceneCanvas {
     }, { equal: sameLevels });
 
     private started = false;
-    private graphicsNotice: number | null = null;
 
     constructor() {
         inject(ViewportObserver).onResize((width, height) => {
@@ -209,8 +206,8 @@ export class SceneCanvas {
             this.scene.refreshLod();
             this.loop.invalidate();
         });
-        this.guard.onLost(() => this.graphicsLost());
-        this.guard.onRestored(() => this.graphicsRestored());
+        this.guard.onLost(() => this.graphicsNotices.lost());
+        this.guard.onRestored(() => this.graphicsNotices.restored());
         this.governor.apply(0);
         this.conductor.bind(() => this.animated());
         this.loop.start();
@@ -233,6 +230,10 @@ export class SceneCanvas {
     }
 
     private select(atom: PlacedAtom | null): void {
+        if (this.run.active()) {
+            return;
+        }
+
         if (atom) {
             this.clickedUnitId.set(atom.unitId);
             this.selection.toggle(atom.substanceId);
@@ -242,6 +243,10 @@ export class SceneCanvas {
     }
 
     private focus(atom: PlacedAtom | null): void {
+        if (this.run.active()) {
+            return;
+        }
+
         if (!atom) {
             this.viewport.requestFit();
 
@@ -261,24 +266,6 @@ export class SceneCanvas {
         const last = this.pointer.lastPosition;
 
         this.hovered.set(last ? this.scene.pick(last.x, last.y) : null);
-    }
-
-    private graphicsLost(): void {
-        this.graphicsNotice = this.notifications.show(
-            'warning',
-            this.transloco.translate('lab.graphics.lost'),
-            this.transloco.translate('lab.graphics.lostDetail'),
-            true
-        );
-    }
-
-    private graphicsRestored(): void {
-        if (this.graphicsNotice !== null) {
-            this.notifications.dismiss(this.graphicsNotice);
-            this.graphicsNotice = null;
-        }
-
-        this.notifications.show('success', this.transloco.translate('lab.graphics.restored'));
     }
 }
 

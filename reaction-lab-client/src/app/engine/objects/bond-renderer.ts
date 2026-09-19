@@ -50,6 +50,7 @@ const PATTERNS: Readonly<Record<Exclude<Stroke, 'solid'>, Pattern>> = {
 
 const UP = new Vector3(0, 1, 0);
 const RIGHT = new Vector3(1, 0, 0);
+const MIN_STRENGTH = 0.02;
 
 export function bondPerpendicular(bond: PlacedBond): Vector3 {
     const axis = bond.to.position.clone().sub(bond.from.position).normalize();
@@ -66,6 +67,10 @@ export function bondPerpendicular(bond: PlacedBond): Vector3 {
 }
 
 export function bondPieces(bond: PlacedBond): BondPiece[] {
+    if (bond.strength < MIN_STRENGTH) {
+        return [];
+    }
+
     const perpendicular = bondPerpendicular(bond);
     const pieces: BondPiece[] = [];
 
@@ -73,7 +78,7 @@ export function bondPieces(bond: PlacedBond): BondPiece[] {
         const shift = perpendicular.clone().multiplyScalar(line.offset);
 
         if (line.stroke === 'solid') {
-            pieces.push({ atom: bond.from, start: bond.from.position.clone().add(shift), end: bond.to.position.clone().add(shift), radius: line.radius });
+            pieces.push({ atom: bond.from, start: bond.from.position.clone().add(shift), end: bond.to.position.clone().add(shift), radius: line.radius * bond.strength });
         } else {
             pieces.push(...patterned(bond, line, shift, PATTERNS[line.stroke]));
         }
@@ -102,6 +107,10 @@ export class BondRenderer implements Disposable {
         const pieces: Record<Stroke, BondPieces> = { solid: new Map(), dashed: new Map(), dotted: new Map() };
 
         for (const bond of bonds) {
+            if (bond.strength < MIN_STRENGTH) {
+                continue;
+            }
+
             const perpendicular = bondPerpendicular(bond);
 
             for (const line of LINES[bond.kind]) {
@@ -165,8 +174,8 @@ function halves(bond: PlacedBond, line: Line, shift: Vector3): BondPiece[] {
     const middle = bond.from.position.clone().add(bond.to.position).multiplyScalar(0.5).add(shift);
 
     return [
-        { atom: bond.from, start: bond.from.position.clone().add(shift), end: middle, radius: line.radius },
-        { atom: bond.to, start: bond.to.position.clone().add(shift), end: middle.clone(), radius: line.radius }
+        { atom: bond.from, start: bond.from.position.clone().add(shift), end: middle, radius: line.radius * bond.strength },
+        { atom: bond.to, start: bond.to.position.clone().add(shift), end: middle.clone(), radius: line.radius * bond.strength }
     ];
 }
 
@@ -194,7 +203,7 @@ function patterned(bond: PlacedBond, line: Line, shift: Vector3, pattern: Patter
             atom: along < distance / 2 ? bond.from : bond.to,
             start: center.clone().sub(half),
             end: center.add(half),
-            radius: line.radius
+            radius: line.radius * bond.strength
         });
     }
 

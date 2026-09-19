@@ -21,7 +21,8 @@ export class InstancedBatches implements Disposable {
     sync(geometry: BufferGeometry, requests: ReadonlyMap<string, BatchRequest>): ReadonlyMap<string, InstancedMesh> {
         for (const [key, mesh] of this.meshes) {
             if (!requests.has(key)) {
-                this.drop(key, mesh);
+                mesh.count = 0;
+                mesh.visible = false;
             }
         }
 
@@ -48,6 +49,7 @@ export class InstancedBatches implements Disposable {
         if (existing && existing.geometry === geometry && existing.material === request.material
             && existing.instanceMatrix.count >= request.count) {
             existing.count = request.count;
+            existing.visible = true;
 
             return existing;
         }

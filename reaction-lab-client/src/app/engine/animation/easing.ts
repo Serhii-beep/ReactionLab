@@ -1,3 +1,5 @@
+import { PhaseSpanSeconds } from "./reaction-script";
+
 export function easeInOutCubic(progress: number): number {
     return progress < 0.5 ? 4 * Math.pow(progress, 3) : 1 - Math.pow(-2 * progress + 2, 3) / 2;
 }
@@ -12,4 +14,8 @@ export function progressBetween(startSeconds: number, endSeconds: number, second
     }
 
     return Math.min(Math.max((seconds - startSeconds) / (endSeconds - startSeconds), 0), 1);
+}
+
+export function progressWithin(span: PhaseSpanSeconds, seconds: number): number {
+    return progressBetween(span.start, span.end, seconds);
 }

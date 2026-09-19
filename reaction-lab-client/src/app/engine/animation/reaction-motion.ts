@@ -1,156 +1,94 @@
 import { Box3, Sphere, Vector3 } from "three";
-import { BenchLayout, packUnits, PlacedAtom, PlacedBond } from "../scene/bench-layout";
-import { easeInOutCubic, easeOutCubic, progressBetween } from "./easing";
+import { BenchLayout } from "../scene/bench-layout";
+import { easeInOutCubic, easeOutCubic, progressBetween, progressWithin } from "./easing";
 import { ReactionScript } from "./reaction-script";
-
-export interface StagedBench {
-    readonly atoms: readonly PlacedAtom[];
-    readonly bonds: readonly PlacedBond[];
-    readonly sphereByUnitId: ReadonlyMap<string, Sphere>;
-}
-
-interface MovingPoint {
-    readonly live: Vector3;
-    readonly resting: Vector3;
-}
-
-interface UnitTravel {
-    readonly points: readonly MovingPoint[];
-    readonly fromShift: Vector3;
-    readonly toShift: Vector3;
-}
-
-interface StagedSet extends StagedBench {
-    readonly travels: readonly UnitTravel[];
-}
-
-type ShiftsFor = (unitId: string, sphere: Sphere) => readonly [Vector3, Vector3] | null;
+import { atomsOfUnits, bondsOfUnits, CentersByUnitId, gatheredCentersOf, meetingPointOf, mergePosedPoints, pointsAtProgress, poseUnits, ShiftsFor, StagedBench, StagedSet, stageTravellingUnits, UnitShifts } from "./unit-gathering";
+import { AtomMorph } from "./atom-morph";
+import { BondChanges, classifyBonds, indexBondsByEnds, setStrength } from "./bond-continuity";
+import { pairAtoms } from "./atom-pairing";
+import { refinePairing } from "./pairing-refinement";
 
 export class ReactionMotion {
     readonly bounds: Box3;
 
     private readonly reactantsSet: StagedSet;
     private readonly productsSet: StagedSet;
-    private readonly shift = new Vector3();
+    private readonly morph: AtomMorph;
+    private readonly bondChanges: BondChanges;
 
     constructor(private readonly script: ReactionScript, before: BenchLayout, after: BenchLayout) {
-        const consumedIds = [...before.sphereByUnitId.keys()].filter((unitId) => !after.sphereByUnitId.has(unitId));
-        const producedIds = [...after.sphereByUnitId.keys()].filter((unitId) => !before.sphereByUnitId.has(unitId));
-        const meeting = meetingPointOf(before, consumedIds);
-        const gatheredReactants = gatheredCentersOf(before, consumedIds, meeting);
-        const gatheredProducts = gatheredCentersOf(after, producedIds, meeting);
+        const consumedIds = new Set([...before.sphereByUnitId.keys()].filter((unitId) => !after.sphereByUnitId.has(unitId)));
+        const producedIds = new Set([...after.sphereByUnitId.keys()].filter((unitId) => !before.sphereByUnitId.has(unitId)));
+        const meeting = meetingPointOf(before, [...consumedIds]);
 
         this.bounds = before.bounds.clone().union(after.bounds);
-        this.reactantsSet = stage(before, (unitId, sphere) => {
-            const gathered = gatheredReactants.get(unitId);
+        this.reactantsSet = stageTravellingUnits(before, approachShifts(gatheredCentersOf(before, [...consumedIds], meeting)));
+        this.productsSet = stageTravellingUnits(after, releaseShifts(gatheredCentersOf(after, [...producedIds], meeting), before));
 
-            return gathered ? [new Vector3(), gathered.clone().sub(sphere.center)] : null;
-        });
-        this.productsSet = stage(after, (unitId, sphere) => {
-            const gathered = gatheredProducts.get(unitId);
+        const gathered = mergePosedPoints(pointsAtProgress(this.reactantsSet, 1), pointsAtProgress(this.productsSet, 0));
+        const reactantBonds = bondsOfUnits(this.reactantsSet, consumedIds);
+        const productBonds = bondsOfUnits(this.productsSet, producedIds);
+        const productBondByEnds = indexBondsByEnds(productBonds);
+        const nearestPairs = pairAtoms(atomsOfUnits(this.reactantsSet, consumedIds), atomsOfUnits(this.productsSet, producedIds), gathered);
+        const atomPairs = refinePairing(nearestPairs, reactantBonds, productBondByEnds, gathered);
 
-            if (gathered) {
-                return [gathered.clone().sub(sphere.center), new Vector3()];
-            }
-
-            const restingBefore = before.sphereByUnitId.get(unitId);
-
-            return restingBefore ? [restingBefore.center.clone().sub(sphere.center), new Vector3()] : null;
-        });
+        this.bondChanges = classifyBonds(reactantBonds, productBonds, productBondByEnds, atomPairs);
+        this.morph = new AtomMorph(atomPairs, this.bondChanges.surviving, gathered);
     }
 
     frameAt(seconds: number): StagedBench {
-        const { cues, durationSeconds } = this.script;
+        const { phases } = this.script;
 
-        if (seconds < cues.swapSeconds) {
-            return this.pose(this.reactantsSet, easeInOutCubic(progressBetween(0, cues.gatheredSeconds, seconds)));
-        }
+        if (seconds < phases.transitionState.end) {
+            poseUnits(this.reactantsSet, easeInOutCubic(progressWithin(phases.approach, seconds)));
 
-        return this.pose(this.productsSet, easeOutCubic(progressBetween(cues.releaseSeconds, durationSeconds, seconds)));
-    }
-
-    private pose(set: StagedSet, progress: number): StagedBench {
-        for (const travel of set.travels) {
-            this.shift.lerpVectors(travel.fromShift, travel.toShift, progress);
-
-            for (const point of travel.points) {
-                point.live.copy(point.resting).add(this.shift);
+            if (seconds >= phases.approach.end) {
+                this.morph.placeReactants(this.rearrangementAt(seconds));
             }
+
+            setStrength(this.bondChanges.breaking, 1 - easeOutCubic(progressWithin(phases.bondsBreak, seconds)));
+
+            return this.reactantsSet;
         }
 
-        return set;
+        poseUnits(this.productsSet, easeOutCubic(progressWithin(phases.separation, seconds)));
+
+        if (seconds < phases.bondsForm.end) {
+            this.morph.placeProducts(this.rearrangementAt(seconds));
+        }
+
+        setStrength(this.bondChanges.forming, easeOutCubic(progressWithin(phases.bondsForm, seconds)));
+
+        return this.productsSet;
+    }
+
+    private rearrangementAt(seconds: number): number {
+        const { phases } = this.script;
+
+        return easeInOutCubic(progressBetween(phases.bondsBreak.start, phases.bondsForm.end, seconds));
     }
 }
 
-function stage(layout: BenchLayout, shiftsFor: ShiftsFor): StagedSet {
-    const travels: UnitTravel[] = [];
+function approachShifts(gatheredCenterByUnitId: CentersByUnitId): ShiftsFor {
+    return (unitId, sphere) => {
+        const gatheredCenter = gatheredCenterByUnitId.get(unitId);
 
-    for (const [unitId, sphere] of layout.sphereByUnitId) {
-        const shifts = shiftsFor(unitId, sphere);
-
-        if (shifts !== null) {
-            travels.push({ points: movingPointsOf(layout, unitId, sphere), fromShift: shifts[0], toShift: shifts[1] });
-        }
-    }
-
-    return { atoms: layout.atoms, bonds: layout.bonds, sphereByUnitId: layout.sphereByUnitId, travels };
+        return gatheredCenter ? { fromShift: new Vector3(), toShift: gatheredCenter.clone().sub(sphere.center) } : null;
+    };
 }
 
-function movingPointsOf(layout: BenchLayout, unitId: string, sphere: Sphere): MovingPoint[] {
-    const points: MovingPoint[] = [{ live: sphere.center, resting: sphere.center.clone() }];
-    const centroids = new Set<Vector3>();
+function releaseShifts(gatheredCenterByUnitId: CentersByUnitId, before: BenchLayout): ShiftsFor {
+    return (unitId, sphere) => {
+        const gatheredCenter = gatheredCenterByUnitId.get(unitId);
 
-    for (const atom of layout.atoms) {
-        if (atom.unitId === unitId) {
-            points.push({ live: atom.position, resting: atom.position.clone() });
+        if (gatheredCenter) {
+            return { fromShift: gatheredCenter.clone().sub(sphere.center), toShift: new Vector3() };
         }
-    }
 
-    for (const bond of layout.bonds) {
-        if (bond.from.unitId === unitId) {
-            centroids.add(bond.centroid);
-        }
-    }
-
-    for (const centroid of centroids) {
-        points.push({ live: centroid, resting: centroid.clone() });
-    }
-
-    return points;
+        return spectatorShifts(before.sphereByUnitId.get(unitId), sphere);
+    };
 }
 
-function meetingPointOf(layout: BenchLayout, unitIds: readonly string[]): Vector3 {
-    const meeting = new Vector3();
-
-    for (const unitId of unitIds) {
-        const sphere = layout.sphereByUnitId.get(unitId);
-
-        if (sphere) {
-            meeting.add(sphere.center);
-        }
-    }
-
-    meeting.divideScalar(Math.max(unitIds.length, 1));
-    meeting.y = 0;
-
-    return meeting;
-}
-
-function gatheredCentersOf(layout: BenchLayout, unitIds: readonly string[], meeting: Vector3): ReadonlyMap<string, Vector3> {
-    const spheres = unitIds.flatMap((unitId) => {
-        const sphere = layout.sphereByUnitId.get(unitId);
-
-        return sphere ? [{ unitId, sphere }] : [];
-    });
-
-    const packed = packUnits(spheres.map(({ sphere }) => sphere.radius), 0);
-    const centers = new Map<string, Vector3>();
-
-    spheres.forEach(({ unitId, sphere }, index) => {
-        const slot = packed.centers[index];
-
-        centers.set(unitId, new Vector3(meeting.x + slot.x, sphere.center.y, meeting.z + slot.z));
-    });
-
-    return centers;
+function spectatorShifts(restingBefore: Sphere | undefined, sphere: Sphere): UnitShifts | null {
+    return restingBefore ? { fromShift: restingBefore.center.clone().sub(sphere.center), toShift: new Vector3() } : null;
 }

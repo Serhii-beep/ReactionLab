@@ -1,7 +1,7 @@
 import { computed, DOCUMENT, effect, inject, Injectable, signal, untracked } from "@angular/core";
 import { ReactionScript } from "../../../engine/animation/reaction-script";
 import { ReactionSummary } from "../../../data/reactions/reaction";
-import { DEFAULT_RUN_SECONDS, phaseAt, reactionTimeline, ReactionTimeline, runSecondsOf } from "../../../data/reactions/reaction-phases";
+import { activationBarrierOf, DEFAULT_RUN_SECONDS, phaseAt, reactionTimeline, ReactionTimeline, runSecondsOf } from "../../../data/reactions/reaction-phases";
 import { WorkspaceItem, WorkspaceStore } from "../../../state/workspace-store";
 import { UiStore } from "../../../state/ui-store";
 import { SubstanceDetailsClient } from "../../../data/substances/substance-details-client";
@@ -150,7 +150,7 @@ export class ReactionRun {
         if (step === 'before') {
             this.seek(0);
         } else if (step === 'during') {
-            this.seek(timeline.byName.transitionState.startSeconds);
+            this.seek(timeline.byName.transitionState.endSeconds);
         } else {
             this.seek(timeline.durationSeconds);
         }
@@ -192,7 +192,7 @@ export class ReactionRun {
             return;
         }
 
-        const timeline = reactionTimeline(runSecondsOf(reaction));
+        const timeline = reactionTimeline(runSecondsOf(reaction), activationBarrierOf(reaction));
         const script = buildReactionScript(timeline, {
             entriesBefore: this.workspace.entries(),
             entriesAfter: this.workspace.entriesAfter(outcome),
