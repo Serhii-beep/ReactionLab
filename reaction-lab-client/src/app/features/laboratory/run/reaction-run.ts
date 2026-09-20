@@ -14,6 +14,7 @@ import { buildReactionScript } from "./reaction-script-builder";
 import { readiness } from "../../../data/reactions/reaction-readiness";
 import { prefersReducedMotion } from "../../../core/platform/reduced-motion";
 import { tap } from "rxjs";
+import { choreographyTuningFor } from "./choreography-tuning";
 
 export type ReactionRunStatus = 'idle' | 'preparing' | 'playing' | 'paused' | 'finished';
 export type ReactionRunStep = 'before' | 'during' | 'after';
@@ -193,7 +194,7 @@ export class ReactionRun {
         }
 
         const timeline = reactionTimeline(runSecondsOf(reaction), activationBarrierOf(reaction));
-        const script = buildReactionScript(timeline, {
+        const script = buildReactionScript(timeline, choreographyTuningFor(reaction), {
             entriesBefore: this.workspace.entries(),
             entriesAfter: this.workspace.entriesAfter(outcome),
             details: this.details.loaded(),

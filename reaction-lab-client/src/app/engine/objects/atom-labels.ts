@@ -31,6 +31,7 @@ export class AtomLabels implements Disposable {
     readonly root = new Group();
 
     private readonly pool: Text[] = [];
+    private readonly labelsAwaitingText = new Set<Text>();
     private readonly toCamera = new Vector3();
     private readonly cameraUp = new Vector3();
     private atoms: readonly PlacedAtom[] = [];
@@ -47,11 +48,15 @@ export class AtomLabels implements Disposable {
         atoms.forEach((atom, index) => {
             const label = index < this.pool.length ? this.pool[index] : this.grow(ink);
 
-            label.text = atom.symbol;
+            if (label.text !== atom.symbol) {
+                label.text = atom.symbol;
+                this.labelsAwaitingText.add(label);
+            }
+
             label.fontSize = atom.radius * SIZE_FACTOR;
             label.color = inkFor(atom.color, ink).getHex();
-            label.visible = true;
-            label.sync();
+            label.visible = !this.labelsAwaitingText.has(label);
+            label.sync(() => this.labelsAwaitingText.delete(label));
         });
 
         for (const label of this.pool.slice(atoms.length)) {
@@ -73,7 +78,7 @@ export class AtomLabels implements Disposable {
 
             const distance = this.toCamera.length();
 
-            label.visible = projectedRadius(atom.radius, distance, camera.fov, viewportHeight) >= MIN_PIXELS;
+            label.visible = !this.labelsAwaitingText.has(label) && projectedRadius(atom.radius, distance, camera.fov, viewportHeight) >= MIN_PIXELS;
 
             if (label.visible) {
                 this.toCamera.divideScalar(distance);

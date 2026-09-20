@@ -1,4 +1,4 @@
-import { Sphere, Vector3 } from "three";
+import { Quaternion, Sphere, Vector3 } from "three";
 import { BenchLayout, packUnits, PlacedAtom, PlacedBond } from "../scene/bench-layout";
 
 export interface StagedBench {
@@ -14,19 +14,27 @@ export interface MovingPoint {
     readonly bond: PlacedBond | null;
 }
 
-export interface UnitShifts {
+export interface UnitTravelPlan {
     readonly fromShift: Vector3;
     readonly toShift: Vector3;
+    readonly tumbleRadians: number;
 }
 
-export interface UnitTravel extends UnitShifts {
+export interface UnitTravel extends UnitTravelPlan {
     readonly unitId: string;
+    readonly restingCenter: Vector3;
+    readonly travelDirection: Vector3;
     readonly points: readonly MovingPoint[];
-    readonly appliedShift: Vector3;
 }
 
 export interface StagedSet extends StagedBench {
     readonly travels: readonly UnitTravel[];
+}
+
+export interface UnitPose {
+    travelProgress: number;
+    turnFraction: number;
+    recoilAngstrom: number;
 }
 
 export interface PosedPoints {
@@ -36,44 +44,57 @@ export interface PosedPoints {
 
 export type CentersByUnitId = ReadonlyMap<string, Vector3>;
 
-export type ShiftsFor = (unitId: string, sphere: Sphere) => UnitShifts | null;
+export type TravelPlanFor = (unitId: string, sphere: Sphere) => UnitTravelPlan | null;
 
-export function stageTravellingUnits(layout: BenchLayout, shiftsFor: ShiftsFor): StagedSet {
+const UP = new Vector3(0, 1, 0);
+const SHIFT_SCRATCH = new Vector3();
+const TURN_SCRATCH = new Quaternion();
+const OFFSET_SCRATCH = new Vector3();
+
+export function stageTravellingUnits(layout: BenchLayout, planFor: TravelPlanFor): StagedSet {
     const travels: UnitTravel[] = [];
 
     for (const [unitId, sphere] of layout.sphereByUnitId) {
-        const shifts = shiftsFor(unitId, sphere);
+        const plan = planFor(unitId, sphere);
 
-        if (shifts !== null) {
-            travels.push({ ...shifts, unitId, points: movingPointsOf(layout, unitId, sphere), appliedShift: new Vector3() });
+        if (plan !== null) {
+            travels.push({
+                ...plan,
+                unitId,
+                restingCenter: sphere.center.clone(),
+                travelDirection: plan.toShift.clone().sub(plan.fromShift).normalize(),
+                points: movingPointsOf(layout, unitId, sphere)
+            });
         }
     }
 
     return { atoms: layout.atoms, bonds: layout.bonds, sphereByUnitId: layout.sphereByUnitId, travels };
 }
 
-export function poseUnits(stagedSet: StagedSet, progress: number): void {
+export function poseUnits(stagedSet: StagedSet, pose: Readonly<UnitPose>): void {
     for (const travel of stagedSet.travels) {
-        travel.appliedShift.lerpVectors(travel.fromShift, travel.toShift, progress);
+        shiftOf(travel, pose, SHIFT_SCRATCH);
+        turnOf(travel, pose, TURN_SCRATCH);
 
         for (const point of travel.points) {
-            point.live.copy(point.resting).add(travel.appliedShift);
+            placePosedPoint(point.live, travel, point.resting, TURN_SCRATCH, SHIFT_SCRATCH);
         }
     }
 }
 
-export function pointsAtProgress(stagedSet: StagedSet, progress: number): PosedPoints {
+export function pointsAtPose(stagedSet: StagedSet, pose: Readonly<UnitPose>): PosedPoints {
     const positionByAtom = new Map<PlacedAtom, Vector3>();
     const centroidByBond = new Map<PlacedBond, Vector3>();
 
     for (const travel of stagedSet.travels) {
-        const shift = new Vector3().lerpVectors(travel.fromShift, travel.toShift, progress);
+        const shift = shiftOf(travel, pose, new Vector3());
+        const turn = turnOf(travel, pose, new Quaternion());
 
         for (const point of travel.points) {
             if (point.atom !== null) {
-                positionByAtom.set(point.atom, point.resting.clone().add(shift));
+                positionByAtom.set(point.atom, placePosedPoint(new Vector3(), travel, point.resting, turn, shift));
             } else if (point.bond !== null) {
-                centroidByBond.set(point.bond, point.resting.clone().add(shift));
+                centroidByBond.set(point.bond, placePosedPoint(new Vector3(), travel, point.resting, turn, shift));
             }
         }
     }
@@ -154,6 +175,20 @@ export function gatheredCentersOf(layout: BenchLayout, unitIds: readonly string[
     });
 
     return centerByUnitId;
+}
+
+function shiftOf(travel: UnitTravel, pose: Readonly<UnitPose>, target: Vector3): Vector3 {
+    return target.lerpVectors(travel.fromShift, travel.toShift, pose.travelProgress).addScaledVector(travel.travelDirection, -pose.recoilAngstrom);
+}
+
+function turnOf(travel: UnitTravel, pose: Readonly<UnitPose>, target: Quaternion): Quaternion {
+    return target.setFromAxisAngle(UP, travel.tumbleRadians * pose.turnFraction);
+}
+
+function placePosedPoint(target: Vector3, travel: UnitTravel, resting: Vector3, turn: Quaternion, shift: Vector3): Vector3 {
+    OFFSET_SCRATCH.subVectors(resting, travel.restingCenter).applyQuaternion(turn);
+
+    return target.copy(travel.restingCenter).add(OFFSET_SCRATCH).add(shift);
 }
 
 function movingPointsOf(layout: BenchLayout, unitId: string, sphere: Sphere): MovingPoint[] {
