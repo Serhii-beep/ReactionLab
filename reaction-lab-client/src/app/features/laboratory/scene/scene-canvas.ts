@@ -202,8 +202,9 @@ export class SceneCanvas {
             return mustPresent;
         });
         this.loop.onPresent((intervalSeconds) => this.governor.sample(intervalSeconds));
-        this.governor.onChange(() => {
+        this.governor.onChange((level) => {
             this.scene.refreshLod();
+            this.scene.setEffectsQuality(level);
             this.loop.invalidate();
         });
         this.guard.onLost(() => this.graphicsNotices.lost());

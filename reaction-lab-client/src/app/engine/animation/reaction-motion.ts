@@ -7,6 +7,7 @@ import { AtomMorph } from "./atom-morph";
 import { BondChanges, classifyBonds, indexBondsByEnds, setStrength } from "./bond-continuity";
 import { pairAtoms } from "./atom-pairing";
 import { refinePairing } from "./pairing-refinement";
+import { EmissionAnchors } from "../particles/emission-plan";
 
 const GATHERED_REACTANTS: Readonly<UnitPose> = Object.freeze({ travelProgress: 1, turnFraction: 1, recoilAngstrom: 0 });
 const GATHERED_PRODUCTS: Readonly<UnitPose> = Object.freeze({ travelProgress: 0, turnFraction: 1, recoilAngstrom: 0 });
@@ -18,6 +19,7 @@ const VARIATION_STEPS = 100;
 
 export class ReactionMotion {
     readonly bounds: Box3;
+    readonly emissionAnchors: EmissionAnchors;
 
     private readonly reactantsSet: StagedSet;
     private readonly productsSet: StagedSet;
@@ -34,8 +36,16 @@ export class ReactionMotion {
         const separationTumble = Math.min(tuning.tumbleRadiansPerSecond * secondsOf(phases.separation), MAX_TUMBLE_RADIANS);
 
         this.bounds = before.bounds.clone().union(after.bounds);
-        this.reactantsSet = stageTravellingUnits(before, approachPlans(gatheredCentersOf(before, [...consumedIds], meeting), approachTumble));
-        this.productsSet = stageTravellingUnits(after, releasePlans(gatheredCentersOf(after, [...producedIds], meeting), before, separationTumble));
+        const gatheredReactantCenters = gatheredCentersOf(before, [...consumedIds], meeting);
+        const gatheredProductCenters = gatheredCentersOf(after, [...producedIds], meeting);
+
+        this.emissionAnchors = {
+            meeting: raisedToCenters(meeting, gatheredReactantCenters),
+            products: [...gatheredProductCenters.values()],
+            reactants: [...gatheredReactantCenters.values()]
+        };
+        this.reactantsSet = stageTravellingUnits(before, approachPlans(gatheredReactantCenters, approachTumble));
+        this.productsSet = stageTravellingUnits(after, releasePlans(gatheredProductCenters, before, separationTumble));
 
         const gathered = mergePosedPoints(pointsAtPose(this.reactantsSet, GATHERED_REACTANTS), pointsAtPose(this.productsSet, GATHERED_PRODUCTS));
         const reactantBonds = bondsOfUnits(this.reactantsSet, consumedIds);
@@ -142,4 +152,16 @@ function tumbleOf(unitId: string, referenceTumbleRadians: number): number {
     const variation = TUMBLE_VARIATION_FLOOR + (1 - TUMBLE_VARIATION_FLOOR) * ((Math.floor(hash / 2) % VARIATION_STEPS) / VARIATION_STEPS);
 
     return sign * variation * referenceTumbleRadians;
+}
+
+function raisedToCenters(meeting: Vector3, centerByUnitId: CentersByUnitId): Vector3 {
+    const centers = [...centerByUnitId.values()];
+
+    if (centers.length === 0) {
+        return meeting.clone();
+    }
+
+    const height = centers.reduce((sum, center) => sum + center.y, 0) / centers.length;
+
+    return meeting.clone().setY(height);
 }

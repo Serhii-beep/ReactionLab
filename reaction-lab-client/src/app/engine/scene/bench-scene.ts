@@ -18,6 +18,8 @@ import { ReactionDirector } from "../animation/reaction-director";
 import { ReactionMotion } from "../animation/reaction-motion";
 import { StagedBench } from "../animation/unit-gathering";
 import { ReactionScript } from "../animation/reaction-script";
+import { ReactionEffects } from "../particles/reaction-effects";
+import { QualityLevel } from "../performance/quality-governor";
 
 export interface BenchSceneCollaborators {
     readonly context: EngineContext;
@@ -31,6 +33,7 @@ export interface BenchSceneCollaborators {
     readonly picking: PickingService;
     readonly lod: LodController;
     readonly director: ReactionDirector;
+    readonly effects: ReactionEffects;
 }
 
 export interface UnitAnchor {
@@ -54,6 +57,7 @@ export class BenchScene implements Disposable {
     private bounds = new Box3();
     private sphereByUnitId: ReadonlyMap<string, Sphere> = new Map();
     private motion: ReactionMotion | null = null;
+    private runTailSeconds = 0;
     private ink: LabelInk | null = null;
     private viewportWidth = REFERENCE_WIDTH;
     private viewportHeight = REFERENCE_HEIGHT;
@@ -65,9 +69,9 @@ export class BenchScene implements Disposable {
     private readonly projectedCenter = new Vector3();
 
     constructor(private readonly collaborators: BenchSceneCollaborators) {
-        const { context, atoms, bonds, outline, labels } = collaborators;
+        const { context, atoms, bonds, outline, labels, effects } = collaborators;
 
-        context.scene.add(atoms.root, bonds.root, outline.root, labels.root);
+        context.scene.add(atoms.root, bonds.root, outline.root, labels.root, effects.root);
     }
 
     setViewportSize(width: number, height: number): void {
@@ -107,6 +111,8 @@ export class BenchScene implements Disposable {
         const opening = motion.frameAt(0);
 
         this.motion = motion;
+        this.runTailSeconds = 0;
+        this.collaborators.effects.begin(script.emissions, motion.emissionAnchors);
         this.bounds = motion.bounds;
         this.fitBench(opening.atoms, animated);
         this.show(opening);
@@ -114,6 +120,7 @@ export class BenchScene implements Disposable {
 
     endRun(): void {
         this.motion = null;
+        this.collaborators.effects.end();
     }
 
     setHighlight(targetLevels: ReadonlyMap<string, number>): void {
@@ -183,6 +190,10 @@ export class BenchScene implements Disposable {
         this.needsRender = true;
     }
 
+    setEffectsQuality(level: QualityLevel): void {
+        this.collaborators.effects.setQuality(level);
+    }
+
     update(deltaSeconds: number): boolean {
         const { context, camera, highlight, outline, labels } = this.collaborators;
         const moved = camera.update(deltaSeconds);
@@ -194,7 +205,7 @@ export class BenchScene implements Disposable {
         const fading = highlight.update(deltaSeconds);
 
         this.settleLod(moved);
-        this.advanceRun();
+        this.advanceRun(deltaSeconds);
 
         if (moved || fading || this.outlineDirty) {
             outline.update(highlight.highlightLevels, OUTLINE_PIXELS * worldPerPixel(camera.distance, context.camera.fov, this.viewportHeight));
@@ -213,9 +224,9 @@ export class BenchScene implements Disposable {
     }
 
     dispose(): void {
-        const { context, atoms, bonds, outline, labels } = this.collaborators;
+        const { context, atoms, bonds, outline, labels, effects } = this.collaborators;
 
-        context.scene.remove(atoms.root, bonds.root, outline.root, labels.root);
+        context.scene.remove(atoms.root, bonds.root, outline.root, labels.root, effects.root);
     }
 
     private fitBench(atoms: readonly PlacedAtom[], animated: boolean): void {
@@ -246,11 +257,22 @@ export class BenchScene implements Disposable {
         }
     }
 
-    private advanceRun(): void {
-        const { director } = this.collaborators;
+    private advanceRun(deltaSeconds: number): void {
+        const { director, effects } = this.collaborators;
 
-        if (this.motion !== null && director.consumeMovement()) {
+        if (this.motion === null) {
+            return;
+        }
+
+        if (director.consumeMovement()) {
             this.show(this.motion.frameAt(director.elapsedSeconds));
+            this.runTailSeconds = 0;
+        }
+
+        this.runTailSeconds += director.status === 'finished' ? deltaSeconds : 0;
+
+        if (effects.setElapsed(director.elapsedSeconds + this.runTailSeconds)) {
+            this.needsRender = true;
         }
     }
 

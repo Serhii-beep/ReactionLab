@@ -1,3 +1,4 @@
+import { EmissionPlan } from "../particles/emission-plan";
 import { LayoutUnit } from "../scene/bench-layout";
 
 export type MotionPhaseName = 'approach' | 'collision' | 'bondsBreak' | 'transitionState' | 'bondsForm' | 'separation';
@@ -22,6 +23,7 @@ export interface ReactionScript {
     readonly durationSeconds: number;
     readonly phases: PhaseSpansByName;
     readonly tuning: ChoreographyTuning;
+    readonly emissions: readonly EmissionPlan[];
     readonly unitsBefore: readonly LayoutUnit[];
     readonly unitsAfter: readonly LayoutUnit[];
 }

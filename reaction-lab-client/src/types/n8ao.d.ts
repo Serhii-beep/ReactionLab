@@ -16,6 +16,7 @@ declare module 'n8ao' {
 
     export class N8AOPostPass extends Pass {
         readonly configuration: N8AOConfiguration;
+        autoDetectTransparency: boolean;
         constructor(scene: Scene, camera: Camera, width: number, height: number);
         setQualityMode(mode: N8AOQualityMode): void;
         setSize(width: number, height: number): void;

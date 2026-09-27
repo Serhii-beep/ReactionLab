@@ -31,6 +31,7 @@ export class PostProcessingPipeline implements Disposable, Presenter {
         this.occlusion.configuration.distanceFalloff = AO_FALLOFF;
         this.occlusion.configuration.intensity = AO_INTENSITY;
         this.occlusion.configuration.gammaCorrection = false;
+        this.occlusion.autoDetectTransparency = false;
         this.smaa = new EffectPass(camera, new SMAAEffect({ preset: SMAAPreset.HIGH }));
 
         this.composer.addPass(new RenderPass(scene, camera));
