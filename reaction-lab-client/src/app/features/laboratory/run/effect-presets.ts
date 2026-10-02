@@ -110,7 +110,7 @@ export function emissionPlansFor(reaction: ReactionSummary, timeline: ReactionTi
     return recipe === null ? [] : recipe(timeline);
 }
 
-function isEffectPresetKey(key: string): key is EffectPresetKey {
+export function isEffectPresetKey(key: string): key is EffectPresetKey {
     return KNOWN_KEYS.includes(key);
 }
 

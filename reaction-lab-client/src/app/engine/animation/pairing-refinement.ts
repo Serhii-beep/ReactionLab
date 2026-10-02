@@ -1,7 +1,7 @@
 import { PlacedAtom, PlacedBond } from "../scene/bench-layout";
 import { AtomPair } from "./atom-pairing";
 import { BondByAtomPair, bondSurvives } from "./bond-continuity";
-import { PosedPoints, posedPositionOf } from "./unit-gathering";
+import { PosedPoints, posedPositionOf } from "./unit-staging";
 
 type BondsByAtom = ReadonlyMap<PlacedAtom, readonly PlacedBond[]>;
 

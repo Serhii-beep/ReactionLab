@@ -44,7 +44,7 @@ export interface BenchLayout {
     readonly sphereByUnitId: ReadonlyMap<string, Sphere>;
 }
 
-export interface PackedUnits {
+interface PackedUnits {
     readonly centers: readonly Vector3[];
     readonly width: number;
     readonly depth: number;
@@ -71,7 +71,7 @@ interface BenchUnderConstruction {
 const GAP = 1.6;
 const ROW_LIMIT = 8;
 const RING_SPREAD = 1.85;
-const FLOOR_CLEARANCE = 0.12;
+export const FLOOR_CLEARANCE = 0.12;
 
 export function layoutBench(units: readonly LayoutUnit[]): BenchLayout {
     const extents = units.map(measureUnit);
@@ -98,7 +98,24 @@ export function layoutBench(units: readonly LayoutUnit[]): BenchLayout {
     return bench;
 }
 
-export function packUnits(radii: readonly number[], gap: number): PackedUnits {
+export function ringPositions(radii: readonly number[]): Vector3[] {
+    const count = radii.length;
+
+    if (count <= 1) {
+        return radii.map(() => new Vector3());
+    }
+
+    const mean = radii.reduce((sum, radius) => sum + radius, 0) / count;
+    const ring = (count === 2 ? mean : mean / Math.sin(Math.PI / count)) * RING_SPREAD;
+
+    return radii.map((_, index) => {
+        const angle = (index / count) * Math.PI * 2;
+
+        return new Vector3(Math.cos(angle) * ring, Math.sin(angle) * ring, 0);
+    });
+}
+
+function packUnits(radii: readonly number[], gap: number): PackedUnits {
     const rows: number[][] = [];
 
     for (let index = 0; index < radii.length; index += ROW_LIMIT) {
@@ -123,23 +140,6 @@ export function packUnits(radii: readonly number[], gap: number): PackedUnits {
     });
 
     return { centers, width: Math.max(0, ...rowWidths), depth };
-}
-
-export function ringPositions(radii: readonly number[]): Vector3[] {
-    const count = radii.length;
-
-    if (count <= 1) {
-        return radii.map(() => new Vector3());
-    }
-
-    const mean = radii.reduce((sum, radius) => sum + radius, 0) / count;
-    const ring = (count === 2 ? mean : mean / Math.sin(Math.PI / count)) * RING_SPREAD;
-
-    return radii.map((_, index) => {
-        const angle = (index / count) * Math.PI * 2;
-
-        return new Vector3(Math.cos(angle) * ring, Math.sin(angle) * ring, 0);
-    });
 }
 
 function blocksBySubstance(units: readonly LayoutUnit[]): UnitBlock[] {

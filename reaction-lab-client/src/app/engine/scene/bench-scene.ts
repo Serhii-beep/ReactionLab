@@ -16,7 +16,7 @@ import { distanceFor, framingFor } from "../core/camera-framing";
 import { LodController } from "../performance/lod-controller";
 import { ReactionDirector } from "../animation/reaction-director";
 import { ReactionMotion } from "../animation/reaction-motion";
-import { StagedBench } from "../animation/unit-gathering";
+import { StagedBench } from "../animation/unit-staging";
 import { ReactionScript } from "../animation/reaction-script";
 import { ReactionEffects } from "../particles/reaction-effects";
 import { QualityLevel } from "../performance/quality-governor";

@@ -1,5 +1,5 @@
 import { PlacedAtom } from "../scene/bench-layout";
-import { PosedPoints, posedPositionOf } from "./unit-gathering";
+import { PosedPoints, posedPositionOf } from "./unit-staging";
 
 export interface AtomPair {
     readonly reactant: PlacedAtom;

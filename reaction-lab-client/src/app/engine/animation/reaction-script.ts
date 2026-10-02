@@ -10,19 +10,18 @@ export interface PhaseSpanSeconds {
 
 export type PhaseSpansByName = Readonly<Record<MotionPhaseName, PhaseSpanSeconds>>;
 
-export interface ChoreographyTuning {
-    readonly tumbleRadiansPerSecond: number;
-    readonly recoilAngstrom: number;
-    readonly bulgeAngstrom: number;
-    readonly jitterAngstrom: number;
-    readonly jitterHertz: number;
-    readonly releaseExponent: number;
+export interface ReactionEnergetics {
+    readonly enthalpyKilojoulesPerMole: number | null;
+    readonly activationKilojoulesPerMole: number | null;
+    readonly flightShare: number;
 }
 
 export interface ReactionScript {
     readonly durationSeconds: number;
     readonly phases: PhaseSpansByName;
-    readonly tuning: ChoreographyTuning;
+    readonly energetics: ReactionEnergetics;
+    readonly massBySymbol: ReadonlyMap<string, number>;
+    readonly randomSeed: string;
     readonly emissions: readonly EmissionPlan[];
     readonly unitsBefore: readonly LayoutUnit[];
     readonly unitsAfter: readonly LayoutUnit[];

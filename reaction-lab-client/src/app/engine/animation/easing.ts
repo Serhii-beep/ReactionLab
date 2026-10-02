@@ -4,12 +4,16 @@ export function easeInOutCubic(progress: number): number {
     return progress < 0.5 ? 4 * Math.pow(progress, 3) : 1 - Math.pow(-2 * progress + 2, 3) / 2;
 }
 
-export function easeOutCubic(progress: number): number {
-    return 1 - Math.pow(1 - progress, 3);
+export function easeInOutCubicRateOf(progress: number): number {
+    return progress < 0.5 ? 12 * progress * progress : 12 * (1 - progress) * (1 - progress);
 }
 
-export function easeOutPower(progress: number, exponent: number): number {
-    return 1 - Math.pow(1 - progress, exponent);
+export function easeInToGlide(progress: number): number {
+    return progress * progress * (2.75 - 1.75 * progress);
+}
+
+export function glideRateOf(progress: number): number {
+    return progress * (5.5 - 5.25 * progress);
 }
 
 export function progressBetween(startSeconds: number, endSeconds: number, seconds: number): number {
@@ -18,6 +22,12 @@ export function progressBetween(startSeconds: number, endSeconds: number, second
     }
 
     return Math.min(Math.max((seconds - startSeconds) / (endSeconds - startSeconds), 0), 1);
+}
+
+export function smoothProgressBetween(startSeconds: number, endSeconds: number, seconds: number): number {
+    const progress = progressBetween(startSeconds, endSeconds, seconds);
+
+    return progress * progress * (3 - 2 * progress);
 }
 
 export function progressWithin(span: PhaseSpanSeconds, seconds: number): number {

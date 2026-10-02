@@ -14,7 +14,6 @@ import { buildReactionScript } from "./reaction-script-builder";
 import { readiness } from "../../../data/reactions/reaction-readiness";
 import { prefersReducedMotion } from "../../../core/platform/reduced-motion";
 import { tap } from "rxjs";
-import { choreographyTuningFor } from "./choreography-tuning";
 import { emissionPlansFor } from "./effect-presets";
 
 export type ReactionRunStatus = 'idle' | 'preparing' | 'playing' | 'paused' | 'finished';
@@ -152,7 +151,7 @@ export class ReactionRun {
         if (step === 'before') {
             this.seek(0);
         } else if (step === 'during') {
-            this.seek(timeline.byName.transitionState.endSeconds);
+            this.seek((timeline.byName.transitionState.startSeconds + timeline.byName.transitionState.endSeconds) / 2);
         } else {
             this.seek(timeline.durationSeconds);
         }
@@ -195,7 +194,7 @@ export class ReactionRun {
         }
 
         const timeline = reactionTimeline(runSecondsOf(reaction), activationBarrierOf(reaction));
-        const script = buildReactionScript(timeline, choreographyTuningFor(reaction), emissionPlansFor(reaction, timeline), {
+        const script = buildReactionScript(reaction, timeline, emissionPlansFor(reaction, timeline), {
             entriesBefore: this.workspace.entries(),
             entriesAfter: this.workspace.entriesAfter(outcome),
             details: this.details.loaded(),

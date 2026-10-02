@@ -59,7 +59,7 @@
         },
         "empty": {
             "heading": "Your bench is empty",
-            "description": "Add a substance to see what if can react with. Everything you put here becomes an object in the scene.",
+            "description": "Add a substance to see what it can react with. Everything you put here becomes an object in the scene.",
             "search": "Search substances",
             "table": "Open the periodic table"
         },

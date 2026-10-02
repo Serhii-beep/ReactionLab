@@ -14,16 +14,18 @@ export interface ReactionTimeline {
     readonly byName: Readonly<Record<ReactionPhaseName, ReactionPhase>>;
 }
 
-export const DEFAULT_RUN_SECONDS = 3;
+export const DEFAULT_RUN_SECONDS = 5;
 
-const INNER_SHARE_WITHOUT_BARRIER = 0.5;
-const INNER_SHARE_PER_BARRIER = 0.2;
-const INNER_WEIGHTS = { collision: 0.2, bondsBreak: 0.3, transitionState: 0.2, bondsForm: 0.3 };
+const CATALOG_PACE_FACTOR = 5 / 3;
+const INNER_SHARE_WITHOUT_BARRIER = 0.35;
+const INNER_SHARE_PER_BARRIER = 0.15;
+const INNER_WEIGHTS = { collision: 8 / 39, bondsBreak: 10 / 39, transitionState: 9 / 39, bondsForm: 12 / 39 };
+const APPROACH_SHARE_OF_OUTER = 28 / 61;
 const BARRIER_REFERENCE_KILOJOULES_PER_MOLE = 250;
 
 export function reactionTimeline(durationSeconds: number, activationBarrier = 0): ReactionTimeline {
     const innerSeconds = (INNER_SHARE_WITHOUT_BARRIER + INNER_SHARE_PER_BARRIER * activationBarrier) * durationSeconds;
-    const approach = phase('approach', 0, (durationSeconds - innerSeconds) / 2);
+    const approach = phase('approach', 0, (durationSeconds - innerSeconds) * APPROACH_SHARE_OF_OUTER);
     const collision = phase('collision', approach.endSeconds, innerSeconds * INNER_WEIGHTS.collision);
     const bondsBreak = phase('bondsBreak', collision.endSeconds, innerSeconds * INNER_WEIGHTS.bondsBreak);
     const transitionState = phase('transitionState', bondsBreak.endSeconds, innerSeconds * INNER_WEIGHTS.transitionState);
@@ -42,7 +44,7 @@ export function phaseAt(timeline: ReactionTimeline, seconds: number): ReactionPh
 }
 
 export function runSecondsOf(reaction: ReactionSummary): number {
-    return reaction.animationDurationMilliseconds === null ? DEFAULT_RUN_SECONDS : reaction.animationDurationMilliseconds / 1000;
+    return reaction.animationDurationMilliseconds === null ? DEFAULT_RUN_SECONDS : (reaction.animationDurationMilliseconds / 1000) * CATALOG_PACE_FACTOR;
 }
 
 export function activationBarrierOf(reaction: ReactionSummary): number {
