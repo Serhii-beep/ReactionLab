@@ -72,7 +72,11 @@ export function dissociationSumOf(picture: BondingPicture): number {
     return picture.bonds.reduce((sum, bond) => sum + bond.dissociation, 0);
 }
 
-export function heldPairsOf(picture: BondingPicture): Set<number> {
+export function pairKey(first: number, second: number): number {
+    return first < second ? first * PAIR_KEY_STRIDE + second : second * PAIR_KEY_STRIDE + first;
+}
+
+function heldPairsOf(picture: BondingPicture): Set<number> {
     const held = new Set<number>();
 
     for (const bond of picture.bonds) {
@@ -84,10 +88,6 @@ export function heldPairsOf(picture: BondingPicture): Set<number> {
     }
 
     return held;
-}
-
-export function pairKey(first: number, second: number): number {
-    return first < second ? first * PAIR_KEY_STRIDE + second : second * PAIR_KEY_STRIDE + first;
 }
 
 function morseBondOf(bond: IndexedBond, atoms: readonly SimulatedAtom[], rest: Float64Array): MorseBond {

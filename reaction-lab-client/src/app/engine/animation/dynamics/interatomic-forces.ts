@@ -3,7 +3,7 @@ import { addPictureGradient, BondingPicture } from "./bonding-picture";
 import { CoreRepulsion } from "./core-repulsion";
 import { MolecularSystem, TIME_UNITS_PER_SECOND } from "./molecular-system";
 
-const FLOOR_RATE = 25 / TIME_UNITS_PER_SECOND;
+const FLOOR_RATE = 90 / TIME_UNITS_PER_SECOND;
 const CRITICAL_DAMPING = 2;
 
 export class InteratomicForces {

@@ -1,9 +1,9 @@
-import { BondingPicture, heldPairsOf, pairKey } from "./bonding-picture";
-import { MolecularSystem } from "./molecular-system";
+import { BondingPicture, pairKey } from "./bonding-picture";
+import { MolecularSystem, TIME_UNITS_PER_SECOND } from "./molecular-system";
 
 const CORE_REACH_SHARE = 0.6;
 const CONTACT_REACH_SHARE = 0.82;
-const REPULSION_STIFFNESS = 2400;
+const CORE_RATE = 90 / TIME_UNITS_PER_SECOND;
 
 const NEIGHBOR_MARGIN = 1.0;
 const REBUILD_DISTANCE_SQUARED = (NEIGHBOR_MARGIN / 2) ** 2;
@@ -15,12 +15,13 @@ export class CoreRepulsion {
     private readonly firstAtomOfPair: Int32Array;
     private readonly secondAtomOfPair: Int32Array;
     private readonly reachOfPair: Float64Array;
+    private readonly stiffnessOfPair: Float64Array;
     private readonly nearPairIndices: Int32Array;
     private readonly positionsAtBuild: Float64Array;
     private nearCount = 0;
 
     constructor(private readonly system: MolecularSystem, reactant: BondingPicture, product: BondingPicture) {
-        const heldByEither = new Set([...heldPairsOf(reactant), ...heldPairsOf(product)]);
+        const bondedInEither = new Set([...reactant.bonds, ...product.bonds].map((bond) => pairKey(bond.first, bond.second)));
         const { atoms } = system;
         const pairCount = (atoms.length * (atoms.length - 1)) / 2;
         let pairIndex = 0;
@@ -28,16 +29,19 @@ export class CoreRepulsion {
         this.firstAtomOfPair = new Int32Array(pairCount);
         this.secondAtomOfPair = new Int32Array(pairCount);
         this.reachOfPair = new Float64Array(pairCount);
+        this.stiffnessOfPair = new Float64Array(pairCount);
         this.nearPairIndices = new Int32Array(pairCount);
         this.positionsAtBuild = new Float64Array(system.positions.length);
 
         for (let first = 0; first < atoms.length; first++) {
             for (let second = first + 1; second < atoms.length; second++, pairIndex++) {
-                const reachShare = heldByEither.has(pairKey(first, second)) ? CORE_REACH_SHARE : CONTACT_REACH_SHARE;
+                const reachShare = bondedInEither.has(pairKey(first, second)) ? CORE_REACH_SHARE : CONTACT_REACH_SHARE;
+                const reducedMass = (atoms[first].mass * atoms[second].mass) / (atoms[first].mass + atoms[second].mass);
 
                 this.firstAtomOfPair[pairIndex] = first;
                 this.secondAtomOfPair[pairIndex] = second;
                 this.reachOfPair[pairIndex] = reachShare * (atoms[first].radius + atoms[second].radius);
+                this.stiffnessOfPair[pairIndex] = reducedMass * CORE_RATE * CORE_RATE;
             }
         }
 
@@ -65,7 +69,7 @@ export class CoreRepulsion {
             return;
         }
 
-        const pushOverDistance = (REPULSION_STIFFNESS * (reach - distance)) / distance;
+        const pushOverDistance = (this.stiffnessOfPair[pairIndex] * (reach - distance)) / distance;
 
         for (let axis = 0; axis < 3; axis++) {
             forces[first * 3 + axis] -= pushOverDistance * SEPARATION[axis];
