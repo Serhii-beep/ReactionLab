@@ -17,6 +17,7 @@ export interface SpringPull {
     readonly damping: number;
     readonly weight: number;
     readonly drift: Vector3;
+    readonly minPulledMass: number;
 }
 
 export const TIME_UNITS_PER_SECOND = 0.42;
@@ -57,7 +58,7 @@ export class MolecularSystem {
     }
 
     pullToward(index: number, goal: Vector3, spring: SpringPull): void {
-        const mass = this.atoms[index].mass * spring.weight;
+        const mass = Math.max(this.atoms[index].mass, spring.minPulledMass) * spring.weight;
         const stiffness = spring.omega * spring.omega;
         const friction = spring.damping * spring.omega;
         const slot = index * 3;

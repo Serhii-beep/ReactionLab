@@ -54,7 +54,7 @@ export function withAntiBonding(picture: BondingPicture, other: BondingPicture):
     return { ...picture, antiBonds: other.bonds.filter((bond) => !held.has(pairKey(bond.first, bond.second))) };
 }
 
-export function addPictureGradient(picture: BondingPicture, positions: Float64Array, gradient: Float64Array): void {
+export function addPictureGradient(picture: BondingPicture, positions: Float64Array, gradient: Float64Array, antiBondingWeight: number): void {
     for (const bond of picture.bonds) {
         addMorseGradient(bond, positions, gradient);
     }
@@ -63,13 +63,28 @@ export function addPictureGradient(picture: BondingPicture, positions: Float64Ar
         addBendGradient(bend, positions, gradient);
     }
 
+    if (antiBondingWeight <= 0) {
+        return;
+    }
+
     for (const bond of picture.antiBonds) {
-        addAntiBondingGradient(bond, positions, gradient);
+        addAntiBondingGradient(bond, positions, gradient, antiBondingWeight);
     }
 }
 
 export function dissociationSumOf(picture: BondingPicture): number {
     return picture.bonds.reduce((sum, bond) => sum + bond.dissociation, 0);
+}
+
+export function rebondingAtomIndicesOf(reactant: BondingPicture, product: BondingPicture): Set<number> {
+    const reactantPairs = new Set(reactant.bonds.map((bond) => pairKey(bond.first, bond.second)));
+    const productPairs = new Set(product.bonds.map((bond) => pairKey(bond.first, bond.second)));
+    const changedBonds = [
+        ...reactant.bonds.filter((bond) => !productPairs.has(pairKey(bond.first, bond.second))),
+        ...product.bonds.filter((bond) => !reactantPairs.has(pairKey(bond.first, bond.second)))
+    ];
+
+    return new Set(changedBonds.flatMap((bond) => [bond.first, bond.second]));
 }
 
 export function pairKey(first: number, second: number): number {
@@ -141,10 +156,10 @@ function addMorseGradient(bond: MorseBond, positions: Float64Array, gradient: Fl
     addPairGradient(gradient, positions, bond, (2 * bond.dissociation * bond.steepness * decay * (1 - decay)) / length);
 }
 
-function addAntiBondingGradient(bond: MorseBond, positions: Float64Array, gradient: Float64Array): void {
+function addAntiBondingGradient(bond: MorseBond, positions: Float64Array, gradient: Float64Array, weight: number): void {
     const length = distanceBetween(positions, bond.first, bond.second);
     const decay = Math.exp(-bond.steepness * (length - bond.restLength));
-    const half = 0.5 * ANTI_BONDING_SHARE * bond.dissociation;
+    const half = 0.5 * ANTI_BONDING_SHARE * bond.dissociation * weight;
 
     addPairGradient(gradient, positions, bond, (-2 * bond.steepness * half * (decay * decay + decay)) / length);
 }

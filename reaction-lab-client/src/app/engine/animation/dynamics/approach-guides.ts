@@ -1,7 +1,7 @@
 import { Vector3 } from "three";
 import { MolecularSystem, Molecule, TIME_UNITS_PER_SECOND } from "./molecular-system";
-import { DynamicsSchedule } from "./dynamics-schedule";
-import { easeInToGlide, glideRateOf, progressBetween, smoothProgressBetween } from "../easing";
+import { approachWeightAt, DynamicsSchedule } from "./dynamics-schedule";
+import { easeInToGlide, glideRateOf, progressBetween } from "../easing";
 
 export interface ApproachArc {
     readonly from: Vector3;
@@ -20,8 +20,6 @@ const LIFT = { shareOfRise: 0.6, extraAngstrom: 0.4 };
 const ENTRY_REACH = 0.6;
 
 const APPROACH_RATE = 9;
-const LET_GO_LEAD_SECONDS = 0.05;
-const LET_GO_SHARE_OF_COLLISION = 0.3;
 
 export function approachArcOf(from: Vector3, to: Vector3, meeting: Vector3): ApproachArc {
     return {
@@ -50,7 +48,7 @@ export class ApproachGuides {
     }
 
     accumulate(seconds: number): void {
-        const weight = this.weightAt(seconds);
+        const weight = approachWeightAt(this.schedule, seconds);
 
         if (weight <= 0) {
             return;
@@ -71,13 +69,6 @@ export class ApproachGuides {
                 .addScaledVector(this.goalVelocity, 2 * omega);
             this.system.accelerate(molecule.atomIndices, this.acceleration, weight);
         }
-    }
-
-    private weightAt(seconds: number): number {
-        const { collisionStartSeconds, collisionEndSeconds } = this.schedule;
-        const letGoEnd = collisionStartSeconds + LET_GO_SHARE_OF_COLLISION * (collisionEndSeconds - collisionStartSeconds);
-
-        return 1 - smoothProgressBetween(collisionStartSeconds - LET_GO_LEAD_SECONDS, letGoEnd, seconds);
     }
 }
 

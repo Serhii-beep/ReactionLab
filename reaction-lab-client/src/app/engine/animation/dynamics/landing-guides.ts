@@ -57,7 +57,7 @@ export class LandingGuides {
         }
 
         const timing = poseTimingAt(sinceRelease);
-        const spring: SpringPull = { omega: POSE.rate / TIME_UNITS_PER_SECOND, damping: CRITICAL_DAMPING, weight: timing.weight, drift: this.anchorVelocity };
+        const spring: SpringPull = { omega: POSE.rate / TIME_UNITS_PER_SECOND, damping: CRITICAL_DAMPING, weight: timing.weight, drift: this.anchorVelocity, minPulledMass: 0 };
         const settleFriction = settleFrictionOf(settleWeight, airFrictionPerSecond);
 
         for (const product of this.products) {

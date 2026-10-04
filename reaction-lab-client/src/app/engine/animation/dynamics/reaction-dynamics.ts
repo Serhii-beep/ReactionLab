@@ -3,9 +3,9 @@ import { smoothProgressBetween } from "../easing";
 import { ReactionEnergetics } from "../reaction-script";
 import { ActivationShaping } from "./activation-shaping";
 import { ApproachArc, ApproachGuides } from "./approach-guides";
-import { bondingPictureOf, dissociationSumOf, IndexedBond, withAntiBonding } from "./bonding-picture";
+import { bondingPictureOf, dissociationSumOf, IndexedBond, rebondingAtomIndicesOf, withAntiBonding } from "./bonding-picture";
 import { DynamicsRecording } from "./dynamics-recording";
-import { DynamicsSchedule, productWeightAt } from "./dynamics-schedule";
+import { antiBondingWeightsAt, contactRigidityAt, DynamicsSchedule, productWeightAt } from "./dynamics-schedule";
 import { AIR_DRAG_PER_SECOND, LaunchDraws, launchProducts, ReleaseBudget, releaseBudgetOf, ringDown } from "./energy-release";
 import { InteratomicForces } from "./interatomic-forces";
 import { LandingGuides } from "./landing-guides";
@@ -78,9 +78,14 @@ class ReactionSimulation {
         this.products = moleculesOf(atoms, input.productUnitIds);
         this.draws = { uniform, standardNormal: standardNormalSource(uniform) };
         this.releaseBudget = releaseBudgetOf(input.energetics, dissociationSumOf(reactantPicture) - dissociationSumOf(productPicture), atoms.length);
-        this.interatomicForces = new InteratomicForces(this.system, withAntiBonding(reactantPicture, productPicture), withAntiBonding(productPicture, reactantPicture));
+        this.interatomicForces = new InteratomicForces(
+            this.system,
+            withAntiBonding(reactantPicture, productPicture),
+            withAntiBonding(productPicture, reactantPicture),
+            this.reactants,
+            this.products);
         this.approachGuides = new ApproachGuides(this.system, this.reactants, input.approachArcByUnitId, schedule);
-        this.activationShaping = new ActivationShaping(this.system, this.products, productRest, schedule);
+        this.activationShaping = new ActivationShaping(this.system, this.products, productRest, schedule, rebondingAtomIndicesOf(reactantPicture, productPicture));
         this.landingGuides = new LandingGuides(this.system, this.products, productRest, schedule);
         this.bath = new LangevinBath(this.system, this.draws.standardNormal);
         this.warm();
@@ -137,7 +142,7 @@ class ReactionSimulation {
         const productWeight = productWeightAt(this.input.schedule, seconds);
 
         this.system.forces.fill(0);
-        this.interatomicForces.accumulate(productWeight);
+        this.interatomicForces.accumulate(productWeight, contactRigidityAt(this.input.schedule, seconds), antiBondingWeightsAt(this.input.schedule, seconds));
         this.approachGuides.accumulate(seconds);
         this.activationShaping.accumulate(seconds, productWeight);
         this.landingGuides.accumulate(seconds, airFrictionPerSecondAt(this.input.schedule, seconds));
