@@ -28,9 +28,7 @@ export function indexBondsByEnds(bonds: readonly PlacedBond[]): BondByAtomPair {
 }
 
 export function productCounterpartOf(bond: PlacedBond, productByReactant: ProductByReactant, productBondByEnds: BondByAtomPair): PlacedBond | undefined {
-    const from = productByReactant.get(bond.from);
-    const to = productByReactant.get(bond.to);
-    const counterpart = from !== undefined && to !== undefined ? productBondByEnds.get(from)?.get(to) : undefined;
+    const counterpart = productBondOnSameEnds(bond, productByReactant, productBondByEnds);
 
     return counterpart !== undefined && counterpart.kind === bond.kind ? counterpart : undefined;
 }
@@ -51,7 +49,7 @@ export function classifyBonds(
     const surviving: SurvivingBond[] = [];
 
     for (const bond of reactantBonds) {
-        const counterpart = productCounterpartOf(bond, productByReactant, productBondByEnds);
+        const counterpart = productBondOnSameEnds(bond, productByReactant, productBondByEnds);
 
         if (counterpart === undefined) {
             breaking.push(bond);
@@ -64,10 +62,11 @@ export function classifyBonds(
     return { breaking, surviving, forming: productBonds.filter((bond) => !survivingProducts.has(bond)) };
 }
 
-export function setStrength(bonds: readonly PlacedBond[], strength: number): void {
-    for (const bond of bonds) {
-        bond.strength = strength;
-    }
+function productBondOnSameEnds(bond: PlacedBond, productByReactant: ProductByReactant, productBondByEnds: BondByAtomPair): PlacedBond | undefined {
+    const from = productByReactant.get(bond.from);
+    const to = productByReactant.get(bond.to);
+
+    return from !== undefined && to !== undefined ? productBondByEnds.get(from)?.get(to) : undefined;
 }
 
 function indexBondEnd(bondByEnds: Map<PlacedAtom, Map<PlacedAtom, PlacedBond>>, from: PlacedAtom, to: PlacedAtom, bond: PlacedBond): void {

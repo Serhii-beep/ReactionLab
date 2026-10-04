@@ -1,19 +1,11 @@
 import { BufferGeometry, Group, Vector3 } from "three";
-import { BondKind, PlacedAtom, PlacedBond } from "../scene/bench-layout";
+import { PlacedAtom, PlacedBond } from "../scene/bench-layout";
 import { MaterialCache } from "../resources/material-cache";
 import { Disposable } from "../core/disposal-scope";
 import { BatchRequest, commit, InstancedBatches } from "./instanced-batches";
 import { GeometryCache, Lod } from "../resources/geometry-cache";
 import { CylinderTransform } from "./cylinder-transform";
-
-
-type Stroke = 'solid' | 'dashed' | 'dotted';
-
-interface Line {
-    readonly offset: number;
-    readonly radius: number;
-    readonly stroke: Stroke;
-}
+import { bondPerpendicular, Line, linesOf, Stroke } from "../scene/bond-lines";
 
 interface Pattern {
     readonly period: number;
@@ -29,42 +21,12 @@ export interface BondPiece {
 
 type BondPieces = Map<string, BondPiece[]>;
 
-const LINES: Readonly<Record<BondKind, readonly Line[]>> = {
-    single: [{ offset: 0, radius: 0.08, stroke: 'solid' }],
-    double: [{ offset: -0.11, radius: 0.055, stroke: 'solid' }, { offset: 0.11, radius: 0.055, stroke: 'solid' }],
-    triple: [
-        { offset: -0.15, radius: 0.048, stroke: 'solid' },
-        { offset: 0, radius: 0.048, stroke: 'solid' },
-        { offset: 0.15, radius: 0.048, stroke: 'solid' }
-    ],
-    aromatic: [{ offset: 0, radius: 0.065, stroke: 'solid' }, { offset: 0.15, radius: 0.04, stroke: 'dashed' }],
-    ionic: [{ offset: 0, radius: 0.06, stroke: 'dashed' }],
-    hydrogen: [{ offset: 0, radius: 0.045, stroke: 'dotted' }],
-    metallic: [{ offset: 0, radius: 0.08, stroke: 'solid' }]
-};
-
 const PATTERNS: Readonly<Record<Exclude<Stroke, 'solid'>, Pattern>> = {
     dashed: { period: 0.3, duty: 0.6 },
     dotted: { period: 0.16, duty: 0 }
 };
 
-const UP = new Vector3(0, 1, 0);
-const RIGHT = new Vector3(1, 0, 0);
 const MIN_STRENGTH = 0.02;
-
-export function bondPerpendicular(bond: PlacedBond): Vector3 {
-    const axis = bond.to.position.clone().sub(bond.from.position).normalize();
-    const center = bond.from.position.clone().add(bond.to.position).multiplyScalar(0.5);
-    const perpendicular = bond.centroid.clone().sub(center);
-
-    perpendicular.addScaledVector(axis, -perpendicular.dot(axis));
-
-    if (perpendicular.lengthSq() < 1e-6) {
-        perpendicular.crossVectors(axis, Math.abs(axis.y) < 0.9 ? UP : RIGHT);
-    }
-
-    return perpendicular.normalize();
-}
 
 export function bondPieces(bond: PlacedBond): BondPiece[] {
     if (bond.strength < MIN_STRENGTH) {
@@ -74,7 +36,7 @@ export function bondPieces(bond: PlacedBond): BondPiece[] {
     const perpendicular = bondPerpendicular(bond);
     const pieces: BondPiece[] = [];
 
-    for (const line of LINES[bond.kind]) {
+    for (const line of linesOf(bond)) {
         const shift = perpendicular.clone().multiplyScalar(line.offset);
 
         if (line.stroke === 'solid') {
@@ -113,7 +75,7 @@ export class BondRenderer implements Disposable {
 
             const perpendicular = bondPerpendicular(bond);
 
-            for (const line of LINES[bond.kind]) {
+            for (const line of linesOf(bond)) {
                 const shift = perpendicular.clone().multiplyScalar(line.offset);
                 const made = line.stroke === 'solid' ? halves(bond, line, shift) : patterned(bond, line, shift, PATTERNS[line.stroke]);
 

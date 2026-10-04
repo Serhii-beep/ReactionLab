@@ -46,7 +46,7 @@ export class SelectionOutline implements Disposable {
 
     render(atoms: readonly PlacedAtom[], bonds: readonly PlacedBond[]): void {
         this.atoms = atoms;
-        this.outlinedBonds = bonds.map((bond) => ({ unitId: bond.from.unitId, pieces: bondPieces(bond) }));
+        this.outlinedBonds = bonds.filter((bond) => bond.from.unitId === bond.to.unitId).map((bond) => ({ unitId: bond.from.unitId, pieces: bondPieces(bond) }));
     }
 
     update(highlightLevels: HighlightLevelsByUnitId, thickness: number): void {

@@ -33,8 +33,9 @@ export interface PlacedBond {
     readonly from: PlacedAtom;
     readonly to: PlacedAtom;
     readonly kind: BondKind;
-    readonly centroid: Vector3;
+    readonly sidePoint: Vector3;
     strength: number;
+    partial: boolean;
 }
 
 export interface BenchLayout {
@@ -169,7 +170,7 @@ function placeUnits(unit: LayoutUnit, extent: UnitExtent, offset: Vector3, bench
     }
 
     for (const bond of unit.bonds) {
-        bench.bonds.push({ from: placed[bond.from], to: placed[bond.to], kind: bond.kind, centroid: centroid.clone(), strength: 1 });
+        bench.bonds.push({ from: placed[bond.from], to: placed[bond.to], kind: bond.kind, sidePoint: centroid.clone(), strength: 1, partial: false });
     }
 
     bench.sphereByUnitId.set(unit.id, new Sphere(centroid.clone(), extent.radius));

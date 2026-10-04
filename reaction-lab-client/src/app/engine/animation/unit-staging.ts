@@ -108,7 +108,7 @@ function movingPointsOf(layout: BenchLayout, unitId: string, sphere: Sphere): Mo
 
     for (const bond of layout.bonds) {
         if (bond.from.unitId === unitId) {
-            points.push({ live: bond.centroid, resting: bond.centroid.clone(), atom: null });
+            points.push({ live: bond.sidePoint, resting: bond.sidePoint.clone(), atom: null });
         }
     }
 
