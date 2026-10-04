@@ -3,12 +3,17 @@ import { ReactionScript } from "./reaction-script";
 
 export type DirectorStatus = 'idle' | 'playing' | 'paused' | 'finished';
 
+const SHOWN_FRAME_SPACING_SECONDS = 0.0075;
+
 export class ReactionDirector {
     private readonly clock = new PlaybackClock();
     private readonly finishedListeners = new Set<() => void>();
     private runningScript: ReactionScript | null = null;
     private currentStatus: DirectorStatus = 'idle';
     private movedSinceRender = false;
+    private soughtSinceShown = false;
+    private lastShownSeconds = 0;
+    private finishedForSeconds = 0;
 
     get script(): ReactionScript | null {
         return this.runningScript;
@@ -22,6 +27,14 @@ export class ReactionDirector {
         return this.clock.elapsedSeconds;
     }
 
+    get shownSeconds(): number {
+        return this.lastShownSeconds;
+    }
+
+    get secondsSinceFinish(): number {
+        return this.finishedForSeconds;
+    }
+
     onFinished(listener: () => void): () => void {
         this.finishedListeners.add(listener);
 
@@ -33,6 +46,8 @@ export class ReactionDirector {
         this.clock.reset(script.durationSeconds);
         this.currentStatus = 'playing';
         this.movedSinceRender = true;
+        this.lastShownSeconds = 0;
+        this.finishedForSeconds = 0;
     }
 
     pause(): void {
@@ -54,6 +69,8 @@ export class ReactionDirector {
 
         this.clock.seek(seconds);
         this.movedSinceRender = true;
+        this.soughtSinceShown = true;
+        this.finishedForSeconds = 0;
 
         if (this.clock.atEnd) {
             this.finish();
@@ -63,6 +80,11 @@ export class ReactionDirector {
     }
 
     advance(stepSeconds: number): void {
+        if (this.currentStatus === 'finished') {
+            this.finishedForSeconds += stepSeconds;
+            return;
+        }
+
         if (this.currentStatus !== 'playing') {
             return;
         }
@@ -80,14 +102,35 @@ export class ReactionDirector {
         this.currentStatus = 'idle';
         this.clock.reset(0);
         this.movedSinceRender = true;
+        this.lastShownSeconds = 0;
+        this.finishedForSeconds = 0;
     }
 
-    consumeMovement(): boolean {
+    takeShownSeconds(stepRemainderSeconds: number): number | null {
+        const moved = this.consumeMovement();
+
+        if (this.currentStatus !== 'playing') {
+            return moved ? this.markShown(this.clock.elapsedSeconds) : null;
+        }
+
+        const seconds = Math.min(this.clock.elapsedSeconds + stepRemainderSeconds, this.clock.durationSeconds);
+
+        return this.soughtSinceShown || seconds - this.lastShownSeconds >= SHOWN_FRAME_SPACING_SECONDS ? this.markShown(seconds) : null;
+    }
+
+    private consumeMovement(): boolean {
         const moved = this.movedSinceRender;
 
         this.movedSinceRender = false;
 
         return moved;
+    }
+
+    private markShown(seconds: number): number {
+        this.lastShownSeconds = seconds;
+        this.soughtSinceShown = false;
+
+        return seconds;
     }
 
     private finish(): void {

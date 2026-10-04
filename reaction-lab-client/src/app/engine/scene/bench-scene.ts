@@ -59,7 +59,6 @@ export class BenchScene implements Disposable {
     private bounds = new Box3();
     private sphereByUnitId: ReadonlyMap<string, Sphere> = new Map();
     private motion: ReactionMotion | null = null;
-    private runTailSeconds = 0;
     private ink: LabelInk | null = null;
     private viewportWidth = REFERENCE_WIDTH;
     private viewportHeight = REFERENCE_HEIGHT;
@@ -114,7 +113,6 @@ export class BenchScene implements Disposable {
         const { effects, runCamera } = this.collaborators;
 
         this.motion = motion;
-        this.runTailSeconds = 0;
         effects.begin(script.emissions, motion.emissionAnchors);
         this.bounds = motion.bounds;
         runCamera.end();
@@ -147,7 +145,7 @@ export class BenchScene implements Disposable {
 
         if (runCamera.directing && !animated) {
             camera.fenceTo(this.bounds, framing.center);
-            runCamera.follow(director.elapsedSeconds);
+            runCamera.follow(director.shownSeconds);
         } else {
             camera.frame(framing.center, framing.distance, this.bounds, animated);
         }
@@ -211,10 +209,10 @@ export class BenchScene implements Disposable {
         this.collaborators.effects.setQuality(level);
     }
 
-    update(deltaSeconds: number): boolean {
+    update(deltaSeconds: number, stepRemainderSeconds: number): boolean {
         const { context, camera, highlight, outline, labels } = this.collaborators;
 
-        this.advanceRun(deltaSeconds);
+        this.advanceRun(stepRemainderSeconds);
 
         const moved = camera.update(deltaSeconds);
 
@@ -275,22 +273,21 @@ export class BenchScene implements Disposable {
         }
     }
 
-    private advanceRun(deltaSeconds: number): void {
+    private advanceRun(stepRemainderSeconds: number): void {
         const { director, effects, runCamera } = this.collaborators;
 
         if (this.motion === null) {
             return;
         }
 
-        if (director.consumeMovement()) {
-            this.show(this.motion.frameAt(director.elapsedSeconds));
-            runCamera.follow(director.elapsedSeconds);
-            this.runTailSeconds = 0;
+        const seconds = director.takeShownSeconds(stepRemainderSeconds);
+
+        if (seconds !== null) {
+            this.show(this.motion.frameAt(seconds));
+            runCamera.follow(seconds);
         }
 
-        this.runTailSeconds += director.status === 'finished' ? deltaSeconds : 0;
-
-        if (effects.setElapsed(director.elapsedSeconds + this.runTailSeconds)) {
+        if (effects.setElapsed(director.shownSeconds + director.secondsSinceFinish)) {
             this.needsRender = true;
         }
     }

@@ -2,7 +2,7 @@ import { Disposable } from "./disposal-scope";
 import { EngineContext } from "./engine-context";
 
 export type UpdateListener = (stepSeconds: number) => void;
-export type RenderListener = (deltaSeconds: number) => boolean;
+export type RenderListener = (deltaSeconds: number, stepRemainderSeconds: number) => boolean;
 export type PresentListener = (intervalSeconds: number) => void;
 
 const FIXED_STEP = 1 / 60;
@@ -117,7 +117,7 @@ export class RenderLoop implements Disposable {
         this.invalidated = false;
 
         for (const render of this.renders) {
-            mustPresent = render(delta) || mustPresent;
+            mustPresent = render(delta, this.accumulator) || mustPresent;
         }
 
         if (mustPresent) {

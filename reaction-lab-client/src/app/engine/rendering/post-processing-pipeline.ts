@@ -1,4 +1,4 @@
-import { BloomEffect, EffectComposer, EffectPass, RenderPass, SMAAEffect, SMAAPreset, ToneMappingEffect, ToneMappingMode, VignetteEffect } from "postprocessing";
+import { BloomEffect, DepthOfFieldEffect, EffectComposer, EffectPass, RenderPass, SMAAEffect, SMAAPreset, ToneMappingEffect, ToneMappingMode, VignetteEffect } from "postprocessing";
 import { Disposable } from "../core/disposal-scope";
 import { EngineContext, Presenter } from "../core/engine-context";
 import { N8AOPostPass } from "n8ao";
@@ -12,6 +12,14 @@ const BLOOM_THRESHOLD = 1.0;
 const BLOOM_INTENSITY = 0.5;
 const VIGNETTE_OFFSET = 0.35;
 const MULTISAMPLES = 4;
+const DEPTH_OF_FIELD_RESOLUTION = 0.75;
+
+export interface LensFocus {
+    readonly focusDistance: number;
+    readonly focusRange: number;
+    readonly bokehScale: number;
+    readonly vignetteDeepening: number;
+}
 
 export class PostProcessingPipeline implements Disposable, Presenter {
     private readonly composer: EffectComposer;
@@ -19,8 +27,12 @@ export class PostProcessingPipeline implements Disposable, Presenter {
     private readonly bloom = new BloomEffect({ luminanceThreshold: BLOOM_THRESHOLD, intensity: BLOOM_INTENSITY, mipmapBlur: true });
     private readonly smaa: EffectPass;
     private readonly vignette = new VignetteEffect({ offset: VIGNETTE_OFFSET, darkness: 0 });
+    private readonly depthOfField: DepthOfFieldEffect;
+    private readonly depthOfFieldPass: EffectPass;
 
     private tier: QualityTier = 'low';
+    private lookVignetteDarkness = 0;
+    private vignetteDeepening = 0;
 
     constructor(private readonly context: EngineContext) {
         const { renderer, scene, camera } = context;
@@ -33,9 +45,14 @@ export class PostProcessingPipeline implements Disposable, Presenter {
         this.occlusion.configuration.gammaCorrection = false;
         this.occlusion.autoDetectTransparency = false;
         this.smaa = new EffectPass(camera, new SMAAEffect({ preset: SMAAPreset.HIGH }));
+        this.depthOfField = new DepthOfFieldEffect(camera, { bokehScale: 0, resolutionScale: DEPTH_OF_FIELD_RESOLUTION });
+
+        this.depthOfFieldPass = new EffectPass(camera, this.depthOfField);
+        this.depthOfFieldPass.enabled = false;
 
         this.composer.addPass(new RenderPass(scene, camera));
         this.composer.addPass(this.occlusion);
+        this.composer.addPass(this.depthOfFieldPass);
         this.composer.addPass(new EffectPass(camera, this.bloom));
         this.composer.addPass(this.smaa);
         this.composer.addPass(new EffectPass(
@@ -75,7 +92,24 @@ export class PostProcessingPipeline implements Disposable, Presenter {
     }
 
     setVignette(darkness: number): void {
-        this.vignette.darkness = darkness;
+        this.lookVignetteDarkness = darkness;
+        this.vignette.darkness = darkness + this.vignetteDeepening;
+    }
+
+    setLensFocus(focus: LensFocus): void {
+        this.depthOfField.cocMaterial.focusDistance = focus.focusDistance;
+        this.depthOfField.cocMaterial.focusRange = focus.focusRange;
+        this.depthOfField.bokehScale = focus.bokehScale;
+        this.depthOfFieldPass.enabled = true;
+        this.vignetteDeepening = focus.vignetteDeepening;
+        this.vignette.darkness = this.lookVignetteDarkness + focus.vignetteDeepening;
+    }
+
+    clearLensFocus(): void {
+        this.depthOfField.bokehScale = 0;
+        this.depthOfFieldPass.enabled = false;
+        this.vignetteDeepening = 0;
+        this.vignette.darkness = this.lookVignetteDarkness;
     }
 
     setOcclusionColor(color: Color): void {

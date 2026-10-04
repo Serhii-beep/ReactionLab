@@ -194,8 +194,8 @@ export class SceneCanvas {
     private start(): void {
         this.host.nativeElement.append(this.context.canvas);
         this.scene.setReducedMotion(!this.animated());
-        this.loop.onRender((deltaSeconds) => {
-            const mustPresent = this.scene.update(deltaSeconds);
+        this.loop.onRender((deltaSeconds, stepRemainderSeconds) => {
+            const mustPresent = this.scene.update(deltaSeconds, stepRemainderSeconds);
 
             this.hud().place();
 

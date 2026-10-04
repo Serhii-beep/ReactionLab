@@ -78,7 +78,7 @@ function sceneProviders(): Provider[] {
         { provide: QualityGovernor, useFactory: () => new QualityGovernor(inject(PostProcessingPipeline), inject(ViewportObserver), inject(LodController)) },
         { provide: ReactionDirector, useFactory: () => new ReactionDirector() },
         owned(ReactionEffects, () => new ReactionEffects()),
-        owned(RunCamera, () => new RunCamera(inject(EngineContext), inject(CameraController), inject(PointerInput))),
+        owned(RunCamera, () => new RunCamera(inject(EngineContext), inject(CameraController), inject(PointerInput), inject(PostProcessingPipeline))),
         owned(BenchScene, () => new BenchScene({
             context: inject(EngineContext),
             camera: inject(CameraController),

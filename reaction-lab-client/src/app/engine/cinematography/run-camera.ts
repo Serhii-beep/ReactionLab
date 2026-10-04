@@ -5,13 +5,17 @@ import { CameraShake } from "./camera-shake";
 import { EngineContext } from "../core/engine-context";
 import { CameraController } from "../interaction/camera-controller";
 import { PointerInput } from "../interaction/pointer-input";
-import { ReactionScript } from "../animation/reaction-script";
+import { PhaseSpansByName, ReactionScript } from "../animation/reaction-script";
 import { CameraCues } from "./camera-cues";
 import { distancePerRadius, framedSphereOf } from "../core/camera-framing";
+import { PostProcessingPipeline } from "../rendering/post-processing-pipeline";
+import { smoothProgressBetween } from "../animation/easing";
 
 interface RunShot {
     readonly path: CameraPath;
     readonly shake: CameraShake;
+    readonly phases: PhaseSpansByName;
+    readonly focusRange: number;
 }
 
 const CLOSE_MARGIN = 1.3;
@@ -22,6 +26,10 @@ const REVEAL_LIFT = 0.1;
 const CLOSE_POLAR = { dip: 0.05, lowest: 0.95, highest: 1.15, transitionDip: 0.03 };
 const AZIMUTH_TURN = { approach: 0.35, transitionState: 0.55, reveal: 0.66, settled: 0.25 };
 const TARGET_SHARE_OF_SHAKE = 0.6;
+const BOKEH_SCALE = 1.6;
+const FOCUS_RANGE_OF_GATHERED = 4.2;
+const VIGNETTE_DEEPENING = 0.2;
+const DEFOCUS_SHARE_OF_SEPARATION = 0.45;
 
 export class RunCamera implements Disposable {
     private shot: RunShot | null = null;
@@ -36,7 +44,8 @@ export class RunCamera implements Disposable {
     constructor(
         private readonly context: EngineContext,
         private readonly camera: CameraController,
-        private readonly pointer: PointerInput
+        private readonly pointer: PointerInput,
+        private readonly pipeline: PostProcessingPipeline
     ) {
         this.stopListening = camera.onTakeover(() => this.handBackUnlessPressedInPlace());
     }
@@ -57,7 +66,9 @@ export class RunCamera implements Disposable {
 
         this.shot = {
             path: new CameraPath(keys),
-            shake: new CameraShake(script.phases.bondsForm.start, script.durationSeconds, cues.enthalpyKilojoulesPerMole)
+            shake: new CameraShake(script.phases.bondsForm.start, script.durationSeconds, cues.enthalpyKilojoulesPerMole),
+            phases: script.phases,
+            focusRange: cues.gathered.radius * FOCUS_RANGE_OF_GATHERED
         };
     }
 
@@ -66,7 +77,7 @@ export class RunCamera implements Disposable {
             return;
         }
 
-        const { path, shake } = this.shot;
+        const { path, shake, phases, focusRange } = this.shot;
 
         this.followedSeconds = seconds;
         path.sampleAt(seconds, this.target, this.framedView);
@@ -78,10 +89,20 @@ export class RunCamera implements Disposable {
         this.position.add(this.shakeOffset);
         this.target.addScaledVector(this.shakeOffset, TARGET_SHARE_OF_SHAKE);
         this.camera.pose(this.position, this.target);
+
+        const engagement = lensEngagementAt(phases, seconds);
+
+        this.pipeline.setLensFocus({
+            focusDistance: cameraDistance,
+            focusRange,
+            bokehScale: BOKEH_SCALE * engagement,
+            vignetteDeepening: VIGNETTE_DEEPENING * engagement
+        });
     }
 
     end(): void {
         this.shot = null;
+        this.pipeline.clearLensFocus();
     }
 
     dispose(): void {
@@ -95,6 +116,13 @@ export class RunCamera implements Disposable {
             this.end();
         }
     }
+}
+
+function lensEngagementAt(phases: PhaseSpansByName, seconds: number): number {
+    const { approach, separation } = phases;
+    const defocusEndSeconds = separation.start + DEFOCUS_SHARE_OF_SEPARATION * (separation.end - separation.start);
+
+    return smoothProgressBetween(0, approach.end, seconds) * (1 - smoothProgressBetween(separation.start, defocusEndSeconds, seconds));
 }
 
 function runKeysOf(script: ReactionScript, cues: CameraCues, startTarget: Vector3, startView: Spherical, distancePerFramedRadius: number): CameraKey[] {
