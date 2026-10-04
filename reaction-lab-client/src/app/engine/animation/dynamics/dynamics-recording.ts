@@ -5,6 +5,13 @@ export interface DynamicsRecording {
     readonly framesPerSecond: number;
     readonly frames: readonly Float32Array[];
     readonly schedule: DynamicsSchedule;
+    readonly enthalpyKilojoulesPerMole: number;
+}
+
+const REACH_SCRATCH = new Vector3();
+
+export function recordedReachAt(recording: DynamicsRecording, atomRadii: readonly number[], seconds: number, center: Vector3): number {
+    return atomRadii.reduce((reach, radius, atomIndex) => Math.max(reach, recordedPositionAt(recording, atomIndex, seconds, REACH_SCRATCH).distanceTo(center) + radius), 0);
 }
 
 export function recordedPositionAt(recording: DynamicsRecording, atomIndex: number, seconds: number, target: Vector3): Vector3 {

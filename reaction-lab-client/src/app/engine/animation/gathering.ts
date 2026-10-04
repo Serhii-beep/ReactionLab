@@ -70,6 +70,18 @@ export function boundsWithGathering(before: BenchLayout, after: BenchLayout, gat
     return bounds;
 }
 
+export function gatheredSphereOf(before: BenchLayout, gathering: Gathering): Sphere {
+    const sphere = new Sphere(gathering.meeting.clone(), 0);
+
+    for (const [unitId, center] of gathering.centerByUnitId) {
+        const unitRadius = before.sphereByUnitId.get(unitId)?.radius ?? 0;
+
+        sphere.radius = Math.max(sphere.radius, center.distanceTo(sphere.center) + unitRadius);
+    }
+
+    return sphere;
+}
+
 function benchSpotsOf(layout: BenchLayout, unitIds: readonly string[]): BenchSpot[] {
     return unitIds.flatMap((unitId) => {
         const sphere = layout.sphereByUnitId.get(unitId);

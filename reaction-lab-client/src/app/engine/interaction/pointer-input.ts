@@ -35,12 +35,17 @@ export class PointerInput implements Disposable {
         element.addEventListener('pointerdown', this.onDown);
         element.addEventListener('click', this.onClick);
         element.addEventListener('dblclick', this.onDoubleClick);
+        this.document.addEventListener('pointermove', this.onPressMove, true);
         this.document.addEventListener('pointerup', this.onUp);
         this.document.addEventListener('pointercancel', this.onUp);
     }
 
     get lastPosition(): ClientPoint | null {
         return this.last;
+    }
+
+    get pressedInPlace(): boolean {
+        return this.press !== null && !this.dragged;
     }
 
     bind(handlers: PointerHandlers): () => void {
@@ -59,6 +64,7 @@ export class PointerInput implements Disposable {
         this.element.removeEventListener('pointerdown', this.onDown);
         this.element.removeEventListener('click', this.onClick);
         this.element.removeEventListener('dblclick', this.onDoubleClick);
+        this.document.removeEventListener('pointermove', this.onPressMove, true);
         this.document.removeEventListener('pointerup', this.onUp);
         this.document.removeEventListener('pointercancel', this.onUp);
         this.handlers = null;
@@ -67,15 +73,15 @@ export class PointerInput implements Disposable {
     private readonly onMove = (event: PointerEvent): void => {
         this.last = { x: event.clientX, y: event.clientY };
 
-        if (this.press) {
-            if (event.pointerId === this.press.id && !this.dragged) {
-                this.dragged = Math.hypot(event.clientX - this.press.x, event.clientY - this.press.y) > DRAG_SLOP;
-            }
-
-            return;
+        if (!this.press) {
+            this.handlers?.move(event.clientX, event.clientY);
         }
+    };
 
-        this.handlers?.move(event.clientX, event.clientY);
+    private readonly onPressMove = (event: PointerEvent): void => {
+        if (this.press?.id === event.pointerId && !this.dragged) {
+            this.dragged = Math.hypot(event.clientX - this.press.x, event.clientY - this.press.y) > DRAG_SLOP;
+        }
     };
 
     private readonly onLeave = (): void => {
@@ -84,7 +90,9 @@ export class PointerInput implements Disposable {
     };
 
     private readonly onDown = (event: PointerEvent): void => {
-        if (this.press) {
+        if (!event.isPrimary) {
+            this.dragged = true;
+
             return;
         }
 

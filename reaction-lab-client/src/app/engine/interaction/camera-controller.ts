@@ -16,9 +16,10 @@ const FENCE = 8;
 export class CameraController implements Disposable {
     private readonly controls: CameraControls;
     private readonly fence = new Box3();
+    private readonly cameraOffset = new Vector3();
 
     constructor(
-        private readonly context: EngineContext,
+        context: EngineContext,
         element: HTMLElement
     ) {
         this.controls = new CameraControls(context.camera, element);
@@ -44,8 +45,13 @@ export class CameraController implements Disposable {
     }
 
     frame(center: Vector3, distance: number, bounds: Box3, transition: boolean): void {
+        this.fenceTo(bounds, center);
+        this.focus(center, distance, transition);
+    }
+
+    fenceTo(bounds: Box3, fallbackCenter: Vector3): void {
         if (bounds.isEmpty()) {
-            this.fence.set(center, center);
+            this.fence.set(fallbackCenter, fallbackCenter);
         } else {
             this.fence.copy(bounds);
         }
@@ -53,12 +59,33 @@ export class CameraController implements Disposable {
         this.fence.expandByScalar(FENCE);
         this.fence.min.y = Math.max(this.fence.min.y, 0);
         this.controls.setBoundary(this.fence);
-        this.focus(center, distance, transition);
     }
 
     focus(center: Vector3, distance: number, transition: boolean): void {
         this.controls.setTarget(center.x, center.y, center.z, transition);
         this.controls.dollyTo(distance, transition);
+    }
+
+    pose(position: Vector3, target: Vector3): void {
+        const offset = this.cameraOffset.subVectors(position, target);
+
+        offset.setLength(MathUtils.clamp(offset.length(), MIN_DISTANCE, MAX_DISTANCE));
+        this.controls.setLookAt(target.x + offset.x, target.y + offset.y, target.z + offset.z, target.x, target.y, target.z, false);
+    }
+
+    currentPose(position: Vector3, target: Vector3): void {
+        this.controls.getPosition(position, false);
+        this.controls.getTarget(target, false);
+    }
+
+    onTakeover(listener: () => void): () => void {
+        this.controls.addEventListener('control', listener);
+        this.controls.addEventListener('transitionstart', listener);
+
+        return () => {
+            this.controls.removeEventListener('control', listener);
+            this.controls.removeEventListener('transitionstart', listener);
+        };
     }
 
     update(delta: number): boolean {

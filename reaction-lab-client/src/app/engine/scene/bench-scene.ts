@@ -8,7 +8,7 @@ import { AtomLabels, LabelInk } from "../objects/atom-labels";
 import { AtomRenderer } from "../objects/atom-renderer";
 import { BondRenderer } from "../objects/bond-renderer";
 import { SelectionOutline } from "../objects/selection-outline";
-import { layoutBench, LayoutUnit, PlacedAtom, PlacedBond } from "./bench-layout";
+import { layoutBench, LayoutUnit, PlacedAtom, PlacedBond, smallestRadiusOf } from "./bench-layout";
 import { BenchStage } from "./bench-stage";
 import { Lod } from "../resources/geometry-cache";
 import { projectedRadius, worldPerPixel } from "../core/projection";
@@ -20,6 +20,7 @@ import { StagedBench } from "../animation/unit-staging";
 import { ReactionScript } from "../animation/reaction-script";
 import { ReactionEffects } from "../particles/reaction-effects";
 import { QualityLevel } from "../performance/quality-governor";
+import { RunCamera } from "../cinematography/run-camera";
 
 export interface BenchSceneCollaborators {
     readonly context: EngineContext;
@@ -34,6 +35,7 @@ export interface BenchSceneCollaborators {
     readonly lod: LodController;
     readonly director: ReactionDirector;
     readonly effects: ReactionEffects;
+    readonly runCamera: RunCamera;
 }
 
 export interface UnitAnchor {
@@ -109,11 +111,18 @@ export class BenchScene implements Disposable {
     beginRun(script: ReactionScript, animated: boolean): void {
         const motion = new ReactionMotion(script, layoutBench(script.unitsBefore), layoutBench(script.unitsAfter));
         const opening = motion.frameAt(0);
+        const { effects, runCamera } = this.collaborators;
 
         this.motion = motion;
         this.runTailSeconds = 0;
-        this.collaborators.effects.begin(script.emissions, motion.emissionAnchors);
+        effects.begin(script.emissions, motion.emissionAnchors);
         this.bounds = motion.bounds;
+        runCamera.end();
+
+        if (animated) {
+            runCamera.begin(script, motion.cameraCues);
+        }
+
         this.fitBench(opening.atoms, animated);
         this.show(opening);
     }
@@ -121,6 +130,7 @@ export class BenchScene implements Disposable {
     endRun(): void {
         this.motion = null;
         this.collaborators.effects.end();
+        this.collaborators.runCamera.end();
     }
 
     setHighlight(targetLevels: ReadonlyMap<string, number>): void {
@@ -132,10 +142,17 @@ export class BenchScene implements Disposable {
     }
 
     frame(animated: boolean): number {
-        const { context, camera } = this.collaborators;
+        const { context, camera, stage, director, runCamera } = this.collaborators;
         const framing = framingFor(context.camera, this.bounds);
 
-        camera.frame(framing.center, framing.distance, this.bounds, animated);
+        if (runCamera.directing && !animated) {
+            camera.fenceTo(this.bounds, framing.center);
+            runCamera.follow(director.elapsedSeconds);
+        } else {
+            camera.frame(framing.center, framing.distance, this.bounds, animated);
+        }
+
+        stage.fit(framing.distance, this.bounds);
         this.needsRender = true;
 
         return framing.distance;
@@ -177,8 +194,8 @@ export class BenchScene implements Disposable {
     }
 
     refreshLod(): void {
-        const { context, camera, atoms, bonds, lod } = this.collaborators;
-        const chosen = lod.choose(smallestRadius(this.atoms), camera.distance, context.camera.fov, this.viewportHeight);
+        const { context, camera, atoms, bonds, lod, runCamera } = this.collaborators;
+        const chosen = lod.choose(smallestRadiusOf(this.atoms), runCamera.directing ? runCamera.nearestDistance : camera.distance, context.camera.getEffectiveFOV(), this.viewportHeight);
 
         if (chosen === this.lodInUse) {
             return;
@@ -196,6 +213,9 @@ export class BenchScene implements Disposable {
 
     update(deltaSeconds: number): boolean {
         const { context, camera, highlight, outline, labels } = this.collaborators;
+
+        this.advanceRun(deltaSeconds);
+
         const moved = camera.update(deltaSeconds);
 
         if (moved) {
@@ -205,7 +225,6 @@ export class BenchScene implements Disposable {
         const fading = highlight.update(deltaSeconds);
 
         this.settleLod(moved);
-        this.advanceRun(deltaSeconds);
 
         if (moved || fading || this.outlineDirty) {
             outline.update(highlight.highlightLevels, OUTLINE_PIXELS * worldPerPixel(camera.distance, context.camera.fov, this.viewportHeight));
@@ -230,11 +249,10 @@ export class BenchScene implements Disposable {
     }
 
     private fitBench(atoms: readonly PlacedAtom[], animated: boolean): void {
-        const { context, stage, lod } = this.collaborators;
-        const distance = this.frame(animated);
+        const { context, lod, runCamera } = this.collaborators;
+        const distance = this.frame(animated && !runCamera.directing);
 
-        this.lodInUse = lod.choose(smallestRadius(atoms), distance, context.camera.fov, this.viewportHeight);
-        stage.fit(distance, this.bounds);
+        this.lodInUse = lod.choose(smallestRadiusOf(atoms), runCamera.directing ? runCamera.nearestDistance : distance, context.camera.getEffectiveFOV(), this.viewportHeight);
     }
 
     private show(staged: StagedBench): void {
@@ -258,7 +276,7 @@ export class BenchScene implements Disposable {
     }
 
     private advanceRun(deltaSeconds: number): void {
-        const { director, effects } = this.collaborators;
+        const { director, effects, runCamera } = this.collaborators;
 
         if (this.motion === null) {
             return;
@@ -266,6 +284,7 @@ export class BenchScene implements Disposable {
 
         if (director.consumeMovement()) {
             this.show(this.motion.frameAt(director.elapsedSeconds));
+            runCamera.follow(director.elapsedSeconds);
             this.runTailSeconds = 0;
         }
 
@@ -283,14 +302,4 @@ export class BenchScene implements Disposable {
 
         this.cameraWasMoving = moved;
     }
-}
-
-function smallestRadius(atoms: readonly PlacedAtom[]): number {
-    let smallest = Infinity;
-
-    for (const atom of atoms) {
-        smallest = Math.min(smallest, atom.radius);
-    }
-
-    return smallest;
 }

@@ -22,6 +22,7 @@ import { LodController } from "./performance/lod-controller";
 import { QualityGovernor } from "./performance/quality-governor";
 import { ReactionDirector } from "./animation/reaction-director";
 import { ReactionEffects } from "./particles/reaction-effects";
+import { RunCamera } from "./cinematography/run-camera";
 
 const HIGHLIGHT_RISE = 0.2;
 const HIGHLIGHT_FALL = 0.3;
@@ -77,6 +78,7 @@ function sceneProviders(): Provider[] {
         { provide: QualityGovernor, useFactory: () => new QualityGovernor(inject(PostProcessingPipeline), inject(ViewportObserver), inject(LodController)) },
         { provide: ReactionDirector, useFactory: () => new ReactionDirector() },
         owned(ReactionEffects, () => new ReactionEffects()),
+        owned(RunCamera, () => new RunCamera(inject(EngineContext), inject(CameraController), inject(PointerInput))),
         owned(BenchScene, () => new BenchScene({
             context: inject(EngineContext),
             camera: inject(CameraController),
@@ -89,7 +91,8 @@ function sceneProviders(): Provider[] {
             picking: inject(PickingService),
             lod: inject(LodController),
             director: inject(ReactionDirector),
-            effects: inject(ReactionEffects)
+            effects: inject(ReactionEffects),
+            runCamera: inject(RunCamera)
         }))
     ];
 }

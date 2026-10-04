@@ -4,16 +4,17 @@ import { easeInOutCubic, easeInToGlide, progressWithin, smoothProgressBetween } 
 import { ReactionScript } from "./reaction-script";
 import { classifyBonds, indexBondsByEnds } from "./bond-continuity";
 import { EmissionAnchors } from "../particles/emission-plan";
-import { DynamicsRecording } from "./dynamics/dynamics-recording";
+import { DynamicsRecording, recordedReachAt } from "./dynamics/dynamics-recording";
 import { atomsOfUnits, bondsOfUnits, mergePosedPoints, pointsAtPose, poseTravels, StagedBench, StagedSet, stageTravelingUnits, TravelPlanFor, UnitTravel } from "./unit-staging";
 import { dynamicsScheduleOf, swapSecondsOf } from "./dynamics/dynamics-schedule";
 import { RecordedUnits } from "./recorded-units";
 import { buildDynamicsInput, DynamicsSources, recordingIndexByAtom } from "./dynamics-input-builder";
-import { boundsWithGathering, CentersByUnitId, gatheringOf, slotCentersAround } from "./gathering";
-import { pairAtoms } from "./atom-pairing";
+import { boundsWithGathering, CentersByUnitId, gatheredSphereOf, Gathering, gatheringOf, slotCentersAround } from "./gathering";
+import { AtomPair, pairAtoms } from "./atom-pairing";
 import { refinePairing } from "./pairing-refinement";
 import { bakeReactionDynamics } from "./dynamics/reaction-dynamics";
 import { RunBonds } from "./run-bonds";
+import { CameraCues } from "../cinematography/camera-cues";
 
 const LANDING_BLEND_SECONDS = 0.3;
 const RECORDING_BY_SCRIPT = new WeakMap<ReactionScript, DynamicsRecording>();
@@ -21,6 +22,7 @@ const RECORDING_BY_SCRIPT = new WeakMap<ReactionScript, DynamicsRecording>();
 export class ReactionMotion {
     readonly bounds: Box3;
     readonly emissionAnchors: EmissionAnchors;
+    readonly cameraCues: CameraCues;
 
     private readonly swapSeconds: number;
     private readonly reactantsSet: StagedSet;
@@ -72,6 +74,7 @@ export class ReactionMotion {
             gathering,
             restSphereByUnitId: before.sphereByUnitId
         });
+        this.cameraCues = cameraCuesOf(before, after, gathering, this.recording, atomPairs);
         this.recordedReactants = new RecordedUnits(this.reactantsSet, reactantIndexByAtom, this.recording, { restSeconds: 0, towardSeconds: this.swapSeconds });
         this.recordedProducts = new RecordedUnits(this.productsSet, productIndexByAtom, this.recording, { restSeconds: script.durationSeconds, towardSeconds: this.swapSeconds });
         this.reactantTravels = this.reactantsSet.travels.filter((travel) => !this.recordedReactants.unitIds.has(travel.unitId));
@@ -112,6 +115,17 @@ function recordingFor(sources: DynamicsSources): DynamicsRecording {
     RECORDING_BY_SCRIPT.set(sources.script, recording);
 
     return recording;
+}
+
+function cameraCuesOf(before: BenchLayout, after: BenchLayout, gathering: Gathering, recording: DynamicsRecording, atomPairs: readonly AtomPair[]): CameraCues {
+    const atomRadii = atomPairs.map((pair) => pair.reactant.radius);
+
+    return {
+        gathered: gatheredSphereOf(before, gathering),
+        finalBounds: after.bounds,
+        enthalpyKilojoulesPerMole: recording.enthalpyKilojoulesPerMole,
+        reachAt: (seconds, center) => recordedReachAt(recording, atomRadii, seconds, center)
+    };
 }
 
 function unitIdsOnlyIn(layout: BenchLayout, other: BenchLayout): Set<string> {

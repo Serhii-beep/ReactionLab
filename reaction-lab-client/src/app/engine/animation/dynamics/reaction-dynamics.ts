@@ -50,10 +50,12 @@ export function bakeReactionDynamics(input: DynamicsInput): DynamicsRecording {
         }
     }
 
-    return { framesPerSecond: FRAMES_PER_SECOND, frames, schedule: input.schedule };
+    return { framesPerSecond: FRAMES_PER_SECOND, frames, schedule: input.schedule, enthalpyKilojoulesPerMole: simulation.enthalpyKilojoulesPerMole };
 }
 
 class ReactionSimulation {
+    readonly enthalpyKilojoulesPerMole: number;
+
     private readonly system: MolecularSystem;
     private readonly reactants: readonly Molecule[];
     private readonly products: readonly Molecule[];
@@ -77,7 +79,8 @@ class ReactionSimulation {
         this.reactants = moleculesOf(atoms, input.reactantUnitIds);
         this.products = moleculesOf(atoms, input.productUnitIds);
         this.draws = { uniform, standardNormal: standardNormalSource(uniform) };
-        this.releaseBudget = releaseBudgetOf(input.energetics, dissociationSumOf(reactantPicture) - dissociationSumOf(productPicture), atoms.length);
+        this.enthalpyKilojoulesPerMole = input.energetics.enthalpyKilojoulesPerMole ?? dissociationSumOf(reactantPicture) - dissociationSumOf(productPicture);
+        this.releaseBudget = releaseBudgetOf(input.energetics, this.enthalpyKilojoulesPerMole, atoms.length);
         this.interatomicForces = new InteratomicForces(
             this.system,
             withAntiBonding(reactantPicture, productPicture),

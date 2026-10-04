@@ -33,10 +33,9 @@ const SPIN_RATE = 3.2;
 const SPIN_VARIATION = { floor: 0.6, spread: 0.8 };
 const MAX_RINGING_SCALE = 2;
 
-export function releaseBudgetOf(energetics: ReactionEnergetics, estimatedEnthalpy: number, atomCount: number): ReleaseBudget {
-    const enthalpy = energetics.enthalpyKilojoulesPerMole ?? estimatedEnthalpy;
+export function releaseBudgetOf(energetics: ReactionEnergetics, enthalpyKilojoulesPerMole: number, atomCount: number): ReleaseBudget {
     const activation = Math.max(energetics.activationKilojoulesPerMole ?? ASSUMED_ACTIVATION_KILOJOULES_PER_MOLE, MIN_ACTIVATION_KILOJOULES_PER_MOLE);
-    const released = Math.max(-enthalpy, 0);
+    const released = Math.max(-enthalpyKilojoulesPerMole, 0);
 
     return {
         flightKilojoulesPerMole: released > 0 ? energetics.flightShare * released : ENDOTHERMIC_FLIGHT_SHARE_OF_BARRIER * activation,

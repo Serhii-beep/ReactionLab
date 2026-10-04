@@ -99,6 +99,16 @@ export function layoutBench(units: readonly LayoutUnit[]): BenchLayout {
     return bench;
 }
 
+export function smallestRadiusOf(atoms: readonly PlacedAtom[]): number {
+    let smallest = Infinity;
+
+    for (const atom of atoms) {
+        smallest = Math.min(smallest, atom.radius);
+    }
+
+    return smallest;
+}
+
 export function ringPositions(radii: readonly number[]): Vector3[] {
     const count = radii.length;
 

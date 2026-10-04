@@ -7,25 +7,40 @@ export interface Framing {
 
 const MARGIN = 1.25;
 const MIN_RADIUS = 4.3;
-const EMPTY = new Box3();
 
 export function distanceFor(camera: PerspectiveCamera, radius: number, margin = MARGIN): number {
-    const vertical = MathUtils.degToRad(camera.fov) / 2;
-    const horizontal = Math.atan(Math.tan(vertical) * camera.aspect);
+    return radius * margin * distancePerRadius(camera);
+}
 
-    return (radius * margin) / Math.sin(Math.min(vertical, horizontal));
+export function distancePerRadius(camera: PerspectiveCamera): number {
+    return distancePerRadiusThrough(camera.getEffectiveFOV(), camera.aspect);
 }
 
 export function framingFor(camera: PerspectiveCamera, bounds: Box3): Framing {
+    const framed = framedSphereOf(bounds);
+
+    return { center: framed.center, distance: framed.radius * distancePerRadius(camera) };
+}
+
+export function framedSphereOf(bounds: Box3): Sphere {
     const sphere = new Sphere();
 
     if (!bounds.isEmpty()) {
         bounds.getBoundingSphere(sphere);
     }
 
-    return { center: sphere.center, distance: distanceFor(camera, Math.max(sphere.radius, MIN_RADIUS)) };
+    sphere.radius = Math.max(sphere.radius, MIN_RADIUS) * MARGIN;
+
+    return sphere;
 }
 
 export function referenceDistance(camera: PerspectiveCamera): number {
-    return framingFor(camera, EMPTY).distance;
+    return MIN_RADIUS * MARGIN * distancePerRadiusThrough(camera.fov, camera.aspect);
+}
+
+function distancePerRadiusThrough(fovDegrees: number, aspect: number): number {
+    const vertical = MathUtils.degToRad(fovDegrees) / 2;
+    const horizontal = Math.atan(Math.tan(vertical) * aspect);
+
+    return 1 / Math.sin(Math.min(vertical, horizontal));
 }
