@@ -82,6 +82,13 @@ function activationSharesOf({ energetics, breakingAtomIndices, formingAtomIndice
 function releaseSharesOf({ energetics, formingAtomIndices, productUnitIds }: EnergyLedgerSources): ReleaseShares {
     const atomCount = productUnitIds.length;
     const released = releasedHeatOf(energetics);
+
+    if ((shownEnthalpyOf(energetics) ?? 0) > 0) {
+        const evenShares = new Float64Array(atomCount).fill(released / atomCount);
+
+        return { atFormingBonds: evenShares, acrossMolecule: evenShares };
+    }
+
     const atFormingBonds = new Float64Array(atomCount);
     const acrossMolecule = new Float64Array(atomCount);
 
