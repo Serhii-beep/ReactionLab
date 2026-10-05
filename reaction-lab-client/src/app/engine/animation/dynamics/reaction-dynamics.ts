@@ -1,17 +1,17 @@
 import { Vector3 } from "three";
-import { smoothProgressBetween } from "../easing";
 import { ReactionEnergetics } from "../reaction-script";
 import { ActivationShaping } from "./activation-shaping";
 import { ApproachArc, ApproachGuides } from "./approach-guides";
 import { bondingPictureOf, dissociationSumOf, IndexedBond, rebondingAtomIndicesOf, withAntiBonding } from "./bonding-picture";
 import { DynamicsRecording } from "./dynamics-recording";
 import { antiBondingWeightsAt, contactRigidityAt, DynamicsSchedule, productWeightAt } from "./dynamics-schedule";
-import { AIR_DRAG_PER_SECOND, LaunchDraws, launchProducts, ReleaseBudget, releaseBudgetOf, ringDown } from "./energy-release";
+import { LaunchDraws, launchProducts, ReleaseBudget, releaseBudgetOf, ringDown } from "./energy-release";
 import { InteratomicForces } from "./interatomic-forces";
 import { LandingGuides } from "./landing-guides";
 import { BathSetting, BENCH_TEMPERATURE_KELVIN, BOLTZMANN_KILOJOULES_PER_MOLE_KELVIN, LangevinBath } from "./langevin-bath";
 import { MolecularSystem, Molecule, moleculesOf, SimulatedAtom, TIME_UNITS_PER_SECOND } from "./molecular-system";
 import { seededRandom, standardNormalSource } from "../../core/seeded-random";
+import { airFrictionPerSecondAt, coolingAt } from "./bath-cooling";
 
 export interface DynamicsInput {
     readonly atoms: readonly SimulatedAtom[];
@@ -33,8 +33,7 @@ const FRAMES_PER_SECOND = SUBSTEPS_PER_SECOND / SUBSTEPS_PER_FRAME;
 const STEP_SECONDS = 1 / SUBSTEPS_PER_SECOND;
 const STEP_TIME_UNITS = TIME_UNITS_PER_SECOND * STEP_SECONDS;
 const REACTANT_TEMPERATURE_KELVIN = 1400;
-const FRICTION_PER_SECOND = { beforeCollision: 2.5, reacting: 0.25, cooling: 2.6 };
-const COOLING_AFTER_RELEASE = { startSeconds: 0.5, fullSeconds: 1.6 };
+const FRICTION_PER_SECOND = { beforeCollision: 2.5, reacting: 0.25 };
 const NO_MOLECULES: readonly Molecule[] = [];
 
 export function bakeReactionDynamics(input: DynamicsInput): DynamicsRecording {
@@ -189,12 +188,4 @@ class ReactionSimulation {
             }
         }
     }
-}
-
-function coolingAt(schedule: DynamicsSchedule, seconds: number): number {
-    return smoothProgressBetween(schedule.releaseSeconds + COOLING_AFTER_RELEASE.startSeconds, schedule.releaseSeconds + COOLING_AFTER_RELEASE.fullSeconds, seconds);
-}
-
-function airFrictionPerSecondAt(schedule: DynamicsSchedule, seconds: number): number {
-    return AIR_DRAG_PER_SECOND + FRICTION_PER_SECOND.cooling * coolingAt(schedule, seconds);
 }

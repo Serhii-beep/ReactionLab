@@ -1,5 +1,5 @@
 import { Box3, Color, Sphere, Vector3 } from "three";
-import { Phase } from "../core/matter";
+import { Phase, ROOM_TEMPERATURE_KELVIN } from "../core/matter";
 
 export type BondKind = 'single' | 'double' | 'triple' | 'aromatic' | 'ionic' | 'hydrogen' | 'metallic';
 
@@ -27,6 +27,7 @@ export interface LayoutUnit {
 export interface PlacedAtom extends UnitAtom {
     readonly unitId: string;
     readonly substanceId: string;
+    temperatureKelvin: number;
 }
 
 export interface PlacedBond {
@@ -187,7 +188,7 @@ function placeUnits(unit: LayoutUnit, extent: UnitExtent, offset: Vector3, bench
 }
 
 function place(atom: UnitAtom, unit: LayoutUnit, offset: Vector3): PlacedAtom {
-    return { ...atom, position: atom.position.clone().add(offset), unitId: unit.id, substanceId: unit.substanceId };
+    return { ...atom, position: atom.position.clone().add(offset), unitId: unit.id, substanceId: unit.substanceId, temperatureKelvin: ROOM_TEMPERATURE_KELVIN };
 }
 
 function measureUnit(unit: LayoutUnit): UnitExtent {

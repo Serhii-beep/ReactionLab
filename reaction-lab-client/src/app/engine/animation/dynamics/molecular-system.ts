@@ -74,23 +74,27 @@ export class MolecularSystem {
 }
 
 export function moleculesOf(atoms: readonly SimulatedAtom[], unitIds: readonly string[]): Molecule[] {
-    const atomIndicesByUnitId = new Map<string, number[]>();
-
-    unitIds.forEach((unitId, index) => {
-        const atomIndices = atomIndicesByUnitId.get(unitId);
-
-        if (atomIndices) {
-            atomIndices.push(index);
-        } else {
-            atomIndicesByUnitId.set(unitId, [index]);
-        }
-    });
-
-    return [...atomIndicesByUnitId].map(([unitId, atomIndices]) => ({
+    return [...atomIndicesByUnitId(unitIds)].map(([unitId, atomIndices]) => ({
         unitId,
         atomIndices,
         mass: atomIndices.reduce((sum, index) => sum + atoms[index].mass, 0)
     }));
+}
+
+export function atomIndicesByUnitId(unitIds: readonly string[]): Map<string, number[]> {
+    const indicesByUnitId = new Map<string, number[]>();
+
+    unitIds.forEach((unitId, index) => {
+        const atomIndices = indicesByUnitId.get(unitId);
+
+        if (atomIndices) {
+            atomIndices.push(index);
+        } else {
+            indicesByUnitId.set(unitId, [index]);
+        }
+    });
+
+    return indicesByUnitId;
 }
 
 export function flattened(points: readonly Vector3[]): Float64Array {

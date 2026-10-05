@@ -5,6 +5,7 @@ import { RecordingIndexByAtom } from "./dynamics-input-builder";
 import { DynamicsRecording, recordedPositionAt } from "./dynamics/dynamics-recording";
 import { TurnSpan, UnitTurns } from "./unit-turns";
 import { bondAxis, bondPerpendicular, drawsSideLines } from "../scene/bond-lines";
+import { EnergyLedger } from "./energy-ledger";
 
 interface RecordedAtom {
     readonly atom: PlacedAtom;
@@ -43,7 +44,13 @@ export class RecordedUnits {
     private readonly centroid = new Vector3();
     private readonly turn = new Quaternion();
 
-    constructor(bench: StagedBench, recordingIndexByAtom: RecordingIndexByAtom, private readonly recording: DynamicsRecording, turnSpan: TurnSpan) {
+    constructor(
+        bench: StagedBench,
+        recordingIndexByAtom: RecordingIndexByAtom,
+        private readonly recording: DynamicsRecording,
+        turnSpan: TurnSpan,
+        private readonly ledger: EnergyLedger
+    ) {
         this.unitIds = new Set(bench.atoms.filter((atom) => recordingIndexByAtom.has(atom)).map((atom) => atom.unitId));
         this.recordedUnits = [...this.unitIds].map((unitId) => recordedUnitOf(bench, unitId, recordingIndexByAtom, recording, turnSpan));
     }
@@ -52,6 +59,7 @@ export class RecordedUnits {
         for (const unit of this.recordedUnits) {
             for (const { atom, recordingIndex, rest } of unit.recorded) {
                 recordedPositionAt(this.recording, recordingIndex, seconds, atom.position).lerp(rest, restBlend);
+                atom.temperatureKelvin = this.ledger.temperatureKelvinAt(recordingIndex, seconds);
             }
 
             this.carryRiders(unit);
@@ -65,16 +73,20 @@ export class RecordedUnits {
             return;
         }
 
+        let temperatureSumKelvin = 0;
+
         this.centroid.set(0, 0, 0);
 
         for (const { atom } of unit.recorded) {
             this.centroid.add(atom.position);
+            temperatureSumKelvin += atom.temperatureKelvin;
         }
 
         this.centroid.divideScalar(unit.recorded.length).sub(unit.recordedRestCentroid);
 
         for (const { atom, rest } of unit.riding) {
             atom.position.copy(rest).add(this.centroid);
+            atom.temperatureKelvin = temperatureSumKelvin / unit.recorded.length;
         }
     }
 

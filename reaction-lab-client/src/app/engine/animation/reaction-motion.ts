@@ -1,20 +1,21 @@
 import { Box3, Vector3 } from "three";
-import { BenchLayout } from "../scene/bench-layout";
+import { BenchLayout, PlacedBond } from "../scene/bench-layout";
 import { easeInOutCubic, easeInToGlide, progressWithin, smoothProgressBetween } from "./easing";
 import { ReactionScript } from "./reaction-script";
-import { classifyBonds, indexBondsByEnds } from "./bond-continuity";
+import { BondChanges, classifyBonds, indexBondsByEnds } from "./bond-continuity";
 import { EmissionAnchors } from "../particles/emission-plan";
 import { DynamicsRecording, recordedReachAt } from "./dynamics/dynamics-recording";
 import { atomsOfUnits, bondsOfUnits, mergePosedPoints, pointsAtPose, poseTravels, StagedBench, StagedSet, stageTravelingUnits, TravelPlanFor, UnitTravel } from "./unit-staging";
 import { dynamicsScheduleOf, swapSecondsOf } from "./dynamics/dynamics-schedule";
 import { RecordedUnits } from "./recorded-units";
-import { buildDynamicsInput, DynamicsSources, recordingIndexByAtom } from "./dynamics-input-builder";
+import { buildDynamicsInput, DynamicsSources, RecordingIndexByAtom, recordingIndexByAtom } from "./dynamics-input-builder";
 import { boundsWithGathering, CentersByUnitId, gatheredSphereOf, Gathering, gatheringOf, slotCentersAround } from "./gathering";
 import { AtomPair, pairAtoms } from "./atom-pairing";
 import { refinePairing } from "./pairing-refinement";
 import { bakeReactionDynamics } from "./dynamics/reaction-dynamics";
 import { RunBonds } from "./run-bonds";
 import { CameraCues } from "../cinematography/camera-cues";
+import { EnergyLedger } from "./energy-ledger";
 
 const LANDING_BLEND_SECONDS = 0.3;
 const RECORDING_BY_SCRIPT = new WeakMap<ReactionScript, DynamicsRecording>();
@@ -63,9 +64,9 @@ export class ReactionMotion {
         const productIndexByAtom = recordingIndexByAtom(atomPairs.map((pair) => pair.product));
 
         const bondChanges = classifyBonds(reactantBonds, productBonds, productBondByEnds, atomPairs);
-        this.recording = recordingFor({
+        const dynamicsSources: DynamicsSources = {
             script,
-            schedule: schedule,
+            schedule,
             atomPairs,
             reactantIndexByAtom,
             productIndexByAtom,
@@ -73,10 +74,13 @@ export class ReactionMotion {
             productBonds,
             gathering,
             restSphereByUnitId: before.sphereByUnitId
-        });
+        };
+        const ledger = energyLedgerOf(dynamicsSources, bondChanges);
+
+        this.recording = recordingFor(dynamicsSources);
         this.cameraCues = cameraCuesOf(before, after, gathering, this.recording, atomPairs);
-        this.recordedReactants = new RecordedUnits(this.reactantsSet, reactantIndexByAtom, this.recording, { restSeconds: 0, towardSeconds: this.swapSeconds });
-        this.recordedProducts = new RecordedUnits(this.productsSet, productIndexByAtom, this.recording, { restSeconds: script.durationSeconds, towardSeconds: this.swapSeconds });
+        this.recordedReactants = new RecordedUnits(this.reactantsSet, reactantIndexByAtom, this.recording, { restSeconds: 0, towardSeconds: this.swapSeconds }, ledger);
+        this.recordedProducts = new RecordedUnits(this.productsSet, productIndexByAtom, this.recording, { restSeconds: script.durationSeconds, towardSeconds: this.swapSeconds }, ledger);
         this.reactantTravels = this.reactantsSet.travels.filter((travel) => !this.recordedReactants.unitIds.has(travel.unitId));
         this.productTravels = this.productsSet.travels.filter((travel) => !this.recordedProducts.unitIds.has(travel.unitId));
         this.runBonds = new RunBonds({ bondChanges, atomPairs, reactantIndexByAtom, productIndexByAtom, recording: this.recording });
@@ -115,6 +119,32 @@ function recordingFor(sources: DynamicsSources): DynamicsRecording {
     RECORDING_BY_SCRIPT.set(sources.script, recording);
 
     return recording;
+}
+
+function energyLedgerOf(sources: DynamicsSources, bondChanges: BondChanges): EnergyLedger {
+    return new EnergyLedger({
+        schedule: sources.schedule,
+        energetics: sources.script.energetics,
+        breakingAtomIndices: recordingIndicesOf(bondChanges.breaking, sources.reactantIndexByAtom),
+        formingAtomIndices: recordingIndicesOf(bondChanges.forming, sources.productIndexByAtom),
+        productUnitIds: sources.atomPairs.map((pair) => pair.product.unitId)
+    });
+}
+
+function recordingIndicesOf(bonds: readonly PlacedBond[], indexByAtom: RecordingIndexByAtom): Set<number> {
+    const indices = new Set<number>();
+
+    for (const { from, to } of bonds) {
+        for (const atom of [from, to]) {
+            const index = indexByAtom.get(atom);
+
+            if (index !== undefined) {
+                indices.add(index);
+            }
+        }
+    }
+
+    return indices;
 }
 
 function cameraCuesOf(before: BenchLayout, after: BenchLayout, gathering: Gathering, recording: DynamicsRecording, atomPairs: readonly AtomPair[]): CameraCues {

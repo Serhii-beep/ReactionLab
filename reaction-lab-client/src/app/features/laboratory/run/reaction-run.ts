@@ -15,6 +15,7 @@ import { readiness } from "../../../data/reactions/reaction-readiness";
 import { prefersReducedMotion } from "../../../core/platform/reduced-motion";
 import { tap } from "rxjs";
 import { emissionPlansFor } from "./effect-presets";
+import { dynamicsScheduleOf } from "../../../engine/animation/dynamics/dynamics-schedule";
 
 export type ReactionRunStatus = 'idle' | 'preparing' | 'playing' | 'paused' | 'finished';
 export type ReactionRunStep = 'before' | 'during' | 'after';
@@ -144,16 +145,18 @@ export class ReactionRun {
     }
 
     stepTo(step: ReactionRunStep): void {
-        const timeline = this.timeline();
-
         this.step.set(step);
+
+        if (this.script === null) {
+            return;
+        }
 
         if (step === 'before') {
             this.seek(0);
         } else if (step === 'during') {
-            this.seek((timeline.byName.transitionState.startSeconds + timeline.byName.transitionState.endSeconds) / 2);
+            this.seek(dynamicsScheduleOf(this.script.phases, this.script.durationSeconds).releaseSeconds);
         } else {
-            this.seek(timeline.durationSeconds);
+            this.seek(this.timeline().durationSeconds);
         }
     }
 

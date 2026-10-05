@@ -1,4 +1,4 @@
-import { BufferGeometry, Group, Vector3 } from "three";
+import { BufferGeometry, Color, Group, Vector3 } from "three";
 import { PlacedAtom, PlacedBond } from "../scene/bench-layout";
 import { MaterialCache } from "../resources/material-cache";
 import { Disposable } from "../core/disposal-scope";
@@ -6,6 +6,7 @@ import { BatchRequest, commit, InstancedBatches } from "./instanced-batches";
 import { GeometryCache, Lod } from "../resources/geometry-cache";
 import { CylinderTransform } from "./cylinder-transform";
 import { bondPerpendicular, Line, linesOf, Stroke } from "../scene/bond-lines";
+import { incandescenceOf } from "../rendering/incandescence";
 
 interface Pattern {
     readonly period: number;
@@ -56,6 +57,7 @@ export class BondRenderer implements Disposable {
     private readonly dashes = new InstancedBatches('bond-dashes');
     private readonly dots = new InstancedBatches('bond-dots');
     private readonly cylinder = new CylinderTransform();
+    private readonly glow = new Color();
 
     constructor(
         private readonly geometries: GeometryCache,
@@ -115,7 +117,10 @@ export class BondRenderer implements Disposable {
                 continue;
             }
 
-            group.forEach((piece, index) => mesh.setMatrixAt(index, this.cylinder.between(piece.start, piece.end, piece.radius)));
+            group.forEach((piece, index) => {
+                mesh.setMatrixAt(index, this.cylinder.between(piece.start, piece.end, piece.radius));
+                mesh.setColorAt(index, incandescenceOf(piece.atom.temperatureKelvin, this.glow));
+            });
             commit(mesh);
         }
     }

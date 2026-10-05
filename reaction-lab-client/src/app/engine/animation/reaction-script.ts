@@ -10,10 +10,14 @@ export interface PhaseSpanSeconds {
 
 export type PhaseSpansByName = Readonly<Record<MotionPhaseName, PhaseSpanSeconds>>;
 
+export type ActivationSource = 'heat' | 'current' | 'light';
+
 export interface ReactionEnergetics {
     readonly enthalpyKilojoulesPerMole: number | null;
     readonly activationKilojoulesPerMole: number | null;
     readonly flightShare: number;
+    readonly activationSource: ActivationSource;
+    readonly inWater: boolean;
 }
 
 export interface ReactionScript {

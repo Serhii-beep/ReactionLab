@@ -1,4 +1,4 @@
-import { Color, MeshPhysicalMaterial } from "three";
+import { Color, MeshPhysicalMaterial, WebGLProgramParametersWithUniforms } from "three";
 import { Disposable } from "../core/disposal-scope";
 import { Phase } from "../core/matter";
 
@@ -15,6 +15,9 @@ const FINISHES: Readonly<Record<Phase, Finish>> = {
     aqueous: { roughness: 0.25, clearcoat: 0.3, emissive: 0 },
     plasma: { roughness: 0.5, clearcoat: 0, emissive: 0.6 },
 };
+const INCANDESCENT_PROGRAM_KEY = 'atom-incandescence';
+const TINT_CHUNK = '#include <color_fragment>';
+const EMISSION_CHUNK = '#include <emissivemap_fragment>';
 
 export class MaterialCache implements Disposable {
     private readonly materials = new Map<string, MeshPhysicalMaterial>();
@@ -44,6 +47,8 @@ export class MaterialCache implements Disposable {
         });
 
         material.emissive.copy(color).multiplyScalar(finish.emissive);
+        material.onBeforeCompile = emitInstanceColor;
+        material.customProgramCacheKey = () => INCANDESCENT_PROGRAM_KEY;
 
         return material;
     }
@@ -58,4 +63,14 @@ export class MaterialCache implements Disposable {
 
         return material;
     }
+}
+
+function emitInstanceColor(parameters: WebGLProgramParametersWithUniforms): void {
+    if (!parameters.fragmentShader.includes(TINT_CHUNK) || !parameters.fragmentShader.includes(EMISSION_CHUNK)) {
+        throw new Error('The atom shader no longer has the chunks that turn the instance color into emitted light.');
+    }
+
+    parameters.fragmentShader = parameters.fragmentShader
+        .replace(TINT_CHUNK, '')
+        .replace(EMISSION_CHUNK, `${EMISSION_CHUNK}\n#ifdef USE_COLOR\n\ttotalEmissiveRadiance += vColor.rgb;\n#endif`);
 }

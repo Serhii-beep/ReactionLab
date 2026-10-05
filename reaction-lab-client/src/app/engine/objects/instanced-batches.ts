@@ -1,4 +1,4 @@
-import { BufferGeometry, Group, InstancedMesh, Material } from "three";
+import { BufferGeometry, Group, InstancedBufferAttribute, InstancedMesh, Material } from "three";
 import { Disposable } from "../core/disposal-scope";
 
 export interface BatchRequest {
@@ -63,6 +63,7 @@ export class InstancedBatches implements Disposable {
 
         mesh.name = key;
         mesh.count = request.count;
+        mesh.instanceColor = unlitEmissionsFor(capacity);
         mesh.castShadow = request.castShadow;
         mesh.receiveShadow = true;
         this.meshes.set(key, mesh);
@@ -80,5 +81,14 @@ export class InstancedBatches implements Disposable {
 
 export function commit(mesh: InstancedMesh): void {
     mesh.instanceMatrix.needsUpdate = true;
+
+    if (mesh.instanceColor) {
+        mesh.instanceColor.needsUpdate = true;
+    }
+
     mesh.computeBoundingSphere();
+}
+
+function unlitEmissionsFor(capacity: number): InstancedBufferAttribute {
+    return new InstancedBufferAttribute(new Float32Array(capacity * 3), 3);
 }

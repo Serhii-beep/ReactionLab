@@ -1,13 +1,15 @@
-import { Group, Matrix4 } from "three";
+import { Color, Group, Matrix4 } from "three";
 import { Disposable } from "../core/disposal-scope";
 import { GeometryCache, Lod } from "../resources/geometry-cache";
 import { MaterialCache } from "../resources/material-cache";
 import { PlacedAtom } from "../scene/bench-layout";
 import { BatchRequest, commit, InstancedBatches } from "./instanced-batches";
+import { incandescenceOf } from "../rendering/incandescence";
 
 export class AtomRenderer implements Disposable {
     private readonly batches = new InstancedBatches('atoms');
     private readonly matrix = new Matrix4();
+    private readonly glow = new Color();
 
     constructor(
         private readonly geometries: GeometryCache,
@@ -52,6 +54,7 @@ export class AtomRenderer implements Disposable {
             group.forEach((atom, index) => {
                 this.matrix.makeScale(atom.radius, atom.radius, atom.radius).setPosition(atom.position);
                 mesh.setMatrixAt(index, this.matrix);
+                mesh.setColorAt(index, incandescenceOf(atom.temperatureKelvin, this.glow));
             });
             commit(mesh);
         }

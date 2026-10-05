@@ -30,6 +30,16 @@ export function smoothProgressBetween(startSeconds: number, endSeconds: number, 
     return progress * progress * (3 - 2 * progress);
 }
 
+export function smoothProgressIntegralBetween(startSeconds: number, endSeconds: number, seconds: number): number {
+    if (endSeconds <= startSeconds) {
+        return Math.max(seconds - endSeconds, 0);
+    }
+
+    const progress = progressBetween(startSeconds, endSeconds, seconds);
+
+    return (endSeconds - startSeconds) * (progress ** 3 - progress ** 4 / 2) + Math.max(seconds - endSeconds, 0);
+}
+
 export function progressWithin(span: PhaseSpanSeconds, seconds: number): number {
     return progressBetween(span.start, span.end, seconds);
 }

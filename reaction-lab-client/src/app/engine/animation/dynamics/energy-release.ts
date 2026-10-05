@@ -3,6 +3,7 @@ import { RandomSource } from "../../core/seeded-random";
 import { MolecularSystem, Molecule, TIME_UNITS_PER_SECOND } from "./molecular-system";
 import { BENCH_TEMPERATURE_KELVIN, BOLTZMANN_KILOJOULES_PER_MOLE_KELVIN } from "./langevin-bath";
 import { ReactionEnergetics } from "../reaction-script";
+import { AIR_DRAG_PER_SECOND } from "./bath-cooling";
 
 export interface ReleaseBudget {
     readonly flightKilojoulesPerMole: number;
@@ -20,8 +21,6 @@ interface Launch {
     readonly drift: Vector3;
     readonly velocity: Vector3;
 }
-
-export const AIR_DRAG_PER_SECOND = 1.1;
 
 const RINGING_SHARE = 0.3;
 const ENDOTHERMIC_FLIGHT_SHARE_OF_BARRIER = 0.1;
