@@ -5,7 +5,6 @@ export interface DynamicsRecording {
     readonly framesPerSecond: number;
     readonly frames: readonly Float32Array[];
     readonly schedule: DynamicsSchedule;
-    readonly enthalpyKilojoulesPerMole: number;
 }
 
 const REACH_SCRATCH = new Vector3();

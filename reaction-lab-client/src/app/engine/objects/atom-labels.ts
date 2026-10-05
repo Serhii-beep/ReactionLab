@@ -4,6 +4,8 @@ import { Text } from "troika-three-text";
 import { PlacedAtom, PlacedBond } from "../scene/bench-layout";
 import { LabelAtlas } from "../resources/label-atlas";
 import { projectedRadius } from "../core/projection";
+import { incandescentLuminanceOf } from "../rendering/incandescence";
+import { LIT_WHITE_LUMINANCE } from "../rendering/look";
 
 export interface LabelInk {
     readonly dark: Color;
@@ -36,6 +38,7 @@ export class AtomLabels implements Disposable {
     private readonly cameraUp = new Vector3();
     private atoms: readonly PlacedAtom[] = [];
     private sticks: BondsByAtom = new Map();
+    private ink: LabelInk | null = null;
 
     constructor(private readonly atlas: LabelAtlas) {
         this.root.name = 'atom-labels';
@@ -44,6 +47,7 @@ export class AtomLabels implements Disposable {
     render(atoms: readonly PlacedAtom[], bonds: readonly PlacedBond[], ink: LabelInk): void {
         this.atoms = atoms;
         this.sticks = sticksOf(bonds);
+        this.ink = ink;
 
         atoms.forEach((atom, index) => {
             const label = index < this.pool.length ? this.pool[index] : this.grow(ink);
@@ -54,7 +58,7 @@ export class AtomLabels implements Disposable {
             }
 
             label.fontSize = atom.radius * SIZE_FACTOR;
-            label.color = inkFor(atom.color, ink).getHex();
+            label.color = inkFor(atom, ink).getHex();
             label.visible = !this.labelsAwaitingText.has(label);
             label.sync(() => this.labelsAwaitingText.delete(label));
         });
@@ -66,6 +70,16 @@ export class AtomLabels implements Disposable {
 
     refreshSticks(bonds: readonly PlacedBond[]): void {
         this.sticks = sticksOf(bonds);
+    }
+
+    refreshInk(): void {
+        const ink = this.ink;
+
+        if (ink !== null) {
+            this.atoms.forEach((atom, index) => {
+                this.pool[index].color = inkFor(atom, ink).getHex();
+            });
+        }
     }
 
     update(camera: PerspectiveCamera, viewportHeight: number): void {
@@ -159,8 +173,12 @@ function stick(sticks: BondsByAtom, atom: PlacedAtom, entry: BondFromAtom): void
     }
 }
 
-function inkFor(color: Color, ink: LabelInk): Color {
-    const luminance = 0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b;
+function inkFor(atom: PlacedAtom, ink: LabelInk): Color {
+    const luminance = luminanceOf(atom.color) + incandescentLuminanceOf(atom.temperatureKelvin) / LIT_WHITE_LUMINANCE;
 
     return luminance > INK_LUMINANCE ? ink.dark : ink.light;
+}
+
+function luminanceOf(color: Color): number {
+    return 0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b;
 }

@@ -66,7 +66,7 @@ export class RunCamera implements Disposable {
 
         this.shot = {
             path: new CameraPath(keys),
-            shake: new CameraShake(script.phases.bondsForm.start, script.durationSeconds, cues.enthalpyKilojoulesPerMole),
+            shake: new CameraShake(cues.releaseSeconds, script.durationSeconds, cues.shownEnthalpyKilojoulesPerMole),
             phases: script.phases,
             focusRange: cues.gathered.radius * FOCUS_RANGE_OF_GATHERED
         };

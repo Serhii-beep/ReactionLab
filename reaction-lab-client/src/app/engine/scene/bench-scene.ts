@@ -254,7 +254,7 @@ export class BenchScene implements Disposable {
     }
 
     private show(staged: StagedBench): void {
-        const { atoms, bonds, labels, outline } = this.collaborators;
+        const { atoms, bonds, labels, outline, stage } = this.collaborators;
         const differentAtoms = staged.atoms !== this.atoms;
 
         this.atoms = staged.atoms;
@@ -263,6 +263,7 @@ export class BenchScene implements Disposable {
         atoms.render(this.atoms, this.lodInUse);
         bonds.render(this.bonds, this.lodInUse);
         outline.render(this.atoms, this.bonds);
+        stage.exposeFor(this.atoms);
         this.outlineDirty = true;
         this.needsRender = true;
 
@@ -270,6 +271,7 @@ export class BenchScene implements Disposable {
             labels.render(this.atoms, this.bonds, this.ink);
         } else if (this.motion !== null) {
             labels.refreshSticks(this.bonds);
+            labels.refreshInk();
         }
     }
 

@@ -1,5 +1,6 @@
 import { Color } from "three";
 import { FLAME_CEILING_KELVIN } from "../core/matter";
+import { LIT_WHITE_LUMINANCE } from "./look";
 
 interface ColorMatchingLobe {
     readonly weight: number;
@@ -10,8 +11,13 @@ interface ColorMatchingLobe {
 
 type LinearRgb = [number, number, number];
 
+interface Blackbody {
+    readonly color: LinearRgb;
+    readonly logLuminance: number;
+}
+
 const DRAPER_POINT_KELVIN = 798;
-const EMISSION_AT_FLAME_CEILING = 1.6;
+const BRIGHT_AS_LIT_WHITE_KELVIN = 1200;
 const TABLE_STEP_KELVIN = 25;
 const VISIBLE_NANOMETERS = { first: 380, last: 780, step: 5 };
 const SECOND_RADIATION_CONSTANT_NANOMETER_KELVIN = 1.4388e7;
@@ -33,32 +39,54 @@ const XYZ_TO_LINEAR_SRGB = [
     [-0.9689, 1.8758, 0.0415],
     [0.0557, -0.2040, 1.0570]
 ] as const;
-const BLACKBODY_RGB_BY_STEP = blackbodyRgbTable();
+const BLACKBODY_BY_STEP = blackbodyTable();
+const DRAPER_POINT_LOG_LUMINANCE = blackbodyOf(DRAPER_POINT_KELVIN).logLuminance;
+const BRIGHT_AS_LIT_WHITE_LOG_LUMINANCE = blackbodyOf(BRIGHT_AS_LIT_WHITE_KELVIN).logLuminance;
 
 export function incandescenceOf(temperatureKelvin: number, target: Color): Color {
-    if (temperatureKelvin <= DRAPER_POINT_KELVIN) {
+    const luminance = incandescentLuminanceOf(temperatureKelvin);
+
+    if (luminance === 0) {
         return target.setRGB(0, 0, 0);
     }
 
-    const emission = EMISSION_AT_FLAME_CEILING * (1 / DRAPER_POINT_KELVIN - 1 / temperatureKelvin) / (1 / DRAPER_POINT_KELVIN - 1 / FLAME_CEILING_KELVIN);
-    const step = Math.min((temperatureKelvin - DRAPER_POINT_KELVIN) / TABLE_STEP_KELVIN, BLACKBODY_RGB_BY_STEP.length - 1);
-    const lower = BLACKBODY_RGB_BY_STEP[Math.floor(step)];
-    const upper = BLACKBODY_RGB_BY_STEP[Math.ceil(step)];
+    const step = stepAt(temperatureKelvin);
+    const lower = BLACKBODY_BY_STEP[Math.floor(step)].color;
+    const upper = BLACKBODY_BY_STEP[Math.ceil(step)].color;
     const amount = step - Math.floor(step);
 
     return target.setRGB(
-        (lower[0] + (upper[0] - lower[0]) * amount) * emission,
-        (lower[1] + (upper[1] - lower[1]) * amount) * emission,
-        (lower[2] + (upper[2] - lower[2]) * amount) * emission
+        (lower[0] + (upper[0] - lower[0]) * amount) * luminance,
+        (lower[1] + (upper[1] - lower[1]) * amount) * luminance,
+        (lower[2] + (upper[2] - lower[2]) * amount) * luminance
     );
 }
 
-function blackbodyRgbTable(): LinearRgb[] {
-    const steps = Math.ceil((FLAME_CEILING_KELVIN - DRAPER_POINT_KELVIN) / TABLE_STEP_KELVIN) + 1;
-    return Array.from({ length: steps }, (_, step) => blackbodyRgbOf(DRAPER_POINT_KELVIN + step * TABLE_STEP_KELVIN));
+export function incandescentLuminanceOf(temperatureKelvin: number): number {
+    if (temperatureKelvin <= DRAPER_POINT_KELVIN) {
+        return 0;
+    }
+
+    const step = stepAt(temperatureKelvin);
+    const lower = BLACKBODY_BY_STEP[Math.floor(step)].logLuminance;
+    const upper = BLACKBODY_BY_STEP[Math.ceil(step)].logLuminance;
+    const logLuminance = lower + (upper - lower) * (step - Math.floor(step));
+    const trueRatio = Math.exp(logLuminance - BRIGHT_AS_LIT_WHITE_LOG_LUMINANCE);
+    const logRatio = (logLuminance - DRAPER_POINT_LOG_LUMINANCE) / (BRIGHT_AS_LIT_WHITE_LOG_LUMINANCE - DRAPER_POINT_LOG_LUMINANCE);
+
+    return LIT_WHITE_LUMINANCE * Math.min(trueRatio, logRatio);
 }
 
-function blackbodyRgbOf(temperatureKelvin: number): LinearRgb {
+function stepAt(temperatureKelvin: number): number {
+    return Math.min((temperatureKelvin - DRAPER_POINT_KELVIN) / TABLE_STEP_KELVIN, BLACKBODY_BY_STEP.length - 1);
+}
+
+function blackbodyTable(): Blackbody[] {
+    const steps = Math.ceil((FLAME_CEILING_KELVIN - DRAPER_POINT_KELVIN) / TABLE_STEP_KELVIN) + 1;
+    return Array.from({ length: steps }, (_, step) => blackbodyOf(DRAPER_POINT_KELVIN + step * TABLE_STEP_KELVIN));
+}
+
+function blackbodyOf(temperatureKelvin: number): Blackbody {
     const tristimulus = [0, 0, 0];
 
     for (let nanometers = VISIBLE_NANOMETERS.first; nanometers <= VISIBLE_NANOMETERS.last; nanometers += VISIBLE_NANOMETERS.step) {
@@ -70,9 +98,12 @@ function blackbodyRgbOf(temperatureKelvin: number): LinearRgb {
     }
 
     const linear = XYZ_TO_LINEAR_SRGB.map((row) => Math.max(row[0] * tristimulus[0] + row[1] * tristimulus[1] + row[2] * tristimulus[2], 0));
-    const peak = Math.max(...linear);
+    const luminance = 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2];
 
-    return [linear[0] / peak, linear[1] / peak, linear[2] / peak];
+    return {
+        color: [linear[0] / luminance, linear[1] / luminance, linear[2] / luminance],
+        logLuminance: Math.log(tristimulus[1])
+    };
 }
 
 function colorMatchingAt(lobes: readonly ColorMatchingLobe[], nanometers: number): number {

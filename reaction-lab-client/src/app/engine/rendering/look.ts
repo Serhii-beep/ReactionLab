@@ -41,3 +41,5 @@ export const LOOKS: Readonly<Record<LookName, Look>> = {
         vignette: 0.45
     }
 };
+
+export const LIT_WHITE_LUMINANCE = 1.8;

@@ -49,12 +49,10 @@ export function bakeReactionDynamics(input: DynamicsInput): DynamicsRecording {
         }
     }
 
-    return { framesPerSecond: FRAMES_PER_SECOND, frames, schedule: input.schedule, enthalpyKilojoulesPerMole: simulation.enthalpyKilojoulesPerMole };
+    return { framesPerSecond: FRAMES_PER_SECOND, frames, schedule: input.schedule };
 }
 
 class ReactionSimulation {
-    readonly enthalpyKilojoulesPerMole: number;
-
     private readonly system: MolecularSystem;
     private readonly reactants: readonly Molecule[];
     private readonly products: readonly Molecule[];
@@ -72,14 +70,14 @@ class ReactionSimulation {
         const { atoms, reactantRest, productRest, schedule } = input;
         const reactantPicture = bondingPictureOf(input.reactantBonds, atoms, reactantRest);
         const productPicture = bondingPictureOf(input.productBonds, atoms, productRest);
+        const enthalpyKilojoulesPerMole = input.energetics.enthalpyKilojoulesPerMole ?? dissociationSumOf(reactantPicture) - dissociationSumOf(productPicture);
         const uniform = seededRandom(input.randomSeed);
 
         this.system = new MolecularSystem(atoms, reactantRest);
         this.reactants = moleculesOf(atoms, input.reactantUnitIds);
         this.products = moleculesOf(atoms, input.productUnitIds);
         this.draws = { uniform, standardNormal: standardNormalSource(uniform) };
-        this.enthalpyKilojoulesPerMole = input.energetics.enthalpyKilojoulesPerMole ?? dissociationSumOf(reactantPicture) - dissociationSumOf(productPicture);
-        this.releaseBudget = releaseBudgetOf(input.energetics, this.enthalpyKilojoulesPerMole, atoms.length);
+        this.releaseBudget = releaseBudgetOf(input.energetics, enthalpyKilojoulesPerMole, atoms.length);
         this.interatomicForces = new InteratomicForces(
             this.system,
             withAntiBonding(reactantPicture, productPicture),

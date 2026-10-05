@@ -53,16 +53,18 @@ export class EnergyLedger {
     }
 }
 
+export function shownEnthalpyOf(energetics: ReactionEnergetics): number | null {
+    return energetics.inWater ? null : energetics.enthalpyKilojoulesPerMole;
+}
+
 function thermalActivationOf(energetics: ReactionEnergetics): number {
     return energetics.activationSource === 'heat' && !energetics.inWater ? energetics.activationKilojoulesPerMole ?? 0 : 0;
 }
 
 function releasedHeatOf(energetics: ReactionEnergetics): number {
-    if (energetics.inWater || energetics.enthalpyKilojoulesPerMole === null) {
-        return 0;
-    }
+    const enthalpy = shownEnthalpyOf(energetics);
 
-    return Math.max(thermalActivationOf(energetics) - energetics.enthalpyKilojoulesPerMole, 0);
+    return enthalpy === null ? 0 : Math.max(thermalActivationOf(energetics) - enthalpy, 0);
 }
 
 function activationSharesOf({ energetics, breakingAtomIndices, formingAtomIndices, productUnitIds }: EnergyLedgerSources): Float64Array {

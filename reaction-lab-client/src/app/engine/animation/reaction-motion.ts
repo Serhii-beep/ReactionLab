@@ -1,7 +1,7 @@
-import { Box3, Vector3 } from "three";
+import { Box3, Sphere, Vector3 } from "three";
 import { BenchLayout, PlacedBond } from "../scene/bench-layout";
 import { easeInOutCubic, easeInToGlide, progressWithin, smoothProgressBetween } from "./easing";
-import { ReactionScript } from "./reaction-script";
+import { ReactionEnergetics, ReactionScript } from "./reaction-script";
 import { BondChanges, classifyBonds, indexBondsByEnds } from "./bond-continuity";
 import { EmissionAnchors } from "../particles/emission-plan";
 import { DynamicsRecording, recordedReachAt } from "./dynamics/dynamics-recording";
@@ -9,13 +9,13 @@ import { atomsOfUnits, bondsOfUnits, mergePosedPoints, pointsAtPose, poseTravels
 import { dynamicsScheduleOf, swapSecondsOf } from "./dynamics/dynamics-schedule";
 import { RecordedUnits } from "./recorded-units";
 import { buildDynamicsInput, DynamicsSources, RecordingIndexByAtom, recordingIndexByAtom } from "./dynamics-input-builder";
-import { boundsWithGathering, CentersByUnitId, gatheredSphereOf, Gathering, gatheringOf, slotCentersAround } from "./gathering";
+import { boundsWithGathering, CentersByUnitId, gatheredSphereOf, gatheringOf, slotCentersAround } from "./gathering";
 import { AtomPair, pairAtoms } from "./atom-pairing";
 import { refinePairing } from "./pairing-refinement";
 import { bakeReactionDynamics } from "./dynamics/reaction-dynamics";
 import { RunBonds } from "./run-bonds";
 import { CameraCues } from "../cinematography/camera-cues";
-import { EnergyLedger } from "./energy-ledger";
+import { EnergyLedger, shownEnthalpyOf } from "./energy-ledger";
 
 const LANDING_BLEND_SECONDS = 0.3;
 const RECORDING_BY_SCRIPT = new WeakMap<ReactionScript, DynamicsRecording>();
@@ -78,7 +78,7 @@ export class ReactionMotion {
         const ledger = energyLedgerOf(dynamicsSources, bondChanges);
 
         this.recording = recordingFor(dynamicsSources);
-        this.cameraCues = cameraCuesOf(before, after, gathering, this.recording, atomPairs);
+        this.cameraCues = cameraCuesOf(gatheredSphereOf(before, gathering), after.bounds, this.recording, atomPairs, script.energetics);
         this.recordedReactants = new RecordedUnits(this.reactantsSet, reactantIndexByAtom, this.recording, { restSeconds: 0, towardSeconds: this.swapSeconds }, ledger);
         this.recordedProducts = new RecordedUnits(this.productsSet, productIndexByAtom, this.recording, { restSeconds: script.durationSeconds, towardSeconds: this.swapSeconds }, ledger);
         this.reactantTravels = this.reactantsSet.travels.filter((travel) => !this.recordedReactants.unitIds.has(travel.unitId));
@@ -147,13 +147,14 @@ function recordingIndicesOf(bonds: readonly PlacedBond[], indexByAtom: Recording
     return indices;
 }
 
-function cameraCuesOf(before: BenchLayout, after: BenchLayout, gathering: Gathering, recording: DynamicsRecording, atomPairs: readonly AtomPair[]): CameraCues {
+function cameraCuesOf(gathered: Sphere, finalBounds: Box3, recording: DynamicsRecording, atomPairs: readonly AtomPair[], energetics: ReactionEnergetics): CameraCues {
     const atomRadii = atomPairs.map((pair) => pair.reactant.radius);
 
     return {
-        gathered: gatheredSphereOf(before, gathering),
-        finalBounds: after.bounds,
-        enthalpyKilojoulesPerMole: recording.enthalpyKilojoulesPerMole,
+        gathered,
+        finalBounds,
+        releaseSeconds: recording.schedule.releaseSeconds,
+        shownEnthalpyKilojoulesPerMole: shownEnthalpyOf(energetics) ?? 0,
         reachAt: (seconds, center) => recordedReachAt(recording, atomRadii, seconds, center)
     };
 }

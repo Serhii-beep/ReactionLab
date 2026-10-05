@@ -4,11 +4,12 @@ import { EngineContext, Presenter } from "../core/engine-context";
 import { N8AOPostPass } from "n8ao";
 import { QualityTier } from "./quality";
 import { ACESFilmicToneMapping, Color, HalfFloatType, NoToneMapping } from "three";
+import { LIT_WHITE_LUMINANCE } from "./look";
 
 const AO_RADIUS = 0.9;
 const AO_FALLOFF = 0.6;
 const AO_INTENSITY = 2.2;
-const BLOOM_THRESHOLD = 1.0;
+const BLOOM_THRESHOLD = LIT_WHITE_LUMINANCE * 1.15;
 const BLOOM_INTENSITY = 0.5;
 const VIGNETTE_OFFSET = 0.35;
 const MULTISAMPLES = 4;
