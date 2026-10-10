@@ -7,6 +7,8 @@ import { EmissionPlan } from "../../../engine/particles/emission-plan";
 import { WorkspaceItem } from "../../../state/workspace-store";
 import { buildBenchUnits } from "../scene/bench-units";
 import { reactionEnergeticsOf } from "./reaction-energetics";
+import { gasLookOf } from "./gas-looks";
+import { precipitatePlanOf } from "./precipitates";
 
 export interface ScriptSources {
     readonly entriesBefore: readonly WorkspaceItem[];
@@ -22,6 +24,8 @@ export function buildReactionScript(
     sources: ScriptSources
 ): ReactionScript {
     const { approach, collision, bondsBreak, transitionState, bondsForm, separation } = timeline.byName;
+    const elements = new Map(sources.elements.map((element) => [element.symbol, element]));
+    const precipitate = precipitatePlanOf(reaction, { entriesAfter: sources.entriesAfter, details: sources.details, elements });
     const phases: PhaseSpansByName = {
         approach: spanOf(approach),
         collision: spanOf(collision),
@@ -38,6 +42,8 @@ export function buildReactionScript(
         massBySymbol: new Map(sources.elements.map((element) => [element.symbol, element.mass])),
         randomSeed: reaction.id,
         emissions,
+        gasLook: gasLookOf(reaction) ?? (precipitate === null ? null : 'precipitate'),
+        precipitate,
         unitsBefore: buildBenchUnits(sources.entriesBefore, sources.details, sources.elements),
         unitsAfter: buildBenchUnits(sources.entriesAfter, sources.details, sources.elements)
     };

@@ -23,6 +23,9 @@ import { QualityGovernor } from "./performance/quality-governor";
 import { ReactionDirector } from "./animation/reaction-director";
 import { ReactionEffects } from "./particles/reaction-effects";
 import { RunCamera } from "./cinematography/run-camera";
+import { GasVolume } from "./gas/gas-volume";
+import { ReactionGas } from "./gas/reaction-gas";
+import { ReactionSparks } from "./sparks/reaction-sparks";
 
 const HIGHLIGHT_RISE = 0.2;
 const HIGHLIGHT_FALL = 0.3;
@@ -44,7 +47,8 @@ function coreProviders(): Provider[] {
             }
         },
         owned(EngineContext, () => new EngineContext()),
-        owned(PostProcessingPipeline, () => new PostProcessingPipeline(inject(EngineContext))),
+        { provide: GasVolume, useFactory: () => new GasVolume(inject(EngineContext).camera) },
+        owned(PostProcessingPipeline, () => new PostProcessingPipeline(inject(EngineContext), inject(GasVolume))),
         owned(ViewportObserver, () => new ViewportObserver(
             hostElement(),
             inject(EngineContext),
@@ -77,7 +81,13 @@ function sceneProviders(): Provider[] {
         { provide: LodController, useFactory: () => new LodController() },
         { provide: QualityGovernor, useFactory: () => new QualityGovernor(inject(PostProcessingPipeline), inject(ViewportObserver), inject(LodController)) },
         { provide: ReactionDirector, useFactory: () => new ReactionDirector() },
-        owned(ReactionEffects, () => new ReactionEffects()),
+        owned(ReactionEffects, () => {
+            const effects = new ReactionEffects(new ReactionGas(inject(EngineContext).renderer, inject(GasVolume)), new ReactionSparks(inject(EngineContext).renderer));
+
+            inject(ContextGuard).onRestored(() => effects.restoreContext());
+
+            return effects;
+        }),
         owned(RunCamera, () => new RunCamera(inject(EngineContext), inject(CameraController), inject(PointerInput), inject(PostProcessingPipeline))),
         owned(BenchScene, () => new BenchScene({
             context: inject(EngineContext),

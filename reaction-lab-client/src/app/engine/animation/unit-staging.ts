@@ -4,6 +4,7 @@ import { BenchLayout, PlacedAtom, PlacedBond } from "../scene/bench-layout";
 export interface StagedBench {
     readonly atoms: readonly PlacedAtom[];
     readonly bonds: readonly PlacedBond[];
+    readonly latticeBonds: readonly PlacedBond[];
     readonly sphereByUnitId: ReadonlyMap<string, Sphere>;
 }
 
@@ -46,7 +47,7 @@ export function stageTravelingUnits(layout: BenchLayout, planFor: TravelPlanFor)
         }
     }
 
-    return { atoms: layout.atoms, bonds: layout.bonds, sphereByUnitId: layout.sphereByUnitId, travels };
+    return { atoms: layout.atoms, bonds: layout.bonds, latticeBonds: layout.latticeBonds, sphereByUnitId: layout.sphereByUnitId, travels };
 }
 
 export function poseTravels(travels: readonly UnitTravel[], travelProgress: number): void {

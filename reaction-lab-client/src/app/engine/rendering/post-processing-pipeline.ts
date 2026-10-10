@@ -5,6 +5,7 @@ import { N8AOPostPass } from "n8ao";
 import { QualityTier } from "./quality";
 import { ACESFilmicToneMapping, Color, HalfFloatType, NoToneMapping } from "three";
 import { LIT_WHITE_LUMINANCE } from "./look";
+import { GasVolume } from "../gas/gas-volume";
 
 const AO_RADIUS = 0.9;
 const AO_FALLOFF = 0.6;
@@ -35,7 +36,7 @@ export class PostProcessingPipeline implements Disposable, Presenter {
     private lookVignetteDarkness = 0;
     private vignetteDeepening = 0;
 
-    constructor(private readonly context: EngineContext) {
+    constructor(private readonly context: EngineContext, gas: GasVolume) {
         const { renderer, scene, camera } = context;
 
         this.composer = new EffectComposer(renderer, { frameBufferType: HalfFloatType });
@@ -54,6 +55,7 @@ export class PostProcessingPipeline implements Disposable, Presenter {
         this.composer.addPass(new RenderPass(scene, camera));
         this.composer.addPass(this.occlusion);
         this.composer.addPass(this.depthOfFieldPass);
+        this.composer.addPass(gas);
         this.composer.addPass(new EffectPass(camera, this.bloom));
         this.composer.addPass(this.smaa);
         this.composer.addPass(new EffectPass(

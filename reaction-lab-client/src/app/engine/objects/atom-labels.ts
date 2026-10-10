@@ -1,16 +1,11 @@
-import { Color, Group, PerspectiveCamera, Vector3 } from "three";
+import { Group, PerspectiveCamera, Vector3 } from "three";
 import { Disposable } from "../core/disposal-scope";
 import { Text } from "troika-three-text";
 import { PlacedAtom, PlacedBond } from "../scene/bench-layout";
 import { LabelAtlas } from "../resources/label-atlas";
 import { projectedRadius } from "../core/projection";
-import { incandescentLuminanceOf } from "../rendering/incandescence";
-import { LIT_WHITE_LUMINANCE } from "../rendering/look";
-
-export interface LabelInk {
-    readonly dark: Color;
-    readonly light: Color;
-}
+import { inkFor, LabelInk } from "./label-ink";
+import { IonChargeLabels } from "./ion-charge-labels";
 
 interface BondFromAtom {
     readonly direction: Vector3;
@@ -21,7 +16,6 @@ type BondsByAtom = Map<PlacedAtom, BondFromAtom[]>;
 
 const MIN_PIXELS = 12;
 const SIZE_FACTOR = 1.1;
-const INK_LUMINANCE = 0.35;
 const SURFACE_OFFSET = 1.02;
 const FOOTPRINT = 0.6;
 const STICK_RADIUS = 0.1;
@@ -33,6 +27,7 @@ export class AtomLabels implements Disposable {
     readonly root = new Group();
 
     private readonly pool: Text[] = [];
+    private readonly charges: IonChargeLabels;
     private readonly labelsAwaitingText = new Set<Text>();
     private readonly toCamera = new Vector3();
     private readonly cameraUp = new Vector3();
@@ -42,6 +37,8 @@ export class AtomLabels implements Disposable {
 
     constructor(private readonly atlas: LabelAtlas) {
         this.root.name = 'atom-labels';
+        this.charges = new IonChargeLabels(atlas, { sizePerRadius: SIZE_FACTOR, minimumPixels: MIN_PIXELS });
+        this.root.add(this.charges.root);
     }
 
     render(atoms: readonly PlacedAtom[], bonds: readonly PlacedBond[], ink: LabelInk): void {
@@ -57,7 +54,7 @@ export class AtomLabels implements Disposable {
                 this.labelsAwaitingText.add(label);
             }
 
-            label.fontSize = atom.radius * SIZE_FACTOR;
+            label.fontSize = SIZE_FACTOR;
             label.color = inkFor(atom, ink).getHex();
             label.visible = !this.labelsAwaitingText.has(label);
             label.sync(() => this.labelsAwaitingText.delete(label));
@@ -66,6 +63,8 @@ export class AtomLabels implements Disposable {
         for (const label of this.pool.slice(atoms.length)) {
             label.visible = false;
         }
+
+        this.charges.render(atoms, ink);
     }
 
     refreshSticks(bonds: readonly PlacedBond[]): void {
@@ -79,6 +78,7 @@ export class AtomLabels implements Disposable {
             this.atoms.forEach((atom, index) => {
                 this.pool[index].color = inkFor(atom, ink).getHex();
             });
+            this.charges.refreshInk(ink);
         }
     }
 
@@ -97,10 +97,13 @@ export class AtomLabels implements Disposable {
             if (label.visible) {
                 this.toCamera.divideScalar(distance);
                 label.position.copy(atom.position).addScaledVector(this.toCamera, this.offsetFor(atom));
+                label.scale.setScalar(atom.radius);
                 label.up.copy(this.cameraUp);
                 label.lookAt(camera.position);
             }
         });
+
+        this.charges.update(camera, viewportHeight);
     }
 
     dispose(): void {
@@ -109,6 +112,7 @@ export class AtomLabels implements Disposable {
         }
 
         this.pool.length = 0;
+        this.charges.dispose();
         this.root.removeFromParent();
     }
 
@@ -171,14 +175,4 @@ function stick(sticks: BondsByAtom, atom: PlacedAtom, entry: BondFromAtom): void
     } else {
         sticks.set(atom, [entry]);
     }
-}
-
-function inkFor(atom: PlacedAtom, ink: LabelInk): Color {
-    const luminance = luminanceOf(atom.color) + incandescentLuminanceOf(atom.temperatureKelvin) / LIT_WHITE_LUMINANCE;
-
-    return luminance > INK_LUMINANCE ? ink.dark : ink.light;
-}
-
-function luminanceOf(color: Color): number {
-    return 0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b;
 }

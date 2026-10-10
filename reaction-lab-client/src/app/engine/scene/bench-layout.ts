@@ -1,7 +1,13 @@
 import { Box3, Color, Sphere, Vector3 } from "three";
 import { Phase, ROOM_TEMPERATURE_KELVIN } from "../core/matter";
+import { latticeContactsOf } from "./lattice-contacts";
 
 export type BondKind = 'single' | 'double' | 'triple' | 'aromatic' | 'ionic' | 'hydrogen' | 'metallic';
+
+export interface IonMembership {
+    readonly index: number;
+    readonly charge: number;
+}
 
 export interface UnitAtom {
     readonly symbol: string;
@@ -9,6 +15,7 @@ export interface UnitAtom {
     readonly color: Color;
     readonly radius: number;
     readonly position: Vector3;
+    readonly ion: IonMembership | null;
 }
 
 export interface UnitBond {
@@ -22,11 +29,13 @@ export interface LayoutUnit {
     readonly substanceId: string;
     readonly atoms: readonly UnitAtom[];
     readonly bonds: readonly UnitBond[];
+    readonly crystallite: boolean;
 }
 
 export interface PlacedAtom extends UnitAtom {
     readonly unitId: string;
     readonly substanceId: string;
+    radius: number;
     temperatureKelvin: number;
 }
 
@@ -42,6 +51,7 @@ export interface PlacedBond {
 export interface BenchLayout {
     readonly atoms: readonly PlacedAtom[];
     readonly bonds: readonly PlacedBond[];
+    readonly latticeBonds: readonly PlacedBond[];
     readonly bounds: Box3;
     readonly sphereByUnitId: ReadonlyMap<string, Sphere>;
 }
@@ -63,9 +73,15 @@ interface UnitBlock {
     readonly end: number;
 }
 
+interface PlacementGroup {
+    readonly extent: UnitExtent;
+    readonly unitIndices: readonly number[];
+}
+
 interface BenchUnderConstruction {
     readonly atoms: PlacedAtom[];
     readonly bonds: PlacedBond[];
+    readonly latticeBonds: PlacedBond[];
     readonly bounds: Box3;
     readonly sphereByUnitId: Map<string, Sphere>;
 }
@@ -76,23 +92,30 @@ const RING_SPREAD = 1.85;
 export const FLOOR_CLEARANCE = 0.12;
 
 export function layoutBench(units: readonly LayoutUnit[]): BenchLayout {
-    const extents = units.map(measureUnit);
-    const blocks = blocksBySubstance(units);
-    const packs = blocks.map((block) => packUnits(extents.slice(block.start, block.end).map((extent) => extent.radius), GAP));
-    const benchWidth = packs.reduce((sum, pack) => sum + pack.width, 0) + GAP * Math.max(blocks.length - 1, 0);
-    const bench: BenchUnderConstruction = { atoms: [], bonds: [], bounds: new Box3(), sphereByUnitId: new Map() };
+    const extents = units.map((unit) => measureAtoms(unit.atoms));
+    const groupsByBlock = blocksBySubstance(units).map((block) => placementGroupsOf(units, extents, block));
+    const packs = groupsByBlock.map((groups) => packUnits(groups.map((group) => group.extent.radius), GAP));
+    const benchWidth = packs.reduce((sum, pack) => sum + pack.width, 0) + GAP * Math.max(packs.length - 1, 0);
+    const bench: BenchUnderConstruction = { atoms: [], bonds: [], latticeBonds: [], bounds: new Box3(), sphereByUnitId: new Map() };
     let blockStart = -benchWidth / 2;
 
-    blocks.forEach((block, blockIndex) => {
+    groupsByBlock.forEach((groups, blockIndex) => {
         const pack = packs[blockIndex];
 
-        for (let index = block.start; index < block.end; index++) {
-            const extent = extents[index];
-            const slot = pack.centers[index - block.start];
-            const offset = new Vector3(blockStart + pack.width / 2 + slot.x - extent.center.x, FLOOR_CLEARANCE - extent.floor, slot.z - extent.center.z);
+        groups.forEach((group, groupIndex) => {
+            const slot = pack.centers[groupIndex];
+            const offset = new Vector3(blockStart + pack.width / 2 + slot.x - group.extent.center.x, FLOOR_CLEARANCE - group.extent.floor, slot.z - group.extent.center.z);
+            const firstAtom = bench.atoms.length;
+            const firstBond = bench.bonds.length;
 
-            placeUnits(units[index], extent, offset, bench);
-        }
+            for (const index of group.unitIndices) {
+                placeUnits(units[index], extents[index], offset, bench);
+            }
+
+            if (units[group.unitIndices[0]].crystallite) {
+                bench.latticeBonds.push(...latticeContactsOf(bench.atoms.slice(firstAtom), bench.bonds.slice(firstBond)));
+            }
+        });
 
         blockStart += pack.width + GAP;
     });
@@ -104,7 +127,9 @@ export function smallestRadiusOf(atoms: readonly PlacedAtom[]): number {
     let smallest = Infinity;
 
     for (const atom of atoms) {
-        smallest = Math.min(smallest, atom.radius);
+        if (atom.radius > 0) {
+            smallest = Math.min(smallest, atom.radius);
+        }
     }
 
     return smallest;
@@ -170,6 +195,16 @@ function blocksBySubstance(units: readonly LayoutUnit[]): UnitBlock[] {
     return blocks;
 }
 
+function placementGroupsOf(units: readonly LayoutUnit[], extents: readonly UnitExtent[], block: UnitBlock): PlacementGroup[] {
+    const unitIndices = Array.from({ length: block.end - block.start }, (_, index) => block.start + index);
+
+    if (units[block.start].crystallite) {
+        return [{ extent: measureAtoms(unitIndices.flatMap((index) => units[index].atoms)), unitIndices }];
+    }
+
+    return unitIndices.map((index) => ({ extent: extents[index], unitIndices: [index] }));
+}
+
 function placeUnits(unit: LayoutUnit, extent: UnitExtent, offset: Vector3, bench: BenchUnderConstruction): void {
     const placed = unit.atoms.map((atom) => place(atom, unit, offset));
     const centroid = extent.center.clone().add(offset);
@@ -191,18 +226,18 @@ function place(atom: UnitAtom, unit: LayoutUnit, offset: Vector3): PlacedAtom {
     return { ...atom, position: atom.position.clone().add(offset), unitId: unit.id, substanceId: unit.substanceId, temperatureKelvin: ROOM_TEMPERATURE_KELVIN };
 }
 
-function measureUnit(unit: LayoutUnit): UnitExtent {
+function measureAtoms(atoms: readonly UnitAtom[]): UnitExtent {
     const center = new Vector3();
     let radius = 0;
     let floor = Infinity;
 
-    for (const atom of unit.atoms) {
+    for (const atom of atoms) {
         center.add(atom.position);
     }
 
-    center.divideScalar(Math.max(unit.atoms.length, 1));
+    center.divideScalar(Math.max(atoms.length, 1));
 
-    for (const atom of unit.atoms) {
+    for (const atom of atoms) {
         radius = Math.max(radius, atom.position.distanceTo(center) + atom.radius);
         floor = Math.min(floor, atom.position.y - atom.radius);
     }

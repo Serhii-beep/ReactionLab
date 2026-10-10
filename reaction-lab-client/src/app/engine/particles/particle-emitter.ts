@@ -1,4 +1,4 @@
-import { AdditiveBlending, Blending, BufferAttribute, Color, InstancedBufferAttribute, InstancedBufferGeometry, IUniform, Mesh, NoBlending, NormalBlending, ShaderMaterial, Vector3 } from "three";
+import { AdditiveBlending, BufferAttribute, Color, InstancedBufferAttribute, InstancedBufferGeometry, IUniform, Mesh, NormalBlending, ShaderMaterial, Vector3 } from "three";
 import { Disposable } from "../core/disposal-scope";
 import { PARTICLE_LOOKS, ParticleLook } from "./particle-look";
 import { anchorPointsOf, EmissionAnchors, EmissionPlan, hash01 } from "./emission-plan";
@@ -18,12 +18,9 @@ interface Variation {
 
 const QUAD_CORNERS = new Float32Array([-0.5, -0.5, 0, 0.5, -0.5, 0, 0.5, 0.5, 0, -0.5, 0.5, 0]);
 const QUAD_TRIANGLES = [0, 1, 2, 0, 2, 3];
-const NO_FLOOR = -1e6;
-const PRECIPITATE_REST_ANGSTROM = 0.04;
 const NEVER_FADES_AGE = 2;
 const MIN_FADE_FRACTION = 0.001;
 const MIN_DRAG_PER_SECOND = 0.0001;
-const OPAQUE_ALPHA_CUTOFF = 0.5;
 const MIN_PARTICLES = 1;
 const SPEED_VARIATION: Variation = { minimum: 0.5, range: 1 };
 const LIFE_VARIATION: Variation = { minimum: 0.7, range: 0.6 };
@@ -124,33 +121,23 @@ function particleMaterial(plan: EmissionPlan, look: ParticleLook, elapsedUniform
     return new ShaderMaterial({
         vertexShader: PARTICLE_VERTEX_SHADER,
         fragmentShader: PARTICLE_FRAGMENT_SHADER,
-        transparent: !look.opaque,
-        depthWrite: look.opaque,
-        blending: blendingOf(look),
+        transparent: true,
+        depthWrite: false,
+        blending: look.additive ? AdditiveBlending : NormalBlending,
         uniforms: {
             uElapsedSeconds: elapsedUniform,
             uGravity: { value: look.gravityAngstromPerSecondSquared.clone() },
             uGrowthPerLife: { value: look.growthPerLife },
             uDragPerSecond: { value: Math.max(look.dragPerSecond, MIN_DRAG_PER_SECOND) },
-            uFloor: { value: look.settlesOnFloor ? PRECIPITATE_REST_ANGSTROM : NO_FLOOR },
             uColorStart: { value: new Color(plan.colorStart) },
             uColorEnd: { value: new Color(plan.colorEnd) },
             uIntensity: { value: plan.intensity },
             uOpacity: { value: plan.opacity },
             uFadeInEnd: { value: Math.max(look.fadeInLifeFraction, MIN_FADE_FRACTION) },
             uFadeOutStart: { value: fadeOutStart },
-            uFadeOutEnd: { value: fadeOutStart + Math.max(look.fadeOutLifeFraction, MIN_FADE_FRACTION) },
-            uAlphaCutoff: { value: look.opaque ? OPAQUE_ALPHA_CUTOFF : 0 }
+            uFadeOutEnd: { value: fadeOutStart + Math.max(look.fadeOutLifeFraction, MIN_FADE_FRACTION) }
         }
     });
-}
-
-function blendingOf(look: ParticleLook): Blending {
-    if (look.opaque) {
-        return NoBlending;
-    }
-
-    return look.additive ? AdditiveBlending : NormalBlending;
 }
 
 function vary(variation: Variation, fraction: number): number {

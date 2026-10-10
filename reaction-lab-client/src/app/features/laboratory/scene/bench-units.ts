@@ -1,12 +1,12 @@
-import { Color, Vector3 } from "three";
+import { Vector3 } from "three";
 import { ElementSummary } from "../../../data/elements/element";
 import { BondType, MatterState, SubstanceDetail, SubstanceKind } from "../../../data/substances/substance";
 import { BondKind, LayoutUnit, ringPositions, UnitAtom, UnitBond } from "../../../engine/scene/bench-layout";
 import { WorkspaceItem } from "../../../state/workspace-store";
 import { parseHillFormula } from "./hill-formula";
 import { Phase } from "../../../engine/core/matter";
-
-type Elements = ReadonlyMap<string, ElementSummary>;
+import { colorOf, covalentBallRadiusOf, ElementsBySymbol } from "./atom-balls";
+import { ionicUnitsOf } from "./ionic-units";
 
 interface Unit {
     readonly atoms: readonly UnitAtom[];
@@ -39,11 +39,7 @@ const UNIT_BONDS: Readonly<Record<SubstanceKind, BondKind>> = {
     NetworkCovalent: 'single'
 };
 
-const BALL_BASE = 0.22;
-const BALL_SCALE = 0.32;
-const FALLBACK_COVALENT = 0.75;
-const FALLBACK_COLOR = '#909090';
-const MAX_COPIES = 64;
+export const MAX_COPIES = 64;
 
 export function buildBenchUnits(
     entries: readonly WorkspaceItem[],
@@ -54,7 +50,7 @@ export function buildBenchUnits(
         return [];
     }
 
-    const bySymbol: Elements = new Map(elements.map((element) => [element.symbol, element]));
+    const bySymbol: ElementsBySymbol = new Map(elements.map((element) => [element.symbol, element]));
     const units: LayoutUnit[] = [];
 
     for (const entry of entries) {
@@ -64,19 +60,20 @@ export function buildBenchUnits(
             continue;
         }
 
-        const { atoms, bonds } = unitOf(detail, bySymbol);
+        const copies = Math.min(entry.count, MAX_COPIES);
+        const phase = PHASES[detail.stateAtRoomTemperature];
 
-        for (let copy = 0; copy < Math.min(entry.count, MAX_COPIES); copy++) {
-            units.push({ id: `${detail.id}#${copy}`, substanceId: detail.id, atoms, bonds });
-        }
+        units.push(...(ionicUnitsOf(detail, copies, phase, bySymbol) ?? copiesOf(detail, unitOf(detail, phase, bySymbol), copies)));
     }
 
     return units;
 }
 
-function unitOf(detail: SubstanceDetail, elements: Elements): Unit {
-    const phase = PHASES[detail.stateAtRoomTemperature];
+function copiesOf(detail: SubstanceDetail, unit: Unit, copies: number): LayoutUnit[] {
+    return Array.from({ length: copies }, (_, copy) => ({ id: `${detail.id}#${copy}`, substanceId: detail.id, ...unit, crystallite: false }));
+}
 
+function unitOf(detail: SubstanceDetail, phase: Phase, elements: ElementsBySymbol): Unit {
     if (detail.structure) {
         return {
             atoms: detail.structure.atoms.map((atom) => describe(atom.symbol, new Vector3(atom.x, atom.y, atom.z), phase, elements)),
@@ -85,7 +82,7 @@ function unitOf(detail: SubstanceDetail, elements: Elements): Unit {
     }
 
     const symbols = parseHillFormula(detail.hillFormula).flatMap(({ symbol, count }) => Array<string>(count).fill(symbol));
-    const positions = ringPositions(symbols.map((symbol) => radiusOf(elements.get(symbol))));
+    const positions = ringPositions(symbols.map((symbol) => covalentBallRadiusOf(elements.get(symbol))));
 
     return {
         atoms: symbols.map((symbol, index) => describe(symbol, positions[index], phase, elements)),
@@ -105,14 +102,8 @@ function ringBonds(count: number, kind: BondKind): UnitBond[] {
     return Array.from({ length: count }, (_, index) => ({ from: index, to: (index + 1) % count, kind }));
 }
 
-function describe(symbol: string, position: Vector3, phase: Phase, elements: Elements): UnitAtom {
+function describe(symbol: string, position: Vector3, phase: Phase, elements: ElementsBySymbol): UnitAtom {
     const element = elements.get(symbol);
 
-    return { symbol, phase, position, radius: radiusOf(element), color: new Color(element?.displayColor ?? FALLBACK_COLOR) };
-}
-
-function radiusOf(element: ElementSummary | undefined): number {
-    const covalent = (element?.covalentRadiusPicometers ?? FALLBACK_COVALENT * 100) / 100;
-
-    return BALL_BASE + BALL_SCALE * covalent;
+    return { symbol, phase, position, radius: covalentBallRadiusOf(element), color: colorOf(element), ion: null };
 }

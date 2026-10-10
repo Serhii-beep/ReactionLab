@@ -221,7 +221,7 @@ export class SceneCanvas {
 
         this.stage.applyLook(look, resolve);
         this.scene.setAccent(resolve('--accent'));
-        this.scene.setLabelInk({ dark: resolve('--cat-ink'), light: LIGHT_INK });
+        this.scene.setLabelInk({ dark: resolve('--cat-ink'), light: LIGHT_INK, ground: resolve('--text-primary') });
 
         this.loop.invalidate();
     }

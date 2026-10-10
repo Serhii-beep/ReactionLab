@@ -4,7 +4,8 @@ import { EngineContext } from "../core/engine-context";
 import { CameraController } from "../interaction/camera-controller";
 import { HighlightFade } from "../interaction/highlight-fade";
 import { PickingService } from "../interaction/picking-service";
-import { AtomLabels, LabelInk } from "../objects/atom-labels";
+import { AtomLabels } from "../objects/atom-labels";
+import { LabelInk } from "../objects/label-ink";
 import { AtomRenderer } from "../objects/atom-renderer";
 import { BondRenderer } from "../objects/bond-renderer";
 import { SelectionOutline } from "../objects/selection-outline";
@@ -113,7 +114,7 @@ export class BenchScene implements Disposable {
         const { effects, runCamera } = this.collaborators;
 
         this.motion = motion;
-        effects.begin(script.emissions, motion.emissionAnchors);
+        effects.begin(script.emissions, motion.emissionAnchors, motion.trace, motion.gasRun);
         this.bounds = motion.bounds;
         runCamera.end();
 
@@ -258,7 +259,7 @@ export class BenchScene implements Disposable {
         const differentAtoms = staged.atoms !== this.atoms;
 
         this.atoms = staged.atoms;
-        this.bonds = staged.bonds;
+        this.bonds = staged.latticeBonds.length === 0 ? staged.bonds : [...staged.bonds, ...staged.latticeBonds];
         this.sphereByUnitId = staged.sphereByUnitId;
         atoms.render(this.atoms, this.lodInUse);
         bonds.render(this.bonds, this.lodInUse);

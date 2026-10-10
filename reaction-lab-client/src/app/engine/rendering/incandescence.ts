@@ -16,7 +16,7 @@ interface Blackbody {
     readonly logLuminance: number;
 }
 
-const DRAPER_POINT_KELVIN = 798;
+export const DRAPER_POINT_KELVIN = 798;
 const BRIGHT_AS_LIT_WHITE_KELVIN = 1200;
 const TABLE_STEP_KELVIN = 25;
 const VISIBLE_NANOMETERS = { first: 380, last: 780, step: 5 };

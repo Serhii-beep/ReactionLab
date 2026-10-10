@@ -5,7 +5,11 @@ import { RecordingIndexByAtom } from "./dynamics-input-builder";
 import { DynamicsRecording, recordedPositionAt } from "./dynamics/dynamics-recording";
 import { TurnSpan, UnitTurns } from "./unit-turns";
 import { bondAxis, bondPerpendicular, drawsSideLines } from "../scene/bond-lines";
-import { EnergyLedger } from "./energy-ledger";
+
+export interface RecordedAtomLooks {
+    readonly temperatureKelvinAt: (recordingIndex: number, seconds: number) => number;
+    readonly radiusAt: (recordingIndex: number, seconds: number) => number;
+}
 
 interface RecordedAtom {
     readonly atom: PlacedAtom;
@@ -49,7 +53,7 @@ export class RecordedUnits {
         recordingIndexByAtom: RecordingIndexByAtom,
         private readonly recording: DynamicsRecording,
         turnSpan: TurnSpan,
-        private readonly ledger: EnergyLedger
+        private readonly looks: RecordedAtomLooks
     ) {
         this.unitIds = new Set(bench.atoms.filter((atom) => recordingIndexByAtom.has(atom)).map((atom) => atom.unitId));
         this.recordedUnits = [...this.unitIds].map((unitId) => recordedUnitOf(bench, unitId, recordingIndexByAtom, recording, turnSpan));
@@ -59,7 +63,8 @@ export class RecordedUnits {
         for (const unit of this.recordedUnits) {
             for (const { atom, recordingIndex, rest } of unit.recorded) {
                 recordedPositionAt(this.recording, recordingIndex, seconds, atom.position).lerp(rest, restBlend);
-                atom.temperatureKelvin = this.ledger.temperatureKelvinAt(recordingIndex, seconds);
+                atom.temperatureKelvin = this.looks.temperatureKelvinAt(recordingIndex, seconds);
+                atom.radius = this.looks.radiusAt(recordingIndex, seconds);
             }
 
             this.carryRiders(unit);

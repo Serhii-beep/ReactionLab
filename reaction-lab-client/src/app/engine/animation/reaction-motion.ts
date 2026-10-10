@@ -7,15 +7,38 @@ import { EmissionAnchors } from "../particles/emission-plan";
 import { DynamicsRecording, recordedReachAt } from "./dynamics/dynamics-recording";
 import { atomsOfUnits, bondsOfUnits, mergePosedPoints, pointsAtPose, poseTravels, StagedBench, StagedSet, stageTravelingUnits, TravelPlanFor, UnitTravel } from "./unit-staging";
 import { dynamicsScheduleOf, swapSecondsOf } from "./dynamics/dynamics-schedule";
-import { RecordedUnits } from "./recorded-units";
+import { RecordedAtomLooks, RecordedUnits } from "./recorded-units";
 import { buildDynamicsInput, DynamicsSources, RecordingIndexByAtom, recordingIndexByAtom } from "./dynamics-input-builder";
-import { boundsWithGathering, CentersByUnitId, gatheredSphereOf, gatheringOf, slotCentersAround } from "./gathering";
+import { boundsWithGathering, CentersByUnitId, Gathering, gatheredSphereOf, gatheringOf, slotCentersAround } from "./gathering";
 import { AtomPair, pairAtoms } from "./atom-pairing";
 import { refinePairing } from "./pairing-refinement";
 import { bakeReactionDynamics } from "./dynamics/reaction-dynamics";
 import { RunBonds } from "./run-bonds";
 import { CameraCues } from "../cinematography/camera-cues";
 import { EnergyLedger, shownEnthalpyOf } from "./energy-ledger";
+import { GasRun } from "../gas/gas-run";
+import { buildGasRun } from "./gas-run-builder";
+import { ReactionTrace } from "./reaction-trace";
+import { buildReactionTrace } from "./reaction-trace-builder";
+import { CrystalGrowth } from "./crystal-growth";
+import { RadiusAt } from "./radius-blend";
+
+interface RunFrameSources {
+    readonly reactantsSet: StagedSet;
+    readonly productsSet: StagedSet;
+    readonly runBonds: RunBonds;
+    readonly growth: CrystalGrowth | null;
+    readonly before: BenchLayout;
+    readonly after: BenchLayout;
+    readonly consumedIds: ReadonlySet<string>;
+    readonly producedIds: ReadonlySet<string>;
+}
+
+interface RunFrames {
+    readonly reactants: StagedBench;
+    readonly products: StagedBench;
+    readonly landingLatticeBonds: readonly PlacedBond[];
+}
 
 const LANDING_BLEND_SECONDS = 0.3;
 const RECORDING_BY_SCRIPT = new WeakMap<ReactionScript, DynamicsRecording>();
@@ -24,6 +47,8 @@ export class ReactionMotion {
     readonly bounds: Box3;
     readonly emissionAnchors: EmissionAnchors;
     readonly cameraCues: CameraCues;
+    readonly trace: ReactionTrace;
+    readonly gasRun: GasRun | null;
 
     private readonly swapSeconds: number;
     private readonly reactantsSet: StagedSet;
@@ -36,6 +61,8 @@ export class ReactionMotion {
     private readonly recordedProducts: RecordedUnits;
     private readonly reactantTravels: readonly UnitTravel[];
     private readonly productTravels: readonly UnitTravel[];
+    private readonly landingLatticeBonds: readonly PlacedBond[];
+    private readonly growth: CrystalGrowth | null;
 
     constructor(private readonly script: ReactionScript, before: BenchLayout, after: BenchLayout) {
         const consumedIds = unitIdsOnlyIn(before, after);
@@ -46,11 +73,7 @@ export class ReactionMotion {
         const schedule = dynamicsScheduleOf(script.phases, script.durationSeconds);
         this.swapSeconds = swapSecondsOf(schedule);
         this.bounds = boundsWithGathering(before, after, gathering);
-        this.emissionAnchors = {
-            meeting: gathering.meeting.clone(),
-            products: [...productCenters.values()],
-            reactants: [...gathering.centerByUnitId.values()]
-        };
+        this.emissionAnchors = emissionAnchorsOf(gathering, productCenters);
         this.reactantsSet = stageTravelingUnits(before, approachPlans(gathering.centerByUnitId));
         this.productsSet = stageTravelingUnits(after, releasePlans(productCenters, before));
 
@@ -77,19 +100,32 @@ export class ReactionMotion {
         };
         const ledger = energyLedgerOf(dynamicsSources, bondChanges);
 
+        const gatheredSphere = gatheredSphereOf(before, gathering);
+
         this.recording = recordingFor(dynamicsSources);
-        this.cameraCues = cameraCuesOf(gatheredSphereOf(before, gathering), after.bounds, this.recording, atomPairs, script.energetics);
-        this.recordedReactants = new RecordedUnits(this.reactantsSet, reactantIndexByAtom, this.recording, { restSeconds: 0, towardSeconds: this.swapSeconds }, ledger);
-        this.recordedProducts = new RecordedUnits(this.productsSet, productIndexByAtom, this.recording, { restSeconds: script.durationSeconds, towardSeconds: this.swapSeconds }, ledger);
+        this.cameraCues = cameraCuesOf(gatheredSphere, after.bounds, this.recording, atomPairs, script.energetics);
+        this.trace = buildReactionTrace(dynamicsSources, bondChanges, ledger, this.recording, { start: script.durationSeconds - LANDING_BLEND_SECONDS, end: script.durationSeconds });
+        this.gasRun = buildGasRun(dynamicsSources, this.trace);
+        const atomLooks = atomLooksOf(ledger, this.trace.radiusAt);
+
+        this.recordedReactants = new RecordedUnits(this.reactantsSet, reactantIndexByAtom, this.recording, { restSeconds: 0, towardSeconds: this.swapSeconds }, atomLooks);
+        this.recordedProducts = new RecordedUnits(this.productsSet, productIndexByAtom, this.recording, { restSeconds: script.durationSeconds, towardSeconds: this.swapSeconds }, atomLooks);
         this.reactantTravels = this.reactantsSet.travels.filter((travel) => !this.recordedReactants.unitIds.has(travel.unitId));
         this.productTravels = this.productsSet.travels.filter((travel) => !this.recordedProducts.unitIds.has(travel.unitId));
         this.runBonds = new RunBonds({ bondChanges, atomPairs, reactantIndexByAtom, productIndexByAtom, recording: this.recording });
-        this.reactantsFrame = { atoms: this.reactantsSet.atoms, bonds: [...this.reactantsSet.bonds, ...this.runBonds.previews], sphereByUnitId: this.reactantsSet.sphereByUnitId };
-        this.productsFrame = { atoms: this.productsSet.atoms, bonds: [...this.productsSet.bonds, ...this.runBonds.echoes], sphereByUnitId: this.productsSet.sphereByUnitId };
+        this.growth = script.precipitate === null ? null : new CrystalGrowth({ plan: script.precipitate, after, unitsAfter: script.unitsAfter, solution: gatheredSphere, schedule, randomSeed: script.randomSeed });
+
+        const frames = runFramesOf({ reactantsSet: this.reactantsSet, productsSet: this.productsSet, runBonds: this.runBonds, growth: this.growth, before, after, consumedIds, producedIds });
+
+        this.reactantsFrame = frames.reactants;
+        this.productsFrame = frames.products;
+        this.landingLatticeBonds = frames.landingLatticeBonds;
     }
 
     frameAt(seconds: number): StagedBench {
         const { phases, durationSeconds } = this.script;
+
+        this.growth?.place(seconds);
 
         if (seconds < this.swapSeconds) {
             this.recordedReactants.place(seconds, 0);
@@ -99,9 +135,15 @@ export class ReactionMotion {
             return this.reactantsFrame;
         }
 
-        this.recordedProducts.place(seconds, smoothProgressBetween(durationSeconds - LANDING_BLEND_SECONDS, durationSeconds, seconds));
+        const landing = smoothProgressBetween(durationSeconds - LANDING_BLEND_SECONDS, durationSeconds, seconds);
+
+        this.recordedProducts.place(seconds, landing);
         poseTravels(this.productTravels, easeInOutCubic(progressWithin(phases.separation, seconds)));
         this.runBonds.showAfterSwap(seconds);
+
+        for (const bond of this.landingLatticeBonds) {
+            bond.strength = landing;
+        }
 
         return this.productsFrame;
     }
@@ -119,6 +161,13 @@ function recordingFor(sources: DynamicsSources): DynamicsRecording {
     RECORDING_BY_SCRIPT.set(sources.script, recording);
 
     return recording;
+}
+
+function atomLooksOf(ledger: EnergyLedger, radiusAt: RadiusAt): RecordedAtomLooks {
+    return {
+        temperatureKelvinAt: (recordingIndex, seconds) => ledger.temperatureKelvinAt(recordingIndex, seconds),
+        radiusAt
+    };
 }
 
 function energyLedgerOf(sources: DynamicsSources, bondChanges: BondChanges): EnergyLedger {
@@ -157,6 +206,38 @@ function cameraCuesOf(gathered: Sphere, finalBounds: Box3, recording: DynamicsRe
         shownEnthalpyKilojoulesPerMole: shownEnthalpyOf(energetics) ?? 0,
         reachAt: (seconds, center) => recordedReachAt(recording, atomRadii, seconds, center)
     };
+}
+
+function emissionAnchorsOf(gathering: Gathering, productCenters: CentersByUnitId): EmissionAnchors {
+    return {
+        meeting: gathering.meeting.clone(),
+        products: [...productCenters.values()],
+        reactants: [...gathering.centerByUnitId.values()]
+    };
+}
+
+function runFramesOf({ reactantsSet, productsSet, runBonds, growth, before, after, consumedIds, producedIds }: RunFrameSources): RunFrames {
+    const standIns = { atoms: growth?.atoms ?? [], bonds: growth?.bonds ?? [], latticeBonds: growth?.latticeBonds ?? [] };
+
+    return {
+        reactants: {
+            atoms: [...reactantsSet.atoms, ...standIns.atoms],
+            bonds: [...reactantsSet.bonds, ...runBonds.previews, ...standIns.bonds],
+            latticeBonds: latticeBondsOf(before, consumedIds, false),
+            sphereByUnitId: reactantsSet.sphereByUnitId
+        },
+        products: {
+            atoms: [...productsSet.atoms, ...standIns.atoms],
+            bonds: [...productsSet.bonds, ...runBonds.echoes, ...standIns.bonds],
+            latticeBonds: [...after.latticeBonds, ...standIns.latticeBonds],
+            sphereByUnitId: productsSet.sphereByUnitId
+        },
+        landingLatticeBonds: latticeBondsOf(after, producedIds, true)
+    };
+}
+
+function latticeBondsOf(layout: BenchLayout, unitIds: ReadonlySet<string>, touching: boolean): PlacedBond[] {
+    return layout.latticeBonds.filter((bond) => (unitIds.has(bond.from.unitId) || unitIds.has(bond.to.unitId)) === touching);
 }
 
 function unitIdsOnlyIn(layout: BenchLayout, other: BenchLayout): Set<string> {

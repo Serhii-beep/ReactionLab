@@ -3,6 +3,8 @@ import { Look } from "./look";
 
 export type TokenResolver = (token: string) => Color;
 
+export const KEY_LIGHT_POSITION: readonly [number, number, number] = [8, 14, 10];
+
 const SHADOW_EXTENT = 14;
 
 export class LightingRig extends Group {
@@ -16,7 +18,7 @@ export class LightingRig extends Group {
 
         this.name = 'lighting';
 
-        this.key.position.set(8, 14, 10);
+        this.key.position.set(...KEY_LIGHT_POSITION);
         this.key.castShadow = true;
         this.key.shadow.mapSize.set(2048, 2048);
         this.key.shadow.camera.near = 1;
