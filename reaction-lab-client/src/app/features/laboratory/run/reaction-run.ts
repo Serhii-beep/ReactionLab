@@ -14,7 +14,6 @@ import { buildReactionScript } from "./reaction-script-builder";
 import { readiness } from "../../../data/reactions/reaction-readiness";
 import { prefersReducedMotion } from "../../../core/platform/reduced-motion";
 import { tap } from "rxjs";
-import { emissionPlansFor } from "./effect-presets";
 import { dynamicsScheduleOf } from "../../../engine/animation/dynamics/dynamics-schedule";
 
 export type ReactionRunStatus = 'idle' | 'preparing' | 'playing' | 'paused' | 'finished';
@@ -197,7 +196,7 @@ export class ReactionRun {
         }
 
         const timeline = reactionTimeline(runSecondsOf(reaction), activationBarrierOf(reaction));
-        const script = buildReactionScript(reaction, timeline, emissionPlansFor(reaction, timeline), {
+        const script = buildReactionScript(reaction, timeline, {
             entriesBefore: this.workspace.entries(),
             entriesAfter: this.workspace.entriesAfter(outcome),
             details: this.details.loaded(),

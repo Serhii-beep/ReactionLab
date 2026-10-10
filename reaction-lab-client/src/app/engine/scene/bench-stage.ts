@@ -9,11 +9,12 @@ import { referenceDistance } from "../core/camera-framing";
 import { PostProcessingPipeline } from "../rendering/post-processing-pipeline";
 import { PlacedAtom } from "./bench-layout";
 import { incandescentLuminanceOf } from "../rendering/incandescence";
+import { ReactionLight } from "../rendering/reaction-light";
 
 const OCCLUSION_DARKENING = 0.3;
 
 export class BenchStage implements Disposable {
-    readonly ground = new Ground();
+    readonly ground: Ground;
     readonly lights = new LightingRig();
 
     private readonly environment: Environment;
@@ -25,8 +26,10 @@ export class BenchStage implements Disposable {
 
     constructor(
         private readonly context: EngineContext,
-        private readonly pipeline: PostProcessingPipeline
+        private readonly pipeline: PostProcessingPipeline,
+        private readonly reactionLight: ReactionLight
     ) {
+        this.ground = new Ground(reactionLight);
         this.environment = new Environment(context);
         context.scene.fog = this.fog;
         context.scene.add(this.ground, this.lights);
@@ -48,11 +51,12 @@ export class BenchStage implements Disposable {
         this.pipeline.setOcclusionColor(resolve(look.fog.token).multiplyScalar(OCCLUSION_DARKENING));
     }
 
-    exposeFor(atoms: readonly PlacedAtom[]): void {
+    glowFrom(atoms: readonly PlacedAtom[]): void {
         const brightest = atoms.reduce((most, atom) => Math.max(most, incandescentLuminanceOf(atom.temperatureKelvin)), 0);
 
         this.glowExposureScale = brightest > LIT_WHITE_LUMINANCE ? LIT_WHITE_LUMINANCE / brightest : 1;
         this.expose();
+        this.reactionLight.shine(atoms);
     }
 
     fit(distance: number, bounds: Box3): void {

@@ -22,11 +22,11 @@ const VAPOR_SPREAD_SECONDS = 0.6;
 const VELOCITY_SPAN_SECONDS = 1 / 60;
 const FLAME_SOURCE_SLOTS = 16;
 const VAPOR_SOURCE_SLOTS = 8;
-const CLOUD_SOURCE_SLOTS = 12;
-const CLOUD_SOURCE_RADIUS_ANGSTROM = 1;
-const CLOUD_PER_ATOM = 5;
-const CLOUD_LEAD_SECONDS = 0.1;
-const CLOUD_GROWTH_SECONDS = 1.2;
+const PARTICLE_SOURCE_SLOTS = 12;
+const PARTICLE_SOURCE_RADIUS_ANGSTROM = 1;
+const PARTICLES_PER_ATOM = 5;
+const PARTICLE_LEAD_SECONDS = 0.1;
+const PARTICLE_GROWTH_SECONDS = 1.2;
 
 export class GasFeed {
     private readonly aheadPlace = new Vector3();
@@ -35,7 +35,7 @@ export class GasFeed {
     private readonly flameBonds: readonly RecordedBond[];
     private readonly vaporOxygens: readonly number[];
     private readonly obstacleAtoms: readonly number[];
-    private readonly cloudAtoms: readonly number[];
+    private readonly particleAtoms: readonly number[];
     private readonly trace: ReactionTrace;
 
     constructor(private readonly run: GasRun) {
@@ -43,7 +43,7 @@ export class GasFeed {
         this.flameBonds = evenlyPicked(run.trace.formingBonds, FLAME_SOURCE_SLOTS);
         this.vaporOxygens = evenlyPicked(run.waterOxygens, VAPOR_SOURCE_SLOTS);
         this.obstacleAtoms = evenlyPicked(Array.from({ length: run.trace.atomCount }, (_, atomIndex) => atomIndex), MAX_GAS_OBSTACLES);
-        this.cloudAtoms = evenlyPicked(run.cloud?.atomIndices ?? [], CLOUD_SOURCE_SLOTS);
+        this.particleAtoms = evenlyPicked(run.particles?.atomIndices ?? [], PARTICLE_SOURCE_SLOTS);
     }
 
     reachAt(seconds: number): number {
@@ -58,9 +58,12 @@ export class GasFeed {
     }
 
     sourcesAt(seconds: number): GasSource[] {
-        const formedSources = [...this.releaseSourcesAt(seconds), ...this.cloudSourcesAt(seconds)];
+        const { atomCount, temperatureKelvinAt } = this.trace;
+        const warmAtoms: WarmAtom[] = Array.from({ length: atomCount }, (_, atomIndex) => ({ atomIndex, riseKelvin: temperatureKelvinAt(atomIndex, seconds) - ROOM_TEMPERATURE_KELVIN }));
+        const meanRiseKelvin = warmAtoms.reduce((sum, { riseKelvin }) => sum + riseKelvin, 0) / Math.max(atomCount, 1);
+        const formedSources = [...this.flameSourcesAt(seconds), ...this.vaporSourcesAt(seconds), ...this.particleSourcesAt(seconds, meanRiseKelvin)];
 
-        return [...formedSources, ...this.heatSourcesAt(seconds, MAX_GAS_SOURCES - formedSources.length)];
+        return [...formedSources, ...this.heatSourcesAt(seconds, warmAtoms, MAX_GAS_SOURCES - formedSources.length)];
     }
 
     obstaclesAt(seconds: number): GasObstacle[] {
@@ -78,55 +81,62 @@ export class GasFeed {
         });
     }
 
-    private releaseSourcesAt(seconds: number): GasSource[] {
-        const { waterOxygens, releasesHeat } = this.run;
+    private flameSourcesAt(seconds: number): GasSource[] {
         const { schedule, formingBonds, placeAt } = this.trace;
+        const formingPerSecond = this.run.releasesHeat ? formingRateAt(schedule.releaseSeconds - RELEASE_HALF_WIDTH_SECONDS, schedule.releaseSeconds + RELEASE_HALF_WIDTH_SECONDS, seconds) : 0;
 
-        if (!releasesHeat) {
+        if (formingPerSecond === 0 || this.flameBonds.length === 0) {
             return [];
         }
 
-        const formingPerSecond = formingRateAt(schedule.releaseSeconds - RELEASE_HALF_WIDTH_SECONDS, schedule.releaseSeconds + RELEASE_HALF_WIDTH_SECONDS, seconds);
-        const steamingPerSecond = formingRateAt(schedule.releaseSeconds - RELEASE_HALF_WIDTH_SECONDS, schedule.releaseSeconds + VAPOR_SPREAD_SECONDS, seconds);
-        const flamePerSecond = (FLAME_PER_BOND * formingPerSecond * formingBonds.length) / Math.max(this.flameBonds.length, 1);
-        const vaporPerSecond = (VAPOR_PER_WATER * steamingPerSecond * waterOxygens.length) / Math.max(this.vaporOxygens.length, 1);
-        const flames = flamePerSecond === 0 ? [] : this.flameBonds.map(({ firstAtomIndex, secondAtomIndex }) => formedSource(
-            placeAt(firstAtomIndex, seconds, new Vector3()).add(placeAt(secondAtomIndex, seconds, this.scratchPlace)).multiplyScalar(0.5),
-            BOND_SOURCE_RADIUS_ANGSTROM,
-            0,
-            flamePerSecond));
-        const vapors = vaporPerSecond === 0 ? [] : this.vaporOxygens.map((atomIndex) => formedSource(placeAt(atomIndex, seconds, new Vector3()), WATER_SOURCE_RADIUS_ANGSTROM, vaporPerSecond, 0));
+        const flamePerSecond = (FLAME_PER_BOND * formingPerSecond * formingBonds.length) / this.flameBonds.length;
 
-        return [...flames, ...vapors];
+        return this.flameBonds.map(({ firstAtomIndex, secondAtomIndex }) => ({
+            ...formedSource(placeAt(firstAtomIndex, seconds, new Vector3()).add(placeAt(secondAtomIndex, seconds, this.scratchPlace)).multiplyScalar(0.5), BOND_SOURCE_RADIUS_ANGSTROM),
+            flamePerSecond
+        }));
     }
 
-    private cloudSourcesAt(seconds: number): GasSource[] {
+    private vaporSourcesAt(seconds: number): GasSource[] {
         const { schedule, placeAt } = this.trace;
-        const formedAtoms = this.run.cloud?.atomIndices.length ?? 0;
-        const formingPerSecond = formingRateAt(schedule.releaseSeconds - CLOUD_LEAD_SECONDS, schedule.releaseSeconds + CLOUD_GROWTH_SECONDS, seconds);
+        const steamingPerSecond = formingRateAt(schedule.releaseSeconds - RELEASE_HALF_WIDTH_SECONDS, schedule.releaseSeconds + VAPOR_SPREAD_SECONDS, seconds);
 
-        if (formingPerSecond === 0 || formedAtoms === 0) {
+        if (steamingPerSecond === 0 || this.vaporOxygens.length === 0) {
             return [];
         }
 
-        const cloudPerSecond = (CLOUD_PER_ATOM * formingPerSecond * formedAtoms) / this.cloudAtoms.length;
+        const vaporPerSecond = (VAPOR_PER_WATER * steamingPerSecond * this.run.waterOxygens.length) / this.vaporOxygens.length;
 
-        return this.cloudAtoms.map((atomIndex) => ({ ...formedSource(placeAt(atomIndex, seconds, new Vector3()), CLOUD_SOURCE_RADIUS_ANGSTROM, 0, 0), cloudPerSecond }));
+        return this.vaporOxygens.map((atomIndex) => ({ ...formedSource(placeAt(atomIndex, seconds, new Vector3()), WATER_SOURCE_RADIUS_ANGSTROM), vaporPerSecond }));
     }
 
-    private heatSourcesAt(seconds: number, slots: number): GasSource[] {
-        const { atomCount, radiusAt, temperatureKelvinAt, placeAt } = this.trace;
-        const warmAtoms: WarmAtom[] = Array.from({ length: atomCount }, (_, atomIndex) => ({ atomIndex, riseKelvin: temperatureKelvinAt(atomIndex, seconds) - ROOM_TEMPERATURE_KELVIN }))
-            .filter(({ riseKelvin }) => riseKelvin > WARM_KELVIN);
+    private particleSourcesAt(seconds: number, meanRiseKelvin: number): GasSource[] {
+        const { schedule, placeAt } = this.trace;
+        const { particles } = this.run;
+        const formingPerSecond = formingRateAt(schedule.releaseSeconds - PARTICLE_LEAD_SECONDS, schedule.releaseSeconds + PARTICLE_GROWTH_SECONDS, seconds);
+
+        if (particles === null || formingPerSecond === 0 || this.particleAtoms.length === 0) {
+            return [];
+        }
+
+        const particlesPerSecond = (PARTICLES_PER_ATOM * particles.loading * formingPerSecond * particles.atomIndices.length) / this.particleAtoms.length;
+
+        return this.particleAtoms.map((atomIndex) => ({
+            ...formedSource(placeAt(atomIndex, seconds, new Vector3()), PARTICLE_SOURCE_RADIUS_ANGSTROM),
+            targetKelvin: meanRiseKelvin,
+            heatingPerSecond: HEATING_PER_SECOND,
+            particlesPerSecond
+        }));
+    }
+
+    private heatSourcesAt(seconds: number, atoms: readonly WarmAtom[], slots: number): GasSource[] {
+        const { radiusAt, placeAt } = this.trace;
+        const warmAtoms = atoms.filter(({ riseKelvin }) => riseKelvin > WARM_KELVIN);
 
         return warmAtoms.sort((first, second) => second.riseKelvin - first.riseKelvin).slice(0, slots).map(({ atomIndex, riseKelvin }) => ({
-            place: placeAt(atomIndex, seconds, new Vector3()),
-            radius: radiusAt(atomIndex, seconds) * HEAT_RADIUS_SHARE,
+            ...formedSource(placeAt(atomIndex, seconds, new Vector3()), radiusAt(atomIndex, seconds) * HEAT_RADIUS_SHARE),
             targetKelvin: riseKelvin,
-            heatingPerSecond: HEATING_PER_SECOND,
-            vaporPerSecond: 0,
-            flamePerSecond: 0,
-            cloudPerSecond: 0
+            heatingPerSecond: HEATING_PER_SECOND
         }));
     }
 }
@@ -135,8 +145,8 @@ function evenlyPicked<Item>(items: readonly Item[], slots: number): readonly Ite
     return items.length <= slots ? items : Array.from({ length: slots }, (_, slot) => items[Math.floor((slot * items.length) / slots)]);
 }
 
-function formedSource(place: Vector3, radius: number, vaporPerSecond: number, flamePerSecond: number): GasSource {
-    return { place, radius, targetKelvin: 0, heatingPerSecond: 0, vaporPerSecond, flamePerSecond, cloudPerSecond: 0 };
+function formedSource(place: Vector3, radius: number): GasSource {
+    return { place, radius, targetKelvin: 0, heatingPerSecond: 0, vaporPerSecond: 0, flamePerSecond: 0, particlesPerSecond: 0 };
 }
 
 function formingRateAt(startSeconds: number, endSeconds: number, seconds: number): number {

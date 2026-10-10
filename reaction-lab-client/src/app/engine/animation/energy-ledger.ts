@@ -33,7 +33,7 @@ export class EnergyLedger {
     }
 
     temperatureKelvinAt(atomIndex: number, seconds: number): number {
-        return Math.min(ROOM_TEMPERATURE_KELVIN + this.energyAt(atomIndex, seconds) / DULONG_PETIT_KILOJOULES_PER_MOLE_KELVIN, FLAME_CEILING_KELVIN);
+        return Math.min(kelvinHeatedBy(this.energyAt(atomIndex, seconds), 1), FLAME_CEILING_KELVIN);
     }
 
     private energyAt(atomIndex: number, seconds: number): number {
@@ -51,6 +51,10 @@ export class EnergyLedger {
 
         return activation * (1 - releaseProgress) + carried * energyKeptAt(schedule, seconds) * releaseProgress;
     }
+}
+
+export function kelvinHeatedBy(kilojoulesPerMole: number, atomCount: number): number {
+    return ROOM_TEMPERATURE_KELVIN + kilojoulesPerMole / (atomCount * DULONG_PETIT_KILOJOULES_PER_MOLE_KELVIN);
 }
 
 export function shownEnthalpyOf(energetics: ReactionEnergetics): number | null {

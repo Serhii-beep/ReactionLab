@@ -1,4 +1,3 @@
-import { Color } from "three";
 import { ReactionSummary } from "../../../data/reactions/reaction";
 import { SubstanceDetail } from "../../../data/substances/substance";
 import { LayoutUnit } from "../../../engine/scene/bench-layout";
@@ -16,25 +15,6 @@ export interface PrecipitateSources {
 }
 
 const CRYSTALLITE_IONS = 16;
-const WHITE_PRECIPITATE = '#f3f4f2';
-const PRECIPITATE_COLOR_BY_FORMULA: ReadonlyMap<string, string> = new Map([
-    ['PbI2', '#f2c12e'],
-    ['AgI', '#eee2a0'],
-    ['Ag3PO4', '#ead04a'],
-    ['Ag2CO3', '#ede6b4'],
-    ['Cu(OH)2', '#6ea6db'],
-    ['Cu3(PO4)2', '#62ada6'],
-    ['CuCO3', '#4f9a6c'],
-    ['Fe(OH)3', '#9c4f2b'],
-    ['Fe(OH)2', '#97b487'],
-    ['FePO4', '#e9ddb0'],
-    ['Ag2O', '#4a3b2f'],
-    ['Ag2S', '#2a2a2b'],
-    ['PbS', '#2b2b2e'],
-    ['CuS', '#26292d'],
-    ['FeS', '#2e2b27'],
-    ['CuO', '#232323']
-]);
 
 export function precipitatePlanOf(reaction: ReactionSummary, sources: PrecipitateSources): PrecipitatePlan | null {
     if (!reaction.participants.some((participant) => participant.role === 'Reactant' && participant.state === 'Aqueous')) {
@@ -64,5 +44,5 @@ function planOf(detail: SubstanceDetail, formula: IonicFormula, sources: Precipi
         crystallite: true
     }));
 
-    return { substanceId: detail.id, cloudColor: new Color(PRECIPITATE_COLOR_BY_FORMULA.get(detail.formula) ?? WHITE_PRECIPITATE), standIns };
+    return { substanceId: detail.id, standIns };
 }

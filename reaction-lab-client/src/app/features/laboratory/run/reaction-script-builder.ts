@@ -3,11 +3,10 @@ import { ReactionSummary } from "../../../data/reactions/reaction";
 import { ReactionPhase, ReactionTimeline } from "../../../data/reactions/reaction-phases";
 import { SubstanceDetail } from "../../../data/substances/substance";
 import { PhaseSpansByName, PhaseSpanSeconds, ReactionScript } from "../../../engine/animation/reaction-script";
-import { EmissionPlan } from "../../../engine/particles/emission-plan";
 import { WorkspaceItem } from "../../../state/workspace-store";
 import { buildBenchUnits } from "../scene/bench-units";
 import { reactionEnergeticsOf } from "./reaction-energetics";
-import { gasLookOf } from "./gas-looks";
+import { gasPlanOf } from "./gas-plans";
 import { precipitatePlanOf } from "./precipitates";
 
 export interface ScriptSources {
@@ -17,12 +16,7 @@ export interface ScriptSources {
     readonly elements: readonly ElementSummary[];
 }
 
-export function buildReactionScript(
-    reaction: ReactionSummary,
-    timeline: ReactionTimeline,
-    emissions: readonly EmissionPlan[],
-    sources: ScriptSources
-): ReactionScript {
+export function buildReactionScript(reaction: ReactionSummary, timeline: ReactionTimeline, sources: ScriptSources): ReactionScript {
     const { approach, collision, bondsBreak, transitionState, bondsForm, separation } = timeline.byName;
     const elements = new Map(sources.elements.map((element) => [element.symbol, element]));
     const precipitate = precipitatePlanOf(reaction, { entriesAfter: sources.entriesAfter, details: sources.details, elements });
@@ -41,8 +35,7 @@ export function buildReactionScript(
         energetics: reactionEnergeticsOf(reaction),
         massBySymbol: new Map(sources.elements.map((element) => [element.symbol, element.mass])),
         randomSeed: reaction.id,
-        emissions,
-        gasLook: gasLookOf(reaction) ?? (precipitate === null ? null : 'precipitate'),
+        gas: gasPlanOf(reaction, sources.details, precipitate),
         precipitate,
         unitsBefore: buildBenchUnits(sources.entriesBefore, sources.details, sources.elements),
         unitsAfter: buildBenchUnits(sources.entriesAfter, sources.details, sources.elements)

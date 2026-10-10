@@ -11,6 +11,7 @@ const AO_RADIUS = 0.9;
 const AO_FALLOFF = 0.6;
 const AO_INTENSITY = 2.2;
 const BLOOM_THRESHOLD = LIT_WHITE_LUMINANCE * 1.15;
+const BLOOM_KNEE = LIT_WHITE_LUMINANCE;
 const BLOOM_INTENSITY = 0.5;
 const VIGNETTE_OFFSET = 0.35;
 const MULTISAMPLES = 4;
@@ -26,7 +27,7 @@ export interface LensFocus {
 export class PostProcessingPipeline implements Disposable, Presenter {
     private readonly composer: EffectComposer;
     private readonly occlusion: N8AOPostPass;
-    private readonly bloom = new BloomEffect({ luminanceThreshold: BLOOM_THRESHOLD, intensity: BLOOM_INTENSITY, mipmapBlur: true });
+    private readonly bloom = new BloomEffect({ luminanceThreshold: BLOOM_THRESHOLD, luminanceSmoothing: BLOOM_KNEE, intensity: BLOOM_INTENSITY, mipmapBlur: true });
     private readonly smaa: EffectPass;
     private readonly vignette = new VignetteEffect({ offset: VIGNETTE_OFFSET, darkness: 0 });
     private readonly depthOfField: DepthOfFieldEffect;

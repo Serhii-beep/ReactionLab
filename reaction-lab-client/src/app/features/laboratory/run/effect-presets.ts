@@ -1,162 +1,49 @@
 import { isDevMode } from "@angular/core";
 import { ReactionSummary } from "../../../data/reactions/reaction";
-import { ReactionTimeline } from "../../../data/reactions/reaction-phases";
-import { EmissionPlan } from "../../../engine/particles/emission-plan";
-import { gasLookOf } from "./gas-looks";
 
-export type EffectPresetKey =
-    | 'white-precipitate'
-    | 'blue-flame'
-    | 'warm-glow'
-    | 'color-change'
-    | 'ionic-crystallization'
-    | 'vigorous-bubbling'
-    | 'furnace-heat'
-    | 'steam-burst'
-    | 'skittering-flame'
-    | 'white-smoke'
-    | 'foaming-eruption'
-    | 'brilliant-white-flare'
-    | 'gentle-glow'
-    | 'white-hot-flame'
-    | 'ember-glow'
-    | 'foaming-gas'
-    | 'electric-arc'
-    | 'catalytic-glow'
-    | 'golden-precipitate'
-    | 'sunlight-absorption'
-    | 'explosive-flash'
-    | 'gentle-gas';
+const EFFECT_PRESET_KEYS = [
+    'white-precipitate',
+    'blue-flame',
+    'warm-glow',
+    'color-change',
+    'ionic-crystallization',
+    'vigorous-bubbling',
+    'furnace-heat',
+    'steam-burst',
+    'skittering-flame',
+    'white-smoke',
+    'foaming-eruption',
+    'brilliant-white-flare',
+    'gentle-glow',
+    'white-hot-flame',
+    'ember-glow',
+    'foaming-gas',
+    'electric-arc',
+    'catalytic-glow',
+    'golden-precipitate',
+    'sunlight-absorption',
+    'explosive-flash',
+    'gentle-gas'
+] as const;
 
-interface Tint {
-    readonly colorStart: number;
-    readonly colorEnd: number;
-}
+export type EffectPresetKey = typeof EFFECT_PRESET_KEYS[number];
 
-interface EmissionOptions {
-    readonly particleCount?: number;
-    readonly intensity?: number;
-    readonly opacity?: number;
-    readonly magnitude?: number;
-}
+const KNOWN_KEYS: readonly string[] = EFFECT_PRESET_KEYS;
 
-type EmissionRecipe = (timeline: ReactionTimeline) => EmissionPlan[];
-
-const ORANGE_FLAME: Tint = { colorStart: 0xffb347, colorEnd: 0xff3b0a };
-const BLUE_FLAME: Tint = { colorStart: 0x8ad4ff, colorEnd: 0x1f4dff };
-const WHITE_FLAME: Tint = { colorStart: 0xfff6e0, colorEnd: 0xffc36b };
-const EMBER: Tint = { colorStart: 0xff9a3c, colorEnd: 0x7a1f00 };
-const WARM_GLOW: Tint = { colorStart: 0xffd08a, colorEnd: 0xff9a3c };
-const SMOKE: Tint = { colorStart: 0x9aa1a8, colorEnd: 0x5c626a };
-const STEAM: Tint = { colorStart: 0xffffff, colorEnd: 0xdfe6ee };
-
-const FLAME_LIFE_SECONDS = 0.8;
-const SMOKE_LIFE_SECONDS = 2.4;
-const STEAM_LIFE_SECONDS = 2;
-
-const WARM_GLOW_RECIPE: EmissionRecipe = (timeline) => [flame(timeline, WARM_GLOW, { intensity: 0.8, opacity: 0.25, particleCount: 40, magnitude: 1.3 })];
-
-const RECIPES: Readonly<Record<EffectPresetKey, EmissionRecipe | null>> = {
-    'white-precipitate': null,
-    'blue-flame': (timeline) => [flame(timeline, BLUE_FLAME, { intensity: 1.6 }), smoke(timeline, SMOKE)],
-    'warm-glow': WARM_GLOW_RECIPE,
-    'color-change': null,
-    'ionic-crystallization': null,
-    'vigorous-bubbling': null,
-    'furnace-heat': (timeline) => [flame(timeline, ORANGE_FLAME, { intensity: 1.6, magnitude: 1.3 }), smoke(timeline, SMOKE, { opacity: 0.14, particleCount: 50 })],
-    'steam-burst': (timeline) => [steamBurst(timeline, STEAM)],
-    'skittering-flame': (timeline) => [flame(timeline, ORANGE_FLAME, { particleCount: 60, magnitude: 0.7 })],
-    'white-smoke': (timeline) => [smoke(timeline, STEAM, { opacity: 0.16, particleCount: 60 })],
-    'foaming-eruption': null,
-    'brilliant-white-flare': (timeline) => [flame(timeline, WHITE_FLAME, { intensity: 2.2, particleCount: 60 })],
-    'gentle-glow': WARM_GLOW_RECIPE,
-    'white-hot-flame': (timeline) => [flame(timeline, WHITE_FLAME, { intensity: 2 }), smoke(timeline, SMOKE)],
-    'ember-glow': (timeline) => [flame(timeline, EMBER, { intensity: 1.1, particleCount: 60 }), smoke(timeline, SMOKE, { opacity: 0.1 })],
-    'foaming-gas': null,
-    'electric-arc': null,
-    'catalytic-glow': (timeline) => [flame(timeline, WARM_GLOW, { intensity: 1, opacity: 0.3, particleCount: 50, magnitude: 1.2 })],
-    'golden-precipitate': null,
-    'sunlight-absorption': null,
-    'explosive-flash': (timeline) => [flame(timeline, ORANGE_FLAME, { particleCount: 70 }), smoke(timeline, SMOKE, { opacity: 0.14, particleCount: 50 })],
-    'gentle-gas': null
-};
-
-const KNOWN_KEYS: readonly string[] = Object.keys(RECIPES);
-
-export function emissionPlansFor(reaction: ReactionSummary, timeline: ReactionTimeline): EmissionPlan[] {
+export function effectPresetKeyOf(reaction: ReactionSummary): EffectPresetKey | null {
     const key = reaction.effectPresetKey;
 
-    if (key === null) {
-        return [];
+    if (key === null || isEffectPresetKey(key)) {
+        return key;
     }
 
-    if (!isEffectPresetKey(key)) {
-        if (isDevMode()) {
-            console.warn(`Unknown effect preset "${key}" on reaction ${reaction.id}`);
-        }
-
-        return [];
+    if (isDevMode()) {
+        console.warn(`Unknown effect preset "${key}" on reaction ${reaction.id}`);
     }
 
-    const recipe = RECIPES[key];
-
-    return recipe === null || gasLookOf(reaction) !== null ? [] : recipe(timeline);
+    return null;
 }
 
-export function isEffectPresetKey(key: string): key is EffectPresetKey {
+function isEffectPresetKey(key: string): key is EffectPresetKey {
     return KNOWN_KEYS.includes(key);
-}
-
-function flame(timeline: ReactionTimeline, tint: Tint, options: EmissionOptions = {}): EmissionPlan {
-    const { collision, bondsForm } = timeline.byName;
-
-    return {
-        kind: 'flame',
-        anchor: 'meeting',
-        startSeconds: collision.startSeconds,
-        windowSeconds: bondsForm.endSeconds - collision.startSeconds,
-        lifeSeconds: FLAME_LIFE_SECONDS,
-        particleCount: options.particleCount ?? 90,
-        spreadAngstrom: 0.5,
-        magnitude: options.magnitude ?? 1,
-        ...tint,
-        intensity: options.intensity ?? 1.4,
-        opacity: options.opacity ?? 0.35
-    };
-}
-
-function smoke(timeline: ReactionTimeline, tint: Tint, options: EmissionOptions = {}): EmissionPlan {
-    const { transitionState, separation } = timeline.byName;
-
-    return {
-        kind: 'smoke',
-        anchor: 'meeting',
-        startSeconds: transitionState.endSeconds,
-        windowSeconds: separation.endSeconds - separation.startSeconds,
-        lifeSeconds: SMOKE_LIFE_SECONDS,
-        particleCount: options.particleCount ?? 40,
-        spreadAngstrom: 0.5,
-        magnitude: options.magnitude ?? 1,
-        ...tint,
-        intensity: options.intensity ?? 1,
-        opacity: options.opacity ?? 0.12
-    };
-}
-
-function steamBurst(timeline: ReactionTimeline, tint: Tint): EmissionPlan {
-    const { transitionState } = timeline.byName;
-
-    return {
-        kind: 'smoke',
-        anchor: 'meeting',
-        startSeconds: transitionState.startSeconds,
-        windowSeconds: transitionState.endSeconds - transitionState.startSeconds,
-        lifeSeconds: STEAM_LIFE_SECONDS,
-        particleCount: 60,
-        spreadAngstrom: 0.5,
-        magnitude: 1.2,
-        ...tint,
-        intensity: 1,
-        opacity: 0.16
-    };
 }

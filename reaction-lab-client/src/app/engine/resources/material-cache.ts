@@ -1,6 +1,7 @@
 import { Color, MeshPhysicalMaterial, WebGLProgramParametersWithUniforms } from "three";
 import { Disposable } from "../core/disposal-scope";
 import { Phase } from "../core/matter";
+import { ReactionLight } from "../rendering/reaction-light";
 
 interface Finish {
     roughness: number;
@@ -21,6 +22,8 @@ const EMISSION_CHUNK = '#include <emissivemap_fragment>';
 
 export class MaterialCache implements Disposable {
     private readonly materials = new Map<string, MeshPhysicalMaterial>();
+
+    constructor(private readonly reactionLight: ReactionLight) {}
 
     get size(): number {
         return this.materials.size;
@@ -47,7 +50,10 @@ export class MaterialCache implements Disposable {
         });
 
         material.emissive.copy(color).multiplyScalar(finish.emissive);
-        material.onBeforeCompile = emitInstanceColor;
+        material.onBeforeCompile = (parameters) => {
+            emitInstanceColor(parameters);
+            this.reactionLight.patch(parameters);
+        };
         material.customProgramCacheKey = () => INCANDESCENT_PROGRAM_KEY;
 
         return material;

@@ -1,17 +1,13 @@
 import { AdditiveBlending, BufferAttribute, DoubleSide, InstancedBufferGeometry, IUniform, Mesh, ShaderMaterial, Texture, Vector2, WebGLRenderer } from "three";
 import { Disposable } from "../core/disposal-scope";
-import { FLAME_CEILING_KELVIN } from "../core/matter";
-import { DRAPER_POINT_KELVIN } from "../rendering/incandescence";
-import { incandescenceTexture } from "./incandescence-texture";
+import { incandescenceTexture, IncandescenceUniforms, incandescenceUniformsOf } from "../rendering/incandescence-texture";
 import { SparkField } from "./spark-field";
 import { SPARK_STREAK_FRAGMENT_SHADER, SPARK_STREAK_VERTEX_SHADER } from "./spark-shaders";
 
-interface StreakUniforms {
+interface StreakUniforms extends IncandescenceUniforms {
     readonly uPlaces: IUniform<Texture | null>;
     readonly uMotions: IUniform<Texture | null>;
     readonly uLaunchTraits: IUniform<Texture | null>;
-    readonly uIncandescence: IUniform<Texture>;
-    readonly uIncandescenceKelvin: IUniform<Vector2>;
     readonly uResolution: IUniform<Vector2>;
     readonly uPixelRatio: IUniform<number>;
     readonly uShutterSeconds: IUniform<number>;
@@ -25,19 +21,18 @@ const SPARK_BRIGHTNESS = 2.2;
 
 export class SparkStreaks implements Disposable {
     readonly mesh: Mesh;
+    readonly material: ShaderMaterial;
 
     private readonly geometry = new InstancedBufferGeometry();
     private readonly incandescence = incandescenceTexture();
     private readonly uniforms: StreakUniforms;
-    private readonly material: ShaderMaterial;
 
     constructor() {
         this.uniforms = {
             uPlaces: { value: null },
             uMotions: { value: null },
             uLaunchTraits: { value: null },
-            uIncandescence: { value: this.incandescence },
-            uIncandescenceKelvin: { value: new Vector2(DRAPER_POINT_KELVIN, FLAME_CEILING_KELVIN) },
+            ...incandescenceUniformsOf(this.incandescence),
             uResolution: { value: new Vector2(1, 1) },
             uPixelRatio: { value: 1 },
             uShutterSeconds: { value: SHUTTER_SECONDS },

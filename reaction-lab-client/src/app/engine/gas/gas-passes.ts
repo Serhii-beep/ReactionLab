@@ -4,6 +4,7 @@ import { ADVECT_COORDINATES_SHADER, ADVECT_SCALARS_SHADER, ADVECT_VELOCITY_SHADE
 import { CURL_SHADER, DIVERGENCE_SHADER, FORCES_SHADER, JACOBI_SHADER, PROJECT_SHADER } from "./gas-projection-shaders";
 import { GAS_LIGHTING_SHADER } from "./gas-lighting-shader";
 import { KEY_LIGHT_POSITION } from "../rendering/lighting-rig";
+import { GasLook } from "./gas-look";
 
 export interface GasGridUniforms {
     readonly uVoxelsPerSide: IUniform<number>;
@@ -19,7 +20,7 @@ export interface GasBoxUniforms {
 export interface GasSourceUniforms {
     readonly uSourcePlaces: IUniform<Vector4[]>;
     readonly uSourceFeeds: IUniform<Vector4[]>;
-    readonly uSourceClouds: IUniform<number[]>;
+    readonly uSourceParticles: IUniform<number[]>;
     readonly uSourceCount: IUniform<number>;
 }
 
@@ -31,7 +32,7 @@ export interface GasObstacleUniforms {
 
 export interface GasPhysicsUniforms {
     readonly uBuoyancyPerKelvin: IUniform<number>;
-    readonly uSinkPerCloud: IUniform<number>;
+    readonly uSinkPerParticle: IUniform<number>;
     readonly uBurstPerFlame: IUniform<number>;
     readonly uVorticity: IUniform<number>;
 }
@@ -45,6 +46,7 @@ export interface GasMistUniforms {
 export interface SharedGasUniforms {
     readonly grid: GasGridUniforms;
     readonly step: { readonly uDt: IUniform<number> };
+    readonly keep: { readonly uScalarKeep: IUniform<Vector4> };
     readonly box: GasBoxUniforms;
     readonly sources: GasSourceUniforms;
     readonly obstacles: GasObstacleUniforms;
@@ -66,11 +68,12 @@ export interface GasPasses {
 }
 
 const BUOYANCY_PER_KELVIN = 0.005;
-const SINK_PER_CLOUD = 1.2;
 const BURST_PER_FLAME = 1.5;
 const VORTICITY = 1.8;
 const VELOCITY_KEEP_PER_SECOND = 0.8;
-const SCALAR_KEEP_PER_SECOND = new Vector4(0.03, 0.6, 0.005, 0.7);
+const HEAT_KEEP_PER_SECOND = 0.03;
+const VAPOR_KEEP_PER_SECOND = 0.6;
+const FLAME_KEEP_PER_SECOND = 0.005;
 const MIST_EXTINCTION_PER_ANGSTROM = 1.5;
 const CONDENSATION_KELVIN = new Vector2(75, 45);
 
@@ -78,11 +81,12 @@ export function sharedGasUniformsOf(): SharedGasUniforms {
     return {
         grid: { uVoxelsPerSide: { value: 1 }, uTiles: { value: new Vector2(1, 1) }, uAtlas: { value: new Vector2(1, 1) } },
         step: { uDt: { value: 1 / 60 } },
+        keep: { uScalarKeep: { value: new Vector4(HEAT_KEEP_PER_SECOND, VAPOR_KEEP_PER_SECOND, FLAME_KEEP_PER_SECOND, 1) } },
         box: { uOrigin: { value: new Vector3() }, uVoxelSize: { value: 1 } },
         sources: {
             uSourcePlaces: { value: Array.from({ length: MAX_GAS_SOURCES }, () => new Vector4()) },
             uSourceFeeds: { value: Array.from({ length: MAX_GAS_SOURCES }, () => new Vector4()) },
-            uSourceClouds: { value: new Array<number>(MAX_GAS_SOURCES).fill(0) },
+            uSourceParticles: { value: new Array<number>(MAX_GAS_SOURCES).fill(0) },
             uSourceCount: { value: 0 }
         },
         obstacles: {
@@ -90,7 +94,7 @@ export function sharedGasUniformsOf(): SharedGasUniforms {
             uObstacleVelocities: { value: Array.from({ length: MAX_GAS_OBSTACLES }, () => new Vector3()) },
             uObstacleCount: { value: 0 }
         },
-        physics: { uBuoyancyPerKelvin: { value: 0 }, uSinkPerCloud: { value: 0 }, uBurstPerFlame: { value: 0 }, uVorticity: { value: VORTICITY } },
+        physics: { uBuoyancyPerKelvin: { value: 0 }, uSinkPerParticle: { value: 0 }, uBurstPerFlame: { value: 0 }, uVorticity: { value: VORTICITY } },
         mist: { uCondensationKelvin: { value: CONDENSATION_KELVIN }, uMistExtinction: { value: MIST_EXTINCTION_PER_ANGSTROM }, uLightDirection: { value: new Vector3(...KEY_LIGHT_POSITION).normalize() } }
     };
 }
@@ -105,18 +109,19 @@ export function sizeGasGrid({ grid }: SharedGasUniforms, voxelsPerSide: number):
     return grid.uAtlas.value.set(tilesX * voxelsPerSide, tilesY * voxelsPerSide);
 }
 
-export function placeGasBox({ box, physics }: SharedGasUniforms, origin: Vector3, voxelSize: number): void {
+export function placeGasBox({ box, physics, keep }: SharedGasUniforms, origin: Vector3, voxelSize: number, look: GasLook): void {
     box.uOrigin.value.copy(origin);
     box.uVoxelSize.value = voxelSize;
     physics.uBuoyancyPerKelvin.value = BUOYANCY_PER_KELVIN / voxelSize;
-    physics.uSinkPerCloud.value = SINK_PER_CLOUD / voxelSize;
+    physics.uSinkPerParticle.value = look.particleSinkPerDensity / voxelSize;
     physics.uBurstPerFlame.value = BURST_PER_FLAME / voxelSize;
+    keep.uScalarKeep.value.w = look.particleKeepPerSecond;
 }
 
-export function gasPassesOf({ grid, step, box, sources, obstacles, physics, mist }: SharedGasUniforms): GasPasses {
+export function gasPassesOf({ grid, step, keep, box, sources, obstacles, physics, mist }: SharedGasUniforms): GasPasses {
     return {
         estimateScalars: passOf(ESTIMATE_SCALARS_SHADER, { ...grid, ...step, ...inputsOf('uVelocity', 'uScalars') }),
-        advectScalars: passOf(ADVECT_SCALARS_SHADER, { ...grid, ...step, ...sources, ...inputsOf('uVelocity', 'uScalars', 'uEstimate'), uScalarKeep: { value: SCALAR_KEEP_PER_SECOND } }),
+        advectScalars: passOf(ADVECT_SCALARS_SHADER, { ...grid, ...step, ...keep, ...sources, ...inputsOf('uVelocity', 'uScalars', 'uEstimate') }),
         advectVelocity: passOf(ADVECT_VELOCITY_SHADER, { ...grid, ...step, ...inputsOf('uVelocity'), uVelocityKeep: { value: VELOCITY_KEEP_PER_SECOND } }),
         curl: passOf(CURL_SHADER, { ...grid, ...inputsOf('uVelocity') }),
         forces: passOf(FORCES_SHADER, { ...grid, ...step, ...sources, ...obstacles, ...physics, ...inputsOf('uVelocity', 'uCurl', 'uScalars') }),

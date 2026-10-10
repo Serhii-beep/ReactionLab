@@ -1,5 +1,4 @@
 import { Color } from "three";
-import { EmissionPlan } from "../particles/emission-plan";
 import { LayoutUnit } from "../scene/bench-layout";
 import { GasLookName } from "../gas/gas-look";
 
@@ -22,9 +21,20 @@ export interface ReactionEnergetics {
     readonly inWater: boolean;
 }
 
+export interface ParticlePlan {
+    readonly substanceIds: readonly string[];
+    readonly seedSymbol: string | null;
+    readonly albedo: Color;
+    readonly loading: number;
+}
+
+export interface GasPlan {
+    readonly look: GasLookName;
+    readonly particles: ParticlePlan | null;
+}
+
 export interface PrecipitatePlan {
     readonly substanceId: string;
-    readonly cloudColor: Color;
     readonly standIns: readonly LayoutUnit[];
 }
 
@@ -34,8 +44,7 @@ export interface ReactionScript {
     readonly energetics: ReactionEnergetics;
     readonly massBySymbol: ReadonlyMap<string, number>;
     readonly randomSeed: string;
-    readonly emissions: readonly EmissionPlan[];
-    readonly gasLook: GasLookName | null;
+    readonly gas: GasPlan | null;
     readonly precipitate: PrecipitatePlan | null;
     readonly unitsBefore: readonly LayoutUnit[];
     readonly unitsAfter: readonly LayoutUnit[];

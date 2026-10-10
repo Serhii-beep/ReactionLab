@@ -1,5 +1,7 @@
 import { GAS_GRID_SHADER } from "./gas-grid";
 import { VISIBLE_VAPOR } from "./gas-lighting-shader";
+import { ROOM_TEMPERATURE_KELVIN } from "../core/matter";
+import { INCANDESCENCE_SHADER } from "../rendering/incandescence-texture";
 
 export const VOLUME_VERTEX_SHADER = `
     varying vec2 vUv;
@@ -15,6 +17,7 @@ export const VOLUME_MARCH_SHADER = `
     #include <packing>
     ${GAS_GRID_SHADER}
     ${VISIBLE_VAPOR}
+    ${INCANDESCENCE_SHADER}
 
     uniform sampler2D uScalars;
     uniform sampler2D uLighting;
@@ -34,11 +37,12 @@ export const VOLUME_MARCH_SHADER = `
     uniform vec3 uKeyLight;
     uniform vec3 uSkyLight;
     uniform vec3 uFlameLight;
-    uniform vec3 uCloudAlbedo;
+    uniform vec3 uParticleAlbedo;
     uniform float uFade;
 
     varying vec2 vUv;
 
+    const float ROOM_KELVIN = ${ROOM_TEMPERATURE_KELVIN.toFixed(1)};
     const int MAX_STEPS = 320;
     const float STEP_VOXELS = 1.5;
     const float EMPTY_STRIDE = 2.0;
@@ -108,15 +112,17 @@ export const VOLUME_MARCH_SHADER = `
         vec3 carriedB = home + displacedB.xyz + FIELD_B_OFFSET;
         vec4 lighting = sampleGrid(uLighting, voxel);
         float vapor = visibleVapor(scalars) * fade;
-        float cloud = scalars.a * fade;
-        float scattering = vapor + cloud;
+        float particles = scalars.a * fade;
+        float scattering = vapor + particles;
+        float particleShare = scattering > 0.0 ? particles / scattering : 0.0;
         float glow = scalars.b * fade > GAS_FLOOR ? fade * flameAt(carriedA, carriedB, scalars.b, lighting.b) : 0.0;
         float mist = scattering > MIST_ONSET ? mistAt(carriedA, carriedB, scattering) : 0.0;
-        vec3 albedo = scattering > 0.0 ? (vec3(vapor) + cloud * uCloudAlbedo) / scattering : vec3(1.0);
         float stepTransmittance = exp(-mist * uMistExtinction * segment);
+        vec3 albedo = mix(vec3(1.0), uParticleAlbedo, particleShare);
         vec3 inscatter = (uKeyLight * lighting.r * phase + uSkyLight * lighting.a) * albedo + uFlameLight * lighting.g * FLAME_GLOW_SHARE;
+        vec3 particleGlow = particleShare * incandescence(ROOM_KELVIN + scalars.r);
 
-        light.rgb += light.a * (uFlameLight * glow * segment + inscatter * (1.0 - stepTransmittance));
+        light.rgb += light.a * (uFlameLight * glow * segment + (inscatter + particleGlow) * (1.0 - stepTransmittance));
         light.a *= stepTransmittance;
     }
 

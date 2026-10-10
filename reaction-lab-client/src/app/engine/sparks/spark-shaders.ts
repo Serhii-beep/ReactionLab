@@ -1,4 +1,5 @@
 import { GAS_GRID_SHADER } from "../gas/gas-grid";
+import { INCANDESCENCE_SHADER } from "../rendering/incandescence-texture";
 import { LIFE_PER_COOLING, SPARK_SIDE } from "./spark-launch";
 
 export const SPARK_STEP_SHADER = `
@@ -88,8 +89,6 @@ export const SPARK_STREAK_VERTEX_SHADER = `
     uniform sampler2D uPlaces;
     uniform sampler2D uMotions;
     uniform sampler2D uLaunchTraits;
-    uniform sampler2D uIncandescence;
-    uniform vec2 uIncandescenceKelvin;
     uniform vec2 uResolution;
     uniform float uPixelRatio;
     uniform float uShutterSeconds;
@@ -105,16 +104,7 @@ export const SPARK_STREAK_VERTEX_SHADER = `
     const float FADE_IN_SECONDS = 0.03;
     const float FADE_OUT_LIFE_SHARE = 0.75;
     const float BLUR_SPREAD_SHARE = 0.55;
-
-    vec3 incandescence(float kelvin) {
-        int last = textureSize(uIncandescence, 0).x - 1;
-        float entry = clamp((kelvin - uIncandescenceKelvin.x) / (uIncandescenceKelvin.y - uIncandescenceKelvin.x), 0.0, 1.0) * float(last);
-        int lower = int(floor(entry));
-        vec3 below = texelFetch(uIncandescence, ivec2(lower, 0), 0).rgb;
-        vec3 above = texelFetch(uIncandescence, ivec2(min(lower + 1, last), 0), 0).rgb;
-
-        return mix(below, above, entry - float(lower));
-    }
+    ${INCANDESCENCE_SHADER}
 
     void main() {
         ivec2 texel = ivec2(gl_InstanceID % SPARK_SIDE, gl_InstanceID / SPARK_SIDE);

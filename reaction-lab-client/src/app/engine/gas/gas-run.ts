@@ -9,7 +9,7 @@ export interface GasSource {
     readonly heatingPerSecond: number;
     readonly vaporPerSecond: number;
     readonly flamePerSecond: number;
-    readonly cloudPerSecond: number;
+    readonly particlesPerSecond: number;
 }
 
 export interface GasObstacle {
@@ -18,9 +18,10 @@ export interface GasObstacle {
     readonly radius: number;
 }
 
-export interface GasCloud {
+export interface GasParticles {
     readonly atomIndices: readonly number[];
     readonly albedo: Color;
+    readonly loading: number;
 }
 
 export interface GasRun {
@@ -28,5 +29,5 @@ export interface GasRun {
     readonly trace: ReactionTrace;
     readonly waterOxygens: readonly number[];
     readonly releasesHeat: boolean;
-    readonly cloud: GasCloud | null;
+    readonly particles: GasParticles | null;
 }

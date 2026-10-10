@@ -43,42 +43,47 @@ const BLACKBODY_BY_STEP = blackbodyTable();
 const DRAPER_POINT_LOG_LUMINANCE = blackbodyOf(DRAPER_POINT_KELVIN).logLuminance;
 const BRIGHT_AS_LIT_WHITE_LOG_LUMINANCE = blackbodyOf(BRIGHT_AS_LIT_WHITE_KELVIN).logLuminance;
 
-export function incandescenceOf(temperatureKelvin: number, target: Color): Color {
-    const luminance = incandescentLuminanceOf(temperatureKelvin);
+const GLOW_LOG_SPAN = BRIGHT_AS_LIT_WHITE_LOG_LUMINANCE - DRAPER_POINT_LOG_LUMINANCE;
 
-    if (luminance === 0) {
-        return target.setRGB(0, 0, 0);
+export function incandescenceOf(temperatureKelvin: number, target: Color, emissivity = 1): Color {
+    return chromaticityOf(temperatureKelvin, target).multiplyScalar(incandescentLuminanceOf(temperatureKelvin, emissivity));
+}
+
+export function incandescentLuminanceOf(temperatureKelvin: number, emissivity = 1): number {
+    if (temperatureKelvin <= DRAPER_POINT_KELVIN) {
+        return 0;
     }
 
+    const logLuminance = logLuminanceAt(temperatureKelvin) + Math.log(emissivity);
+    const trueRatio = Math.exp(logLuminance - BRIGHT_AS_LIT_WHITE_LOG_LUMINANCE);
+    const logRatio = (logLuminance - DRAPER_POINT_LOG_LUMINANCE) / GLOW_LOG_SPAN;
+
+    return LIT_WHITE_LUMINANCE * Math.max(Math.min(trueRatio, logRatio), 0);
+}
+
+function chromaticityOf(temperatureKelvin: number, target: Color): Color {
     const step = stepAt(temperatureKelvin);
     const lower = BLACKBODY_BY_STEP[Math.floor(step)].color;
     const upper = BLACKBODY_BY_STEP[Math.ceil(step)].color;
     const amount = step - Math.floor(step);
 
     return target.setRGB(
-        (lower[0] + (upper[0] - lower[0]) * amount) * luminance,
-        (lower[1] + (upper[1] - lower[1]) * amount) * luminance,
-        (lower[2] + (upper[2] - lower[2]) * amount) * luminance
+        lower[0] + (upper[0] - lower[0]) * amount,
+        lower[1] + (upper[1] - lower[1]) * amount,
+        lower[2] + (upper[2] - lower[2]) * amount
     );
 }
 
-export function incandescentLuminanceOf(temperatureKelvin: number): number {
-    if (temperatureKelvin <= DRAPER_POINT_KELVIN) {
-        return 0;
-    }
-
+function logLuminanceAt(temperatureKelvin: number): number {
     const step = stepAt(temperatureKelvin);
     const lower = BLACKBODY_BY_STEP[Math.floor(step)].logLuminance;
     const upper = BLACKBODY_BY_STEP[Math.ceil(step)].logLuminance;
-    const logLuminance = lower + (upper - lower) * (step - Math.floor(step));
-    const trueRatio = Math.exp(logLuminance - BRIGHT_AS_LIT_WHITE_LOG_LUMINANCE);
-    const logRatio = (logLuminance - DRAPER_POINT_LOG_LUMINANCE) / (BRIGHT_AS_LIT_WHITE_LOG_LUMINANCE - DRAPER_POINT_LOG_LUMINANCE);
 
-    return LIT_WHITE_LUMINANCE * Math.min(trueRatio, logRatio);
+    return lower + (upper - lower) * (step - Math.floor(step));
 }
 
 function stepAt(temperatureKelvin: number): number {
-    return Math.min((temperatureKelvin - DRAPER_POINT_KELVIN) / TABLE_STEP_KELVIN, BLACKBODY_BY_STEP.length - 1);
+    return Math.min(Math.max((temperatureKelvin - DRAPER_POINT_KELVIN) / TABLE_STEP_KELVIN, 0), BLACKBODY_BY_STEP.length - 1);
 }
 
 function blackbodyTable(): Blackbody[] {

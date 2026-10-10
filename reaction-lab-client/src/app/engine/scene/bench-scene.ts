@@ -19,7 +19,7 @@ import { ReactionDirector } from "../animation/reaction-director";
 import { ReactionMotion } from "../animation/reaction-motion";
 import { StagedBench } from "../animation/unit-staging";
 import { ReactionScript } from "../animation/reaction-script";
-import { ReactionEffects } from "../particles/reaction-effects";
+import { ReactionEffects } from "../effects/reaction-effects";
 import { QualityLevel } from "../performance/quality-governor";
 import { RunCamera } from "../cinematography/run-camera";
 
@@ -114,7 +114,7 @@ export class BenchScene implements Disposable {
         const { effects, runCamera } = this.collaborators;
 
         this.motion = motion;
-        effects.begin(script.emissions, motion.emissionAnchors, motion.trace, motion.gasRun);
+        effects.begin(motion.trace, motion.gasRun);
         this.bounds = motion.bounds;
         runCamera.end();
 
@@ -264,7 +264,7 @@ export class BenchScene implements Disposable {
         atoms.render(this.atoms, this.lodInUse);
         bonds.render(this.bonds, this.lodInUse);
         outline.render(this.atoms, this.bonds);
-        stage.exposeFor(this.atoms);
+        stage.glowFrom(this.atoms);
         this.outlineDirty = true;
         this.needsRender = true;
 

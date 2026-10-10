@@ -1,37 +1,37 @@
-import { GasCloud, GasRun } from "../gas/gas-run";
+import { GasParticles, GasRun } from "../gas/gas-run";
 import { AtomPair } from "./atom-pairing";
 import { DynamicsSources } from "./dynamics-input-builder";
 import { shownEnthalpyOf } from "./energy-ledger";
+import { ParticlePlan } from "./reaction-script";
 import { ReactionTrace } from "./reaction-trace";
 
 const WATER_SYMBOLS = ['H', 'H', 'O'];
 
-export function buildGasRun(sources: DynamicsSources, trace: ReactionTrace): GasRun | null {
-    const { script, atomPairs } = sources;
+export function buildGasRun({ script, atomPairs }: DynamicsSources, trace: ReactionTrace): GasRun | null {
+    const { gas } = script;
 
-    if (script.gasLook === null) {
+    if (gas === null) {
         return null;
     }
 
+    const releasesHeat = (shownEnthalpyOf(script.energetics) ?? 0) < 0;
+
     return {
-        look: script.gasLook,
+        look: gas.look,
         trace,
-        waterOxygens: waterOxygensOf(atomPairs),
-        releasesHeat: (shownEnthalpyOf(script.energetics) ?? 0) < 0,
-        cloud: cloudOf(sources)
+        waterOxygens: releasesHeat || gas.look === 'steam' ? waterOxygensOf(atomPairs) : [],
+        releasesHeat,
+        particles: gas.particles === null ? null : particlesOf(gas.particles, atomPairs)
     };
 }
 
-function cloudOf({ script, atomPairs }: DynamicsSources): GasCloud | null {
-    const { precipitate } = script;
-
-    if (precipitate === null) {
-        return null;
-    }
+function particlesOf({ substanceIds, seedSymbol, albedo, loading }: ParticlePlan, atomPairs: readonly AtomPair[]): GasParticles {
+    const seededIds = new Set(substanceIds);
 
     return {
-        atomIndices: atomPairs.flatMap(({ product }, atomIndex) => product.substanceId === precipitate.substanceId ? [atomIndex] : []),
-        albedo: precipitate.cloudColor
+        atomIndices: atomPairs.flatMap(({ product }, atomIndex) => seededIds.has(product.substanceId) && (seedSymbol === null || product.symbol === seedSymbol) ? [atomIndex] : []),
+        albedo,
+        loading
     };
 }
 

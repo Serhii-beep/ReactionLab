@@ -1,6 +1,6 @@
 import { ReactionParticipant, ReactionSummary } from "../../../data/reactions/reaction";
 import { ActivationSource, ReactionEnergetics } from "../../../engine/animation/reaction-script";
-import { EffectPresetKey, isEffectPresetKey } from "./effect-presets";
+import { EffectPresetKey, effectPresetKeyOf } from "./effect-presets";
 
 type ValueByPresetKey<Value> = Readonly<Partial<Record<EffectPresetKey, Value>>>;
 
@@ -16,7 +16,7 @@ const DEFAULT_FLIGHT_SHARE = 0.35;
 const WATER_FORMULA = 'H2O';
 
 export function reactionEnergeticsOf(reaction: ReactionSummary): ReactionEnergetics {
-    const presetKey = reaction.effectPresetKey !== null && isEffectPresetKey(reaction.effectPresetKey) ? reaction.effectPresetKey : null;
+    const presetKey = effectPresetKeyOf(reaction);
 
     return {
         enthalpyKilojoulesPerMole: reaction.enthalpyKilojoulesPerMole,
@@ -31,6 +31,6 @@ function valueForPreset<Value>(valueByPresetKey: ValueByPresetKey<Value>, preset
     return (presetKey === null ? undefined : valueByPresetKey[presetKey]) ?? fallback;
 }
 
-function isWaterBorne(participant: ReactionParticipant): boolean {
+export function isWaterBorne(participant: ReactionParticipant): boolean {
     return participant.state === 'Aqueous' || (participant.formula === WATER_FORMULA && participant.state === 'Liquid');
 }

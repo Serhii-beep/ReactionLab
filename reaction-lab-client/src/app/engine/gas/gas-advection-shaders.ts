@@ -50,7 +50,7 @@ export const ADVECT_SCALARS_SHADER = `
     uniform vec4 uScalarKeep;
     uniform vec4 uSourcePlaces[MAX_GAS_SOURCES];
     uniform vec4 uSourceFeeds[MAX_GAS_SOURCES];
-    uniform float uSourceClouds[MAX_GAS_SOURCES];
+    uniform float uSourceParticles[MAX_GAS_SOURCES];
     uniform int uSourceCount;
     ${BACKTRACE}
 
@@ -94,7 +94,7 @@ export const ADVECT_SCALARS_SHADER = `
 
             value.r += uDt * weight * feed.y * max(feed.x - value.r, 0.0);
             value.gb += uDt * weight * feed.zw;
-            value.a += uDt * weight * uSourceClouds[index];
+            value.a += uDt * weight * uSourceParticles[index];
         }
 
         fragColor = max(value, vec4(0.0));

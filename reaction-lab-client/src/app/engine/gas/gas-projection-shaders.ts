@@ -62,7 +62,7 @@ export const FORCES_SHADER = `
     uniform sampler2D uScalars;
     uniform float uDt;
     uniform float uBuoyancyPerKelvin;
-    uniform float uSinkPerCloud;
+    uniform float uSinkPerParticle;
     uniform float uVorticity;
     uniform float uBurstPerFlame;
     uniform vec4 uSourcePlaces[MAX_GAS_SOURCES];
@@ -107,7 +107,7 @@ export const FORCES_SHADER = `
         vec3 velocity = fetchVoxel(uVelocity, voxel).xyz;
         vec4 scalars = fetchVoxel(uScalars, voxel);
 
-        velocity.y += uDt * (uBuoyancyPerKelvin * scalars.r - uSinkPerCloud * scalars.a);
+        velocity.y += uDt * (uBuoyancyPerKelvin * scalars.r - uSinkPerParticle * scalars.a);
         velocity += uDt * (uVorticity * confinement(voxel) + bursts(p));
         velocity = obstacleVelocity(p, velocity);
 

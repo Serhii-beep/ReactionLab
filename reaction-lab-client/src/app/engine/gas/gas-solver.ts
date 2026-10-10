@@ -1,9 +1,10 @@
-import { BufferAttribute, BufferGeometry, Camera, Color, Mesh, RawShaderMaterial, Texture, Vector3, Vector4, WebGLRenderer, WebGLRenderTarget } from "three";
+import { BufferAttribute, BufferGeometry, Camera, Color, Material, Mesh, RawShaderMaterial, Texture, Vector3, Vector4, WebGLRenderer, WebGLRenderTarget } from "three";
 import { Disposable } from "../core/disposal-scope";
 import { MAX_GAS_OBSTACLES, MAX_GAS_SOURCES } from "./gas-grid";
 import { GasFields } from "./gas-fields";
 import { FieldPair } from "./field-pair";
 import { GasObstacle, GasSource } from "./gas-run";
+import { GasLook } from "./gas-look";
 import { GasBoxUniforms, GasGridUniforms, GasMistUniforms, gasPassesOf, GasPasses, placeGasBox, sharedGasUniformsOf, SharedGasUniforms, sizeGasGrid } from "./gas-passes";
 
 type TextureByUniformName = Readonly<Record<string, Texture>>;
@@ -61,19 +62,27 @@ export class GasSolver implements Disposable {
         return 1 - Math.abs(2 * ((this.flowSeconds / FLOW_PERIOD_SECONDS) % 1) - 1);
     }
 
+    get persistentFields(): readonly FieldPair[] {
+        return [this.fields.velocity, this.fields.scalars, this.fields.pressure];
+    }
+
+    get materials(): readonly Material[] {
+        return Object.values(this.passes);
+    }
+
     allocate(voxelsPerSide: number): void {
         const atlas = sizeGasGrid(this.shared, voxelsPerSide);
 
         this.fields.setSize(atlas.x, atlas.y);
     }
 
-    place(origin: Vector3, sideAngstrom: number): void {
-        placeGasBox(this.shared, origin, sideAngstrom / this.shared.grid.uVoxelsPerSide.value);
+    place(origin: Vector3, sideAngstrom: number, look: GasLook): void {
+        placeGasBox(this.shared, origin, sideAngstrom / this.shared.grid.uVoxelsPerSide.value, look);
         this.clear();
     }
 
     setSources(sources: readonly GasSource[]): void {
-        const { uSourcePlaces, uSourceFeeds, uSourceClouds, uSourceCount } = this.shared.sources;
+        const { uSourcePlaces, uSourceFeeds, uSourceParticles, uSourceCount } = this.shared.sources;
         const count = Math.min(sources.length, MAX_GAS_SOURCES);
 
         for (let index = 0; index < count; index++) {
@@ -81,7 +90,7 @@ export class GasSolver implements Disposable {
 
             this.toVoxels(source.place, uSourcePlaces.value[index]).setW(Math.max(source.radius / this.box.uVoxelSize.value, SMALLEST_SOURCE_VOXELS));
             uSourceFeeds.value[index].set(source.targetKelvin, source.heatingPerSecond, source.vaporPerSecond, source.flamePerSecond);
-            uSourceClouds.value[index] = source.cloudPerSecond;
+            uSourceParticles.value[index] = source.particlesPerSecond;
         }
 
         uSourceCount.value = count;
@@ -131,19 +140,24 @@ export class GasSolver implements Disposable {
         const previousColor = renderer.getClearColor(new Color());
         const previousAlpha = renderer.getClearAlpha();
 
-        this.flowSeconds = 0;
         renderer.setClearColor(0x000000, 0);
         this.drawing(() => {
             for (const target of this.fields.simulated) {
                 renderer.setRenderTarget(target);
                 renderer.clear(true, false, false);
             }
+        });
+        renderer.setClearColor(previousColor, previousAlpha);
+        this.resetFlow();
+    }
 
+    resetFlow(): void {
+        this.flowSeconds = 0;
+        this.drawing(() => {
             for (const pair of [this.fields.coordinatesA, this.fields.coordinatesB, this.fields.coordinatesA, this.fields.coordinatesB]) {
                 this.carry(pair, true);
             }
         });
-        renderer.setClearColor(previousColor, previousAlpha);
     }
 
     release(): void {

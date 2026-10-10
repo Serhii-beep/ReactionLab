@@ -21,14 +21,16 @@ import { ContextGuard } from "./core/context-guard";
 import { LodController } from "./performance/lod-controller";
 import { QualityGovernor } from "./performance/quality-governor";
 import { ReactionDirector } from "./animation/reaction-director";
-import { ReactionEffects } from "./particles/reaction-effects";
+import { ReactionEffects } from "./effects/reaction-effects";
 import { RunCamera } from "./cinematography/run-camera";
 import { GasVolume } from "./gas/gas-volume";
 import { ReactionGas } from "./gas/reaction-gas";
 import { ReactionSparks } from "./sparks/reaction-sparks";
+import { ReactionLight } from "./rendering/reaction-light";
 
 const HIGHLIGHT_RISE = 0.2;
 const HIGHLIGHT_FALL = 0.3;
+const WARM_UP_TIMEOUT_MS = 3000;
 
 export function provideEngine(): Provider[] {
     return [...coreProviders(), ...sceneProviders()];
@@ -64,14 +66,15 @@ function coreProviders(): Provider[] {
         owned(CameraController, () => new CameraController(inject(EngineContext), hostElement())),
         owned(PointerInput, () => new PointerInput(hostElement())),
         owned(GeometryCache, () => new GeometryCache()),
-        owned(MaterialCache, () => new MaterialCache()),
+        { provide: ReactionLight, useFactory: () => new ReactionLight() },
+        owned(MaterialCache, () => new MaterialCache(inject(ReactionLight))),
         owned(LabelAtlas, () => new LabelAtlas(inject(EngineContext)))
     ];
 }
 
 function sceneProviders(): Provider[] {
     return [
-        owned(BenchStage, () => new BenchStage(inject(EngineContext), inject(PostProcessingPipeline))),
+        owned(BenchStage, () => new BenchStage(inject(EngineContext), inject(PostProcessingPipeline), inject(ReactionLight))),
         owned(AtomRenderer, () => new AtomRenderer(inject(GeometryCache), inject(MaterialCache))),
         owned(BondRenderer, () => new BondRenderer(inject(GeometryCache), inject(MaterialCache))),
         owned(AtomLabels, () => new AtomLabels(inject(LabelAtlas))),
@@ -82,9 +85,13 @@ function sceneProviders(): Provider[] {
         { provide: QualityGovernor, useFactory: () => new QualityGovernor(inject(PostProcessingPipeline), inject(ViewportObserver), inject(LodController)) },
         { provide: ReactionDirector, useFactory: () => new ReactionDirector() },
         owned(ReactionEffects, () => {
-            const effects = new ReactionEffects(new ReactionGas(inject(EngineContext).renderer, inject(GasVolume)), new ReactionSparks(inject(EngineContext).renderer));
+            const renderer = inject(EngineContext).renderer;
+            const sparks = new ReactionSparks(renderer);
+            const effects = new ReactionEffects(new ReactionGas(renderer, inject(GasVolume), sparks, inject(ReactionLight)), sparks);
+            const cancelWarmUp = whenIdle(inject(DOCUMENT).defaultView ?? window, () => effects.warmUp());
 
             inject(ContextGuard).onRestored(() => effects.restoreContext());
+            inject(DestroyRef).onDestroy(cancelWarmUp);
 
             return effects;
         }),
@@ -109,6 +116,18 @@ function sceneProviders(): Provider[] {
 
 function owned<T extends Disposable>(token: ProviderToken<T>, create: () => T): Provider {
     return { provide: token, useFactory: () => inject(DisposalScope).add(create()) };
+}
+
+function whenIdle(view: Window, work: () => void): () => void {
+    if (typeof view.requestIdleCallback !== 'function') {
+        const timer = view.setTimeout(work, WARM_UP_TIMEOUT_MS);
+
+        return () => view.clearTimeout(timer);
+    }
+
+    const handle = view.requestIdleCallback(work, { timeout: WARM_UP_TIMEOUT_MS });
+
+    return () => view.cancelIdleCallback(handle);
 }
 
 function hostElement(): HTMLElement {

@@ -1,4 +1,4 @@
-import { BufferAttribute, BufferGeometry, Camera, DataTexture, FloatType, GLSL3, IUniform, Mesh, NearestFilter, RawShaderMaterial, RGBAFormat, Texture, Vector2, Vector3, WebGLRenderer, WebGLRenderTarget } from "three";
+import { BufferAttribute, BufferGeometry, Camera, DataTexture, FloatType, GLSL3, IUniform, Material, Mesh, NearestFilter, RawShaderMaterial, RGBAFormat, Texture, Vector2, Vector3, WebGLRenderer, WebGLRenderTarget } from "three";
 import { Disposable } from "../core/disposal-scope";
 import { ROOM_TEMPERATURE_KELVIN } from "../core/matter";
 import { GAS_PASS_VERTEX_SHADER } from "../gas/gas-grid";
@@ -25,6 +25,23 @@ interface StepUniforms {
     readonly uRoomKelvin: IUniform<number>;
 }
 
+const COPY_STATE_SHADER = `
+    precision highp float;
+    precision highp sampler2D;
+
+    uniform sampler2D uPlaces;
+    uniform sampler2D uMotions;
+
+    layout(location = 0) out vec4 outPlace;
+    layout(location = 1) out vec4 outMotion;
+
+    void main() {
+        ivec2 texel = ivec2(gl_FragCoord.xy);
+
+        outPlace = texelFetch(uPlaces, texel, 0);
+        outMotion = texelFetch(uMotions, texel, 0);
+    }
+`;
 const UNBORN_SECONDS = 1e9;
 const BEFORE_EVERY_LAUNCH_SECONDS = -1e9;
 const CHANNELS = 4;
@@ -38,6 +55,14 @@ export class SparkField implements Disposable {
     private readonly traits = launchTexture(this.launchTraitTexels);
     private readonly uniforms: StepUniforms;
     private readonly material: RawShaderMaterial;
+    private readonly copyState = new RawShaderMaterial({
+        glslVersion: GLSL3,
+        vertexShader: GAS_PASS_VERTEX_SHADER,
+        fragmentShader: COPY_STATE_SHADER,
+        uniforms: { uPlaces: { value: null }, uMotions: { value: null } },
+        depthTest: false,
+        depthWrite: false
+    });
     private readonly quad = new Mesh(new BufferGeometry());
     private readonly camera = new Camera();
     private states: readonly [WebGLRenderTarget, WebGLRenderTarget] = [stateTarget(), stateTarget()];
@@ -69,6 +94,10 @@ export class SparkField implements Disposable {
         return this.traits;
     }
 
+    get materials(): readonly Material[] {
+        return [this.material, this.copyState];
+    }
+
     load(launches: readonly SparkLaunch[]): void {
         for (let slot = 0; slot < SPARK_SLOTS; slot++) {
             this.loadSlot(slot, launches[slot]);
@@ -87,9 +116,23 @@ export class SparkField implements Disposable {
         this.draw(seconds, stepSeconds, airflow);
     }
 
+    capture(): WebGLRenderTarget {
+        const state = stateTarget();
+
+        this.copy(this.states[0], state);
+
+        return state;
+    }
+
+    restore(state: WebGLRenderTarget): void {
+        this.copy(state, this.states[1]);
+        this.states = [this.states[1], this.states[0]];
+    }
+
     dispose(): void {
         this.quad.geometry.dispose();
         this.material.dispose();
+        this.copyState.dispose();
 
         for (const state of this.states) {
             state.dispose();
@@ -129,6 +172,19 @@ export class SparkField implements Disposable {
         renderer.render(this.quad, this.camera);
         renderer.setRenderTarget(previousTarget);
         this.states = [this.states[1], this.states[0]];
+    }
+
+    private copy(source: WebGLRenderTarget, target: WebGLRenderTarget): void {
+        const { renderer } = this;
+        const previousTarget = renderer.getRenderTarget();
+
+        this.copyState.uniforms['uPlaces'].value = source.textures[0];
+        this.copyState.uniforms['uMotions'].value = source.textures[1];
+        this.quad.material = this.copyState;
+        renderer.setRenderTarget(target);
+        renderer.render(this.quad, this.camera);
+        renderer.setRenderTarget(previousTarget);
+        this.quad.material = this.material;
     }
 
     private ride(airflow: GasAirflow | null): void {

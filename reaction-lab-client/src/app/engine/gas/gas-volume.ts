@@ -1,12 +1,15 @@
 import { Color, HalfFloatType, IUniform, Matrix4, PerspectiveCamera, ShaderMaterial, Texture, WebGL3DRenderTarget, WebGLRenderer, WebGLRenderTarget } from "three";
 import { Pass } from "postprocessing";
 import { LIT_WHITE_LUMINANCE } from "../rendering/look";
+import { incandescenceTexture, IncandescenceUniforms, incandescenceUniformsOf, writeIncandescence } from "../rendering/incandescence-texture";
+import { compileOffscreen } from "../rendering/shader-warm-up";
 import { VOLUME_COMPOSITE_SHADER, VOLUME_MARCH_SHADER, VOLUME_VERTEX_SHADER } from "./gas-volume-shaders";
 import { renderDetailNoise } from "./detail-noise";
 import { GasSolver } from "./gas-solver";
-import { GasLook } from "./gas-look";
+import { emissivityOf, flameLightOf, GasLook } from "./gas-look";
+import { GasParticles } from "./gas-run";
 
-interface MarchUniforms {
+interface MarchUniforms extends IncandescenceUniforms {
     readonly uScalars: IUniform<Texture | null>;
     readonly uLighting: IUniform<Texture | null>;
     readonly uCoordinatesA: IUniform<Texture | null>;
@@ -21,7 +24,7 @@ interface MarchUniforms {
     readonly uKeyLight: IUniform<Color>;
     readonly uSkyLight: IUniform<Color>;
     readonly uFlameLight: IUniform<Color>;
-    readonly uCloudAlbedo: IUniform<Color>;
+    readonly uParticleAlbedo: IUniform<Color>;
     readonly uFade: IUniform<number>;
 }
 
@@ -32,7 +35,8 @@ const WHITE_ALBEDO = new Color(1, 1, 1);
 
 export class GasVolume extends Pass {
     private readonly marchTarget = new WebGLRenderTarget(1, 1, { type: HalfFloatType, depthBuffer: false });
-    private readonly marchUniforms: MarchUniforms = marchUniformsOf();
+    private readonly incandescence = incandescenceTexture();
+    private readonly marchUniforms: MarchUniforms = marchUniformsOf(this.incandescence);
     private readonly march = new ShaderMaterial({ vertexShader: VOLUME_VERTEX_SHADER, fragmentShader: VOLUME_MARCH_SHADER, uniforms: { ...this.marchUniforms }, depthTest: false, depthWrite: false });
     private readonly composite: ShaderMaterial;
     private noise: WebGL3DRenderTarget | null = null;
@@ -52,10 +56,13 @@ export class GasVolume extends Pass {
         this.enabled = false;
     }
 
-    show(solver: GasSolver, look: GasLook, cloudAlbedo: Color | null): void {
+    show(solver: GasSolver, look: GasLook, particles: GasParticles | null): void {
+        const particleAlbedo = particles?.albedo ?? WHITE_ALBEDO;
+
         Object.assign(this.march.uniforms, solver.grid, solver.box, solver.mist);
-        this.marchUniforms.uFlameLight.value.copy(look.flameColor).multiplyScalar(look.flameLuminance * LIT_WHITE_LUMINANCE);
-        this.marchUniforms.uCloudAlbedo.value.copy(cloudAlbedo ?? WHITE_ALBEDO);
+        flameLightOf(look, this.marchUniforms.uFlameLight.value);
+        this.marchUniforms.uParticleAlbedo.value.copy(particleAlbedo);
+        writeIncandescence(this.incandescence, emissivityOf(particleAlbedo));
         this.marchUniforms.uFade.value = 1;
         this.track(solver);
         this.enabled = true;
@@ -69,6 +76,11 @@ export class GasVolume extends Pass {
         uniforms.uCoordinatesA.value = solver.coordinatesA;
         uniforms.uCoordinatesB.value = solver.coordinatesB;
         uniforms.uFlowWeight.value = solver.flowWeight;
+    }
+
+    warmUp(renderer: WebGLRenderer): void {
+        compileOffscreen(renderer, [this.march, this.composite]);
+        this.noise ??= renderDetailNoise(renderer);
     }
 
     forgetNoise(): void {
@@ -112,8 +124,9 @@ export class GasVolume extends Pass {
     }
 }
 
-function marchUniformsOf(): MarchUniforms {
+function marchUniformsOf(incandescence: Texture): MarchUniforms {
     return {
+        ...incandescenceUniformsOf(incandescence),
         uScalars: { value: null },
         uLighting: { value: null },
         uCoordinatesA: { value: null },
@@ -128,7 +141,7 @@ function marchUniformsOf(): MarchUniforms {
         uKeyLight: { value: new Color(1, 0.95, 0.88).multiplyScalar(KEY_LIGHT_SHARE * LIT_WHITE_LUMINANCE) },
         uSkyLight: { value: new Color(0.94, 0.98, 1.06).multiplyScalar(SKY_LIGHT_SHARE * LIT_WHITE_LUMINANCE) },
         uFlameLight: { value: new Color() },
-        uCloudAlbedo: { value: new Color(1, 1, 1) },
+        uParticleAlbedo: { value: new Color(1, 1, 1) },
         uFade: { value: 1 }
     };
 }

@@ -3,13 +3,12 @@ import { BenchLayout, PlacedBond } from "../scene/bench-layout";
 import { easeInOutCubic, easeInToGlide, progressWithin, smoothProgressBetween } from "./easing";
 import { ReactionEnergetics, ReactionScript } from "./reaction-script";
 import { BondChanges, classifyBonds, indexBondsByEnds } from "./bond-continuity";
-import { EmissionAnchors } from "../particles/emission-plan";
 import { DynamicsRecording, recordedReachAt } from "./dynamics/dynamics-recording";
 import { atomsOfUnits, bondsOfUnits, mergePosedPoints, pointsAtPose, poseTravels, StagedBench, StagedSet, stageTravelingUnits, TravelPlanFor, UnitTravel } from "./unit-staging";
 import { dynamicsScheduleOf, swapSecondsOf } from "./dynamics/dynamics-schedule";
 import { RecordedAtomLooks, RecordedUnits } from "./recorded-units";
 import { buildDynamicsInput, DynamicsSources, RecordingIndexByAtom, recordingIndexByAtom } from "./dynamics-input-builder";
-import { boundsWithGathering, CentersByUnitId, Gathering, gatheredSphereOf, gatheringOf, slotCentersAround } from "./gathering";
+import { boundsWithGathering, CentersByUnitId, gatheredSphereOf, gatheringOf, slotCentersAround } from "./gathering";
 import { AtomPair, pairAtoms } from "./atom-pairing";
 import { refinePairing } from "./pairing-refinement";
 import { bakeReactionDynamics } from "./dynamics/reaction-dynamics";
@@ -45,7 +44,6 @@ const RECORDING_BY_SCRIPT = new WeakMap<ReactionScript, DynamicsRecording>();
 
 export class ReactionMotion {
     readonly bounds: Box3;
-    readonly emissionAnchors: EmissionAnchors;
     readonly cameraCues: CameraCues;
     readonly trace: ReactionTrace;
     readonly gasRun: GasRun | null;
@@ -73,7 +71,6 @@ export class ReactionMotion {
         const schedule = dynamicsScheduleOf(script.phases, script.durationSeconds);
         this.swapSeconds = swapSecondsOf(schedule);
         this.bounds = boundsWithGathering(before, after, gathering);
-        this.emissionAnchors = emissionAnchorsOf(gathering, productCenters);
         this.reactantsSet = stageTravelingUnits(before, approachPlans(gathering.centerByUnitId));
         this.productsSet = stageTravelingUnits(after, releasePlans(productCenters, before));
 
@@ -205,14 +202,6 @@ function cameraCuesOf(gathered: Sphere, finalBounds: Box3, recording: DynamicsRe
         releaseSeconds: recording.schedule.releaseSeconds,
         shownEnthalpyKilojoulesPerMole: shownEnthalpyOf(energetics) ?? 0,
         reachAt: (seconds, center) => recordedReachAt(recording, atomRadii, seconds, center)
-    };
-}
-
-function emissionAnchorsOf(gathering: Gathering, productCenters: CentersByUnitId): EmissionAnchors {
-    return {
-        meeting: gathering.meeting.clone(),
-        products: [...productCenters.values()],
-        reactants: [...gathering.centerByUnitId.values()]
     };
 }
 
