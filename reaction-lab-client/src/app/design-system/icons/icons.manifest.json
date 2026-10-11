@@ -26,5 +26,6 @@
     "play",
     "pause",
     "rotate-ccw",
-    "square"
+    "square",
+    "chart-spline"
 ]

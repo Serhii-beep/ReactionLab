@@ -1,12 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input } from "@angular/core";
-import { ChemFormula, ChemicalState } from "./chem-formula";
-
-export interface EquationTerm {
-    readonly formula: string;
-    readonly coefficient?: number;
-    readonly charge?: number;
-    readonly state?: ChemicalState;
-}
+import { ChemEquationSide, EquationTerm } from "./chem-equation-side";
 
 const ARROW = '\u2192';
 const EQUILIBRUM = '\u21CC';
@@ -15,7 +8,7 @@ const EQUILIBRUM = '\u21CC';
     selector: 'rl-chem-equation',
     templateUrl: './chem-equation.html',
     styleUrl: './chem-equation.scss',
-    imports: [ChemFormula],
+    imports: [ChemEquationSide],
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: {
         class: 'rl-chem-equation'

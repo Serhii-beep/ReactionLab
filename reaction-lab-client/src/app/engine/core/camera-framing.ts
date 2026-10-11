@@ -8,18 +8,18 @@ export interface Framing {
 const MARGIN = 1.25;
 const MIN_RADIUS = 4.3;
 
-export function distanceFor(camera: PerspectiveCamera, radius: number, margin = MARGIN): number {
-    return radius * margin * distancePerRadius(camera);
+export function distanceFor(camera: PerspectiveCamera, radius: number, margin = MARGIN, heightShare = 1): number {
+    return radius * margin * distancePerRadius(camera, heightShare);
 }
 
-export function distancePerRadius(camera: PerspectiveCamera): number {
-    return distancePerRadiusThrough(camera.getEffectiveFOV(), camera.aspect);
+export function distancePerRadius(camera: PerspectiveCamera, heightShare = 1): number {
+    return distancePerRadiusThrough(camera.getEffectiveFOV(), camera.aspect, heightShare);
 }
 
-export function framingFor(camera: PerspectiveCamera, bounds: Box3): Framing {
+export function framingFor(camera: PerspectiveCamera, bounds: Box3, heightShare = 1): Framing {
     const framed = framedSphereOf(bounds);
 
-    return { center: framed.center, distance: framed.radius * distancePerRadius(camera) };
+    return { center: framed.center, distance: framed.radius * distancePerRadius(camera, heightShare) };
 }
 
 export function framedSphereOf(bounds: Box3): Sphere {
@@ -35,12 +35,13 @@ export function framedSphereOf(bounds: Box3): Sphere {
 }
 
 export function referenceDistance(camera: PerspectiveCamera): number {
-    return MIN_RADIUS * MARGIN * distancePerRadiusThrough(camera.fov, camera.aspect);
+    return MIN_RADIUS * MARGIN * distancePerRadiusThrough(camera.fov, camera.aspect, 1);
 }
 
-function distancePerRadiusThrough(fovDegrees: number, aspect: number): number {
-    const vertical = MathUtils.degToRad(fovDegrees) / 2;
-    const horizontal = Math.atan(Math.tan(vertical) * aspect);
+function distancePerRadiusThrough(fovDegrees: number, aspect: number, heightShare: number): number {
+    const halfHeightTangent = Math.tan(MathUtils.degToRad(fovDegrees) / 2);
+    const vertical = Math.atan(halfHeightTangent * heightShare);
+    const horizontal = Math.atan(halfHeightTangent * aspect);
 
     return 1 / Math.sin(Math.min(vertical, horizontal));
 }

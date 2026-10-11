@@ -22,6 +22,7 @@ import { ReactionScript } from "../animation/reaction-script";
 import { ReactionEffects } from "../effects/reaction-effects";
 import { QualityLevel } from "../performance/quality-governor";
 import { RunCamera } from "../cinematography/run-camera";
+import { LensShift } from "../core/lens-shift";
 
 export interface BenchSceneCollaborators {
     readonly context: EngineContext;
@@ -37,6 +38,7 @@ export interface BenchSceneCollaborators {
     readonly director: ReactionDirector;
     readonly effects: ReactionEffects;
     readonly runCamera: RunCamera;
+    readonly lensShift: LensShift;
 }
 
 export interface UnitAnchor {
@@ -141,8 +143,8 @@ export class BenchScene implements Disposable {
     }
 
     frame(animated: boolean): number {
-        const { context, camera, stage, director, runCamera } = this.collaborators;
-        const framing = framingFor(context.camera, this.bounds);
+        const { context, camera, stage, director, runCamera, lensShift } = this.collaborators;
+        const framing = framingFor(context.camera, this.bounds, lensShift.targetHeightShare);
 
         if (runCamera.directing && !animated) {
             camera.fenceTo(this.bounds, framing.center);
@@ -164,9 +166,9 @@ export class BenchScene implements Disposable {
             return false;
         }
 
-        const { context, camera } = this.collaborators;
+        const { context, camera, lensShift } = this.collaborators;
 
-        camera.focus(sphere.center, distanceFor(context.camera, sphere.radius, FOCUS_MARGIN), animated);
+        camera.focus(sphere.center, distanceFor(context.camera, sphere.radius, FOCUS_MARGIN, lensShift.targetHeightShare), animated);
         this.needsRender = true;
 
         return true;
@@ -211,7 +213,8 @@ export class BenchScene implements Disposable {
     }
 
     update(deltaSeconds: number, stepRemainderSeconds: number): boolean {
-        const { context, camera, highlight, outline, labels } = this.collaborators;
+        const { context, camera, highlight, outline, labels, lensShift } = this.collaborators;
+        const shifting = lensShift.update(deltaSeconds);
 
         this.advanceRun(stepRemainderSeconds);
 
@@ -234,7 +237,7 @@ export class BenchScene implements Disposable {
             labels.update(context.camera, this.viewportHeight);
         }
 
-        const present = moved || fading || this.needsRender;
+        const present = moved || fading || shifting || this.needsRender;
 
         this.needsRender = false;
 

@@ -1,0 +1,33 @@
+<ng-container *transloco="let t; prefix: 'lab.run.thermometer'">
+    <svg
+        class="water-thermometer-tube"
+        viewBox="0 0 44 136"
+        role="img"
+        [attr.aria-label]="t(labelKey(), {
+            value: (reading().celsius | number: readingDigits()),
+            sign: temperatureChange().sign,
+            change: (temperatureChange().kelvin | number: '1.1-1'),
+            start: (calorimetry().startCelsius | number: '1.1-1')
+        })"
+    >
+        <rect class="water-thermometer-glass" x="17" y="4" width="10" height="118" rx="5"></rect>
+        <path class="water-thermometer-scale" [attr.d]="scaleTickPath"></path>
+        <path class="water-thermometer-start" [attr.d]="startTickPath()"></path>
+        <rect class="water-thermometer-liquid" [attr.data-tone]="tone()" x="19.5" [attr.y]="liquidTop()" width="5" [attr.height]="bulbCenterTop - liquidTop()" rx="2.5"></rect>
+        <circle class="water-thermometer-bulb" [attr.data-tone]="tone()" cx="22" [attr.cy]="bulbCenterTop" r="8"></circle>
+    </svg>
+
+    <span class="water-thermometer-reading" [attr.data-tone]="tone()" aria-hidden="true">
+        {{ t('reading', { value: (reading().celsius | number: readingDigits()) }) }}
+    </span>
+
+    <span class="water-thermometer-change" aria-hidden="true">
+        @if (reading().boiling) {
+            {{ t('boils') }}
+        } @else if (reading().freezing) {
+            {{ t('freezes') }}
+        } @else {
+            {{ t('change', { sign: temperatureChange().sign, value: (temperatureChange().kelvin | number: '1.1-1') }) }}
+        }
+    </span>
+</ng-container>

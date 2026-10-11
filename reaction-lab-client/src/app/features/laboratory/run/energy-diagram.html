@@ -1,0 +1,105 @@
+<ng-container *transloco="let t; prefix: 'lab.run.diagram'">
+    @if (profile(); as profile) {
+        <div #plot class="energy-diagram-plot">
+            @if (layout(); as layout) {
+                <svg
+                    class="energy-diagram-drawing"
+                    role="img"
+                    [attr.viewBox]="viewBox()"
+                    [attr.aria-label]="(t(descriptionKey(), {
+                        activation: (profile.activationKilojoulesPerMole | number: '1.0-1'),
+                        sign: shownEnthalpy().sign,
+                        enthalpy: (shownEnthalpy().kilojoulesPerMole | number: '1.0-1')
+                    }))"
+                >
+                    <path class="energy-diagram-guides" [attr.d]="layout.paths.phaseGuides"></path>
+                    <path class="energy-diagram-axes" [attr.d]="layout.paths.axes"></path>
+                    <path class="energy-diagram-axis-heads" [attr.d]="layout.paths.axisHeads"></path>
+                    <path class="energy-diagram-reactant-level" [attr.d]="layout.paths.reactantLevel"></path>
+                    <path class="energy-diagram-curve" [attr.d]="layout.paths.catalogCurve"></path>
+                    <path class="energy-diagram-curve energy-diagram-unknown" [attr.d]="layout.paths.missingBarrierCurve"></path>
+                    <path class="energy-diagram-activation" [attr.d]="layout.paths.activationArrow"></path>
+                    <path class="energy-diagram-enthalpy" [attr.data-tone]="tone()" [attr.d]="layout.paths.enthalpyArrow"></path>
+                    <path class="energy-diagram-break" [attr.d]="layout.paths.breakMarks"></path>
+
+                    @if (progress(); as progress) {
+                        <path class="energy-diagram-traveled" [attr.d]="progress.traveledCatalogCurve"></path>
+                        <path class="energy-diagram-traveled energy-diagram-unknown" [attr.d]="progress.traveledMissingBarrierCurve"></path>
+                        <path
+                            class="energy-diagram-marker-guide"
+                            [class.energy-diagram-marker-guide-hidden]="!progress.markerGuideShown"
+                            [attr.d]="progress.markerGuide"
+                        ></path>
+                        <circle class="energy-diagram-marker-halo" [attr.cx]="progress.marker.left" [attr.cy]="progress.marker.top" r="10"></circle>
+                        <circle class="energy-diagram-marker" [attr.cx]="progress.marker.left" [attr.cy]="progress.marker.top" r="5"></circle>
+                    }
+                </svg>
+
+                <div class="energy-diagram-labels" aria-hidden="true">
+                    <span class="energy-diagram-axis-title energy-diagram-energy-axis">{{ t('energyAxis') }}</span>
+                    <span class="energy-diagram-axis-title energy-diagram-progress-axis">{{ t('progressAxis') }}</span>
+
+                    <span
+                        class="energy-diagram-label energy-diagram-plateau"
+                        [class.energy-diagram-plateau-below]="layout.labels.reactantsBelowLevel"
+                        [style.left.%]="layout.labels.reactants.leftPercent"
+                        [style.top.%]="layout.labels.reactants.topPercent"
+                    >
+                        <rl-chem-equation-side [terms]="reactants()" [showStates]="false"></rl-chem-equation-side>
+                    </span>
+
+                    <span
+                        class="energy-diagram-label energy-diagram-plateau"
+                        [style.left.%]="layout.labels.products.leftPercent"
+                        [style.top.%]="layout.labels.products.topPercent"
+                    >
+                        <rl-chem-equation-side [terms]="products()" [showStates]="false"></rl-chem-equation-side>
+                    </span>
+
+                    <span
+                        class="energy-diagram-label energy-diagram-peak"
+                        [style.left.%]="layout.labels.peak.leftPercent"
+                        [style.top.%]="layout.labels.peak.topPercent"
+                    >
+                        @if (profile.activationKilojoulesPerMole === null) {
+                            {{ t('noBarrier') }}
+                        } @else {
+                            <span>{{ t('transitionState') }}</span>
+                            <span class="energy-diagram-value energy-diagram-barrier-value">{{ t('activation', { value: (profile.activationKilojoulesPerMole | number: '1.0-1') }) }}</span>
+                        }
+                    </span>
+
+                    <span
+                        class="energy-diagram-label energy-diagram-enthalpy-label"
+                        [class.energy-diagram-enthalpy-above]="!layout.labels.enthalpyBesideArrow"
+                        [attr.data-tone]="tone()"
+                        [style.left.%]="layout.labels.enthalpy.leftPercent"
+                        [style.top.%]="layout.labels.enthalpy.topPercent"
+                    >
+                        <span class="energy-diagram-value">{{ t('enthalpy', { sign: shownEnthalpy().sign, value: (shownEnthalpy().kilojoulesPerMole | number: '1.0-1') }) }}</span>
+
+                        @if (barrierEqualsEnthalpy()) {
+                            <span class="energy-diagram-note">{{ t('lowestBarrier') }}</span>
+                        }
+                    </span>
+
+                    @if (layout.axisBroken) {
+                        <span class="energy-diagram-break-label">{{ t('axisBroken') }}</span>
+                    }
+
+                    <span class="energy-diagram-label energy-diagram-phase" [style.left.%]="layout.labels.bondsBreak.leftPercent" [style.top.%]="layout.labels.bondsBreak.topPercent">
+                        {{ t('bondsBreak') }}
+                    </span>
+                    <span class="energy-diagram-label energy-diagram-phase" [style.left.%]="layout.labels.bondsForm.leftPercent" [style.top.%]="layout.labels.bondsForm.topPercent">
+                        {{ t('bondsForm') }}
+                    </span>
+                </div>
+            }
+        </div>
+    } @else {
+        <div class="energy-diagram-empty">
+            <span class="energy-diagram-empty-heading">{{ t('emptyHeading') }}</span>
+            <span class="energy-diagram-empty-detail">{{ t('emptyDetail') }}</span>
+        </div>
+    }
+</ng-container>

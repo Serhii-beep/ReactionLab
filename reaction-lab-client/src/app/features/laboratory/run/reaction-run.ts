@@ -80,6 +80,7 @@ export class ReactionRun {
 
         this.ui.dismiss();
         this.reaction.set(reaction);
+        this.timeline.set(reactionTimeline(runSecondsOf(reaction), activationBarrierOf(reaction)));
         this.status.set('preparing');
         this.elapsedSeconds.set(0);
         this.stepped.set(prefersReducedMotion(this.view));
@@ -195,7 +196,7 @@ export class ReactionRun {
             return;
         }
 
-        const timeline = reactionTimeline(runSecondsOf(reaction), activationBarrierOf(reaction));
+        const timeline = this.timeline();
         const script = buildReactionScript(reaction, timeline, {
             entriesBefore: this.workspace.entries(),
             entriesAfter: this.workspace.entriesAfter(outcome),
@@ -206,7 +207,6 @@ export class ReactionRun {
         this.script = script;
         this.outcome = outcome;
         this.committed = false;
-        this.timeline.set(timeline);
         this.play(script);
         this.announce('lab.announce.runStarted', reaction.name);
     }

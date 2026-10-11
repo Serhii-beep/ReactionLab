@@ -199,7 +199,42 @@
             "exothermic": "exothermic",
             "endothermic": "endothermic",
             "failed": "Could not start the reaction",
-            "failedDetail": "The catalog did not return every product"
+            "failedDetail": "The catalog did not return every product",
+            "diagram": {
+                "toggle": "Energy diagram",
+                "title": "Energy diagram",
+                "releases": "Exothermic · releases {value} kJ/mol",
+                "absorbs": "Endothermic · absorbs {value} kJ/mol",
+                "absorbsFromCurrent": "Endothermic · absorbs {value} kJ/mol from the current",
+                "absorbsFromLight": "Endothermic · absorbs {value} kJ/mol from light",
+                "noEnthalpy": "No ΔH in the catalog",
+                "asWritten": "values for the equation as written",
+                "waterAmount": "{amount} mol in {volume} mL water",
+                "energyAxis": "Energy",
+                "progressAxis": "Reaction progress →",
+                "transitionState": "transition state",
+                "noBarrier": "barrier not in the catalog",
+                "activation": "Eₐ {value} kJ/mol",
+                "lowestBarrier": "Eₐ = ΔH: the lowest barrier possible",
+                "enthalpy": "ΔH {sign}{value} kJ/mol",
+                "axisBroken": "axis broken: the drop is not to scale",
+                "bondsBreak": "bonds break",
+                "bondsForm": "bonds form",
+                "emptyHeading": "The catalog has no ΔH for this reaction",
+                "emptyDetail": "The diagram draws only the catalog's values, so it stays empty rather than guess. The run plays as usual.",
+                "description": "Energy diagram: activation energy {activation} kJ/mol, enthalpy change {sign}{enthalpy} kJ/mol",
+                "descriptionWithoutBarrier": "Energy diagram: activation energy not in the catalog, enthalpy change {sign}{enthalpy} kJ/mol",
+                "descriptionWithLowestBarrier": "Energy diagram: activation energy {activation} kJ/mol, equal to the enthalpy change and the lowest barrier possible"
+            },
+            "thermometer": {
+                "label": "Water temperature {value} °C, {sign}{change} K from {start} °C",
+                "labelBoiling": "Water temperature {value} °C, boiling",
+                "labelFreezing": "Water temperature {value} °C, freezing",
+                "reading": "{value} °C",
+                "change": "{sign}{value} K",
+                "boils": "boils",
+                "freezes": "freezes"
+            }
         }
     }
 }

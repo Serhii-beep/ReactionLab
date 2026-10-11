@@ -1,33 +1,74 @@
 <ng-container *transloco="let t; prefix: 'lab.run'">
     <div class="run-transport-controls">
-        @switch (run.status()) {
-            @case ('preparing') {
-                <rl-spinner size="sm" [label]="t('preparing')"></rl-spinner>
+        <button
+            rlIconButton
+            rlToggleButton
+            variant="ghost"
+            size="sm"
+            [label]="t('diagram.toggle')"
+            [pressed]="diagram.open()"
+            (pressedChange)="diagram.show($event)"
+        >
+            <rl-icon [icon]="icons.chartSpline" size="sm"></rl-icon>
+        </button>
+
+        <div class="run-transport-playback">
+            @switch (run.status()) {
+                @case ('preparing') {
+                    <rl-spinner size="sm" [label]="t('preparing')"></rl-spinner>
+                }
+                @case ('finished') {
+                    <button rlIconButton size="sm" [label]="t('replay')" (click)="run.replay()">
+                        <rl-icon [icon]="icons.rotateCcw" size="sm"></rl-icon>
+                    </button>
+                }
+                @default {
+                    <button
+                        rlIconButton
+                        size="sm"
+                        [label]="run.status() === 'playing' ? t('pause') : t('play')"
+                        (click)="run.togglePause()"
+                    >
+                        <rl-icon [icon]="run.status() === 'playing' ? icons.pause : icons.play" size="sm"></rl-icon>
+                    </button>
+                    <button rlIconButton size="sm" [label]="t('restart')" (click)="run.restart()">
+                        <rl-icon [icon]="icons.rotateCcw" size="sm"></rl-icon>
+                    </button>
+                }
             }
-            @case ('finished') {
-                <button rlIconButton size="sm" [label]="t('replay')" (click)="run.replay()">
-                    <rl-icon [icon]="icons.rotateCcw" size="sm"></rl-icon>
-                </button>
-            }
-            @default {
-                <button
-                    rlIconButton
-                    size="sm"
-                    [label]="run.status() === 'playing' ? t('pause') : t('play')"
-                    (click)="run.togglePause()"
-                >
-                    <rl-icon [icon]="run.status() === 'playing' ? icons.pause : icons.play" size="sm"></rl-icon>
-                </button>
-                <button rlIconButton size="sm" [label]="t('restart')" (click)="run.restart()">
-                    <rl-icon [icon]="icons.rotateCcw" size="sm"></rl-icon>
-                </button>
-            }
-        }
+        </div>
     </div>
 
     <div class="run-transport-separator" role="presentation"></div>
 
     <div class="run-transport-body">
+        @if (diagram.open()) {
+            @if (verdict(); as verdict) {
+                <div class="run-transport-diagram-header">
+                    <span class="run-transport-diagram-title">{{ t('diagram.title') }}</span>
+                    <span class="run-transport-verdict" [attr.data-tone]="verdict.tone">
+                        {{ t('diagram.' + verdict.messageKey, { value: (verdict.kilojoulesPerMole | number: '1.0-1') }) }}
+                    </span>
+
+                    @if (calorimetry(); as water) {
+                        <span class="run-transport-note">
+                            {{ t('diagram.waterAmount', { amount: (water.reactionMoles | number: '1.3-3'), volume: (water.waterMilliliters | number: '1.0-0') }) }}
+                        </span>
+                    } @else if (verdict.heatDriven && profile() !== null) {
+                        <span class="run-transport-note">{{ t('diagram.asWritten') }}</span>
+                    }
+                </div>
+            }
+
+            <app-energy-diagram
+                [profile]="profile()"
+                [timeline]="run.timeline()"
+                [elapsedSeconds]="run.elapsedSeconds()"
+                [reactants]="reactants()"
+                [products]="products()"
+            ></app-energy-diagram>
+        }
+
         <div class="run-transport-line">
             <rl-chem-equation [reactants]="reactants()" [products]="products()" [arrowLabel]="t('yields')"></rl-chem-equation>
             <span class="run-transport-clock">
@@ -66,15 +107,7 @@
         @if (run.status() === 'finished' && run.reaction(); as reaction) {
             <p class="run-transport-result">
                 <span class="run-transport-yield">
-                    @for (term of products(); track $index; let last = $last) {
-                        @if (term.coefficient && term.coefficient !== 1) {
-                            <span>{{ term.coefficient }}</span>
-                        }
-                        <rl-chem-formula [formula]="term.formula" [state]="term.state"></rl-chem-formula>
-                        @if (!last) {
-                            <span class="run-transport-plus">+</span>
-                        }
-                    }
+                    <rl-chem-equation-side [terms]="products()"></rl-chem-equation-side>
                     {{ t('onBench') }}
                 </span>
 
@@ -88,12 +121,22 @@
 
     <div class="run-transport-separator" role="presentation"></div>
 
-    <button
-        rlIconButton
-        size="sm"
-        [label]="run.status() === 'finished' ? t('done') : t('stop')"
-        (click)="run.stop()"
-    >
-        <rl-icon [icon]="run.status() === 'finished' ? icons.check : icons.square" size="sm"></rl-icon>
-    </button>
+    <div class="run-transport-end">
+        @if (diagram.open() && calorimetry(); as water) {
+            <app-water-thermometer
+                class="run-transport-thermometer"
+                [calorimetry]="water"
+                [elapsedSeconds]="run.elapsedSeconds()"
+            ></app-water-thermometer>
+        }
+
+        <button
+            rlIconButton
+            size="sm"
+            [label]="run.status() === 'finished' ? t('done') : t('stop')"
+            (click)="run.stop()"
+        >
+            <rl-icon [icon]="run.status() === 'finished' ? icons.check : icons.square" size="sm"></rl-icon>
+        </button>
+    </div>
 </ng-container>

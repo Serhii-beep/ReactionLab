@@ -1,0 +1,17 @@
+:host {
+    display: contents;
+}
+
+.rl-chem-term {
+    white-space: nowrap;
+}
+
+.rl-chem-coefficient {
+    margin-inline-end: 0.18em;
+    font-variant-numeric: tabular-nums;
+}
+
+.rl-chem-operator {
+    color: var(--text-tertiary);
+    font-weight: 400;
+}

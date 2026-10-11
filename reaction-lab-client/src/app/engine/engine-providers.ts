@@ -27,6 +27,7 @@ import { GasVolume } from "./gas/gas-volume";
 import { ReactionGas } from "./gas/reaction-gas";
 import { ReactionSparks } from "./sparks/reaction-sparks";
 import { ReactionLight } from "./rendering/reaction-light";
+import { LensShift } from "./core/lens-shift";
 
 const HIGHLIGHT_RISE = 0.2;
 const HIGHLIGHT_FALL = 0.3;
@@ -55,6 +56,18 @@ function coreProviders(): Provider[] {
             hostElement(),
             inject(EngineContext),
             inject(DOCUMENT).defaultView ?? window)),
+        {
+            provide: LensShift,
+            useFactory: () => {
+                const lensShift = new LensShift(inject(EngineContext).camera);
+                const camera = inject(CameraController);
+
+                inject(ViewportObserver).onResize((width, height) => lensShift.setViewportSize(width, height));
+                lensShift.onShift((shiftPixels, width, height) => camera.matchLensShift(shiftPixels, width, height));
+
+                return lensShift;
+            }
+        },
         owned(RenderLoop, () => {
             const loop = new RenderLoop(inject(EngineContext), inject(DOCUMENT));
 
@@ -95,7 +108,12 @@ function sceneProviders(): Provider[] {
 
             return effects;
         }),
-        owned(RunCamera, () => new RunCamera(inject(EngineContext), inject(CameraController), inject(PointerInput), inject(PostProcessingPipeline))),
+        owned(RunCamera, () => new RunCamera(
+            inject(EngineContext),
+            inject(CameraController),
+            inject(PointerInput),
+            inject(PostProcessingPipeline),
+            inject(LensShift))),
         owned(BenchScene, () => new BenchScene({
             context: inject(EngineContext),
             camera: inject(CameraController),
@@ -109,7 +127,8 @@ function sceneProviders(): Provider[] {
             lod: inject(LodController),
             director: inject(ReactionDirector),
             effects: inject(ReactionEffects),
-            runCamera: inject(RunCamera)
+            runCamera: inject(RunCamera),
+            lensShift: inject(LensShift)
         }))
     ];
 }

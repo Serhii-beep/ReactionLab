@@ -7,6 +7,7 @@ export const arrowDown: IconNodes = [['path', {"d":"M12 5v14"}], ['path', {"d":"
 export const arrowRightLeft: IconNodes = [['path', {"d":"m16 3 4 4-4 4"}], ['path', {"d":"M20 7H4"}], ['path', {"d":"m8 21-4-4 4-4"}], ['path', {"d":"M4 17h16"}]];
 export const arrowUp: IconNodes = [['path', {"d":"m5 12 7-7 7 7"}], ['path', {"d":"M12 19V5"}]];
 export const atom: IconNodes = [['circle', {"cx":"12","cy":"12","r":"1"}], ['path', {"d":"M20.2 20.2c2.04-2.03.02-7.36-4.5-11.9-4.54-4.52-9.87-6.54-11.9-4.5-2.04 2.03-.02 7.36 4.5 11.9 4.54 4.52 9.87 6.54 11.9 4.5Z"}], ['path', {"d":"M15.7 15.7c4.52-4.54 6.54-9.87 4.5-11.9-2.03-2.04-7.36-.02-11.9 4.5-4.52 4.54-6.54 9.87-4.5 11.9 2.03 2.04 7.36.02 11.9-4.5Z"}]];
+export const chartSpline: IconNodes = [['path', {"d":"M3 3v16a2 2 0 0 0 2 2h16"}], ['path', {"d":"M7 16c.5-2 1.5-7 4-7 2 0 2 3 4 3 2.5 0 4.5-5 5-7"}]];
 export const check: IconNodes = [['path', {"d":"M20 6 9 17l-5-5"}]];
 export const chevronDown: IconNodes = [['path', {"d":"m6 9 6 6 6-6"}]];
 export const chevronUp: IconNodes = [['path', {"d":"m18 15-6-6-6 6"}]];

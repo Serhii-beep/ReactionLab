@@ -88,6 +88,14 @@ export class CameraController implements Disposable {
         };
     }
 
+    matchLensShift(shiftPixels: number, viewportWidth: number, viewportHeight: number): void {
+        if (shiftPixels > 0) {
+            this.controls.setViewport(0, shiftPixels, viewportWidth, viewportHeight);
+        } else {
+            this.controls.setViewport(null, 0, 0, 0);
+        }
+    }
+
     update(delta: number): boolean {
         return this.controls.update(delta);
     }

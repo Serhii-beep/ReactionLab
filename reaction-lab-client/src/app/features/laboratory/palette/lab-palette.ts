@@ -10,7 +10,8 @@ import { ElementsClient } from "../../../data/elements/elements-client";
 import { WorkspaceStore } from "../../../state/workspace-store";
 import { ListboxOption } from "../../../design-system/primitives/listbox/listbox-navigation";
 import { ReactionSummary } from "../../../data/reactions/reaction";
-import { ChemEquation, EquationTerm } from "../../../design-system/chemistry/chem-equation";
+import { ChemEquation } from "../../../design-system/chemistry/chem-equation";
+import { EquationTerm } from "../../../design-system/chemistry/chem-equation-side";
 import { ReactionStore } from "../../../state/reaction-store";
 import { equationTerms } from "../equation-terms";
 

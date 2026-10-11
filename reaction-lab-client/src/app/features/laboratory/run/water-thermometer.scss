@@ -1,0 +1,57 @@
+:host {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-0-5);
+    inline-size: 2.75rem;
+}
+
+.water-thermometer-tube {
+    inline-size: 2.75rem;
+    block-size: 8.5rem;
+}
+
+.water-thermometer-glass {
+    fill: var(--surface-raised);
+    stroke: var(--border-strong);
+    stroke-width: 1;
+}
+
+.water-thermometer-scale {
+    stroke: var(--border-strong);
+    stroke-width: 1;
+}
+
+.water-thermometer-start {
+    stroke: var(--text-secondary);
+    stroke-width: 1.5;
+}
+
+.water-thermometer-bulb {
+    stroke: var(--border-strong);
+    stroke-width: 1;
+}
+
+.water-thermometer-reading {
+    font-family: var(--font-mono);
+    font-size: var(--text-2xs);
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.water-thermometer-change {
+    color: var(--text-tertiary);
+    font-size: var(--text-2xs);
+    white-space: nowrap;
+}
+
+[data-tone='exothermic'] {
+    color: var(--energy-exo);
+    fill: var(--energy-exo);
+}
+
+[data-tone='endothermic'] {
+    color: var(--energy-endo);
+    fill: var(--energy-endo);
+}

@@ -10,6 +10,7 @@ import { CameraCues } from "./camera-cues";
 import { distancePerRadius, framedSphereOf } from "../core/camera-framing";
 import { PostProcessingPipeline } from "../rendering/post-processing-pipeline";
 import { smoothProgressBetween } from "../animation/easing";
+import { LensShift } from "../core/lens-shift";
 
 interface RunShot {
     readonly path: CameraPath;
@@ -40,14 +41,17 @@ export class RunCamera implements Disposable {
     private readonly framedView = new Spherical();
     private readonly shakeOffset = new Vector3();
     private readonly stopListening: () => void;
+    private readonly stopFollowingShifts: () => void;
 
     constructor(
         private readonly context: EngineContext,
         private readonly camera: CameraController,
         private readonly pointer: PointerInput,
-        private readonly pipeline: PostProcessingPipeline
+        private readonly pipeline: PostProcessingPipeline,
+        private readonly lensShift: LensShift
     ) {
         this.stopListening = camera.onTakeover(() => this.handBackUnlessPressedInPlace());
+        this.stopFollowingShifts = lensShift.onShift(() => this.follow(this.followedSeconds));
     }
 
     get directing(): boolean {
@@ -55,14 +59,14 @@ export class RunCamera implements Disposable {
     }
 
     get nearestDistance(): number {
-        return this.shot === null ? Infinity : this.shot.path.nearestFramedRadius * distancePerRadius(this.context.camera);
+        return this.shot === null ? Infinity : this.shot.path.nearestFramedRadius * this.distancePerFramedRadius();
     }
 
     begin(script: ReactionScript, cues: CameraCues): void {
         this.camera.currentPose(this.position, this.target);
 
         const startView = new Spherical().setFromVector3(this.position.sub(this.target));
-        const keys = runKeysOf(script, cues, this.target, startView, distancePerRadius(this.context.camera));
+        const keys = runKeysOf(script, cues, this.target, startView, this.distancePerFramedRadius());
 
         this.shot = {
             path: new CameraPath(keys),
@@ -82,7 +86,7 @@ export class RunCamera implements Disposable {
         this.followedSeconds = seconds;
         path.sampleAt(seconds, this.target, this.framedView);
 
-        const cameraDistance = this.framedView.radius * distancePerRadius(this.context.camera);
+        const cameraDistance = this.framedView.radius * this.distancePerFramedRadius();
 
         this.position.setFromSphericalCoords(cameraDistance, this.framedView.phi, this.framedView.theta).add(this.target);
         shake.offsetAt(seconds, cameraDistance, this.shakeOffset);
@@ -107,6 +111,11 @@ export class RunCamera implements Disposable {
 
     dispose(): void {
         this.stopListening();
+        this.stopFollowingShifts();
+    }
+
+    private distancePerFramedRadius(): number {
+        return distancePerRadius(this.context.camera, this.lensShift.shownHeightShare);
     }
 
     private handBackUnlessPressedInPlace(): void {

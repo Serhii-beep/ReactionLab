@@ -27,6 +27,7 @@ import { UiStore } from "../../../state/ui-store";
 import { RunConductor } from "../run/run-conductor";
 import { ReactionRun } from "../run/reaction-run";
 import { GraphicsNotices } from "./graphics-notices";
+import { LensShift } from "../../../engine/core/lens-shift";
 
 type HighlightLevelsByUnitId = ReadonlyMap<string, number>;
 
@@ -74,6 +75,7 @@ export class SceneCanvas {
     private readonly loop = inject(RenderLoop);
     private readonly stage = inject(BenchStage);
     private readonly scene = inject(BenchScene);
+    private readonly lensShift = inject(LensShift);
     private readonly pointer = inject(PointerInput);
     private readonly governor = inject(QualityGovernor);
     private readonly guard = inject(ContextGuard);
@@ -130,6 +132,7 @@ export class SceneCanvas {
 
             untracked(() => {
                 if (!running) {
+                    this.lensShift.cover(0, this.started && this.animated());
                     this.scene.setUnits(units, this.started && this.animated());
                     this.repick();
                 }
@@ -146,6 +149,20 @@ export class SceneCanvas {
             this.viewport.fitRequests();
             untracked(() => this.scene.frame(this.animated()));
         })
+
+        effect(() => {
+            if (this.run.active()) {
+                const coveredPixels = this.viewport.benchCoveredPixels();
+
+                untracked(() => {
+                    this.lensShift.cover(coveredPixels, this.animated());
+
+                    if (!this.animated()) {
+                        this.scene.frame(false);
+                    }
+                });
+            }
+        });
         
         afterRenderEffect(() => this.applyTheme());
 

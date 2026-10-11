@@ -3,19 +3,5 @@
         <span class="rl-chem-arrow" role="img" [attr.aria-label]="arrowLabel()">{{ arrow() }}</span>
     }
 
-    @for (term of side; track $index; let last = $last) {
-        @if (term.coefficient && term.coefficient !== 1) {
-            <span class="rl-chem-coefficient">{{ term.coefficient }}</span>
-        }
-
-        <rl-chem-formula
-            [formula]="term.formula"
-            [charge]="term.charge ?? 0"
-            [state]="term.state"
-        ></rl-chem-formula>
-
-        @if (!last) {
-            <span class="rl-chem-operator">+</span>
-        }
-    }
+    <rl-chem-equation-side [terms]="side"></rl-chem-equation-side>
 }

@@ -30,7 +30,7 @@ export class RunScrubber {
     protected readonly hoverPhase = signal<HoveredPhase | null>(null);
     protected readonly fill = computed(() => `${(100 * this.elapsedSeconds()) / this.timeline().durationSeconds}%`);
     protected readonly ticks = computed(() =>
-        this.timeline().phases.slice(1).map((phase) => `${(100 * phase.startSeconds) / this.timeline().durationSeconds}%`));
+        this.timeline().phases.slice(1).map((phase) => alongThumbTravel(phase.startSeconds / this.timeline().durationSeconds)));
     protected readonly label = computed(() => this.transloco.translate('lab.run.scrubber'));
     protected readonly valueText = computed(() => this.transloco.translate('lab.run.position', {
         phase: this.phaseLabel(this.elapsedSeconds()),
@@ -65,6 +65,10 @@ export class RunScrubber {
     private phaseLabel(seconds: number): string {
         return this.transloco.translate(`lab.run.phases.${phaseAt(this.timeline(), seconds).name}`);
     }
+}
+
+function alongThumbTravel(fraction: number): string {
+    return `calc(var(--run-thumb-size) / 2 + ${fraction} * (100% - var(--run-thumb-size)))`;
 }
 
 function adjacentBoundary(timeline: ReactionTimeline, seconds: number, forward: boolean): number {

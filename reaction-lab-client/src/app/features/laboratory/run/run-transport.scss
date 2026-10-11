@@ -1,12 +1,45 @@
+@use '../../../design-system/tokens/breakpoints' as *;
+
 :host {
+    --run-thumb-size: 0.875rem;
+    --run-diagram-header-size: 1.125rem;
+
     display: flex;
     align-items: center;
     gap: var(--space-3);
     min-inline-size: 36rem;
     max-inline-size: 100%;
+
+    @include until-desktop {
+        --run-thumb-size: 1.25rem;
+    }
 }
 
-.run-transport-controls {
+:host(.run-transport-with-diagram) {
+    align-items: stretch;
+    inline-size: 46.5rem;
+
+    @include until-desktop {
+        inline-size: 54rem;
+    }
+
+    .run-transport-controls {
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: space-between;
+    }
+
+    .run-transport-playback {
+        min-inline-size: calc(2 * var(--control-height-sm) + var(--space-1));
+    }
+
+    .run-transport-end {
+        justify-content: space-between;
+    }
+}
+
+.run-transport-controls,
+.run-transport-playback {
     display: flex;
     align-items: center;
     gap: var(--space-1);
@@ -25,6 +58,44 @@
     gap: var(--space-1-5);
     min-inline-size: 0;
     padding-inline: var(--space-1);
+}
+
+.run-transport-diagram-header {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2);
+    block-size: var(--run-diagram-header-size);
+    white-space: nowrap;
+}
+
+.run-transport-diagram-title {
+    color: var(--text-primary);
+    font-size: var(--text-sm);
+    font-weight: 600;
+}
+
+.run-transport-verdict {
+    color: var(--text-tertiary);
+    font-size: var(--text-xs);
+    font-weight: 500;
+
+    &[data-tone='exothermic'] {
+        color: var(--energy-exo);
+    }
+
+    &[data-tone='endothermic'] {
+        color: var(--energy-endo);
+    }
+}
+
+.run-transport-note {
+    min-inline-size: 0;
+    margin-inline-start: auto;
+    overflow: hidden;
+    color: var(--text-tertiary);
+    font-family: var(--font-mono);
+    font-size: var(--text-2xs);
+    text-overflow: ellipsis;
 }
 
 .run-transport-line {
@@ -58,10 +129,6 @@
     gap: var(--space-1);
 }
 
-.run-transport-plus {
-    color: var(--text-tertiary);
-}
-
 .run-transport-energy {
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
@@ -71,4 +138,16 @@
         margin-inline-end: var(--space-2);
         color: var(--text-tertiary);
     }
+}
+
+.run-transport-end {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-2);
+}
+
+.run-transport-thermometer {
+    margin-block-start: calc(var(--run-diagram-header-size) + var(--space-1-5));
 }

@@ -1,5 +1,5 @@
 import { ParticipantRole, ReactionSummary } from "../../data/reactions/reaction";
-import { EquationTerm } from "../../design-system/chemistry/chem-equation";
+import { EquationTerm } from "../../design-system/chemistry/chem-equation-side";
 import { stateSymbol } from "./state-symbol";
 
 export function equationTerms(reaction: ReactionSummary, role: ParticipantRole): readonly EquationTerm[] {

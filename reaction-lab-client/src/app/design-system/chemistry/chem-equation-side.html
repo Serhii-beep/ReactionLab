@@ -1,0 +1,17 @@
+@for (term of terms(); track $index; let last = $last) {
+    <span class="rl-chem-term">
+        @if (term.coefficient && term.coefficient !== 1) {
+            <span class="rl-chem-coefficient">{{ term.coefficient }}</span>
+        }
+
+        <rl-chem-formula
+            [formula]="term.formula"
+            [charge]="term.charge ?? 0"
+            [state]="showStates() ? term.state : undefined"
+        ></rl-chem-formula>
+    </span>
+
+    @if (!last) {
+        <span class="rl-chem-operator">+</span>
+    }
+}

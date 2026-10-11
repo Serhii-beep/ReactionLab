@@ -17,21 +17,12 @@ export interface ScriptSources {
 }
 
 export function buildReactionScript(reaction: ReactionSummary, timeline: ReactionTimeline, sources: ScriptSources): ReactionScript {
-    const { approach, collision, bondsBreak, transitionState, bondsForm, separation } = timeline.byName;
     const elements = new Map(sources.elements.map((element) => [element.symbol, element]));
     const precipitate = precipitatePlanOf(reaction, { entriesAfter: sources.entriesAfter, details: sources.details, elements });
-    const phases: PhaseSpansByName = {
-        approach: spanOf(approach),
-        collision: spanOf(collision),
-        bondsBreak: spanOf(bondsBreak),
-        transitionState: spanOf(transitionState),
-        bondsForm: spanOf(bondsForm),
-        separation: spanOf(separation)
-    };
 
     return {
         durationSeconds: timeline.durationSeconds,
-        phases,
+        phases: phaseSpansOf(timeline),
         energetics: reactionEnergeticsOf(reaction),
         massBySymbol: new Map(sources.elements.map((element) => [element.symbol, element.mass])),
         randomSeed: reaction.id,
@@ -39,6 +30,19 @@ export function buildReactionScript(reaction: ReactionSummary, timeline: Reactio
         precipitate,
         unitsBefore: buildBenchUnits(sources.entriesBefore, sources.details, sources.elements),
         unitsAfter: buildBenchUnits(sources.entriesAfter, sources.details, sources.elements)
+    };
+}
+
+export function phaseSpansOf(timeline: ReactionTimeline): PhaseSpansByName {
+    const { approach, collision, bondsBreak, transitionState, bondsForm, separation } = timeline.byName;
+
+    return {
+        approach: spanOf(approach),
+        collision: spanOf(collision),
+        bondsBreak: spanOf(bondsBreak),
+        transitionState: spanOf(transitionState),
+        bondsForm: spanOf(bondsForm),
+        separation: spanOf(separation)
     };
 }
 
