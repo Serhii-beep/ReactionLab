@@ -16,6 +16,7 @@ export interface UnitAtom {
     readonly radius: number;
     readonly position: Vector3;
     readonly ion: IonMembership | null;
+    readonly pickId?: string;
 }
 
 export interface UnitBond {

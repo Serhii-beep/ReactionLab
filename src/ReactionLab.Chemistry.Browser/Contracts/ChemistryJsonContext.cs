@@ -6,13 +6,20 @@ namespace ReactionLab.Chemistry.Browser.Contracts;
     PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
     DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     RespectNullableAnnotations = true,
-    RespectRequiredConstructorParameters = true)]
-[JsonSerializable(typeof(Dictionary<string, decimal>))]
-[JsonSerializable(typeof(IReadOnlyList<AtomicGeometryEntry>))]
+    RespectRequiredConstructorParameters = true,
+    UseStringEnumConverter = true)]
+[JsonSerializable(typeof(IReadOnlyList<ElementEntry>))]
+[JsonSerializable(typeof(ChemistryReferenceDocument))]
 [JsonSerializable(typeof(FormulaResult))]
 [JsonSerializable(typeof(MolarMassResult))]
 [JsonSerializable(typeof(BalanceRequest))]
 [JsonSerializable(typeof(BalanceResult))]
 [JsonSerializable(typeof(SkeletonRequest))]
 [JsonSerializable(typeof(AssemblyResult))]
+[JsonSerializable(typeof(SketchRequest))]
+[JsonSerializable(typeof(SketchDescription))]
+[JsonSerializable(typeof(SymmetryRequest))]
+[JsonSerializable(typeof(SymmetryResult))]
+[JsonSerializable(typeof(PredictionRequest))]
+[JsonSerializable(typeof(PredictionResult))]
 internal sealed partial class ChemistryJsonContext : JsonSerializerContext;

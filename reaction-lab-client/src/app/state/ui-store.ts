@@ -8,9 +8,20 @@ export class UiStore {
     readonly tableElement = signal<string | null>(null);
     readonly aboutOpen = signal(false);
     readonly aboutSubstanceId = signal<string | null>(null);
+    readonly builderOpen = signal(false);
 
     openPalette(): void {
         this.paletteOpen.set(true);
+    }
+
+    openBuilder(): void {
+        this.dismiss();
+        this.paletteOpen.set(false);
+        this.builderOpen.set(true);
+    }
+
+    closeBuilder(): void {
+        this.builderOpen.set(false);
     }
 
     openReactions(): void {
@@ -52,5 +63,6 @@ export class UiStore {
         this.reactionsOpen.set(false);
         this.tableOpen.set(false);
         this.aboutOpen.set(false);
+        this.builderOpen.set(false);
     }
 }

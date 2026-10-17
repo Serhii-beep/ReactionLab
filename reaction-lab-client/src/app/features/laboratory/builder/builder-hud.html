@@ -1,0 +1,166 @@
+<section class="builder-hud" *transloco="let t; prefix: 'lab.builder'" [attr.aria-label]="t('label')">
+    <div class="builder-hud-row" role="toolbar" [attr.aria-label]="t('tools')">
+        <div class="builder-hud-elements" role="group" [attr.aria-label]="t('elements')">
+            @for (element of elements(); track element.symbol) {
+                <button
+                    type="button"
+                    class="builder-hud-element"
+                    [attr.aria-pressed]="builder.element() === element.symbol"
+                    [attr.aria-label]="t('add', { name: element.name })"
+                    [title]="t('add', { name: element.name })"
+                    (click)="add(element.symbol)"
+                >
+                    <rl-element-tile [symbol]="element.symbol" [category]="element.category" size="sm"></rl-element-tile>
+                </button>
+            }
+        </div>
+
+        <div class="builder-hud-separator" role="presentation"></div>
+
+        <rl-segmented-control
+            [options]="bondOrders()"
+            [label]="t('bondOrder')"
+            [value]="selectedBondOrder() ?? editor.bondOrder()"
+            (valueChange)="editor.setBondOrder($event)"
+        ></rl-segmented-control>
+
+        <button
+            rlToggleButton
+            variant="ghost"
+            size="sm"
+            [title]="t('connectHint')"
+            [disabled]="!editor.connecting() && editor.selectedAtom() === null"
+            [pressed]="editor.connecting()"
+            (pressedChange)="$event ? editor.startConnecting() : editor.stopConnecting()"
+        >
+            <rl-icon [icon]="icons.link" size="sm"></rl-icon>
+            <span>{{ t('connect') }}</span>
+        </button>
+
+        @if (selectedAtom(); as atom) {
+            <div class="builder-hud-separator" role="presentation"></div>
+
+            <div class="builder-hud-charge" role="group" [attr.aria-label]="t('charge')">
+                <button rlIconButton size="sm" [label]="t('chargeDown')" (click)="shiftCharge(-1)">
+                    <rl-icon [icon]="icons.minus" size="sm"></rl-icon>
+                </button>
+                <span class="builder-hud-charge-value" [attr.data-inferred]="atom.inferred || null">{{ atom.chargeText || '0' }}</span>
+                <button rlIconButton size="sm" [label]="t('chargeUp')" (click)="shiftCharge(1)">
+                    <rl-icon [icon]="icons.plus" size="sm"></rl-icon>
+                </button>
+                <button rlButton variant="ghost" size="sm" [disabled]="!atom.explicit" [title]="t('chargeAutoHint')" (click)="editor.setFormalCharge(null)">
+                    {{ t('chargeAuto') }}
+                </button>
+            </div>
+        }
+
+        <button rlIconButton size="sm" [label]="t('delete')" [disabled]="editor.selection() === null" (click)="editor.removeSelected()">
+            <rl-icon [icon]="icons.trash2" size="sm"></rl-icon>
+        </button>
+
+        <button
+            rlToggleButton
+            variant="ghost"
+            size="sm"
+            [title]="t('singleKeysHint')"
+            [attr.aria-label]="t('singleKeys')"
+            [pressed]="keys.singleKeys()"
+            (pressedChange)="keys.useSingleKeys($event)"
+        >
+            <rl-icon [icon]="icons.keyboard" size="sm"></rl-icon>
+        </button>
+    </div>
+
+    <div class="builder-hud-row builder-hud-row-info">
+        <p class="builder-hud-summary">
+            @if (description()?.hill; as hill) {
+                <rl-chem-formula class="builder-hud-formula" [formula]="catalogMatch()?.formula ?? hill" [charge]="description()?.charge ?? 0"></rl-chem-formula>
+
+                @if (description()?.gramsPerMole; as mass) {
+                    <span class="builder-hud-meta">{{ t('mass', { mass: (mass | number: '1.0-3') }) }}</span>
+                }
+            }
+
+            @if (pointGroup(); as group) {
+                <span class="builder-hud-meta" [title]="t('pointGroup')">
+                    {{ group.schoenflies.charAt(0) }}<sub>{{ group.schoenflies.slice(1) }}</sub>
+                </span>
+            }
+
+            @if (connectingFrom(); as anchor) {
+                <span class="builder-hud-status" data-tone="neutral">{{ t('connecting', { number: anchor }) }}</span>
+            }
+
+            @if (selectedAtom(); as atom) {
+                <span class="builder-hud-atom">
+                    {{ t('atom', { number: atom.number, symbol: atom.symbol, lonePairs: atom.lonePairs }) }}
+                    · {{ atom.neighbors.length > 0 ? t('bondedTo', { neighbors: atom.neighbors.join(', ') }) : t('unbonded') }}
+                    @if (atom.inferred) {
+                        · {{ t('inferredCharge') }}
+                    }
+                </span>
+            } @else if (status(); as status) {
+                <span class="builder-hud-status" [attr.data-tone]="status.tone">{{ t('status.' + status.key, status.params) }}</span>
+            }
+
+            @if (catalogMatch(); as match) {
+                <span class="builder-hud-match">{{ t('catalogMatch', { name: match.name }) }}</span>
+            }
+
+            @if (busy()) {
+                <rl-spinner size="sm" [label]="t(analyzing() ? 'working' : 'matching')"></rl-spinner>
+            }
+        </p>
+
+        <div class="builder-hud-actions">
+            <button rlIconButton size="sm" [label]="t('undo')" [disabled]="!editor.canUndo()" (click)="editor.undo()">
+                <rl-icon [icon]="icons.undo2" size="sm"></rl-icon>
+            </button>
+            <button rlIconButton size="sm" [label]="t('redo')" [disabled]="!editor.canRedo()" (click)="editor.redo()">
+                <rl-icon [icon]="icons.redo2" size="sm"></rl-icon>
+            </button>
+            <button rlIconButton size="sm" [label]="t('new')" (click)="builder.startNew()">
+                <rl-icon [icon]="icons.filePlus" size="sm"></rl-icon>
+            </button>
+            <button rlIconButton size="sm" [label]="t('fillHydrogens')" [disabled]="builder.incompleteAtoms() === 0" (click)="builder.fillHydrogens()">
+                <rl-icon [icon]="icons.wandSparkles" size="sm"></rl-icon>
+            </button>
+            <button
+                rlToggleButton
+                variant="ghost"
+                size="sm"
+                [title]="t('symmetry')"
+                [attr.aria-label]="t('symmetry')"
+                [disabled]="pointGroup() === null"
+                [pressed]="builder.showSymmetry()"
+                (pressedChange)="builder.showSymmetry.set($event)"
+            >
+                <rl-icon [icon]="icons.axis3d" size="sm"></rl-icon>
+            </button>
+
+            <div class="builder-hud-separator" role="presentation"></div>
+
+            <input
+                rlInput
+                size="sm"
+                class="builder-hud-name"
+                [attr.aria-label]="t('name')"
+                [placeholder]="description()?.hill || t('namePlaceholder')"
+                [value]="builder.name()"
+                (input)="rename($event)"
+            />
+            <button rlButton variant="secondary" size="sm" [disabled]="!builder.canSave()" (click)="save()">
+                <rl-icon [icon]="icons.save" size="sm"></rl-icon>
+                {{ t('save') }}
+            </button>
+            @if (builder.editingId() !== null) {
+                <button rlButton variant="ghost" size="sm" (click)="forget()">{{ t('forget') }}</button>
+            }
+            <button rlButton variant="primary" size="sm" [disabled]="!builder.canPlace()" [title]="t('placeHint')" (click)="place()">
+                <rl-icon [icon]="icons.flaskConical" size="sm"></rl-icon>
+                {{ t('place') }}
+            </button>
+            <button rlButton variant="ghost" size="sm" (click)="builder.close()">{{ t('done') }}</button>
+        </div>
+    </div>
+</section>

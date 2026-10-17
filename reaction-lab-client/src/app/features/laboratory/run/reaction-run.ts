@@ -61,6 +61,12 @@ export class ReactionRun {
 
             untracked(() => this.onBenchChanged(entries));
         })
+
+        effect(() => {
+            if (this.ui.builderOpen()) {
+                untracked(() => this.stop());
+            }
+        });
     }
 
     attach(driver: ReactionRunDriver): () => void {

@@ -42,7 +42,7 @@
                         }
 
                         <dt>{{ t('state') }}</dt>
-                        <dd>{{ t('states.' + detail.stateAtRoomTemperature) }}</dd>
+                        <dd>{{ t('states.' + (detail.stateAtRoomTemperature ?? 'Unknown')) }}</dd>
 
                         <dt>{{ t('kind') }}</dt>
                         <dd>

@@ -18,6 +18,7 @@ import { SubstanceDetailsClient } from '../../../data/substances/substance-detai
 import { NotificationService } from '../../../core/notifications/notification-service';
 import { finalize, tap } from 'rxjs';
 import { missingPortions } from '../../../data/reactions/reaction-outcome';
+import { PredictedReactions } from '../prediction/predicted-reactions';
 
 const SKELETON_ROWS = [1, 2, 3];
 
@@ -25,7 +26,7 @@ const SKELETON_ROWS = [1, 2, 3];
     selector: 'app-reactions-sheet',
     templateUrl: './reactions-sheet.html',
     styleUrl: './reactions-sheet.scss',
-    imports: [Badge, Button, ChemEquation, ChemFormula, Dialog, EmptyState, Skeleton, TranslocoDirective, Icon],
+    imports: [Badge, Button, ChemEquation, ChemFormula, Dialog, EmptyState, Skeleton, TranslocoDirective, Icon, PredictedReactions],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ReactionsSheet {

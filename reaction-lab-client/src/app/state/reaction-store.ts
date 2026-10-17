@@ -5,6 +5,7 @@ import { ReactionsClient } from "../data/reactions/reactions-client";
 import { WorkspaceStore } from "./workspace-store";
 import { ApiError } from "../data/errors/api-error";
 import { resourceError } from "../data/errors/resource-error";
+import { isUserMoleculeId } from "../data/molecules/user-molecules";
 
 export interface ScoredReaction {
     readonly reaction: ReactionSummary;
@@ -30,7 +31,7 @@ export class ReactionStore {
     readonly readyCount = computed(() => this.scored().filter((scored) => scored.readiness.runnable).length);
 
     constructor() {
-        effect(() => this.reactions.available.set(this.workspace.substanceIds()));
+        effect(() => this.reactions.available.set(this.workspace.substanceIds().filter((id) => !isUserMoleculeId(id))));
     }
 
     reload(): void {

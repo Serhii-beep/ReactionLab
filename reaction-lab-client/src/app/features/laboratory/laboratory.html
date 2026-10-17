@@ -7,13 +7,19 @@
         [class.lab-viewport-shifted]="ui.aboutOpen()"
         (dropped)="onDropped($event)"
     >
-        @if (workspace.isEmpty()) {
+        @if (ui.builderOpen()) {
+            <app-builder-hud></app-builder-hud>
+        } @else if (workspace.isEmpty()) {
             <rl-empty-state
                 [icon]="icons.flaskConical"
                 [heading]="t('empty.heading')"
                 [description]="t('empty.description')"
             >
                 <button rlButton variant="primary" (click)="ui.openPalette()">{{ t('empty.search') }}</button>
+                <button rlButton variant="secondary" (click)="ui.openBuilder()">
+                    <rl-icon [icon]="icons.hexagon" size="sm"></rl-icon>
+                    {{ t('empty.build') }}
+                </button>
             </rl-empty-state>
 
             <button rlButton variant="secondary" (click)="ui.openTable()">{{ t('empty.table') }}</button>
@@ -45,6 +51,9 @@
         [substancesLabel]="t('palette.substances')"
         [elementsLabel]="t('palette.elements')"
         [reactionsLabel]="t('palette.reactions')"
+        [moleculesLabel]="t('palette.molecules')"
+        [actionsLabel]="t('palette.actions')"
+        [buildLabel]="t('palette.build')"
     >
         <span class="lab-palette-hint">
             <kbd rlKbd><rl-icon [icon]="icons.arrowUp" size="sm" [label]="t('palette.up')"></rl-icon></kbd>

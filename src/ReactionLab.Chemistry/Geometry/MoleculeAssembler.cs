@@ -54,11 +54,16 @@ public static class MoleculeAssembler
 
             var frame = parent[atom] < 0
                 ? directions
-                : Turned(directions, Vector3.Normalize(placed[parent[atom]] - placed[atom]));
+                : Staggered(
+                    Turned(directions, Vector3.Normalize(placed[parent[atom]] - placed[atom])),
+                    atom,
+                    parent[atom],
+                    placed,
+                    PlacedReference(parent[atom], atom, atoms, neighbours, positioned));
 
             var slot = parent[atom] < 0 ? 0 : 1;
 
-            foreach (var (child, order) in neighbours[atom])
+            foreach (var (child, order) in neighbours[atom].OrderBy(neighbour => IsHydrogen(atoms[neighbour.Atom])))
             {
                 if (child == parent[atom] || positioned[child] || slot >= frame.Count)
                 {
@@ -73,7 +78,12 @@ public static class MoleculeAssembler
             }
         }
 
-        positions = GeometryRelaxation.Settle(placed, GeometryRelaxation.Targets(atoms, bonds, table), 8);
+        positions = GeometryRelaxation.Settle(
+            placed,
+            GeometryRelaxation.Targets(atoms, bonds, table),
+            Coplanarity.Targets(atoms, bonds, table),
+            Torsion.Targets(atoms, bonds, table),
+            8);
         error = AssemblyError.None;
         return true;
     }
@@ -141,6 +151,40 @@ public static class MoleculeAssembler
             return false;
         }
     }
+
+    private static int PlacedReference(
+        int parent, int atom, IReadOnlyList<SkeletalAtom> atoms, List<(int Atom, int Order)>[] neighbours, bool[] positioned) =>
+        neighbours[parent]
+            .Select(neighbour => neighbour.Atom)
+            .Where(other => other != atom && positioned[other])
+            .OrderBy(other => IsHydrogen(atoms[other]))
+            .FirstOrDefault(-1);
+
+    private static IReadOnlyList<Vector3> Staggered(
+        IReadOnlyList<Vector3> frame, int atom, int parent, Vector3[] placed, int reference)
+    {
+        if (reference < 0 || frame.Count < 2)
+        {
+            return frame;
+        }
+
+        var axis = Vector3.Normalize(placed[parent] - placed[atom]);
+        var away = placed[reference] - placed[parent];
+        var anti = (Vector3.Dot(away, axis) * axis) - away;
+        var slot = frame[1] - (Vector3.Dot(frame[1], axis) * axis);
+
+        if (anti.LengthSquared() < 1e-6f || slot.LengthSquared() < 1e-6f)
+        {
+            return frame;
+        }
+
+        var turn = Quaternion.CreateFromAxisAngle(
+            axis, MathF.Atan2(Vector3.Dot(axis, Vector3.Cross(slot, anti)), Vector3.Dot(slot, anti)));
+
+        return [.. frame.Select(direction => Vector3.Transform(direction, turn))];
+    }
+
+    private static bool IsHydrogen(SkeletalAtom atom) => string.Equals(atom.Symbol, "H", StringComparison.Ordinal);
 
     private static IReadOnlyList<Vector3> Turned(IReadOnlyList<Vector3> directions, Vector3 toParent) =>
         [.. directions.Select(direction =>

@@ -5,6 +5,7 @@ import { SubstanceDetail } from "./substance";
 import { environment } from "../../../environments/environment";
 import { combineLatest, filter, finalize, first, map, Observable, of, switchMap, tap, throwError } from "rxjs";
 import { toObservable } from "@angular/core/rxjs-interop";
+import { isUserMoleculeId } from "../molecules/user-molecules";
 
 type DetailsSettlement = 'pending' | 'failed' | readonly SubstanceDetail[];
 
@@ -21,8 +22,12 @@ export class SubstanceDetailsClient {
     readonly loaded = this.details.asReadonly();
     readonly failed = this.failures.asReadonly();
 
+    remember(detail: SubstanceDetail): void {
+        this.details.update((current) => new Map(current).set(detail.id, detail));
+    }
+
     ensure(id: string): void {
-        if (this.details().has(id) || this.failures().has(id) || this.pending.has(id)) {
+        if (this.details().has(id) || this.failures().has(id) || this.pending.has(id) || isUserMoleculeId(id)) {
             return;
         }
 

@@ -23,6 +23,18 @@
 
             <span class="lab-palette-name">{{ item.value.substance.name }}</span>
         </span>
+    } @else if (item.value.kind === 'molecule') {
+        <span class="lab-palette-row">
+            <rl-chem-formula [formula]="item.value.molecule.hillFormula"></rl-chem-formula>
+
+            <span class="lab-palette-name">{{ item.value.molecule.name }}</span>
+        </span>
+    } @else if (item.value.kind === 'build') {
+        <span class="lab-palette-row">
+            <rl-icon [icon]="icons.hexagon" size="sm"></rl-icon>
+
+            <span class="lab-palette-name">{{ item.label }}</span>
+        </span>
     } @else if (item.value.kind === 'element') {
         <span class="lab-palette-row">
             <span class="lab-palette-symbol">{{ item.value.element.symbol }}</span>

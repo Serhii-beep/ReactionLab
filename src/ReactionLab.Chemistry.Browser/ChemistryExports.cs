@@ -1,3 +1,4 @@
+using System.Numerics;
 using System.Runtime.InteropServices.JavaScript;
 using System.Runtime.Versioning;
 using System.Text.Json;
@@ -12,28 +13,22 @@ namespace ReactionLab.Chemistry.Browser;
 internal static partial class ChemistryExports
 {
     private const string UnknownElement = "UnknownElement";
+    private const string NoAtoms = "NoAtoms";
 
-    private static Dictionary<string, decimal> _atomicMasses = new(StringComparer.Ordinal);
-    private static Dictionary<string, AtomicGeometry> _atomicGeometry = new(StringComparer.Ordinal);
+    private static ChemistryReference? _reference;
+
+    private static ChemistryReference Reference =>
+        _reference ?? throw new InvalidOperationException("The chemistry reference data is not loaded.");
 
     [JSExport]
-    internal static void LoadReferenceData(string atomicMassesJson, string atomicGeometryJson)
+    internal static void LoadReferenceData(string elementsJson, string referenceJson)
     {
-        var masses = JsonSerializer.Deserialize(atomicMassesJson, ChemistryJsonContext.Default.DictionaryStringDecimal)
-            ?? throw new JsonException("The atomic masses are missing.");
-        var geometry = JsonSerializer.Deserialize(atomicGeometryJson, ChemistryJsonContext.Default.IReadOnlyListAtomicGeometryEntry)
-            ?? throw new JsonException("The atomic geometry is missing.");
+        var elements = JsonSerializer.Deserialize(elementsJson, ChemistryJsonContext.Default.IReadOnlyListElementEntry)
+            ?? throw new JsonException("The elements are missing.");
+        var document = JsonSerializer.Deserialize(referenceJson, ChemistryJsonContext.Default.ChemistryReferenceDocument)
+            ?? throw new JsonException("The chemistry reference is missing.");
 
-        _atomicMasses = new Dictionary<string, decimal>(masses, StringComparer.Ordinal);
-        _atomicGeometry = geometry.ToDictionary(
-            entry => entry.Symbol,
-            entry => new AtomicGeometry(
-                entry.ValenceElectrons,
-                entry.SingleBondRadiusPicometers,
-                entry.DoubleBondRadiusPicometers,
-                entry.TripleBondRadiusPicometers,
-                entry.AromaticBondRadiusPicometers),
-            StringComparer.Ordinal);
+        _reference = ChemistryReference.From(elements, document);
     }
 
     [JSExport]
@@ -55,7 +50,7 @@ internal static partial class ChemistryExports
         {
             result = new MolarMassResult(null, error.ToString(), null);
         }
-        else if (MolarMass.TryCompute(composition, _atomicMasses, out var gramsPerMole, out var unknownSymbol))
+        else if (MolarMass.TryCompute(composition, Reference.AtomicMasses, out var gramsPerMole, out var unknownSymbol))
         {
             result = new MolarMassResult(gramsPerMole, null, null);
         }
@@ -103,10 +98,51 @@ internal static partial class ChemistryExports
         var atoms = request.Atoms.Select(atom => new SkeletalAtom(atom.Symbol, atom.FormalCharge)).ToList();
         var bonds = request.Bonds.Select(bond => new AtomBond(bond.From, bond.To, bond.Order)).ToList();
 
-        var result = MoleculeAssembler.TryAssemble(atoms, bonds, _atomicGeometry, out var positions, out var error)
+        var result = MoleculeAssembler.TryAssemble(atoms, bonds, Reference.AtomicGeometry, out var positions, out var error)
             ? new AssemblyResult([.. positions.SelectMany(position => new[] { position.X, position.Y, position.Z })], null)
             : new AssemblyResult(null, error.ToString());
 
         return JsonSerializer.Serialize(result, ChemistryJsonContext.Default.AssemblyResult);
     }
+
+    [JSExport]
+    internal static string DescribeSketch(string requestJson)
+    {
+        var request = JsonSerializer.Deserialize(requestJson, ChemistryJsonContext.Default.SketchRequest)
+            ?? throw new JsonException("The sketch request is missing.");
+
+        return JsonSerializer.Serialize(
+            SketchDescriber.Describe(request, Reference), ChemistryJsonContext.Default.SketchDescription);
+    }
+
+    [JSExport]
+    internal static string DetectSymmetry(string requestJson)
+    {
+        var request = JsonSerializer.Deserialize(requestJson, ChemistryJsonContext.Default.SymmetryRequest)
+            ?? throw new JsonException("The symmetry request is missing.");
+
+        if (request.PositionsAngstroms.Count != 3 * request.Symbols.Count)
+        {
+            throw new JsonException("Every atom needs exactly three coordinates.");
+        }
+
+        var result = request.Symbols.Count == 0
+            ? new SymmetryResult(null, NoAtoms)
+            : new SymmetryResult(SymmetryDescriber.Describe(request.Symbols, PositionsOf(request.PositionsAngstroms)), null);
+
+        return JsonSerializer.Serialize(result, ChemistryJsonContext.Default.SymmetryResult);
+    }
+
+    [JSExport]
+    internal static string Predict(string requestJson)
+    {
+        var request = JsonSerializer.Deserialize(requestJson, ChemistryJsonContext.Default.PredictionRequest)
+            ?? throw new JsonException("The prediction request is missing.");
+
+        return JsonSerializer.Serialize(Reference.Prediction.Predict(request), ChemistryJsonContext.Default.PredictionResult);
+    }
+
+    private static Vector3[] PositionsOf(IReadOnlyList<float> flattened) =>
+        [.. Enumerable.Range(0, flattened.Count / 3)
+            .Select(atom => new Vector3(flattened[3 * atom], flattened[(3 * atom) + 1], flattened[(3 * atom) + 2]))];
 }

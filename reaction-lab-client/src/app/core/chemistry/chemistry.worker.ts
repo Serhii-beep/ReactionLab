@@ -1,11 +1,14 @@
 import { ChemistryRequest, ChemistryWorkerMessage, ChemistryWorkerRequest } from "./chemistry-contracts";
 
 interface ChemistryExports {
-  LoadReferenceData(atomicMassesJson: string, atomicGeometryJson: string): void;
+  LoadReferenceData(elementsJson: string, referenceJson: string): void;
   ParseFormula(formula: string): string;
   MolarMassOf(formula: string): string;
   Balance(requestJson: string): string;
   Assemble(requestJson: string): string;
+  DescribeSketch(requestJson: string): string;
+  DetectSymmetry(requestJson: string): string;
+  Predict(requestJson: string): string;
 }
 
 interface AssemblyExports {
@@ -53,7 +56,7 @@ async function respond(request: ChemistryWorkerRequest): Promise<void> {
 function invoke(exports: ChemistryExports, request: ChemistryRequest): string | null {
   switch (request.operation) {
     case 'loadReferenceData':
-      exports.LoadReferenceData(request.atomicMassesJson, request.atomicGeometryJson);
+      exports.LoadReferenceData(request.elementsJson, request.referenceJson);
       return null;
     case 'parseFormula':
       return exports.ParseFormula(request.formula);
@@ -63,6 +66,12 @@ function invoke(exports: ChemistryExports, request: ChemistryRequest): string | 
       return exports.Balance(request.requestJson);
     case 'assemble':
       return exports.Assemble(request.requestJson);
+    case 'describeSketch':
+      return exports.DescribeSketch(request.requestJson);
+    case 'detectSymmetry':
+      return exports.DetectSymmetry(request.requestJson);
+    case 'predict':
+      return exports.Predict(request.requestJson);
   }
 }
 

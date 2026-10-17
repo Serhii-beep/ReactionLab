@@ -27,5 +27,14 @@
     "pause",
     "rotate-ccw",
     "square",
-    "chart-spline"
+    "chart-spline",
+    "hexagon",
+    "link",
+    "wand-sparkles",
+    "axis-3d",
+    "save",
+    "folder-open",
+    "file-plus",
+    "lightbulb",
+    "keyboard"
 ]

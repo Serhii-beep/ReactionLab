@@ -1,0 +1,7 @@
+<span #selectionRing class="builder-scene-ring" data-kind="selection"></span>
+<span #anchorRing class="builder-scene-ring" data-kind="anchor"></span>
+<span #hoverRing class="builder-scene-ring" data-kind="hover"></span>
+
+@for (badge of charges(); track badge.pickId) {
+    <span class="builder-scene-charge" [attr.data-pick-id]="badge.pickId" [attr.data-inferred]="badge.inferred || null">{{ badge.text }}</span>
+}

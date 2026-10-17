@@ -91,6 +91,10 @@
                     }
                 </div>
             }
+
+            @if (!workspace.isEmpty()) {
+                <app-predicted-reactions></app-predicted-reactions>
+            }
         </div>
     </rl-dialog>
 </ng-container>

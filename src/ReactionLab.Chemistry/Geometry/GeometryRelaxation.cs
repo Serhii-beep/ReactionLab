@@ -5,6 +5,7 @@ namespace ReactionLab.Chemistry.Geometry;
 public static class GeometryRelaxation
 {
     private const double LonePairCompressionDegrees = 2.5d;
+    private const double FourMemberedRingDegrees = 90d;
 
     private const int Passes = 3000;
     private const float Step = 0.02f;
@@ -17,7 +18,8 @@ public static class GeometryRelaxation
         IReadOnlyDictionary<string, AtomicGeometry> table)
     {
         var neighbours = Adjacency(atoms.Count, bonds);
-        var aromatic = AromaticBonds(atoms, bonds, neighbours, table);
+        var domains = ConjugatedElectronDomains.Of(atoms, bonds, table);
+        var aromatic = AromaticBonds(bonds, neighbours, domains);
         var targets = new List<DistanceTarget>();
         var lengths = new Dictionary<(int, int), float>();
 
@@ -31,7 +33,7 @@ public static class GeometryRelaxation
 
         for (var centre = 0; centre < atoms.Count; centre++)
         {
-            if (neighbours[centre].Count < 2 || IdealAngles(atoms[centre], neighbours[centre], table) is not { } angles)
+            if (neighbours[centre].Count < 2 || IdealAngles(domains[centre]) is not { } angles)
             {
                 continue;
             }
@@ -40,16 +42,25 @@ public static class GeometryRelaxation
             {
                 for (var second = first + 1; second < neighbours[centre].Count; second++)
                 {
-                    var left = lengths[(centre, neighbours[centre][first].Atom)];
-                    var right = lengths[(centre, neighbours[centre][second].Atom)];
+                    var firstAtom = neighbours[centre][first].Atom;
+                    var secondAtom = neighbours[centre][second].Atom;
+
+                    if (lengths.ContainsKey((firstAtom, secondAtom)))
+                    {
+                        continue;
+                    }
+
+                    var degrees = ShareAnotherNeighbor(firstAtom, secondAtom, centre, neighbours)
+                        ? FourMemberedRingDegrees
+                        : angles[first, second];
+                    var left = lengths[(centre, firstAtom)];
+                    var right = lengths[(centre, secondAtom)];
 
                     var across = Math.Sqrt(
                         (left * left) + (right * right)
-                        - (2 * left * right * Math.Cos(double.DegreesToRadians(angles[first, second]))));
+                        - (2 * left * right * Math.Cos(double.DegreesToRadians(degrees))));
 
-                    targets.Add(new DistanceTarget(
-                        neighbours[centre][first].Atom, neighbours[centre][second].Atom,
-                        (float)across, 0.6f, false));
+                    targets.Add(new DistanceTarget(firstAtom, secondAtom, (float)across, 0.6f, false));
                 }
             }
         }
@@ -78,18 +89,28 @@ public static class GeometryRelaxation
     }
 
     public static IReadOnlyList<Vector3> Settle(
-        IReadOnlyList<Vector3> start, IReadOnlyList<DistanceTarget> targets, int attempts)
+        IReadOnlyList<Vector3> start, IReadOnlyList<DistanceTarget> targets, int attempts) =>
+        Settle(start, targets, [], [], attempts);
+
+    public static IReadOnlyList<Vector3> Settle(
+        IReadOnlyList<Vector3> start,
+        IReadOnlyList<DistanceTarget> targets,
+        IReadOnlyList<CoplanarityTarget> coplanarityTargets,
+        IReadOnlyList<TorsionTarget> torsionTargets,
+        int attempts)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(attempts);
 
         DistanceTarget[] targetArray = [.. targets];
-        var best = Minimize(start, targetArray, 0);
-        var least = Strain(best, targets);
+        CoplanarityTarget[] coplanarityArray = [.. coplanarityTargets];
+        TorsionTarget[] torsionArray = [.. torsionTargets];
+        var best = Minimize(start, targetArray, coplanarityArray, torsionArray, 0);
+        var least = TotalStrain(best, targets, coplanarityTargets, torsionTargets);
 
         for (var seed = 1; seed < attempts && least > Settled; seed++)
         {
-            var candidate = Minimize(start, targetArray, seed);
-            var strain = Strain(candidate, targets);
+            var candidate = Minimize(start, targetArray, coplanarityArray, torsionArray, seed);
+            var strain = TotalStrain(candidate, targets, coplanarityTargets, torsionTargets);
 
             if (strain < least)
             {
@@ -118,8 +139,19 @@ public static class GeometryRelaxation
         return total;
     }
 
+    private static double TotalStrain(
+        IReadOnlyList<Vector3> positions,
+        IReadOnlyList<DistanceTarget> targets,
+        IReadOnlyList<CoplanarityTarget> coplanarityTargets,
+        IReadOnlyList<TorsionTarget> torsionTargets) =>
+        Strain(positions, targets) + Coplanarity.Strain(positions, coplanarityTargets) + Torsion.Strain(positions, torsionTargets);
+
     private static Vector3[] Minimize(
-        IReadOnlyList<Vector3> start, DistanceTarget[] targets, int seed)
+        IReadOnlyList<Vector3> start,
+        DistanceTarget[] targets,
+        CoplanarityTarget[] coplanarityTargets,
+        TorsionTarget[] torsionTargets,
+        int seed)
     {
         var current = start.ToArray();
         var gradient = new Vector3[current.Length];
@@ -158,6 +190,9 @@ public static class GeometryRelaxation
                 gradient[target.To] -= pull * delta;
             }
 
+            Coplanarity.AddGradient(current, coplanarityTargets, (float)pass / Passes, gradient);
+            Torsion.AddGradient(current, torsionTargets, gradient);
+
             for (var i = 0; i < current.Length; i++)
             {
                 velocity[i] = (Momentum * velocity[i]) - (step * gradient[i]);
@@ -180,24 +215,18 @@ public static class GeometryRelaxation
                 + table[atoms[bond.To].Symbol].RadiusFor(bond.Order)) / 100f;
 
     private static HashSet<(int, int)> AromaticBonds(
-        IReadOnlyList<SkeletalAtom> atoms,
         IReadOnlyList<AtomBond> bonds,
         List<(int Atom, int Order)>[] neighbours,
-        IReadOnlyDictionary<string, AtomicGeometry> table)
+        ElectronDomains?[] domains)
     {
         var found = new HashSet<(int, int)>();
-        var trigonal = new bool[atoms.Count];
-
-        for (var i = 0; i < atoms.Count; i++)
-        {
-            trigonal[i] = StericNumber(atoms[i], neighbours[i], table) == 3;
-        }
+        var trigonal = Array.ConvertAll(domains, atom => atom?.StericNumber == 3);
 
         foreach (var bond in bonds)
         {
             if (trigonal[bond.From]
                 && trigonal[bond.To]
-                && SmallestRingThrough(bond, neighbours, atoms.Count) is { } ring
+                && SmallestRingThrough(bond, neighbours, neighbours.Length) is { } ring
                 && ring.TrueForAll(atom => trigonal[atom]))
             {
                 found.Add((Math.Min(bond.From, bond.To), Math.Max(bond.From, bond.To)));
@@ -246,25 +275,24 @@ public static class GeometryRelaxation
         return null;
     }
 
-    private static double[,]? IdealAngles(
-        SkeletalAtom atom,
-        List<(int Atom, int Order)> neighbours,
-        IReadOnlyDictionary<string, AtomicGeometry> table)
+    private static bool ShareAnotherNeighbor(int first, int second, int center, List<(int Atom, int Order)>[] neighbors) =>
+        neighbors[first].Exists(link => link.Atom != center && neighbors[second].Exists(other => other.Atom == link.Atom));
+
+    private static double[,]? IdealAngles(ElectronDomains? domains)
     {
+        if (domains is not { } centre)
+        {
+            return null;
+        }
+
         IReadOnlyList<Vector3> directions;
-        int lonePairs;
+        var lonePairs = centre.LonePairs;
 
         try
         {
-            var domains = ElectronDomains.Around(
-                table[atom.Symbol].ValenceElectrons,
-                [.. neighbours.Select(neighbour => neighbour.Order)],
-                atom.FormalCharge);
-
-            directions = Vsepr.Directions(domains);
-            lonePairs = domains.LonePairs;
+            directions = Vsepr.Directions(centre);
         }
-        catch (Exception ex) when (ex is ArgumentException or ArgumentOutOfRangeException)
+        catch (ArgumentOutOfRangeException)
         {
             return null;
         }
@@ -310,24 +338,6 @@ public static class GeometryRelaxation
         }
 
         return angles;
-    }
-
-    private static int StericNumber(
-        SkeletalAtom atom,
-        List<(int Atom, int Order)> neighbours,
-        IReadOnlyDictionary<string, AtomicGeometry> table)
-    {
-        try
-        {
-            return ElectronDomains.Around(
-                table[atom.Symbol].ValenceElectrons,
-                [.. neighbours.Select(neighbour => neighbour.Order)],
-                atom.FormalCharge).StericNumber;
-        }
-        catch (Exception ex) when (ex is ArgumentException or ArgumentOutOfRangeException)
-        {
-            return -1;
-        }
     }
 
     private static List<(int Atom, int Order)>[] Adjacency(int count, IReadOnlyList<AtomBond> bonds)

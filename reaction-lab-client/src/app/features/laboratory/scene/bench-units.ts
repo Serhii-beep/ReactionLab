@@ -40,6 +40,7 @@ const UNIT_BONDS: Readonly<Record<SubstanceKind, BondKind>> = {
 };
 
 export const MAX_COPIES = 64;
+export const UNKNOWN_STATE_PHASE: Phase = 'gas';
 
 export function buildBenchUnits(
     entries: readonly WorkspaceItem[],
@@ -61,7 +62,7 @@ export function buildBenchUnits(
         }
 
         const copies = Math.min(entry.count, MAX_COPIES);
-        const phase = PHASES[detail.stateAtRoomTemperature];
+        const phase = detail.stateAtRoomTemperature === null ? UNKNOWN_STATE_PHASE : PHASES[detail.stateAtRoomTemperature];
 
         units.push(...(ionicUnitsOf(detail, copies, phase, bySymbol) ?? copiesOf(detail, unitOf(detail, phase, bySymbol), copies)));
     }

@@ -30,6 +30,11 @@
           <span>{{ t('periodicTable') }}</span>
         </button>
 
+        <button rlButton variant="ghost" size="sm" [attr.aria-pressed]="ui.builderOpen()" (click)="ui.builderOpen() ? ui.closeBuilder() : ui.openBuilder()">
+          <rl-icon [icon]="icons.hexagon" size="sm"></rl-icon>
+          <span>{{ t('build') }}</span>
+        </button>
+
         <rl-language-toggle [label]="t('language.label')"></rl-language-toggle>
 
         <rl-theme-toggle

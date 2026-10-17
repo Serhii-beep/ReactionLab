@@ -9,6 +9,6 @@ const SYMBOLS: Record<MatterState, ChemicalState | undefined> = {
     Plasma: undefined
 };
 
-export function stateSymbol(state: MatterState): ChemicalState | undefined {
-    return SYMBOLS[state];
+export function stateSymbol(state: MatterState | null): ChemicalState | undefined {
+    return state === null ? undefined : SYMBOLS[state];
 }

@@ -1,0 +1,44 @@
+<section class="predicted" *transloco="let t; prefix: 'lab.prediction'" [attr.aria-labelledby]="'predicted-heading'">
+    <header class="predicted-header">
+        <rl-icon class="predicted-icon" [icon]="icons.lightbulb" size="sm"></rl-icon>
+        <h3 id="predicted-heading" class="predicted-heading">{{ t('heading') }}</h3>
+
+        @if (prediction.loading()) {
+            <rl-spinner size="sm" [label]="t('working')"></rl-spinner>
+        }
+    </header>
+
+    <p class="predicted-explanation">{{ t('explanation') }}</p>
+
+    @if (prediction.failed()) {
+        <p class="predicted-note">{{ t('failed') }}</p>
+    } @else if (prediction.views().length === 0 && !prediction.loading()) {
+        <p class="predicted-note">{{ t('none') }}</p>
+    } @else {
+        <div class="predicted-grid">
+            @for (view of prediction.views(); track view.signature) {
+                <article class="predicted-card">
+                    <rl-chem-equation [reactants]="view.reactants" [products]="view.products" [arrowLabel]="t('yields')"></rl-chem-equation>
+
+                    <p class="predicted-rule">{{ t('rules.' + view.ruleKey) }}</p>
+
+                    <div class="predicted-facts">
+                        <span rlBadge [tone]="view.confidenceTone">{{ t('confidence', { percent: view.confidencePercent }) }}</span>
+
+                        @if (view.minimumCelsius !== null) {
+                            <span rlBadge tone="warning">{{ t('heat', { celsius: view.minimumCelsius }) }}</span>
+                        }
+
+                        @if (view.enthalpyMagnitudeKilojoulesPerMole !== null) {
+                            <span class="predicted-estimate">{{ t('enthalpy', { sign: view.enthalpySign, kilojoules: view.enthalpyMagnitudeKilojoulesPerMole }) }}</span>
+                        }
+
+                        @if (view.activationEnergyKilojoulesPerMole !== null) {
+                            <span class="predicted-estimate">{{ t('activation', { kilojoules: view.activationEnergyKilojoulesPerMole }) }}</span>
+                        }
+                    </div>
+                </article>
+            }
+        </div>
+    }
+</section>

@@ -10,7 +10,7 @@ export interface SubstanceSummary {
     readonly name: string;
     readonly kind: SubstanceKind;
     readonly isOrganic: boolean;
-    readonly stateAtRoomTemperature: MatterState;
+    readonly stateAtRoomTemperature: MatterState | null;
     readonly weightGramsPerMole: number | null;
     readonly category: string | null;
 }

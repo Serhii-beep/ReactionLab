@@ -1,0 +1,48 @@
+:host {
+    position: absolute;
+    inset: 0;
+    display: block;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.builder-scene-ring,
+.builder-scene-charge {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-start: 0;
+    visibility: hidden;
+    will-change: transform;
+}
+
+.builder-scene-ring {
+    border: 0.125rem solid var(--accent);
+    border-radius: var(--radius-full);
+
+    &[data-kind='anchor'] {
+        border-width: 0.1875rem;
+        border-style: double;
+    }
+
+    &[data-kind='hover'] {
+        border-style: dashed;
+        border-color: var(--accent-hover);
+        opacity: 0.7;
+    }
+}
+
+.builder-scene-charge {
+    padding: 0 var(--space-1);
+    border: 0.0625rem solid var(--border-default);
+    border-radius: var(--radius-full);
+    background: var(--surface-raised);
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: var(--text-2xs);
+    font-weight: 600;
+    line-height: var(--leading-tight);
+
+    &[data-inferred] {
+        border-style: dashed;
+    }
+}

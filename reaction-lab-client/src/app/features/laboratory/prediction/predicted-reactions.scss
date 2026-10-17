@@ -1,0 +1,71 @@
+:host {
+    display: block;
+}
+
+.predicted {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding-block-start: var(--space-4);
+    border-block-start: 0.0625rem solid var(--border-subtle);
+}
+
+.predicted-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.predicted-icon {
+    color: var(--accent);
+}
+
+.predicted-heading {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: var(--text-md);
+    font-weight: 600;
+}
+
+.predicted-explanation,
+.predicted-note {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
+}
+
+.predicted-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+    gap: var(--space-3);
+}
+
+.predicted-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-3);
+    border: 0.0625rem dashed var(--border-strong);
+    border-radius: var(--radius-lg);
+    background: var(--surface-raised);
+}
+
+.predicted-rule {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: var(--text-xs);
+    line-height: var(--leading-normal);
+}
+
+.predicted-facts {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-1-5);
+}
+
+.predicted-estimate {
+    color: var(--text-tertiary);
+    font-family: var(--font-mono);
+    font-size: var(--text-2xs);
+}

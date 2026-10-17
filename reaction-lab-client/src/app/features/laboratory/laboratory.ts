@@ -25,6 +25,14 @@ import { SceneCanvas } from "./scene/scene-canvas";
 import { SceneViewport } from './scene/scene-viewport';
 import { AboutSheet } from './about-sheet/about-sheet';
 import { ReactionRun } from './run/reaction-run';
+import { SketchEditor } from './builder/sketch-editor';
+import { SketchAnalysis } from './builder/sketch-analysis';
+import { MoleculeBuilder } from './builder/molecule-builder';
+import { BuilderHud } from './builder/builder-hud';
+import { builderShortcuts, isSingleKeyShortcut } from './builder/builder-shortcuts';
+import { BuilderKeysPreference } from './builder/builder-keys-preference';
+import { BenchPrediction } from './prediction/bench-prediction';
+import { CatalogMatch } from './builder/catalog-match';
 
 @Component({
     selector: 'app-laboratory',
@@ -44,10 +52,11 @@ import { ReactionRun } from './run/reaction-run';
         ReactionsSheet,
         PeriodicTableSheet,
         SceneCanvas,
-        AboutSheet
+        AboutSheet,
+        BuilderHud
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    providers: [SceneViewport, ReactionRun],
+    providers: [SceneViewport, ReactionRun, SketchEditor, SketchAnalysis, CatalogMatch, MoleculeBuilder, BenchPrediction],
     host: {
         '(document:keydown)': 'onKeydown($event)'
     }
@@ -82,6 +91,8 @@ export class Laboratory {
         ['home', () => this.viewport.requestFit()],
         [' ', () => this.run.togglePause()]
     ]);
+    private readonly builderShortcuts = builderShortcuts(inject(MoleculeBuilder), inject(SketchEditor));
+    private readonly builderKeys = inject(BuilderKeysPreference);
 
     constructor() {
         effect(() => {
@@ -140,12 +151,18 @@ export class Laboratory {
             return;
         }
 
-        const action = this.shortcuts.get(combo);
+        const action = this.builderShortcut(combo) ?? this.shortcuts.get(combo);
 
         if (action) {
             event.preventDefault();
             action();
         }
+    }
+
+    private builderShortcut(combo: string): (() => void) | undefined {
+        const allowed = this.ui.builderOpen() && (this.builderKeys.singleKeys() || !isSingleKeyShortcut(combo));
+
+        return allowed ? this.builderShortcuts.get(combo) : undefined;
     }
 
     private removeSelected(): void {

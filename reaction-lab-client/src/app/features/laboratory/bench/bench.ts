@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import * as icons from '../../../design-system/icons/icons.generated';
 import { ChemFormula } from '../../../design-system/chemistry/chem-formula';
 import { Chip } from '../../../design-system/primitives/chip/chip';
@@ -13,6 +13,7 @@ import { UiStore } from '../../../state/ui-store';
 import { SceneViewport } from '../scene/scene-viewport';
 import { ReactionRun } from '../run/reaction-run';
 import { RunTransport } from '../run/run-transport';
+import { reportHudCoverage } from '../hud-coverage';
 
 @Component({
     selector: 'app-bench',
@@ -33,19 +34,6 @@ export class Bench {
     protected readonly stateSymbol = stateSymbol;
 
     constructor() {
-        const host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
-        const observer = new ResizeObserver(() => this.viewport.setBenchCoveredPixels(coveredPixelsOf(host)));
-
-        observer.observe(host);
-        inject(DestroyRef).onDestroy(() => {
-            observer.disconnect();
-            this.viewport.setBenchCoveredPixels(0);
-        });
+        reportHudCoverage();
     }
-}
-
-function coveredPixelsOf(host: HTMLElement): number {
-    const container = host.offsetParent;
-
-    return container instanceof HTMLElement ? container.clientHeight - host.offsetTop : 0;
 }

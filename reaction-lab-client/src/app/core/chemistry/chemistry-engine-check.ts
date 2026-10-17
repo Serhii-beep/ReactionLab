@@ -1,12 +1,12 @@
 import { HttpClient } from "@angular/common/http";
-import { DOCUMENT, EnvironmentProviders, inject, isDevMode, provideAppInitializer, Service } from "@angular/core";
+import { inject, Service } from "@angular/core";
 import { catchError, concat, concatMap, defer, EMPTY, expand, filter, map, Observable, of, switchMap, tap, toArray }
 from "rxjs";
 import { environment } from "../../../environments/environment";
 import { CursorPage } from "../../data/cursor-page";
 import { ParticipantRole, ReactionParticipant, ReactionSummary } from "../../data/reactions/reaction";
 import { BondType, MolecularStructure, SubstanceDetail, SubstanceSummary } from "../../data/substances/substance";
-import { AtomEntry, BalanceResult, BondEntry } from "./chemistry-contracts";
+import { BalanceResult, BondEntry, PredictionResult, SketchAtomEntry } from "./chemistry-contracts";
 import { ChemistryEngine } from "./chemistry-engine";
 
 interface CheckSample {
@@ -37,16 +37,7 @@ interface CheckOutcome {
 type StructuredSubstance = SubstanceDetail & { readonly structure: MolecularStructure };
 
 const PAGE_SIZE = 100;
-const CHECK_PARAMETER = 'chemistry';
 const BOND_ORDER_BY_TYPE: Readonly<Partial<Record<BondType, number>>> = { Single: 1, Double: 2, Triple: 3 };
-
-export function provideChemistryEngineCheck(): EnvironmentProviders {
-    return provideAppInitializer(() => {
-        if (isDevMode() && new URLSearchParams(inject(DOCUMENT).defaultView?.location.search).has(CHECK_PARAMETER)) {
-            inject(ChemistryEngineCheck).run();
-        }
-    });
-}
 
 @Service()
 export class ChemistryEngineCheck {
@@ -56,7 +47,7 @@ export class ChemistryEngineCheck {
     run(): void {
         timed(this.engine.parseFormula('H2O')).pipe(
             tap(({ milliseconds }) => console.info(`Chemistry engine ready in ${Math.round(milliseconds)} ms`)),
-            switchMap(() => concat(this.balanceCatalog(), this.assembleStructures())),
+            switchMap(() => concat(this.balanceCatalog(), this.describeStructures(), this.predictCatalog())),
             toArray(),
             tap((outcomes) => {
                 console.table(outcomes.map((outcome) => outcome.row));
@@ -82,18 +73,30 @@ export class ChemistryEngineCheck {
         );
     }
 
-    private assembleStructures(): Observable<CheckOutcome> {
+    private describeStructures(): Observable<CheckOutcome> {
         return this.catalog<SubstanceSummary>('substances').pipe(
             filter((substance) => substance.kind === 'Molecular'),
             concatMap((substance) => this.http.get<SubstanceDetail>(`${environment.apiUrl}/substances/${substance.id}`)),
             filter(isAssemblable),
             concatMap((substance) => sampled(
                 substance.name,
-                this.engine.assemble(atomsOf(substance.structure), bondsOf(substance.structure)),
-                (assembled) => assembled.error ?? null
+                this.engine.describeSketch(sketchAtomsOf(substance.structure), bondsOf(substance.structure)),
+                (described) => described.geometryError ?? null
             )),
             toArray(),
-            map((samples) => outcomeOf('assemble the structures', samples))
+            map((samples) => outcomeOf('describe the structures', samples))
+        );
+    }
+
+    private predictCatalog(): Observable<CheckOutcome> {
+        return this.catalog<ReactionSummary>('reactions').pipe(
+            concatMap((reaction) => sampled(
+                reaction.name,
+                this.engine.predict(formulasOf(reaction, 'Reactant'), {}),
+                (predicted) => predictionFailureOf(reaction, predicted)
+            )),
+            toArray(),
+            map((samples) => outcomeOf('predict the catalog', samples))
         );
     }
 
@@ -150,8 +153,29 @@ function isAssemblable(substance: SubstanceDetail): substance is StructuredSubst
     return substance.structure !== null && substance.structure.bonds.every((bond) => bond.type in BOND_ORDER_BY_TYPE);
 }
 
-function atomsOf(structure: MolecularStructure): AtomEntry[] {
-    return structure.atoms.map(({ symbol }) => ({ symbol, formalCharge: 0 }));
+function predictionFailureOf(reaction: ReactionSummary, predicted: PredictionResult): string | null {
+    if (predicted.error !== undefined) {
+        return predicted.invalidFormula === undefined ? predicted.error : `${predicted.error}: ${predicted.invalidFormula}`;
+    }
+
+    const catalog = equationOf(participantsOf(reaction, 'Reactant'), participantsOf(reaction, 'Product'));
+
+    return (predicted.reactions ?? []).some((candidate) => equationOf(candidate.reactants, candidate.products) === catalog)
+        ? null
+        : 'not predicted';
+}
+
+function equationOf(
+    reactants: readonly { readonly formula: string; readonly coefficient: number }[],
+    products: readonly { readonly formula: string; readonly coefficient: number }[]
+): string {
+    const side = (terms: typeof reactants) => terms.map(({ formula, coefficient }) => `${coefficient} ${formula}`).sort().join(' + ');
+
+    return `${side(reactants)} -> ${side(products)}`;
+}
+
+function sketchAtomsOf(structure: MolecularStructure): SketchAtomEntry[] {
+    return structure.atoms.map(({ symbol }) => ({ symbol, formalCharge: null }));
 }
 
 function bondsOf(structure: MolecularStructure): BondEntry[] {

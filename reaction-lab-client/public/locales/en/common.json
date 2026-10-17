@@ -29,7 +29,8 @@
         "skip": "Skip to the laboratory",
         "language": {
             "label": "Language"
-        }
+        },
+        "build": "Build"
     },
     "lab": {
         "reactions": {
@@ -61,7 +62,8 @@
             "heading": "Your bench is empty",
             "description": "Add a substance to see what it can react with. Everything you put here becomes an object in the scene.",
             "search": "Search substances",
-            "table": "Open the periodic table"
+            "table": "Open the periodic table",
+            "build": "Build a molecule"
         },
         "palette": {
             "label": "Search the catalog",
@@ -76,7 +78,10 @@
             "close": "close",
             "up": "Up arrow",
             "down": "Down arrow",
-            "enter": "Enter"
+            "enter": "Enter",
+            "molecules": "My molecules",
+            "actions": "Actions",
+            "build": "Build a molecule"
         },
         "table": {
             "label": "Periodic table",
@@ -163,7 +168,8 @@
                 "Liquid": "liquid",
                 "Gas": "gas",
                 "Aqueous": "aqueous",
-                "Plasma": "plasma"
+                "Plasma": "plasma",
+                "Unknown": "unknown"
             }
         },
         "run": {
@@ -234,6 +240,110 @@
                 "change": "{sign}{value} K",
                 "boils": "boils",
                 "freezes": "freezes"
+            }
+        },
+        "builder": {
+            "label": "Molecule builder",
+            "tools": "Builder tools",
+            "elements": "Elements",
+            "add": "Add {name}",
+            "bondOrder": "Bond order",
+            "bonds": {
+                "single": "Single",
+                "double": "Double",
+                "triple": "Triple"
+            },
+            "connect": "Connect",
+            "connectHint": "Bond the selected atom to the next atom you pick. Shift-click does the same; from the keyboard press L, step with [ and ], then press L again.",
+            "connecting": "Bonding from atom {number}: pick the other atom, or step to it with [ and ] and press L",
+            "charge": "Formal charge",
+            "chargeDown": "Lower the formal charge",
+            "chargeUp": "Raise the formal charge",
+            "chargeAuto": "Auto",
+            "chargeAutoHint": "Let the formal charge follow from the bonds",
+            "delete": "Delete the selection",
+            "undo": "Undo",
+            "redo": "Redo",
+            "new": "Start a new molecule",
+            "fillHydrogens": "Fill the open bonds with hydrogen",
+            "symmetry": "Show the symmetry elements",
+            "singleKeys": "Single-key shortcuts",
+            "singleKeysHint": "Letters add elements, 1 to 3 set the bond order, [ and ] step through the atoms and L bonds two of them. Turn them off if they get in the way.",
+            "pointGroup": "Point group",
+            "mass": "{mass} g/mol",
+            "atom": "Atom {number} · {symbol} · {lonePairs, plural, =0 {no lone pairs} one {# lone pair} other {# lone pairs}}",
+            "bondedTo": "bonded to {neighbors}",
+            "unbonded": "no bonds yet",
+            "inferredCharge": "charge inferred from its bonds",
+            "working": "Working out the geometry",
+            "matching": "Looking it up in the catalog",
+            "name": "Molecule name",
+            "namePlaceholder": "Untitled molecule",
+            "save": "Save",
+            "saved": "Saved {name}",
+            "notStored": "{name} is kept for this visit only: the browser would not store it",
+            "place": "Put on the bench",
+            "placeHint": "Only complete, neutral molecules can go on the bench",
+            "done": "Done",
+            "status": {
+                "empty": "Pick an element to start a molecule",
+                "incomplete": "{count, plural, one {# atom needs} other {# atoms need}} more bonds",
+                "tooManyBonds": "An atom has more bonds than its electrons allow",
+                "unknownElement": "There is no geometry data for one of these elements",
+                "noGeometry": "No VSEPR shape fits this structure",
+                "fragments": "These atoms make more than one molecule. Bond them together to put it on the bench",
+                "ion": "A complete ion, charge {charge}",
+                "complete": "A complete molecule",
+                "failed": "The chemistry engine could not describe this molecule"
+            },
+            "catalogMatch": "In the catalog as {name}",
+            "forget": "Delete from my molecules",
+            "forgotten": "Removed {name} from your molecules"
+        },
+        "prediction": {
+            "heading": "Predicted by the reaction rules",
+            "explanation": "Worked out from what is on the bench by the same rules that generated the catalog, for combinations the catalog does not hold. They cannot be run yet.",
+            "working": "Predicting reactions",
+            "none": "The rules predict nothing beyond the catalog for these substances.",
+            "failed": "The chemistry engine could not predict reactions for this bench.",
+            "yields": "yields",
+            "confidence": "{percent}% confidence",
+            "heat": "Needs heating above {celsius} °C",
+            "enthalpy": "ΔH ≈ {sign}{kilojoules} kJ/mol, estimated",
+            "activation": "Eₐ ≈ {kilojoules} kJ/mol, estimated",
+            "rules": {
+                "combustion": {
+                    "complete": "With plenty of oxygen the fuel burns completely to carbon dioxide and water.",
+                    "incomplete": "With too little oxygen the carbon only reaches carbon monoxide.",
+                    "sooting": "With very little oxygen the carbon is left behind as soot."
+                },
+                "neutralization": {
+                    "saltAndWater": "The acid and the base neutralize each other into a salt and water."
+                },
+                "precipitation": {
+                    "groupOneAndAmmonium": "The swapped ions make a salt that does not dissolve, so a solid falls out of the solution.",
+                    "nitratesAndAcetates": "The swapped ions make a salt that does not dissolve, so a solid falls out of the solution.",
+                    "halides": "Silver and lead halides do not dissolve, so the solid falls out of the solution.",
+                    "sulfates": "Barium, lead, calcium, strontium and silver sulfates do not dissolve, so the solid falls out of the solution.",
+                    "hydroxides": "Most metal hydroxides do not dissolve, so the solid falls out of the solution.",
+                    "permanganatesAndHydrogencarbonates": "The swapped ions make a salt that does not dissolve, so a solid falls out of the solution.",
+                    "carbonatesAndTheRest": "Carbonates, phosphates and most other salts do not dissolve, so the solid falls out of the solution."
+                },
+                "singleReplacement": {
+                    "metalAndColdWater": "A very reactive metal pushes hydrogen out of cold water and leaves its hydroxide.",
+                    "metalAndSteam": "A moderately reactive metal pushes hydrogen out of steam and leaves its oxide.",
+                    "metalAndAcid": "A metal above hydrogen in the activity series displaces hydrogen from the acid.",
+                    "metalAndSalt": "A more reactive metal displaces a less reactive one from its salt."
+                },
+                "synthesis": {
+                    "metalAndNonMetal": "A metal and a non-metal combine into an ionic compound.",
+                    "oxideAndWater": "A reactive metal oxide dissolves in water as its hydroxide."
+                },
+                "decomposition": {
+                    "carbonate": "Heating breaks the carbonate into the metal oxide and carbon dioxide.",
+                    "hydrogencarbonate": "Heating breaks the hydrogencarbonate into a carbonate, water and carbon dioxide.",
+                    "hydroxide": "Heating drives water out of the hydroxide and leaves the oxide."
+                }
             }
         }
     }

@@ -3,7 +3,7 @@ import { Disposable } from "../core/disposal-scope";
 export interface PointerHandlers {
     readonly move: (x: number, y: number) => void;
     readonly leave: () => void;
-    readonly click: (x: number, y: number) => void;
+    readonly click: (x: number, y: number, additive: boolean) => void;
     readonly doubleClick: (x: number, y: number) => void;
 }
 
@@ -20,8 +20,8 @@ const DRAG_SLOP = 4;
 
 export class PointerInput implements Disposable {
     private readonly document: Document;
-    
-    private handlers: PointerHandlers | null = null;
+    private readonly bound: PointerHandlers[] = [];
+
     private press: PointerPress | null = null;
     private dragged = false;
     private last: ClientPoint | null = null;
@@ -49,11 +49,13 @@ export class PointerInput implements Disposable {
     }
 
     bind(handlers: PointerHandlers): () => void {
-        this.handlers = handlers;
+        this.bound.push(handlers);
 
         return () => {
-            if (this.handlers === handlers) {
-                this.handlers = null;
+            const index = this.bound.lastIndexOf(handlers);
+
+            if (index >= 0) {
+                this.bound.splice(index, 1);
             }
         };
     }
@@ -67,7 +69,11 @@ export class PointerInput implements Disposable {
         this.document.removeEventListener('pointermove', this.onPressMove, true);
         this.document.removeEventListener('pointerup', this.onUp);
         this.document.removeEventListener('pointercancel', this.onUp);
-        this.handlers = null;
+        this.bound.length = 0;
+    }
+
+    private get handlers(): PointerHandlers | null {
+        return this.bound.at(-1) ?? null;
     }
 
     private readonly onMove = (event: PointerEvent): void => {
@@ -108,7 +114,7 @@ export class PointerInput implements Disposable {
 
     private readonly onClick = (event: MouseEvent): void => {
         if (!this.dragged && event.detail <= 1) {
-            this.handlers?.click(event.clientX, event.clientY);
+            this.handlers?.click(event.clientX, event.clientY, event.shiftKey);
         }
     };
 

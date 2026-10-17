@@ -28,6 +28,7 @@ import { ReactionGas } from "./gas/reaction-gas";
 import { ReactionSparks } from "./sparks/reaction-sparks";
 import { ReactionLight } from "./rendering/reaction-light";
 import { LensShift } from "./core/lens-shift";
+import { SymmetryGuides } from "./objects/symmetry-guides";
 
 const HIGHLIGHT_RISE = 0.2;
 const HIGHLIGHT_FALL = 0.3;
@@ -92,6 +93,7 @@ function sceneProviders(): Provider[] {
         owned(BondRenderer, () => new BondRenderer(inject(GeometryCache), inject(MaterialCache))),
         owned(AtomLabels, () => new AtomLabels(inject(LabelAtlas))),
         owned(SelectionOutline, () => new SelectionOutline(inject(GeometryCache))),
+        owned(SymmetryGuides, () => new SymmetryGuides(inject(EngineContext).scene)),
         { provide: HighlightFade, useFactory: () => new HighlightFade(HIGHLIGHT_RISE, HIGHLIGHT_FALL) },
         { provide: PickingService, useFactory: () => new PickingService(inject(EngineContext)) },
         { provide: LodController, useFactory: () => new LodController() },

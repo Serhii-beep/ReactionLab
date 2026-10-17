@@ -14,21 +14,29 @@ import { ChemEquation } from "../../../design-system/chemistry/chem-equation";
 import { EquationTerm } from "../../../design-system/chemistry/chem-equation-side";
 import { ReactionStore } from "../../../state/reaction-store";
 import { equationTerms } from "../equation-terms";
+import { SavedMolecule } from "../../../data/molecules/saved-molecule";
+import { UserMoleculesStore } from "../../../state/user-molecules-store";
+import { MoleculeBuilder } from "../builder/molecule-builder";
+import * as icons from "../../../design-system/icons/icons.generated";
+import { Icon } from "../../../design-system/icons/icon";
 
 const SUBSTANCE_LIMIT = 8;
 const ELEMENT_LIMIT = 3;
 const REACTION_LIMIT = 3;
+const MOLECULE_LIMIT = 5;
 
 export type PaletteChoice =
     | { readonly kind: 'substance'; readonly substance: SubstanceSummary }
     | { readonly kind: 'element'; readonly element: ElementSummary }
-    | { readonly kind: 'reaction'; readonly reaction: ReactionSummary; readonly reactants: readonly EquationTerm[]; readonly products: readonly EquationTerm[] };
+    | { readonly kind: 'reaction'; readonly reaction: ReactionSummary; readonly reactants: readonly EquationTerm[]; readonly products: readonly EquationTerm[] }
+    | { readonly kind: 'molecule'; readonly molecule: SavedMolecule }
+    | { readonly kind: 'build' };
 
 @Component({
     selector: 'app-lab-palette',
     templateUrl: './lab-palette.html',
     styleUrl: './lab-palette.scss',
-    imports: [ChemEquation, ChemFormula, CommandPalette],
+    imports: [ChemEquation, ChemFormula, CommandPalette, Icon],
     providers: [SubstancesClient],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -39,9 +47,13 @@ export class LabPalette {
     readonly substancesLabel = input.required<string>();
     readonly elementsLabel = input.required<string>();
     readonly reactionsLabel = input.required<string>();
+    readonly moleculesLabel = input.required<string>();
+    readonly actionsLabel = input.required<string>();
+    readonly buildLabel = input.required<string>();
     readonly cancelLabel = input.required<string>();
 
     protected readonly ui = inject(UiStore);
+    protected readonly icons = icons;
     protected readonly query = signal('');
     protected readonly stateSymbol = stateSymbol;
 
@@ -49,10 +61,20 @@ export class LabPalette {
     private readonly elements = inject(ElementsClient);
     private readonly reactions = inject(ReactionStore);
     private readonly workspace = inject(WorkspaceStore);
+    private readonly molecules = inject(UserMoleculesStore);
+    private readonly builder = inject(MoleculeBuilder);
 
     protected readonly busy = computed(() => this.substances.page.isLoading());
 
     protected readonly options = computed<readonly ListboxOption<PaletteChoice>[]>(() => [
+        ...matchingMolecules(this.molecules.molecules(), this.query()).slice(0, MOLECULE_LIMIT).map((molecule) => ({
+            value: { kind: 'molecule' as const, molecule },
+            label: `${molecule.hillFormula} ${molecule.name}`,
+            group: this.moleculesLabel()
+        })),
+        ...(matchesBuild(this.query(), this.buildLabel())
+            ? [{ value: { kind: 'build' as const }, label: this.buildLabel(), group: this.actionsLabel() }]
+            : []),
         ...this.substances.items().slice(0, SUBSTANCE_LIMIT).map((substance) => ({
             value: { kind: 'substance' as const, substance },
             label: `${substance.formula} ${substance.name}`,
@@ -93,8 +115,27 @@ export class LabPalette {
                 this.ui.paletteOpen.set(false);
                 this.ui.openReactions();
                 break;
+            case 'molecule':
+                this.builder.open(choice.molecule);
+                break;
+            case 'build':
+                this.ui.openBuilder();
+                break;
         }
     }
+}
+
+function matchingMolecules(molecules: readonly SavedMolecule[], query: string): readonly SavedMolecule[] {
+    const needle = query.trim().toLocaleLowerCase();
+
+    return molecules.filter((molecule) =>
+        molecule.name.toLocaleLowerCase().includes(needle) || molecule.hillFormula.toLocaleLowerCase().startsWith(needle));
+}
+
+function matchesBuild(query: string, buildLabel: string): boolean {
+    const needle = query.trim().toLocaleLowerCase();
+
+    return needle === '' || buildLabel.toLocaleLowerCase().includes(needle);
 }
 
 function matchingElements(elements: readonly ElementSummary[], query: string): readonly ElementSummary[] {

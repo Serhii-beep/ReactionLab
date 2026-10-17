@@ -4,15 +4,15 @@ import { ElementsClient } from '../../data/elements/elements-client';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { catchError, combineLatest, defer, filter, first, map, Observable, shareReplay, switchMap, throwError } from 'rxjs';
 import { ChemistryWorkerConnection } from './chemistry-worker-connection';
-import { AssemblyResult, AtomEntry, BalanceResult, BondEntry, ChemistryRequest, ChemistryResultByOperation, FormulaResult, MolarMassResult } from './chemistry-contracts';
+import { AssemblyResult, AtomEntry, BalanceResult, BondEntry, ChemistryRequest, ChemistryResultByOperation, ElementEntry, FormulaResult, MolarMassResult, PredictionResult, SketchAtomEntry, SketchDescription, StandardState, SymmetryResult } from './chemistry-contracts';
 
 @Service()
 export class ChemistryEngine {
     private readonly reference = inject(ChemistryReferenceClient);
     private readonly elements = inject(ElementsClient).all;
-    private readonly atomicMasses$ = toObservable(computed(() => (this.elements.hasValue() ? this.elements.value() : []))).pipe(
+    private readonly elementEntries$ = toObservable(computed(() => (this.elements.hasValue() ? this.elements.value() : []))).pipe(
         filter((elements) => elements.length > 0),
-        map((elements) => Object.fromEntries(elements.map((element) => [element.symbol, element.mass])))
+        map((elements) => elements.map(({ symbol, mass, period }): ElementEntry => ({ symbol, mass, period })))
     );
     private readonly connection$ = defer(() => this.connect()).pipe(shareReplay(1));
 
@@ -32,6 +32,18 @@ export class ChemistryEngine {
         return this.request({ operation: 'assemble', requestJson: JSON.stringify({ atoms, bonds }) });
     }
 
+    describeSketch(atoms: readonly SketchAtomEntry[], bonds: readonly BondEntry[]): Observable<SketchDescription> {
+        return this.request({ operation: 'describeSketch', requestJson: JSON.stringify({ atoms, bonds }) });
+    }
+
+    detectSymmetry(symbols: readonly string[], positionsAngstroms: readonly number[]): Observable<SymmetryResult> {
+        return this.request({ operation: 'detectSymmetry', requestJson: JSON.stringify({ symbols, positionsAngstroms }) });
+    }
+
+    predict(formulas: readonly string[], standardStates: Readonly<Record<string, StandardState>>): Observable<PredictionResult> {
+        return this.request({ operation: 'predict', requestJson: JSON.stringify({ formulas, standardStates }) });
+    }
+
     private request<Operation extends keyof ChemistryResultByOperation>(
         request: ChemistryRequest & { readonly operation: Operation }
     ): Observable<ChemistryResultByOperation[Operation]> {
@@ -44,12 +56,12 @@ export class ChemistryEngine {
     private connect(): Observable<ChemistryWorkerConnection> {
         const connection = new ChemistryWorkerConnection();
 
-        return combineLatest([connection.ready$, this.atomicMasses$, this.reference.reference()]).pipe(
+        return combineLatest([connection.ready$, this.elementEntries$, this.reference.reference()]).pipe(
             first(),
-            switchMap(([, atomicMasses, reference]) => connection.send({
+            switchMap(([, elementEntries, reference]) => connection.send({
                 operation: 'loadReferenceData',
-                atomicMassesJson: JSON.stringify(atomicMasses),
-                atomicGeometryJson: JSON.stringify(reference['atomic-geometry'].elements)
+                elementsJson: JSON.stringify(elementEntries),
+                referenceJson: JSON.stringify(reference)
             })),
             map(() => connection),
             catchError((error: unknown) => {

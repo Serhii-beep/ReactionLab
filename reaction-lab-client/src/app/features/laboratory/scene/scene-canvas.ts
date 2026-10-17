@@ -28,8 +28,10 @@ import { RunConductor } from "../run/run-conductor";
 import { ReactionRun } from "../run/reaction-run";
 import { GraphicsNotices } from "./graphics-notices";
 import { LensShift } from "../../../engine/core/lens-shift";
-
-type HighlightLevelsByUnitId = ReadonlyMap<string, number>;
+import { MoleculeBuilder } from "../builder/molecule-builder";
+import { BuilderScene } from "../builder/builder-scene";
+import { HighlightLevelsByUnitId } from "../../../engine/objects/selection-outline";
+import { sameHighlightLevels } from "./highlight-levels";
 
 const LIGHT_INK = new Color(0xffffff);
 const HOVER = 0.6;
@@ -44,7 +46,7 @@ const SELECTED = 1;
     host: {
         '[class.scene-hovering]': 'hovered() !== null'
     },
-    imports: [SceneStats, ObjectHud]
+    imports: [SceneStats, ObjectHud, BuilderScene]
 })
 export class SceneCanvas {
     protected readonly hovered = signal<PlacedAtom | null>(null);
@@ -58,6 +60,7 @@ export class SceneCanvas {
         return this.workspace.entries().find((entry) => entry.substance.id === substanceId)?.substance ?? null;
     });
     protected readonly hudCount = computed(() => this.workspace.counts().get(this.hudSubstance()?.id ?? '') ?? 0);
+    protected readonly builder = inject(MoleculeBuilder);
 
     private readonly clickedUnitId = signal<string | null>(null);
     private readonly hud = viewChild.required(ObjectHud);
@@ -103,7 +106,7 @@ export class SceneCanvas {
         }
 
         return highlightLevels;
-    }, { equal: sameLevels });
+    }, { equal: sameHighlightLevels });
 
     private started = false;
 
@@ -128,10 +131,10 @@ export class SceneCanvas {
 
         effect(() => {
             const units = this.units();
-            const running = this.run.active();
+            const benchHidden = this.run.active() || this.builder.active();
 
             untracked(() => {
-                if (!running) {
+                if (!benchHidden) {
                     this.lensShift.cover(0, this.started && this.animated());
                     this.scene.setUnits(units, this.started && this.animated());
                     this.repick();
@@ -285,18 +288,4 @@ export class SceneCanvas {
 
         this.hovered.set(last ? this.scene.pick(last.x, last.y) : null);
     }
-}
-
-function sameLevels(a: HighlightLevelsByUnitId, b: HighlightLevelsByUnitId): boolean {
-    if (a.size !== b.size) {
-        return false;
-    }
-
-    for (const [id, level] of a) {
-        if (b.get(id) !== level) {
-            return false;
-        }
-    }
-
-    return true;
 }
