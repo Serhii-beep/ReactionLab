@@ -45,7 +45,8 @@ export const UNKNOWN_STATE_PHASE: Phase = 'gas';
 export function buildBenchUnits(
     entries: readonly WorkspaceItem[],
     details: ReadonlyMap<string, SubstanceDetail>,
-    elements: readonly ElementSummary[]
+    elements: readonly ElementSummary[],
+    statesBySubstanceId: ReadonlyMap<string, MatterState> = new Map()
 ): LayoutUnit[] {
     if (elements.length === 0) {
         return [];
@@ -62,12 +63,16 @@ export function buildBenchUnits(
         }
 
         const copies = Math.min(entry.count, MAX_COPIES);
-        const phase = detail.stateAtRoomTemperature === null ? UNKNOWN_STATE_PHASE : PHASES[detail.stateAtRoomTemperature];
+        const phase = phaseOfState(statesBySubstanceId.get(detail.id) ?? detail.stateAtRoomTemperature);
 
         units.push(...(ionicUnitsOf(detail, copies, phase, bySymbol) ?? copiesOf(detail, unitOf(detail, phase, bySymbol), copies)));
     }
 
     return units;
+}
+
+export function phaseOfState(state: MatterState | null): Phase {
+    return state === null ? UNKNOWN_STATE_PHASE : PHASES[state];
 }
 
 function copiesOf(detail: SubstanceDetail, unit: Unit, copies: number): LayoutUnit[] {

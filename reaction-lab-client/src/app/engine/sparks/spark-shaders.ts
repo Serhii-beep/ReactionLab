@@ -20,7 +20,7 @@ export const SPARK_STEP_SHADER = `
     uniform float uVoxelSize;
     uniform float uSeconds;
     uniform float uDt;
-    uniform float uRoomKelvin;
+    uniform float uAmbientKelvin;
 
     layout(location = 0) out vec4 outPlace;
     layout(location = 1) out vec4 outMotion;
@@ -34,13 +34,13 @@ export const SPARK_STEP_SHADER = `
         vec3 voxel = (place - uOrigin) / uVoxelSize;
 
         if (uAirflow < 0.5 || any(lessThan(voxel, vec3(0.0))) || any(greaterThan(voxel, vec3(uVoxelsPerSide)))) {
-            return vec4(0.0, 0.0, 0.0, uRoomKelvin);
+            return vec4(0.0, 0.0, 0.0, uAmbientKelvin);
         }
 
         vec4 air = sampleGrid(uAirVelocity, voxel);
         vec4 scalars = sampleGrid(uAirScalars, voxel);
 
-        return vec4(air.xyz * uVoxelSize, uRoomKelvin + scalars.r);
+        return vec4(air.xyz * uVoxelSize, uAmbientKelvin + scalars.r);
     }
 
     void main() {

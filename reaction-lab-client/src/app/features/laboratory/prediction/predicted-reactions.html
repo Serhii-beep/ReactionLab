@@ -26,7 +26,11 @@
                         <span rlBadge [tone]="view.confidenceTone">{{ t('confidence', { percent: view.confidencePercent }) }}</span>
 
                         @if (view.minimumCelsius !== null) {
-                            <span rlBadge tone="warning">{{ t('heat', { celsius: view.minimumCelsius }) }}</span>
+                            @if (lab.celsius() > view.minimumCelsius) {
+                                <span rlBadge tone="success">{{ t('heated', { celsius: view.minimumCelsius }) }}</span>
+                            } @else {
+                                <span rlBadge tone="warning">{{ t('heat', { celsius: view.minimumCelsius }) }}</span>
+                            }
                         }
 
                         @if (view.enthalpyMagnitudeKilojoulesPerMole !== null) {

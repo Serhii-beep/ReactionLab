@@ -12,6 +12,7 @@ import { BathSetting, BENCH_TEMPERATURE_KELVIN, BOLTZMANN_KILOJOULES_PER_MOLE_KE
 import { MolecularSystem, Molecule, moleculesOf, SimulatedAtom, TIME_UNITS_PER_SECOND } from "./molecular-system";
 import { seededRandom, standardNormalSource } from "../../core/seeded-random";
 import { airFrictionPerSecondAt, coolingAt } from "./bath-cooling";
+import { ROOM_TEMPERATURE_KELVIN } from "../../core/matter";
 
 export interface DynamicsInput {
     readonly atoms: readonly SimulatedAtom[];
@@ -24,6 +25,7 @@ export interface DynamicsInput {
     readonly approachArcByUnitId: ReadonlyMap<string, ApproachArc>;
     readonly schedule: DynamicsSchedule;
     readonly energetics: ReactionEnergetics;
+    readonly ambientKelvin: number;
     readonly randomSeed: string;
 }
 
@@ -33,6 +35,7 @@ const FRAMES_PER_SECOND = SUBSTEPS_PER_SECOND / SUBSTEPS_PER_FRAME;
 const STEP_SECONDS = 1 / SUBSTEPS_PER_SECOND;
 const STEP_TIME_UNITS = TIME_UNITS_PER_SECOND * STEP_SECONDS;
 const REACTANT_TEMPERATURE_KELVIN = 1400;
+const MOST_AMBIENT_OVER_ROOM = 2;
 const FRICTION_PER_SECOND = { beforeCollision: 2.5, reacting: 0.25 };
 const NO_MOLECULES: readonly Molecule[] = [];
 
@@ -63,6 +66,7 @@ class ReactionSimulation {
     private readonly activationShaping: ActivationShaping;
     private readonly landingGuides: LandingGuides;
     private readonly bath: LangevinBath;
+    private readonly ambientOverRoom: number;
     private launched = false;
     private rungDown = false;
 
@@ -88,6 +92,7 @@ class ReactionSimulation {
         this.activationShaping = new ActivationShaping(this.system, this.products, productRest, schedule, rebondingAtomIndicesOf(reactantPicture, productPicture));
         this.landingGuides = new LandingGuides(this.system, this.products, productRest, schedule);
         this.bath = new LangevinBath(this.system, this.draws.standardNormal);
+        this.ambientOverRoom = Math.min(input.ambientKelvin / ROOM_TEMPERATURE_KELVIN, MOST_AMBIENT_OVER_ROOM);
         this.warm();
         this.computeForces(0);
     }
@@ -126,14 +131,14 @@ class ReactionSimulation {
         if (!this.launched) {
             const frictionPerSecond = seconds < schedule.collisionStartSeconds ? FRICTION_PER_SECOND.beforeCollision : FRICTION_PER_SECOND.reacting;
 
-            return { frictionPerSecond, temperatureKelvin: REACTANT_TEMPERATURE_KELVIN, moleculesKeepingDrift: this.reactants };
+            return { frictionPerSecond, temperatureKelvin: REACTANT_TEMPERATURE_KELVIN * this.ambientOverRoom, moleculesKeepingDrift: this.reactants };
         }
 
         const cooling = coolingAt(schedule, seconds);
 
         return {
             frictionPerSecond: airFrictionPerSecondAt(schedule, seconds),
-            temperatureKelvin: BENCH_TEMPERATURE_KELVIN + (REACTANT_TEMPERATURE_KELVIN - BENCH_TEMPERATURE_KELVIN) * (1 - cooling),
+            temperatureKelvin: (BENCH_TEMPERATURE_KELVIN + (REACTANT_TEMPERATURE_KELVIN - BENCH_TEMPERATURE_KELVIN) * (1 - cooling)) * this.ambientOverRoom,
             moleculesKeepingDrift: NO_MOLECULES
         };
     }
@@ -169,7 +174,7 @@ class ReactionSimulation {
         const moleculeDrift = new Vector3();
 
         atoms.forEach((atom, index) => {
-            const spread = Math.sqrt((BOLTZMANN_KILOJOULES_PER_MOLE_KELVIN * REACTANT_TEMPERATURE_KELVIN) / atom.mass);
+            const spread = Math.sqrt((BOLTZMANN_KILOJOULES_PER_MOLE_KELVIN * REACTANT_TEMPERATURE_KELVIN * this.ambientOverRoom) / atom.mass);
 
             for (let axis = 0; axis < 3; axis++) {
                 velocities[index * 3 + axis] = spread * this.draws.standardNormal();

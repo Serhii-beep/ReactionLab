@@ -5,6 +5,7 @@ import { CURL_SHADER, DIVERGENCE_SHADER, FORCES_SHADER, JACOBI_SHADER, PROJECT_S
 import { GAS_LIGHTING_SHADER } from "./gas-lighting-shader";
 import { KEY_LIGHT_POSITION } from "../rendering/lighting-rig";
 import { GasLook } from "./gas-look";
+import { ROOM_TEMPERATURE_KELVIN } from "../core/matter";
 
 export interface GasGridUniforms {
     readonly uVoxelsPerSide: IUniform<number>;
@@ -39,6 +40,7 @@ export interface GasPhysicsUniforms {
 
 export interface GasMistUniforms {
     readonly uCondensationKelvin: IUniform<Vector2>;
+    readonly uAmbientKelvin: IUniform<number>;
     readonly uMistExtinction: IUniform<number>;
     readonly uLightDirection: IUniform<Vector3>;
 }
@@ -75,7 +77,7 @@ const HEAT_KEEP_PER_SECOND = 0.03;
 const VAPOR_KEEP_PER_SECOND = 0.6;
 const FLAME_KEEP_PER_SECOND = 0.005;
 const MIST_EXTINCTION_PER_ANGSTROM = 1.5;
-const CONDENSATION_KELVIN = new Vector2(75, 45);
+const CONDENSATION_KELVIN = new Vector2(373, 343);
 
 export function sharedGasUniformsOf(): SharedGasUniforms {
     return {
@@ -95,7 +97,7 @@ export function sharedGasUniformsOf(): SharedGasUniforms {
             uObstacleCount: { value: 0 }
         },
         physics: { uBuoyancyPerKelvin: { value: 0 }, uSinkPerParticle: { value: 0 }, uBurstPerFlame: { value: 0 }, uVorticity: { value: VORTICITY } },
-        mist: { uCondensationKelvin: { value: CONDENSATION_KELVIN }, uMistExtinction: { value: MIST_EXTINCTION_PER_ANGSTROM }, uLightDirection: { value: new Vector3(...KEY_LIGHT_POSITION).normalize() } }
+        mist: { uCondensationKelvin: { value: CONDENSATION_KELVIN }, uAmbientKelvin: { value: ROOM_TEMPERATURE_KELVIN }, uMistExtinction: { value: MIST_EXTINCTION_PER_ANGSTROM }, uLightDirection: { value: new Vector3(...KEY_LIGHT_POSITION).normalize() } }
     };
 }
 

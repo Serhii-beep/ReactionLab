@@ -1,0 +1,26 @@
+<section class="rate-panel" *transloco="let t; prefix: 'lab.conditions.rate'" [attr.aria-label]="t('title')">
+    <h3 class="rate-panel-title">{{ t('title') }}</h3>
+
+    <p class="rate-panel-line">
+        {{ t('barrier', { value: (focused().reaction.activationEnergyKilojoulesPerMole | number: '1.0-1') }) }}
+    </p>
+    <p class="rate-panel-line rate-panel-emphasis">
+        {{ t('share', { celsius: celsius(), count: collisionsPerSuccess() }) }}
+    </p>
+    <p class="rate-panel-line">{{ t('factor', { factor: rateFactor() }) }}</p>
+
+    @if (collisionFactor(); as factor) {
+        <p class="rate-panel-line">{{ t('collisions', { factor: factor }) }}</p>
+    }
+
+    <app-temperature-chart
+        [kelvins]="focused().conditions.curve?.kelvins ?? []"
+        [series]="series()"
+        [minimum]="lowest()"
+        [maximum]="0"
+        [valueTicks]="ticks()"
+        [markerKelvin]="focused().kelvin"
+        [markerValue]="kinetics().log10ShareOverBarrier"
+        [label]="t('chart')"
+    ></app-temperature-chart>
+</section>

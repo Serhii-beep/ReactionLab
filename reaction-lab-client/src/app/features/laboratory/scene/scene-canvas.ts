@@ -32,6 +32,7 @@ import { MoleculeBuilder } from "../builder/molecule-builder";
 import { BuilderScene } from "../builder/builder-scene";
 import { HighlightLevelsByUnitId } from "../../../engine/objects/selection-outline";
 import { sameHighlightLevels } from "./highlight-levels";
+import { BenchConditions } from "./bench-conditions";
 
 const LIGHT_INK = new Color(0xffffff);
 const HOVER = 0.6;
@@ -41,7 +42,7 @@ const SELECTED = 1;
     selector: 'app-scene-canvas',
     templateUrl: './scene-canvas.html',
     styleUrl: './scene-canvas.scss',
-    providers: [provideEngine(), RunConductor, GraphicsNotices],
+    providers: [provideEngine(), RunConductor, GraphicsNotices, BenchConditions],
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: {
         '[class.scene-hovering]': 'hovered() !== null'
@@ -111,6 +112,7 @@ export class SceneCanvas {
     private started = false;
 
     constructor() {
+        inject(BenchConditions);
         inject(ViewportObserver).onResize((width, height) => {
             this.scene.setViewportSize(width, height);
             this.scene.frame(false);

@@ -110,7 +110,7 @@ export class ReactionMotion {
         this.reactantTravels = this.reactantsSet.travels.filter((travel) => !this.recordedReactants.unitIds.has(travel.unitId));
         this.productTravels = this.productsSet.travels.filter((travel) => !this.recordedProducts.unitIds.has(travel.unitId));
         this.runBonds = new RunBonds({ bondChanges, atomPairs, reactantIndexByAtom, productIndexByAtom, recording: this.recording });
-        this.growth = script.precipitate === null ? null : new CrystalGrowth({ plan: script.precipitate, after, unitsAfter: script.unitsAfter, solution: gatheredSphere, schedule, randomSeed: script.randomSeed });
+        this.growth = script.precipitate === null ? null : new CrystalGrowth({ plan: script.precipitate, after, unitsAfter: script.unitsAfter, solution: gatheredSphere, schedule, randomSeed: script.randomSeed, ambientKelvin: script.ambientKelvin });
 
         const frames = runFramesOf({ reactantsSet: this.reactantsSet, productsSet: this.productsSet, runBonds: this.runBonds, growth: this.growth, before, after, consumedIds, producedIds });
 
@@ -173,7 +173,8 @@ function energyLedgerOf(sources: DynamicsSources, bondChanges: BondChanges): Ene
         energetics: sources.script.energetics,
         breakingAtomIndices: recordingIndicesOf(bondChanges.breaking, sources.reactantIndexByAtom),
         formingAtomIndices: recordingIndicesOf(bondChanges.forming, sources.productIndexByAtom),
-        productUnitIds: sources.atomPairs.map((pair) => pair.product.unitId)
+        productUnitIds: sources.atomPairs.map((pair) => pair.product.unitId),
+        ambientKelvin: sources.script.ambientKelvin
     });
 }
 

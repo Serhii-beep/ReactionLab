@@ -37,7 +37,7 @@ const VAPORIZATION_BY_METAL: ReadonlyMap<string, MetalVaporization> = new Map([
 ]);
 const STEAM: GasPlan = { look: 'steam', particles: null };
 
-export function gasPlanOf(reaction: ReactionSummary, details: DetailsById, precipitate: PrecipitatePlan | null): GasPlan | null {
+export function gasPlanOf(reaction: ReactionSummary, details: DetailsById, precipitate: PrecipitatePlan | null, ambientKelvin: number): GasPlan | null {
     const reactants = participantsOf(reaction, 'Reactant');
     const products = participantsOf(reaction, 'Product');
 
@@ -45,16 +45,22 @@ export function gasPlanOf(reaction: ReactionSummary, details: DetailsById, preci
         return precipitate === null ? null : precipitateCloudOf(precipitate, details);
     }
 
-    return reaction.enthalpyKilojoulesPerMole === null ? null : heatedPlanOf(reaction, reactants, products, details);
+    return reaction.enthalpyKilojoulesPerMole === null ? null : heatedPlanOf(reaction, reactants, products, details, ambientKelvin);
 }
 
-function heatedPlanOf(reaction: ReactionSummary, reactants: readonly ReactionParticipant[], products: readonly ReactionParticipant[], details: DetailsById): GasPlan | null {
+function heatedPlanOf(
+    reaction: ReactionSummary,
+    reactants: readonly ReactionParticipant[],
+    products: readonly ReactionParticipant[],
+    details: DetailsById,
+    ambientKelvin: number
+): GasPlan | null {
     if (products.every((product) => product.formula === WATER) && reactants.every((reactant) => STEAM_REACTANTS.has(reactant.formula))) {
         return STEAM;
     }
 
     return (burns(reactants) ? combustionPlanOf(products) : null)
-        ?? ionicSmokeOf(reaction, reactants, products, details)
+        ?? ionicSmokeOf(reaction, reactants, products, details, ambientKelvin)
         ?? (products.some((product) => product.formula === WATER && product.state === 'Gas') ? STEAM : null);
 }
 
@@ -88,11 +94,17 @@ function combustionPlanOf(products: readonly ReactionParticipant[]): GasPlan | n
     };
 }
 
-function ionicSmokeOf(reaction: ReactionSummary, reactants: readonly ReactionParticipant[], products: readonly ReactionParticipant[], details: DetailsById): GasPlan | null {
+function ionicSmokeOf(
+    reaction: ReactionSummary,
+    reactants: readonly ReactionParticipant[],
+    products: readonly ReactionParticipant[],
+    details: DetailsById,
+    ambientKelvin: number
+): GasPlan | null {
     const solids = products.filter((product) => product.state === 'Solid' && details.get(product.substanceId)?.kind === 'Ionic');
     const fromGases = reactants.every((reactant) => reactant.state === 'Gas');
 
-    if (solids.length === 0 || (reaction.enthalpyKilojoulesPerMole ?? 0) >= 0 || !(fromGases || burnsAsVapor(reaction, reactants, products, details))) {
+    if (solids.length === 0 || (reaction.enthalpyKilojoulesPerMole ?? 0) >= 0 || !(fromGases || burnsAsVapor(reaction, reactants, products, details, ambientKelvin))) {
         return null;
     }
 
@@ -102,7 +114,13 @@ function ionicSmokeOf(reaction: ReactionSummary, reactants: readonly ReactionPar
     };
 }
 
-function burnsAsVapor(reaction: ReactionSummary, reactants: readonly ReactionParticipant[], products: readonly ReactionParticipant[], details: DetailsById): boolean {
+function burnsAsVapor(
+    reaction: ReactionSummary,
+    reactants: readonly ReactionParticipant[],
+    products: readonly ReactionParticipant[],
+    details: DetailsById,
+    ambientKelvin: number
+): boolean {
     const metal = reactants.find((reactant) => VAPORIZATION_BY_METAL.has(reactant.formula));
     const vaporization = metal === undefined ? undefined : VAPORIZATION_BY_METAL.get(metal.formula);
 
@@ -114,7 +132,7 @@ function burnsAsVapor(reaction: ReactionSummary, reactants: readonly ReactionPar
     const leftKilojoules = heatKilojoules - metal.coefficient * vaporization.vaporizationKilojoulesPerMole;
     const productAtoms = products.reduce((sum, product) => sum + product.coefficient * atomCountOf(details.get(product.substanceId)), 0);
 
-    return kelvinHeatedBy(leftKilojoules, productAtoms) >= vaporization.boilingKelvin;
+    return kelvinHeatedBy(leftKilojoules, productAtoms, ambientKelvin) >= vaporization.boilingKelvin;
 }
 
 function atomCountOf(detail: SubstanceDetail | undefined): number {

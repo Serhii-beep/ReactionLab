@@ -1,0 +1,78 @@
+<section class="equilibrium-panel" *transloco="let t; prefix: 'lab.conditions.equilibrium'" [attr.aria-label]="t('title')">
+    <h3 class="equilibrium-panel-title">{{ t('title') }}</h3>
+
+    <p class="equilibrium-panel-lean" [attr.data-lean]="leanKey()" aria-live="polite">
+        @switch (leanKey()) {
+            @case ('complete') {
+                {{ t('lean.complete') }}
+            }
+            @case ('reactants') {
+                {{ t('lean.reactants') }}
+            }
+            @case ('driven') {
+                {{ t('lean.driven.' + verdict()?.drivenUphillBy) }}
+            }
+            @case ('equilibrium') {
+                {{ t('lean.equilibrium', { percent: ((verdict()?.conversion ?? 0) * 100 | number: '1.0-0') }) }}
+            }
+        }
+    </p>
+
+    <p class="equilibrium-panel-numbers">
+        {{ t('gibbs', { value: (equilibrium().gibbsKilojoulesPerMole | number: '1.1-1'), constant: constant() }) }}
+        @if (crossoverCelsius() !== null) {
+            <span class="equilibrium-panel-crossover">{{ t('crossover', { celsius: (crossoverCelsius() | number: '1.0-0') }) }}</span>
+        }
+        @if (halfConversionCelsius() !== null) {
+            <span class="equilibrium-panel-crossover">{{ t('half', { celsius: (halfConversionCelsius() | number: '1.0-0') }) }}</span>
+        }
+    </p>
+
+    <app-temperature-chart
+        [kelvins]="focused().conditions.curve?.kelvins ?? []"
+        [series]="series()"
+        [minimum]="0"
+        [maximum]="100"
+        [valueTicks]="percentTicks"
+        [markerKelvin]="focused().kelvin"
+        [markerValue]="markerPercent()"
+        [label]="t('chart', { pressure: pressureLabels().current })"
+    ></app-temperature-chart>
+
+    <p class="equilibrium-panel-legend" aria-hidden="true">
+        <span class="equilibrium-panel-key" data-emphasis="primary">{{ t('atPressure', { pressure: pressureLabels().current }) }}</span>
+        <span class="equilibrium-panel-key" data-emphasis="secondary">{{ t('atPressure', { pressure: pressureLabels().tenfold }) }}</span>
+        <span class="equilibrium-panel-key" data-emphasis="tertiary">{{ t('atPressure', { pressure: pressureLabels().tenth }) }}</span>
+    </p>
+
+    <ul class="equilibrium-panel-hints">
+        <li>{{ t(equilibrium().enthalpyKilojoulesPerMole > 0 ? 'heat.toProducts' : 'heat.toReactants') }}</li>
+        <li>{{ t('pressure.' + pressureHint().key, { reactants: pressureHint().reactantGas, products: pressureHint().productGas }) }}</li>
+    </ul>
+
+    <h4 class="equilibrium-panel-subtitle">{{ t('bench') }}</h4>
+
+    <ul class="equilibrium-panel-amounts">
+        @for (amount of amounts(); track amount.participant.substanceId) {
+            <li class="equilibrium-panel-amount">
+                <rl-chem-formula class="equilibrium-panel-formula" [formula]="amount.participant.formula"></rl-chem-formula>
+                <span class="equilibrium-panel-bar" role="presentation">
+                    <span class="equilibrium-panel-fill" [style.inline-size.%]="amount.equilibriumShare"></span>
+                    <span class="equilibrium-panel-now" [style.inset-inline-start.%]="amount.nowShare"></span>
+                </span>
+                <span class="equilibrium-panel-moles">
+                    {{ t('amount', { now: (amount.now | number: '1.0-2'), settled: (amount.atEquilibrium | number: '1.0-2') }) }}
+                </span>
+                <button
+                    rlIconButton
+                    size="sm"
+                    [label]="t('addOne', { name: amount.participant.name })"
+                    [disabled]="run.active()"
+                    (click)="addOne(amount.participant)"
+                >
+                    <rl-icon [icon]="icons.plus" size="sm"></rl-icon>
+                </button>
+            </li>
+        }
+    </ul>
+</section>

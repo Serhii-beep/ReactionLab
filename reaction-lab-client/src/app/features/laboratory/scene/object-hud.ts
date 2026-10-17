@@ -7,7 +7,9 @@ import { Icon } from "../../../design-system/icons/icon";
 import { IconButton } from "../../../design-system/primitives/icon-button/icon-button";
 import { SubstanceSummary } from "../../../data/substances/substance";
 import { stateSymbol } from '../state-symbol';
-import { BenchScene, UnitAnchor } from '../../../engine/scene/bench-scene';
+import { BenchScene } from '../../../engine/scene/bench-scene';
+import { UnitAnchor } from '../../../engine/scene/unit-anchor';
+import { LabStates } from '../conditions/lab-states';
 
 export type ObjectHudMode = 'hover' | 'selected';
 
@@ -41,6 +43,7 @@ export class ObjectHud {
 
     protected readonly icons = icons;
     protected readonly stateSymbol = stateSymbol;
+    protected readonly labStates = inject(LabStates);
 
     private readonly toolbar = viewChild<ElementRef<HTMLElement>>('toolbar');
     private readonly caption = viewChild<ElementRef<HTMLElement>>('caption');

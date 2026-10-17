@@ -142,6 +142,17 @@ internal static partial class ChemistryExports
         return JsonSerializer.Serialize(Reference.Prediction.Predict(request), ChemistryJsonContext.Default.PredictionResult);
     }
 
+    [JSExport]
+    internal static string DescribeConditions(string requestJson)
+    {
+        var request = JsonSerializer.Deserialize(requestJson, ChemistryJsonContext.Default.ConditionsRequest)
+            ?? throw new JsonException("The conditions request is missing.");
+
+        return JsonSerializer.Serialize(
+            ConditionsDescriber.Describe(request, Reference.StandardStates),
+            ChemistryJsonContext.Default.ConditionsResult);
+    }
+
     private static Vector3[] PositionsOf(IReadOnlyList<float> flattened) =>
         [.. Enumerable.Range(0, flattened.Count / 3)
             .Select(atom => new Vector3(flattened[3 * atom], flattened[(3 * atom) + 1], flattened[(3 * atom) + 2]))];

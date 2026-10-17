@@ -6,6 +6,7 @@ import { Badge } from "../../../design-system/primitives/badge/badge";
 import { Spinner } from "../../../design-system/primitives/spinner/spinner";
 import { ChemEquation } from "../../../design-system/chemistry/chem-equation";
 import { BenchPrediction } from "./bench-prediction";
+import { LabConditionsStore } from "../../../state/lab-conditions-store";
 
 @Component({
     selector: 'app-predicted-reactions',
@@ -16,5 +17,6 @@ import { BenchPrediction } from "./bench-prediction";
 })
 export class PredictedReactions {
     protected readonly prediction = inject(BenchPrediction);
+    protected readonly lab = inject(LabConditionsStore);
     protected readonly icons = icons;
 }

@@ -18,6 +18,10 @@ import { EnergyDiagramPreference } from './energy-diagram-preference';
 import { energyProfileOf, energyVerdictOf } from './energy-profile';
 import { WaterThermometer } from './water-thermometer';
 import { waterCalorimetryOf } from './water-calorimetry';
+import { KELVIN_AT_ZERO_CELSIUS, STANDARD_KELVIN, STANDARD_KILOPASCALS } from '../../../state/lab-conditions-store';
+import { celsiusOf, formatAtmospheres } from '../conditions/conditions-format';
+import { waterBoilingKelvinAt } from '../conditions/water-boiling';
+import { RequestLocale } from '../../../data/i18n/request-locale';
 
 const STEPS: readonly ReactionRunStep[] = ['before', 'during', 'after'];
 
@@ -49,6 +53,7 @@ export class RunTransport {
     protected readonly diagram = inject(EnergyDiagramPreference);
 
     private readonly transloco = inject(TranslocoService);
+    private readonly locale = inject(RequestLocale);
 
     protected readonly icons = icons;
     protected readonly reactants = computed(() => termsOf(this.run.reaction(), 'Reactant'));
@@ -69,7 +74,18 @@ export class RunTransport {
         const reaction = this.run.reaction();
         const profile = this.profile();
 
-        return reaction === null || profile === null ? null : waterCalorimetryOf(reaction, profile);
+        const { kelvin, kilopascals } = this.run.conditions();
+
+        return reaction === null || profile === null
+            ? null
+            : waterCalorimetryOf(reaction, profile, kelvin - KELVIN_AT_ZERO_CELSIUS, waterBoilingKelvinAt(kilopascals) - KELVIN_AT_ZERO_CELSIUS);
+    });
+    protected readonly conditions = computed(() => {
+        const { kelvin, kilopascals } = this.run.conditions();
+
+        return kelvin === STANDARD_KELVIN && kilopascals === STANDARD_KILOPASCALS
+            ? null
+            : { celsius: celsiusOf(kelvin), atmospheres: formatAtmospheres(kilopascals, this.locale.lang()) };
     });
 }
 

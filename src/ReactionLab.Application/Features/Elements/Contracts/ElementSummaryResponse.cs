@@ -13,4 +13,6 @@ public sealed record ElementSummaryResponse(
     int? Group,
     string DisplayColor,
     decimal? Electronegativity,
-    decimal? CovalentRadiusPicometers);
+    decimal? CovalentRadiusPicometers,
+    decimal? MeltingPointKelvin,
+    decimal? BoilingPointKelvin);

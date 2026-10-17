@@ -9,6 +9,7 @@ interface ChemistryExports {
   DescribeSketch(requestJson: string): string;
   DetectSymmetry(requestJson: string): string;
   Predict(requestJson: string): string;
+  DescribeConditions(requestJson: string): string;
 }
 
 interface AssemblyExports {
@@ -72,6 +73,8 @@ function invoke(exports: ChemistryExports, request: ChemistryRequest): string | 
       return exports.DetectSymmetry(request.requestJson);
     case 'predict':
       return exports.Predict(request.requestJson);
+    case 'describeConditions':
+      return exports.DescribeConditions(request.requestJson);
   }
 }
 

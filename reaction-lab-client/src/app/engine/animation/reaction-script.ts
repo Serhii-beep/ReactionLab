@@ -42,6 +42,7 @@ export interface ReactionScript {
     readonly durationSeconds: number;
     readonly phases: PhaseSpansByName;
     readonly energetics: ReactionEnergetics;
+    readonly ambientKelvin: number;
     readonly massBySymbol: ReadonlyMap<string, number>;
     readonly randomSeed: string;
     readonly gas: GasPlan | null;

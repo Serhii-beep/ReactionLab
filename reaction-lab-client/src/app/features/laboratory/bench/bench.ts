@@ -14,6 +14,8 @@ import { SceneViewport } from '../scene/scene-viewport';
 import { ReactionRun } from '../run/reaction-run';
 import { RunTransport } from '../run/run-transport';
 import { reportHudCoverage } from '../hud-coverage';
+import { ConditionsAnalysis } from '../conditions/conditions-analysis';
+import { LabStates } from '../conditions/lab-states';
 
 @Component({
     selector: 'app-bench',
@@ -29,6 +31,8 @@ export class Bench {
     protected readonly ui = inject(UiStore);
     protected readonly viewport = inject(SceneViewport);
     protected readonly run = inject(ReactionRun);
+    protected readonly conditions = inject(ConditionsAnalysis);
+    protected readonly labStates = inject(LabStates);
 
     protected readonly icons = icons;
     protected readonly stateSymbol = stateSymbol;

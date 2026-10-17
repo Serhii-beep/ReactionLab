@@ -28,8 +28,6 @@ export class ReactionStore {
             .sort((first, second) => Number(second.readiness.runnable) - Number(first.readiness.runnable));
     });
 
-    readonly readyCount = computed(() => this.scored().filter((scored) => scored.readiness.runnable).length);
-
     constructor() {
         effect(() => this.reactions.available.set(this.workspace.substanceIds().filter((id) => !isUserMoleculeId(id))));
     }

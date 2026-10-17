@@ -16,6 +16,7 @@ export interface ReactionTrace {
     readonly breakingBonds: readonly RecordedBond[];
     readonly formingBonds: readonly RecordedBond[];
     readonly meeting: Vector3;
+    readonly ambientKelvin: number;
     readonly temperatureKelvinAt: (atomIndex: number, seconds: number) => number;
     readonly placeAt: (atomIndex: number, seconds: number, target: Vector3) => Vector3;
 }

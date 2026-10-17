@@ -1,0 +1,26 @@
+:host {
+    display: block;
+}
+
+.rate-panel {
+    display: grid;
+    gap: var(--space-2);
+}
+
+.rate-panel-title {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: var(--text-sm);
+    font-weight: 600;
+}
+
+.rate-panel-line {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: var(--text-xs);
+    line-height: var(--leading-normal);
+}
+
+.rate-panel-emphasis {
+    color: var(--text-primary);
+}

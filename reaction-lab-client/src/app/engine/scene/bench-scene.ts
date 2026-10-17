@@ -12,7 +12,7 @@ import { SelectionOutline } from "../objects/selection-outline";
 import { layoutBench, LayoutUnit, PlacedAtom, PlacedBond, smallestRadiusOf } from "./bench-layout";
 import { BenchStage } from "./bench-stage";
 import { Lod } from "../resources/geometry-cache";
-import { projectedRadius, worldPerPixel } from "../core/projection";
+import { worldPerPixel } from "../core/projection";
 import { distanceFor, framingFor } from "../core/camera-framing";
 import { LodController } from "../performance/lod-controller";
 import { ReactionDirector } from "../animation/reaction-director";
@@ -23,6 +23,8 @@ import { ReactionEffects } from "../effects/reaction-effects";
 import { QualityLevel } from "../performance/quality-governor";
 import { RunCamera } from "../cinematography/run-camera";
 import { LensShift } from "../core/lens-shift";
+import { UnitAnchor, unitAnchorOf } from "./unit-anchor";
+import { BenchAmbient, ROOM_AMBIENT, settleInto } from "./bench-ambient";
 
 export interface BenchSceneCollaborators {
     readonly context: EngineContext;
@@ -41,18 +43,8 @@ export interface BenchSceneCollaborators {
     readonly lensShift: LensShift;
 }
 
-export interface UnitAnchor {
-    readonly centerX: number;
-    readonly centerY: number;
-    readonly radiusPixels: number;
-    readonly viewportWidth: number;
-    readonly viewportHeight: number;
-    readonly onScreen: boolean;
-}
-
 const OUTLINE_PIXELS = 2.5;
 const FOCUS_MARGIN = 2.4;
-const OFFSET_MARGIN = 1.5;
 const REFERENCE_HEIGHT = 900;
 const REFERENCE_WIDTH = 1600;
 
@@ -62,6 +54,7 @@ export class BenchScene implements Disposable {
     private bounds = new Box3();
     private sphereByUnitId: ReadonlyMap<string, Sphere> = new Map();
     private motion: ReactionMotion | null = null;
+    private ambient: BenchAmbient = ROOM_AMBIENT;
     private ink: LabelInk | null = null;
     private viewportWidth = REFERENCE_WIDTH;
     private viewportHeight = REFERENCE_HEIGHT;
@@ -101,6 +94,14 @@ export class BenchScene implements Disposable {
         this.needsRender = true;
     }
 
+    setAmbient(ambient: BenchAmbient): void {
+        this.ambient = ambient;
+
+        if (this.motion === null) {
+            this.show({ atoms: this.atoms, bonds: this.bonds, latticeBonds: [], sphereByUnitId: this.sphereByUnitId });
+        }
+    }
+
     setUnits(units: readonly LayoutUnit[], animated: boolean): void {
         const layout = layoutBench(units);
         
@@ -111,7 +112,7 @@ export class BenchScene implements Disposable {
     }
 
     beginRun(script: ReactionScript, animated: boolean): void {
-        const motion = new ReactionMotion(script, layoutBench(script.unitsBefore), layoutBench(script.unitsAfter));
+        const motion = new ReactionMotion(script, layoutBench(script.unitsBefore, script.ambientKelvin), layoutBench(script.unitsAfter, script.ambientKelvin));
         const opening = motion.frameAt(0);
         const { effects, runCamera } = this.collaborators;
 
@@ -177,21 +178,7 @@ export class BenchScene implements Disposable {
     anchorFor(unitId: string): UnitAnchor | null {
         const sphere = this.sphereByUnitId.get(unitId);
 
-        if (!sphere) {
-            return null;
-        }
-
-        const camera = this.collaborators.context.camera;
-        const ndc = this.projectedCenter.copy(sphere.center).project(camera);
-
-        return {
-            centerX: ((ndc.x + 1) / 2) * this.viewportWidth,
-            centerY: ((1 - ndc.y) / 2) * this.viewportHeight,
-            radiusPixels: projectedRadius(sphere.radius, camera.position.distanceTo(sphere.center), camera.fov, this.viewportHeight),
-            viewportWidth: this.viewportWidth,
-            viewportHeight: this.viewportHeight,
-            onScreen: ndc.z < 1 && Math.abs(ndc.x) <= OFFSET_MARGIN && Math.abs(ndc.y) <= OFFSET_MARGIN
-        };
+        return sphere ? unitAnchorOf(sphere, this.collaborators.context.camera, this.viewportWidth, this.viewportHeight, this.projectedCenter) : null;
     }
 
     refreshLod(): void {
@@ -264,6 +251,11 @@ export class BenchScene implements Disposable {
         this.atoms = staged.atoms;
         this.bonds = staged.latticeBonds.length === 0 ? staged.bonds : [...staged.bonds, ...staged.latticeBonds];
         this.sphereByUnitId = staged.sphereByUnitId;
+
+        if (this.motion === null) {
+            settleInto(this.ambient, this.atoms);
+        }
+
         atoms.render(this.atoms, this.lodInUse);
         bonds.render(this.bonds, this.lodInUse);
         outline.render(this.atoms, this.bonds);
@@ -273,7 +265,7 @@ export class BenchScene implements Disposable {
 
         if (differentAtoms && this.ink) {
             labels.render(this.atoms, this.bonds, this.ink);
-        } else if (this.motion !== null) {
+        } else {
             labels.refreshSticks(this.bonds);
             labels.refreshInk();
         }

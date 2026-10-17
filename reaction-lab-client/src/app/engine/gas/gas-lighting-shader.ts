@@ -2,9 +2,10 @@ import { VOXEL_OR_EXIT } from "./gas-grid";
 
 export const VISIBLE_VAPOR = `
     uniform vec2 uCondensationKelvin;
+    uniform float uAmbientKelvin;
 
     float visibleVapor(vec4 scalars) {
-        return scalars.g * (1.0 - smoothstep(uCondensationKelvin.y, uCondensationKelvin.x, scalars.r));
+        return scalars.g * (1.0 - smoothstep(uCondensationKelvin.y, uCondensationKelvin.x, uAmbientKelvin + scalars.r));
     }
 
     float scatteringOf(vec4 scalars) {

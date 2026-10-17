@@ -41,12 +41,13 @@ internal static class ReferenceData
         ]);
     }
 
-    public static List<SpeciesEnthalpy> ReadSpeciesEnthalpy(string path) =>
+    public static List<SpeciesStandardState> ReadSpeciesStandardStates(string path) =>
     [
-        .. Document(path).GetProperty("species").EnumerateArray().Select(entry => new SpeciesEnthalpy(
+        .. Document(path).GetProperty("species").EnumerateArray().Select(entry => new SpeciesStandardState(
             entry.GetProperty("formula").GetString()!,
             Enum.Parse<Phase>(entry.GetProperty("phase").GetString()!),
-            entry.GetProperty("enthalpy").GetDecimal()))
+            entry.GetProperty("enthalpy").GetDecimal(),
+            entry.TryGetProperty("entropy", out var entropy) ? entropy.GetDecimal() : null))
     ];
 
     public static List<AqueousIon> ReadAqueousIons(string path) =>

@@ -33,6 +33,9 @@ import { builderShortcuts, isSingleKeyShortcut } from './builder/builder-shortcu
 import { BuilderKeysPreference } from './builder/builder-keys-preference';
 import { BenchPrediction } from './prediction/bench-prediction';
 import { CatalogMatch } from './builder/catalog-match';
+import { ConditionsAnalysis } from './conditions/conditions-analysis';
+import { ConditionsSheet } from './conditions/conditions-sheet';
+import { LabStates } from './conditions/lab-states';
 
 @Component({
     selector: 'app-laboratory',
@@ -53,10 +56,11 @@ import { CatalogMatch } from './builder/catalog-match';
         PeriodicTableSheet,
         SceneCanvas,
         AboutSheet,
-        BuilderHud
+        BuilderHud,
+        ConditionsSheet
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    providers: [SceneViewport, ReactionRun, SketchEditor, SketchAnalysis, CatalogMatch, MoleculeBuilder, BenchPrediction],
+    providers: [SceneViewport, ReactionRun, SketchEditor, SketchAnalysis, CatalogMatch, MoleculeBuilder, BenchPrediction, ConditionsAnalysis, LabStates],
     host: {
         '(document:keydown)': 'onKeydown($event)'
     }
@@ -74,6 +78,7 @@ export class Laboratory {
     private readonly announcer = inject(LiveAnnouncer);
     private readonly transloco = inject(TranslocoService);
     private readonly run = inject(ReactionRun);
+    private readonly conditionsAnalysis = inject(ConditionsAnalysis);
 
     private previousBench: readonly WorkspaceItem[] = [];
     private announcedReactions = '';
@@ -107,13 +112,13 @@ export class Laboratory {
         });
 
         effect(() => {
-            if (this.reactions.isLoading() || this.workspace.isEmpty()) {
+            if (this.reactions.isLoading() || this.workspace.isEmpty() || !this.conditionsAnalysis.verdictsSettled()) {
                 return;
             }
 
             const message = this.transloco.translate('lab.announce.reactions', {
                 count: this.reactions.scored().length,
-                ready: this.reactions.readyCount()
+                ready: this.conditionsAnalysis.runnableCount()
             });
 
             if (message !== untracked(() => this.announcedReactions)) {

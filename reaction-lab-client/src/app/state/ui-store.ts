@@ -9,6 +9,7 @@ export class UiStore {
     readonly aboutOpen = signal(false);
     readonly aboutSubstanceId = signal<string | null>(null);
     readonly builderOpen = signal(false);
+    readonly conditionsOpen = signal(false);
 
     openPalette(): void {
         this.paletteOpen.set(true);
@@ -24,9 +25,21 @@ export class UiStore {
         this.builderOpen.set(false);
     }
 
+    openConditions(): void {
+        this.reactionsOpen.set(false);
+        this.tableOpen.set(false);
+        this.aboutOpen.set(false);
+        this.conditionsOpen.set(true);
+    }
+
+    closeConditions(): void {
+        this.conditionsOpen.set(false);
+    }
+
     openReactions(): void {
         this.tableOpen.set(false);
         this.aboutOpen.set(false);
+        this.conditionsOpen.set(false);
         this.reactionsOpen.set(true);
     }
 
@@ -37,6 +50,7 @@ export class UiStore {
 
         this.reactionsOpen.set(false);
         this.aboutOpen.set(false);
+        this.conditionsOpen.set(false);
         this.tableOpen.set(true);
     }
 
@@ -44,6 +58,7 @@ export class UiStore {
         this.aboutSubstanceId.set(substanceId);
         this.reactionsOpen.set(false);
         this.tableOpen.set(false);
+        this.conditionsOpen.set(false);
         this.aboutOpen.set(true);
     }
 
@@ -63,6 +78,7 @@ export class UiStore {
         this.reactionsOpen.set(false);
         this.tableOpen.set(false);
         this.aboutOpen.set(false);
+        this.conditionsOpen.set(false);
         this.builderOpen.set(false);
     }
 }

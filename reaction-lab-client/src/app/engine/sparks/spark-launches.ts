@@ -1,7 +1,7 @@
 import { Vector3 } from "three";
 import { ReactionTrace, RecordedBond } from "../animation/reaction-trace";
 import { RandomSource, seededRandom, standardNormalSource } from "../core/seeded-random";
-import { FLAME_CEILING_KELVIN } from "../core/matter";
+import { FLAME_CEILING_KELVIN, ROOM_TEMPERATURE_KELVIN } from "../core/matter";
 import { DRAPER_POINT_KELVIN } from "../rendering/incandescence";
 import { SPARK_SLOTS, SparkLaunch } from "./spark-launch";
 import { SPARK_STYLES, SparkStyle, ValueSpread } from "./spark-styles";
@@ -125,7 +125,7 @@ class SparkPlanner {
         for (let seconds = schedule.collisionStartSeconds; seconds <= schedule.durationSeconds; seconds += EMBER_SCAN_SECONDS) {
             const kelvin = temperatureKelvinAt(atomIndex, seconds);
 
-            if (this.uniform() < style.countAtFullHeat * hotnessOf(kelvin) * EMBER_SCAN_SECONDS) {
+            if (this.uniform() < style.countAtFullHeat * hotnessOf(kelvin, this.trace.ambientKelvin) * EMBER_SCAN_SECONDS) {
                 this.shedEmber(style, atomIndex, seconds, kelvin);
             }
         }
@@ -195,7 +195,7 @@ class SparkPlanner {
     }
 
     private countOf(style: SparkStyle, kelvin: number): number {
-        return Math.round(style.countAtFullHeat * hotnessOf(kelvin));
+        return Math.round(style.countAtFullHeat * hotnessOf(kelvin, this.trace.ambientKelvin));
     }
 
     private placesAt(bond: RecordedBond, seconds: number): { readonly first: Vector3; readonly second: Vector3 } {
@@ -243,6 +243,8 @@ class SparkPlanner {
     }
 }
 
-function hotnessOf(kelvin: number): number {
-    return Math.min(Math.max((kelvin - DRAPER_POINT_KELVIN) / (FLAME_CEILING_KELVIN - DRAPER_POINT_KELVIN), 0), 1);
+function hotnessOf(kelvin: number, ambientKelvin: number): number {
+    const roomStartKelvin = kelvin - ambientKelvin + ROOM_TEMPERATURE_KELVIN;
+
+    return Math.min(Math.max((roomStartKelvin - DRAPER_POINT_KELVIN) / (FLAME_CEILING_KELVIN - DRAPER_POINT_KELVIN), 0), 1);
 }

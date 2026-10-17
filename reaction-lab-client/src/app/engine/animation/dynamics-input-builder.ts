@@ -41,6 +41,7 @@ export function buildDynamicsInput(sources: DynamicsSources): DynamicsInput {
         approachArcByUnitId: approachArcsOf(gathering, sources.restSphereByUnitId),
         schedule: sources.schedule,
         energetics: script.energetics,
+        ambientKelvin: script.ambientKelvin,
         randomSeed: script.randomSeed
     };
 }

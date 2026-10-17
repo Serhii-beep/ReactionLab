@@ -36,6 +36,9 @@ export interface ReactionSummary {
     readonly effectPresetKey: string | null;
     readonly animationDurationMilliseconds: number | null;
     readonly isExothermic: boolean | null;
+    readonly temperatureKelvin: number | null;
+    readonly pressureKilopascals: number | null;
+    readonly catalyst: string | null;
     readonly tags: readonly string[];
     readonly participants: readonly ReactionParticipant[];
 }

@@ -36,6 +36,7 @@ export interface LayoutUnit {
 export interface PlacedAtom extends UnitAtom {
     readonly unitId: string;
     readonly substanceId: string;
+    phase: Phase;
     radius: number;
     temperatureKelvin: number;
 }
@@ -92,7 +93,7 @@ const ROW_LIMIT = 8;
 const RING_SPREAD = 1.85;
 export const FLOOR_CLEARANCE = 0.12;
 
-export function layoutBench(units: readonly LayoutUnit[]): BenchLayout {
+export function layoutBench(units: readonly LayoutUnit[], ambientKelvin = ROOM_TEMPERATURE_KELVIN): BenchLayout {
     const extents = units.map((unit) => measureAtoms(unit.atoms));
     const groupsByBlock = blocksBySubstance(units).map((block) => placementGroupsOf(units, extents, block));
     const packs = groupsByBlock.map((groups) => packUnits(groups.map((group) => group.extent.radius), GAP));
@@ -110,7 +111,7 @@ export function layoutBench(units: readonly LayoutUnit[]): BenchLayout {
             const firstBond = bench.bonds.length;
 
             for (const index of group.unitIndices) {
-                placeUnits(units[index], extents[index], offset, bench);
+                placeUnits(units[index], extents[index], offset, bench, ambientKelvin);
             }
 
             if (units[group.unitIndices[0]].crystallite) {
@@ -206,8 +207,8 @@ function placementGroupsOf(units: readonly LayoutUnit[], extents: readonly UnitE
     return unitIndices.map((index) => ({ extent: extents[index], unitIndices: [index] }));
 }
 
-function placeUnits(unit: LayoutUnit, extent: UnitExtent, offset: Vector3, bench: BenchUnderConstruction): void {
-    const placed = unit.atoms.map((atom) => place(atom, unit, offset));
+function placeUnits(unit: LayoutUnit, extent: UnitExtent, offset: Vector3, bench: BenchUnderConstruction, ambientKelvin: number): void {
+    const placed = unit.atoms.map((atom) => place(atom, unit, offset, ambientKelvin));
     const centroid = extent.center.clone().add(offset);
 
     for (const atom of placed) {
@@ -223,8 +224,8 @@ function placeUnits(unit: LayoutUnit, extent: UnitExtent, offset: Vector3, bench
     bench.sphereByUnitId.set(unit.id, new Sphere(centroid.clone(), extent.radius));
 }
 
-function place(atom: UnitAtom, unit: LayoutUnit, offset: Vector3): PlacedAtom {
-    return { ...atom, position: atom.position.clone().add(offset), unitId: unit.id, substanceId: unit.substanceId, temperatureKelvin: ROOM_TEMPERATURE_KELVIN };
+function place(atom: UnitAtom, unit: LayoutUnit, offset: Vector3, ambientKelvin: number): PlacedAtom {
+    return { ...atom, position: atom.position.clone().add(offset), unitId: unit.id, substanceId: unit.substanceId, temperatureKelvin: ambientKelvin };
 }
 
 function measureAtoms(atoms: readonly UnitAtom[]): UnitExtent {

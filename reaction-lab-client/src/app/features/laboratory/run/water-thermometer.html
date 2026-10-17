@@ -11,7 +11,7 @@
         })"
     >
         <rect class="water-thermometer-glass" x="17" y="4" width="10" height="118" rx="5"></rect>
-        <path class="water-thermometer-scale" [attr.d]="scaleTickPath"></path>
+        <path class="water-thermometer-scale" [attr.d]="scaleTickPath()"></path>
         <path class="water-thermometer-start" [attr.d]="startTickPath()"></path>
         <rect class="water-thermometer-liquid" [attr.data-tone]="tone()" x="19.5" [attr.y]="liquidTop()" width="5" [attr.height]="bulbCenterTop - liquidTop()" rx="2.5"></rect>
         <circle class="water-thermometer-bulb" [attr.data-tone]="tone()" cx="22" [attr.cy]="bulbCenterTop" r="8"></circle>

@@ -13,5 +13,8 @@ public sealed record ReactionSummaryResponse(
     bool? IsExothermic,
     string? EffectPresetKey,
     int? AnimationDurationMilliseconds,
+    decimal? TemperatureKelvin,
+    decimal? PressureKilopascals,
+    string? Catalyst,
     IReadOnlyList<string> Tags,
     IReadOnlyList<ReactionParticipantResponse> Participants);

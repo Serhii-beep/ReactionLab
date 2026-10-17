@@ -4,7 +4,7 @@
         id="laboratory"
         class="lab-viewport"
         tabindex="-1"
-        [class.lab-viewport-shifted]="ui.aboutOpen()"
+        [class.lab-viewport-shifted]="ui.aboutOpen() || ui.conditionsOpen()"
         (dropped)="onDropped($event)"
     >
         @if (ui.builderOpen()) {
@@ -33,6 +33,7 @@
 
     <app-periodic-table-sheet></app-periodic-table-sheet>
     <app-about-sheet></app-about-sheet>
+    <app-conditions-sheet></app-conditions-sheet>
 
     <rl-drag-preview>
         @if (dragged(); as substance) {
@@ -54,6 +55,7 @@
         [moleculesLabel]="t('palette.molecules')"
         [actionsLabel]="t('palette.actions')"
         [buildLabel]="t('palette.build')"
+        [conditionsLabel]="t('palette.conditions')"
     >
         <span class="lab-palette-hint">
             <kbd rlKbd><rl-icon [icon]="icons.arrowUp" size="sm" [label]="t('palette.up')"></rl-icon></kbd>

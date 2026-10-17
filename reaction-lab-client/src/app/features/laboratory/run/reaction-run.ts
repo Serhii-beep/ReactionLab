@@ -15,9 +15,17 @@ import { readiness } from "../../../data/reactions/reaction-readiness";
 import { prefersReducedMotion } from "../../../core/platform/reduced-motion";
 import { tap } from "rxjs";
 import { dynamicsScheduleOf } from "../../../engine/animation/dynamics/dynamics-schedule";
+import { LabConditionsStore, STANDARD_KELVIN, STANDARD_KILOPASCALS } from "../../../state/lab-conditions-store";
+import { LabStates } from "../conditions/lab-states";
+import { ConditionsAnalysis } from "../conditions/conditions-analysis";
 
 export type ReactionRunStatus = 'idle' | 'preparing' | 'playing' | 'paused' | 'finished';
 export type ReactionRunStep = 'before' | 'during' | 'after';
+
+export interface RunConditions {
+    readonly kelvin: number;
+    readonly kilopascals: number;
+}
 
 export interface ReactionRunDriver {
     start(script: ReactionScript): void;
@@ -35,6 +43,7 @@ export class ReactionRun {
     readonly elapsedSeconds = signal(0);
     readonly stepped = signal(false);
     readonly step = signal<ReactionRunStep>('before');
+    readonly conditions = signal<RunConditions>({ kelvin: STANDARD_KELVIN, kilopascals: STANDARD_KILOPASCALS });
 
     readonly active = computed(() => this.status() !== 'idle');
     readonly currentPhase = computed(() => phaseAt(this.timeline(), this.elapsedSeconds()));
@@ -46,6 +55,9 @@ export class ReactionRun {
     private readonly notifications = inject(NotificationService);
     private readonly announcer = inject(LiveAnnouncer);
     private readonly transloco = inject(TranslocoService);
+    private readonly lab = inject(LabConditionsStore);
+    private readonly labStates = inject(LabStates);
+    private readonly conditionsAnalysis = inject(ConditionsAnalysis);
     private readonly view = inject(DOCUMENT).defaultView ?? window;
 
     private driver: ReactionRunDriver | null = null;
@@ -80,12 +92,15 @@ export class ReactionRun {
     }
 
     start(reaction: ReactionSummary): void {
-        if (this.status() !== 'idle' || !readiness(reaction, this.workspace.counts()).runnable) {
+        const blocked = this.conditionsAnalysis.verdicts().get(reaction.id)?.blocksRun !== false;
+
+        if (this.status() !== 'idle' || blocked || !readiness(reaction, this.workspace.counts()).runnable) {
             return;
         }
 
         this.ui.dismiss();
         this.reaction.set(reaction);
+        this.conditions.set({ kelvin: this.lab.kelvin(), kilopascals: this.lab.kilopascals() });
         this.timeline.set(reactionTimeline(runSecondsOf(reaction), activationBarrierOf(reaction)));
         this.status.set('preparing');
         this.elapsedSeconds.set(0);
@@ -207,7 +222,9 @@ export class ReactionRun {
             entriesBefore: this.workspace.entries(),
             entriesAfter: this.workspace.entriesAfter(outcome),
             details: this.details.loaded(),
-            elements: this.elements.all.value()
+            elements: this.elements.all.value(),
+            ambientKelvin: this.conditions().kelvin,
+            statesBySubstanceId: this.labStates.overrides()
         });
 
         this.script = script;

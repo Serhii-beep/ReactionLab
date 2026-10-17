@@ -77,6 +77,8 @@ internal static class ElementQueries
                 element.DisplayColor,
                 element.Electronegativity,
                 element.Radii,
+                element.MeltingPoint,
+                element.BoilingPoint,
                 element.Translations
             })
             .ToListAsync(cancellationToken);
@@ -92,6 +94,8 @@ internal static class ElementQueries
             row.Position.Group,
             row.DisplayColor.Value,
             row.Electronegativity?.Pauling,
-            row.Radii?.CovalentPicometers));
+            row.Radii?.CovalentPicometers,
+            row.MeltingPoint?.Kelvin,
+            row.BoilingPoint?.Kelvin));
     }
 }

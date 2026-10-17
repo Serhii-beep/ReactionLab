@@ -1,4 +1,4 @@
-import { FLAME_CEILING_KELVIN, ROOM_TEMPERATURE_KELVIN } from "../core/matter";
+import { FLAME_CEILING_KELVIN } from "../core/matter";
 import { energyKeptAt } from "./dynamics/bath-cooling";
 import { DynamicsSchedule } from "./dynamics/dynamics-schedule";
 import { BOLTZMANN_KILOJOULES_PER_MOLE_KELVIN } from "./dynamics/langevin-bath";
@@ -12,6 +12,7 @@ export interface EnergyLedgerSources {
     readonly breakingAtomIndices: ReadonlySet<number>;
     readonly formingAtomIndices: ReadonlySet<number>;
     readonly productUnitIds: readonly string[];
+    readonly ambientKelvin: number;
 }
 
 interface ReleaseShares {
@@ -33,7 +34,7 @@ export class EnergyLedger {
     }
 
     temperatureKelvinAt(atomIndex: number, seconds: number): number {
-        return Math.min(kelvinHeatedBy(this.energyAt(atomIndex, seconds), 1), FLAME_CEILING_KELVIN);
+        return Math.min(kelvinHeatedBy(this.energyAt(atomIndex, seconds), 1, this.sources.ambientKelvin), FLAME_CEILING_KELVIN);
     }
 
     private energyAt(atomIndex: number, seconds: number): number {
@@ -53,8 +54,8 @@ export class EnergyLedger {
     }
 }
 
-export function kelvinHeatedBy(kilojoulesPerMole: number, atomCount: number): number {
-    return ROOM_TEMPERATURE_KELVIN + kilojoulesPerMole / (atomCount * DULONG_PETIT_KILOJOULES_PER_MOLE_KELVIN);
+export function kelvinHeatedBy(kilojoulesPerMole: number, atomCount: number, startKelvin: number): number {
+    return startKelvin + kilojoulesPerMole / (atomCount * DULONG_PETIT_KILOJOULES_PER_MOLE_KELVIN);
 }
 
 export function shownEnthalpyOf(energetics: ReactionEnergetics): number | null {

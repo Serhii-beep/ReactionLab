@@ -35,6 +35,12 @@
 
             <span class="lab-palette-name">{{ item.label }}</span>
         </span>
+    } @else if (item.value.kind === 'conditions') {
+        <span class="lab-palette-row">
+            <rl-icon [icon]="icons.thermometer" size="sm"></rl-icon>
+
+            <span class="lab-palette-name">{{ item.label }}</span>
+        </span>
     } @else if (item.value.kind === 'element') {
         <span class="lab-palette-row">
             <span class="lab-palette-symbol">{{ item.value.element.symbol }}</span>

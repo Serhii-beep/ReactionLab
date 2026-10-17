@@ -1,0 +1,91 @@
+:host {
+    display: block;
+}
+
+.temperature-chart {
+    display: grid;
+    gap: var(--space-1);
+    padding-inline: 4.75rem 1.75rem;
+    color: var(--text-tertiary);
+    font-family: var(--font-mono);
+    font-size: var(--text-2xs);
+}
+
+.temperature-chart-plot {
+    position: relative;
+    block-size: 7.5rem;
+    border-block-end: 0.0625rem solid var(--border-strong);
+    border-inline-start: 0.0625rem solid var(--border-strong);
+}
+
+.temperature-chart-drawing {
+    position: absolute;
+    inset: 0;
+    inline-size: 100%;
+    block-size: 100%;
+    overflow: visible;
+}
+
+.temperature-chart-grid {
+    stroke: var(--border-subtle);
+    stroke-width: 1;
+}
+
+.temperature-chart-line {
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+
+    &[data-emphasis='primary'] {
+        stroke: var(--accent);
+        stroke-width: 2.25;
+    }
+
+    &[data-emphasis='secondary'] {
+        stroke: var(--text-tertiary);
+        stroke-width: 1.25;
+        stroke-dasharray: 5 4;
+    }
+
+    &[data-emphasis='tertiary'] {
+        stroke: var(--text-tertiary);
+        stroke-width: 1.25;
+        stroke-dasharray: 1 4;
+    }
+}
+
+.temperature-chart-cursor {
+    position: absolute;
+    inset-block: 0;
+    inline-size: 0;
+    border-inline-start: 0.0625rem dashed var(--accent);
+    opacity: 0.6;
+}
+
+.temperature-chart-marker {
+    position: absolute;
+    inline-size: 0.625rem;
+    block-size: 0.625rem;
+    border: 0.125rem solid var(--surface-raised);
+    border-radius: var(--radius-full);
+    background: var(--accent);
+    transform: translate(-50%, -50%);
+}
+
+.temperature-chart-value {
+    position: absolute;
+    inset-inline-end: calc(100% + var(--space-1));
+    white-space: nowrap;
+    transform: translateY(-50%);
+}
+
+.temperature-chart-axis {
+    position: relative;
+    block-size: 1rem;
+}
+
+.temperature-chart-temperature {
+    position: absolute;
+    white-space: nowrap;
+    transform: translateX(-50%);
+}

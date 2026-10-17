@@ -35,6 +35,11 @@
           <span>{{ t('build') }}</span>
         </button>
 
+        <button rlButton variant="ghost" size="sm" [attr.aria-pressed]="ui.conditionsOpen()" (click)="ui.conditionsOpen() ? ui.closeConditions() : ui.openConditions()">
+          <rl-icon [icon]="icons.thermometer" size="sm"></rl-icon>
+          <span>{{ lab.isStandard() ? t('conditions') : t('conditionsValue', { celsius: lab.celsius(), atmospheres: atmospheres() }) }}</span>
+        </button>
+
         <rl-language-toggle [label]="t('language.label')"></rl-language-toggle>
 
         <rl-theme-toggle

@@ -24,7 +24,7 @@
             <rl-chem-formula
                 class="object-hud-formula"
                 [formula]="substance.formula"
-                [state]="stateSymbol(substance.stateAtRoomTemperature)"
+                [state]="stateSymbol(labStates.stateOf(substance))"
             ></rl-chem-formula>
             <span class="object-hud-name">{{ substance.name }}</span>
             @if (count() > 1) {

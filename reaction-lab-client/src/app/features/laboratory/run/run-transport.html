@@ -71,6 +71,9 @@
 
         <div class="run-transport-line">
             <rl-chem-equation [reactants]="reactants()" [products]="products()" [arrowLabel]="t('yields')"></rl-chem-equation>
+            @if (conditions(); as conditions) {
+                <span class="run-transport-conditions">{{ t('conditions', conditions) }}</span>
+            }
             <span class="run-transport-clock">
                 @if (run.status() === 'finished') {
                     {{ t('finished', { duration: (run.timeline().durationSeconds | number: '1.1-1') }) }}

@@ -1,6 +1,5 @@
 import { Sphere, Vector3 } from "three";
 import { BenchLayout, LayoutUnit, PlacedAtom, PlacedBond } from "../scene/bench-layout";
-import { ROOM_TEMPERATURE_KELVIN } from "../core/matter";
 import { latticeContactsOf } from "../scene/lattice-contacts";
 import { seededRandom, standardNormalSource } from "../core/seeded-random";
 import { DynamicsSchedule } from "./dynamics/dynamics-schedule";
@@ -14,6 +13,7 @@ export interface CrystalGrowthSources {
     readonly solution: Sphere;
     readonly schedule: DynamicsSchedule;
     readonly randomSeed: string;
+    readonly ambientKelvin: number;
 }
 
 interface CarriedBond {
@@ -66,7 +66,7 @@ export class CrystalGrowth {
 
     constructor(private readonly sources: CrystalGrowthSources) {
         const offset = latticeOffsetOf(sources);
-        const standIns = sources.plan.standIns.map((unit) => standInOf(unit, offset));
+        const standIns = sources.plan.standIns.map((unit) => standInOf(unit, offset, sources.ambientKelvin));
         const realAtoms = sources.after.atoms.filter((atom) => atom.substanceId === sources.plan.substanceId);
 
         this.atoms = standIns.flatMap((standIn) => standIn.atoms);
@@ -99,14 +99,14 @@ export class CrystalGrowth {
     }
 }
 
-function standInOf(unit: LayoutUnit, offset: Vector3): StandIn {
+function standInOf(unit: LayoutUnit, offset: Vector3, ambientKelvin: number): StandIn {
     const atoms: PlacedAtom[] = unit.atoms.map((atom) => ({
         ...atom,
         position: atom.position.clone().add(offset),
         unitId: unit.id,
         substanceId: unit.substanceId,
         radius: atom.radius,
-        temperatureKelvin: ROOM_TEMPERATURE_KELVIN
+        temperatureKelvin: ambientKelvin
     }));
     const restCenter = centroidOf(atoms);
 

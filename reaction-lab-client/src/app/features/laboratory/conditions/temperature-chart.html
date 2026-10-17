@@ -1,0 +1,34 @@
+<div class="temperature-chart" role="img" [attr.aria-label]="label()">
+    <div class="temperature-chart-plot">
+        <svg class="temperature-chart-drawing" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+            @for (tick of valueOffsets(); track tick.label) {
+                <line class="temperature-chart-grid" x1="0" x2="100" [attr.y1]="tick.offset" [attr.y2]="tick.offset" vector-effect="non-scaling-stroke"></line>
+            }
+
+            @for (path of paths(); track path.key) {
+                <path class="temperature-chart-line" [attr.data-emphasis]="path.emphasis" [attr.d]="path.drawing" vector-effect="non-scaling-stroke"></path>
+            }
+        </svg>
+
+        <span class="temperature-chart-cursor" [style.inset-inline-start.%]="cursorOffset()" aria-hidden="true"></span>
+
+        @if (markerOffset() !== null) {
+            <span
+                class="temperature-chart-marker"
+                [style.inset-inline-start.%]="cursorOffset()"
+                [style.inset-block-start.%]="markerOffset()"
+                aria-hidden="true"
+            ></span>
+        }
+
+        @for (tick of valueOffsets(); track tick.label) {
+            <span class="temperature-chart-value" [style.inset-block-start.%]="tick.offset" aria-hidden="true">{{ tick.label }}</span>
+        }
+    </div>
+
+    <div class="temperature-chart-axis" aria-hidden="true">
+        @for (tick of temperatureTicks; track tick.label) {
+            <span class="temperature-chart-temperature" [style.inset-inline-start.%]="tick.offset">{{ tick.label }}</span>
+        }
+    </div>
+</div>

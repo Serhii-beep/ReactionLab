@@ -67,6 +67,11 @@ export class Select<T> {
 
         if (action) {
             event.preventDefault();
+
+            if (event.key === 'Escape' && this.overlay.isOpen()) {
+                event.stopPropagation();
+            }
+
             action();
 
             return;

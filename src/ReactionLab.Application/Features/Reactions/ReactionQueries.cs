@@ -88,6 +88,7 @@ internal static class ReactionQueries
                 reaction.IsReversible,
                 reaction.Energetics,
                 reaction.Visualization,
+                reaction.Conditions,
                 reaction.Translations,
                 reaction.Tags,
                 Participants = reaction.Participants
@@ -114,6 +115,9 @@ internal static class ReactionQueries
             row.Energetics.IsExothermic,
             row.Visualization.PresetKey,
             row.Visualization.DurationMilliseconds,
+            row.Conditions.Temperature?.Kelvin,
+            row.Conditions.Pressure?.Kilopascals,
+            row.Conditions.Catalyst,
             row.Tags,
             Map(row.Participants, locale)));
     }

@@ -1,5 +1,4 @@
 import { Vector3 } from "three";
-import { ROOM_TEMPERATURE_KELVIN } from "../core/matter";
 import { progressBetween } from "../animation/easing";
 import { MAX_GAS_OBSTACLES, MAX_GAS_SOURCES } from "./gas-grid";
 import { GasObstacle, GasRun, GasSource } from "./gas-run";
@@ -58,8 +57,8 @@ export class GasFeed {
     }
 
     sourcesAt(seconds: number): GasSource[] {
-        const { atomCount, temperatureKelvinAt } = this.trace;
-        const warmAtoms: WarmAtom[] = Array.from({ length: atomCount }, (_, atomIndex) => ({ atomIndex, riseKelvin: temperatureKelvinAt(atomIndex, seconds) - ROOM_TEMPERATURE_KELVIN }));
+        const { atomCount, temperatureKelvinAt, ambientKelvin } = this.trace;
+        const warmAtoms: WarmAtom[] = Array.from({ length: atomCount }, (_, atomIndex) => ({ atomIndex, riseKelvin: temperatureKelvinAt(atomIndex, seconds) - ambientKelvin }));
         const meanRiseKelvin = warmAtoms.reduce((sum, { riseKelvin }) => sum + riseKelvin, 0) / Math.max(atomCount, 1);
         const formedSources = [...this.flameSourcesAt(seconds), ...this.vaporSourcesAt(seconds), ...this.particleSourcesAt(seconds, meanRiseKelvin)];
 

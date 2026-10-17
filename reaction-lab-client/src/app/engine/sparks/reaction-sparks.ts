@@ -43,8 +43,8 @@ export class ReactionSparks implements Disposable, GasRider {
         this.launchCount = launches.length;
         this.lastSparkSeconds = launches.reduce((latest, launch) => Math.max(latest, launch.seconds + launch.coolingSeconds * LIFE_PER_COOLING), 0);
 
-        if (launches.length > 0) {
-            this.field.load(launches);
+        if (trace !== null && launches.length > 0) {
+            this.field.load(launches, trace.ambientKelvin);
         }
 
         this.restart();

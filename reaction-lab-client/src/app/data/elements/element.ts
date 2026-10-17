@@ -23,4 +23,6 @@ export interface ElementSummary {
     readonly displayColor: string;
     readonly electronegativity: number | null;
     readonly covalentRadiusPicometers: number | null;
+    readonly meltingPointKelvin: number | null;
+    readonly boilingPointKelvin: number | null;
 }

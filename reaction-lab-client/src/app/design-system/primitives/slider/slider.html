@@ -3,6 +3,7 @@
         type="range"
         class="rl-slider-input"
         [attr.aria-label]="label()"
+        [attr.aria-valuetext]="valueText() ?? null"
         [style.--rl-slider-fill]="fill()"
         [min]="min()"
         [max]="max()"

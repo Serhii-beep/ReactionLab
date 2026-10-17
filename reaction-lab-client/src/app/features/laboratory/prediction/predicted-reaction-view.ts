@@ -3,6 +3,7 @@ import { ReactionSummary } from "../../../data/reactions/reaction";
 import { EquationTerm } from "../../../design-system/chemistry/chem-equation-side";
 import { ChemicalState } from "../../../design-system/chemistry/chem-formula";
 import { BadgeTone } from "../../../design-system/primitives/badge/badge";
+import { KELVIN_AT_ZERO_CELSIUS } from "../../../state/lab-conditions-store";
 
 export interface PredictedReactionView {
     readonly signature: string;
@@ -24,7 +25,6 @@ interface SignatureTerm {
 
 const HIGH_CONFIDENCE = 0.85;
 const MEDIUM_CONFIDENCE = 0.5;
-const KELVIN_AT_ZERO_CELSIUS = 273.15;
 
 const STATE_SYMBOLS: Readonly<Record<StandardState, ChemicalState>> = {
     Solid: 's',

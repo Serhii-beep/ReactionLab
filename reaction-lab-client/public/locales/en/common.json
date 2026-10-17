@@ -30,7 +30,9 @@
         "language": {
             "label": "Language"
         },
-        "build": "Build"
+        "build": "Build",
+        "conditions": "Conditions",
+        "conditionsValue": "Conditions: {celsius} °C, {atmospheres} atm"
     },
     "lab": {
         "reactions": {
@@ -41,13 +43,28 @@
             "stockFailed": "Could not add the missing substances",
             "none": "Nothing in the catalog involves these substances",
             "ready": "Ready",
+            "checking": "Checking the conditions",
             "needs": "Needs",
             "yields": "yields",
             "failed": "Could not load the reactions",
             "failedDetail": "The catalog did not respond",
             "retry": "Retry",
             "close": "Close",
-            "summary": "{count, plural, one {# reaction involves} other {# reactions involve}} what is on the bench · {ready, plural, =0 {none can run yet} one {# can run now} other {# can run now}}"
+            "summary": "{count, plural, one {# reaction involves} other {# reactions involve}} what is on the bench · {ready, plural, =0 {none can run yet} one {# can run now} other {# can run now}}",
+            "wontGo": "Won't go at {celsius} °C",
+            "fix": {
+                "heat": "Heat to {celsius} °C",
+                "cool": "Cool to {celsius} °C",
+                "standard": "Back to 25 °C and 1 atm"
+            },
+            "settles": "Settles at {percent}% converted",
+            "boils": "The water boils at these conditions",
+            "drivenBy": {
+                "current": "The current drives it uphill",
+                "light": "Light drives it uphill"
+            },
+            "rate": "{factor} times the rate at 25 °C",
+            "conditions": "Conditions for {name}"
         },
         "bench": {
             "removeOne": "Remove one {name}",
@@ -81,7 +98,8 @@
             "enter": "Enter",
             "molecules": "My molecules",
             "actions": "Actions",
-            "build": "Build a molecule"
+            "build": "Build a molecule",
+            "conditions": "Set the temperature and pressure"
         },
         "table": {
             "label": "Periodic table",
@@ -201,6 +219,7 @@
                 "separation": "Separation"
             },
             "onBench": "on the bench",
+            "conditions": "at {celsius} °C and {atmospheres} atm",
             "enthalpy": "ΔH {value} kJ/mol",
             "exothermic": "exothermic",
             "endothermic": "endothermic",
@@ -309,6 +328,7 @@
             "yields": "yields",
             "confidence": "{percent}% confidence",
             "heat": "Needs heating above {celsius} °C",
+            "heated": "Hot enough: needs above {celsius} °C",
             "enthalpy": "ΔH ≈ {sign}{kilojoules} kJ/mol, estimated",
             "activation": "Eₐ ≈ {kilojoules} kJ/mol, estimated",
             "rules": {
@@ -344,6 +364,67 @@
                     "hydrogencarbonate": "Heating breaks the hydrogencarbonate into a carbonate, water and carbon dioxide.",
                     "hydroxide": "Heating drives water out of the hydroxide and leaves the oxide."
                 }
+            }
+        },
+        "conditions": {
+            "title": "Conditions",
+            "close": "Close",
+            "controls": "Temperature and pressure",
+            "temperature": "Temperature",
+            "pressure": "Pressure",
+            "celsius": "{value} °C",
+            "atmospheres": "{value} atm",
+            "reset": "Back to 25 °C and 1 atm",
+            "reaction": "Reaction",
+            "yields": "yields",
+            "catalogTemperature": "The catalog runs it at {celsius} °C.",
+            "catalogCatalyst": "Catalyst: {catalyst}. It speeds up both directions alike, so it brings equilibrium sooner without moving it.",
+            "useCatalog": "Use the catalog's conditions",
+            "failed": "The chemistry engine could not work out these conditions.",
+            "working": "Working out the conditions",
+            "empty": "Put substances on the bench to pick a reaction.",
+            "footnote": "Worked out from ΔG = ΔH − TΔS with ΔH and ΔS held at their 25 °C values and gases treated as ideal. Far from 25 °C, and at high pressure, read the numbers as estimates.",
+            "equilibrium": {
+                "title": "Where it settles",
+                "lean": {
+                    "complete": "Goes to completion: the products win outright.",
+                    "reactants": "Won't go at these conditions: the reactants stay.",
+                    "driven": {
+                        "current": "Won't go on its own: ΔG is positive, so the electric current has to drive it.",
+                        "light": "Won't go on its own: ΔG is positive, so light has to drive it."
+                    },
+                    "equilibrium": "Settles at equilibrium with {percent}% converted."
+                },
+                "gibbs": "ΔG = {value} kJ/mol · K = {constant}",
+                "crossover": "ΔG changes sign at {celsius} °C",
+                "half": "Half of it converts at {celsius} °C at this pressure",
+                "chart": "Share converted from 0 to 1500 °C at {pressure} atm, ten times that, and a tenth of it",
+                "atPressure": "{pressure} atm",
+                "heat": {
+                    "toProducts": "Heating favors the products: the forward reaction absorbs heat.",
+                    "toReactants": "Heating favors the reactants: the forward reaction releases heat."
+                },
+                "pressure": {
+                    "toProducts": "Raising the pressure favors the products: {reactants} mol of gas become {products}.",
+                    "toReactants": "Raising the pressure favors the reactants: {reactants} mol of gas become {products}.",
+                    "balanced": "Pressure does not move it: {reactants} mol of gas on each side.",
+                    "noGas": "Pressure barely matters: no gas takes part."
+                },
+                "bench": "Your bench at equilibrium",
+                "amount": "{now} → {settled}",
+                "addOne": "Add one {name}",
+                "addFailed": "Could not add {name}",
+                "inWater": "Reactions in solution are not worked out here yet: the reference data has no entropies for ions in water.",
+                "missingEntropy": "The reference data has no standard entropy for {formulas}, so where it settles is not worked out."
+            },
+            "rate": {
+                "title": "How fast",
+                "barrier": "Activation energy Eₐ = {value} kJ/mol",
+                "share": "At {celsius} °C, 1 collision in {count} clears the barrier",
+                "factor": "{factor} times the rate at 25 °C",
+                "collisions": "Each gas molecule collides {factor} times as often as at 25 °C and 1 atm",
+                "chart": "Share of collisions that clear the barrier, from 0 to 1500 °C",
+                "noBarrier": "The catalog has no activation energy for this reaction, so its rate is not worked out."
             }
         }
     }

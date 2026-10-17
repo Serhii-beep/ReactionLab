@@ -34,28 +34,63 @@
             } @else if (rows().length === 0) {
                 <rl-empty-state [icon]="icons.search" [heading]="t('none')"></rl-empty-state>
             } @else {
-                <p class="reactions-sheet-summary">{{ t('summary', { count: rows().length, ready: store.readyCount()}) }}</p>
+                <p class="reactions-sheet-summary">{{ t('summary', { count: rows().length, ready: analysis.runnableCount() }) }}</p>
 
                 <div class="reactions-sheet-grid" [attr.aria-busy]="store.isLoading() || null">
                     @for (row of rows(); track row.reaction.id) {
-                        <article class="reactions-sheet-card" [attr.data-ready]="row.readiness.runnable || null">
+                        <article class="reactions-sheet-card" [attr.data-ready]="(row.readiness.runnable && !row.blocked) || null">
                             <rl-chem-equation
                                 [reactants]="row.reactants"
                                 [products]="row.products"
-                                [reversible]="row.reaction.isReversible"
+                                [reversible]="row.reaction.isReversible || row.verdict?.lean === 'equilibrium'"
                                 [arrowLabel]="t('yields')"
                             ></rl-chem-equation>
 
+                            @if (row.note !== null || row.rateFactor !== null) {
+                                <p class="reactions-sheet-conditions">
+                                    @switch (row.note) {
+                                        @case ('boils') {
+                                            <span rlBadge tone="warning">{{ t('boils') }}</span>
+                                        }
+                                        @case ('wontGo') {
+                                            <span rlBadge tone="warning">{{ t('wontGo', { celsius: lab.celsius() }) }}</span>
+                                        }
+                                        @case ('current') {
+                                            <span rlBadge tone="info">{{ t('drivenBy.current') }}</span>
+                                        }
+                                        @case ('light') {
+                                            <span rlBadge tone="info">{{ t('drivenBy.light') }}</span>
+                                        }
+                                        @case ('settles') {
+                                            <span rlBadge tone="info">{{ t('settles', { percent: (row.conversionPercent | number: '1.0-0') }) }}</span>
+                                        }
+                                    }
+
+                                    @if (row.rateFactor; as factor) {
+                                        <span class="reactions-sheet-rate">{{ t('rate', { factor }) }}</span>
+                                    }
+                                </p>
+                            }
+
                             <div class="reactions-sheet-foot">
                                 @if (row.readiness.runnable) {
-                                    <span rlBadge tone="success">{{ t('ready') }}</span>
+                                    @if (row.verdict === null) {
+                                        <span rlBadge>{{ t('checking') }}</span>
+                                    } @else if (row.verdict?.fix; as fix) {
+                                        <button rlButton variant="secondary" size="sm" (click)="applyFix(fix); conditionsButton.focus()">
+                                            <rl-icon [icon]="icons.thermometer" size="sm"></rl-icon>
+                                            {{ t('fix.' + fix.kind, { celsius: celsiusOf(fix.kelvin) }) }}
+                                        </button>
+                                    } @else if (!row.blocked) {
+                                        <span rlBadge tone="success">{{ t('ready') }}</span>
+                                    }
 
                                     <button
                                         rlButton
                                         variant="primary"
                                         size="sm"
                                         class="reactions-sheet-action"
-                                        [disabled]="run.active()"
+                                        [disabled]="run.active() || row.blocked"
                                         (click)="run.start(row.reaction)"
                                     >
                                         <rl-icon [icon]="icons.play" size="sm"></rl-icon>
@@ -86,6 +121,16 @@
                                         </button>
                                     }
                                 }
+
+                                <button
+                                    #conditionsButton
+                                    rlIconButton
+                                    size="sm"
+                                    [label]="t('conditions', { name: row.reaction.name })"
+                                    (click)="analysis.focus(row.reaction.id)"
+                                >
+                                    <rl-icon [icon]="icons.thermometer" size="sm"></rl-icon>
+                                </button>
                             </div>
                         </article>
                     }

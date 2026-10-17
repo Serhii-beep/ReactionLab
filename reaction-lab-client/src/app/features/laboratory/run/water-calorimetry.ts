@@ -7,6 +7,7 @@ export interface WaterCalorimetry {
     readonly waterMilliliters: number;
     readonly startCelsius: number;
     readonly endCelsius: number;
+    readonly boilingCelsius: number;
     readonly profile: EnergyProfile;
 }
 
@@ -17,16 +18,14 @@ export interface WaterReading {
 }
 
 export const FREEZING_CELSIUS = 0;
-export const BOILING_CELSIUS = 100;
 
 const REACTION_MOLES = 0.05;
 const WATER_MILLILITERS = 100;
 const WATER_GRAMS_PER_MILLILITER = 1;
 const WATER_JOULES_PER_GRAM_KELVIN = 4.184;
 const JOULES_PER_KILOJOULE = 1000;
-const STARTING_CELSIUS = 20;
 
-export function waterCalorimetryOf(reaction: ReactionSummary, profile: EnergyProfile): WaterCalorimetry | null {
+export function waterCalorimetryOf(reaction: ReactionSummary, profile: EnergyProfile, startCelsius: number, boilingCelsius: number): WaterCalorimetry | null {
     const energetics = reactionEnergeticsOf(reaction);
 
     if (!energetics.inWater || energetics.activationSource !== 'heat') {
@@ -39,19 +38,20 @@ export function waterCalorimetryOf(reaction: ReactionSummary, profile: EnergyPro
     return {
         reactionMoles: REACTION_MOLES,
         waterMilliliters: WATER_MILLILITERS,
-        startCelsius: STARTING_CELSIUS,
-        endCelsius: STARTING_CELSIUS + releasedJoules / waterJoulesPerKelvin,
+        startCelsius,
+        endCelsius: startCelsius + releasedJoules / waterJoulesPerKelvin,
+        boilingCelsius,
         profile
     };
 }
 
 export function waterReadingAt(calorimetry: WaterCalorimetry, seconds: number): WaterReading {
-    const { startCelsius, endCelsius, profile } = calorimetry;
+    const { startCelsius, endCelsius, boilingCelsius, profile } = calorimetry;
     const celsius = startCelsius + (endCelsius - startCelsius) * enthalpyShareAt(profile, seconds);
 
     return {
-        celsius: Math.min(Math.max(celsius, FREEZING_CELSIUS), BOILING_CELSIUS),
-        boiling: celsius >= BOILING_CELSIUS,
-        freezing: celsius <= FREEZING_CELSIUS
+        celsius: Math.min(Math.max(celsius, FREEZING_CELSIUS), boilingCelsius),
+        boiling: celsius >= boilingCelsius,
+        freezing: celsius < FREEZING_CELSIUS
     };
 }

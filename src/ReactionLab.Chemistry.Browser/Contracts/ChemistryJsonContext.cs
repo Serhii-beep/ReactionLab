@@ -22,4 +22,6 @@ namespace ReactionLab.Chemistry.Browser.Contracts;
 [JsonSerializable(typeof(SymmetryResult))]
 [JsonSerializable(typeof(PredictionRequest))]
 [JsonSerializable(typeof(PredictionResult))]
+[JsonSerializable(typeof(ConditionsRequest))]
+[JsonSerializable(typeof(ConditionsResult))]
 internal sealed partial class ChemistryJsonContext : JsonSerializerContext;

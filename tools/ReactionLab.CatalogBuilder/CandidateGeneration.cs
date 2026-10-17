@@ -34,7 +34,7 @@ internal static class CandidateGeneration
             new PhaseResolution(table, ReadStandardStates(catalog)),
             new EnergyEstimator(
                 new StandardStateTable(
-                    ReferenceData.ReadSpeciesEnthalpy(thermodynamics),
+                    ReferenceData.ReadSpeciesStandardStates(thermodynamics),
                     ReferenceData.ReadAqueousIons(thermodynamics),
                     table),
                 ReferenceData.ReadBarriers(thermodynamics)));

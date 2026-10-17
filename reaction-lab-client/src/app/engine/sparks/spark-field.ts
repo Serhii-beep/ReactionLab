@@ -22,7 +22,7 @@ interface StepUniforms {
     readonly uAtlas: IUniform<Vector2>;
     readonly uSeconds: IUniform<number>;
     readonly uDt: IUniform<number>;
-    readonly uRoomKelvin: IUniform<number>;
+    readonly uAmbientKelvin: IUniform<number>;
 }
 
 const COPY_STATE_SHADER = `
@@ -98,7 +98,9 @@ export class SparkField implements Disposable {
         return [this.material, this.copyState];
     }
 
-    load(launches: readonly SparkLaunch[]): void {
+    load(launches: readonly SparkLaunch[], ambientKelvin: number): void {
+        this.uniforms.uAmbientKelvin.value = ambientKelvin;
+
         for (let slot = 0; slot < SPARK_SLOTS; slot++) {
             this.loadSlot(slot, launches[slot]);
         }
@@ -223,7 +225,7 @@ function stepUniformsOf(launchPlaces: Texture, launchMotions: Texture, launchTra
         uAtlas: { value: new Vector2(1, 1) },
         uSeconds: { value: 0 },
         uDt: { value: 0 },
-        uRoomKelvin: { value: ROOM_TEMPERATURE_KELVIN }
+        uAmbientKelvin: { value: ROOM_TEMPERATURE_KELVIN }
     };
 }
 

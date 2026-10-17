@@ -11,11 +11,13 @@ internal sealed record ChemistryReference(
     IReadOnlyDictionary<string, decimal> AtomicMasses,
     IReadOnlyDictionary<string, int> Periods,
     IReadOnlyDictionary<string, AtomicGeometry> AtomicGeometry,
+    StandardStateTable StandardStates,
     PredictionModel Prediction)
 {
     public static ChemistryReference From(IReadOnlyList<ElementEntry> elements, ChemistryReferenceDocument document)
     {
         var ions = IonTableOf(document.Ions);
+        var standardStates = StandardStateTableOf(document.Thermodynamics, ions);
         var series = new ActivitySeries(
             [.. document.ActivitySeries.Metals.Select(metal => new ActiveMetal(metal.Symbol, metal.Charge, metal.Water))]);
 
@@ -31,6 +33,7 @@ internal sealed record ChemistryReference(
                     entry.TripleBondRadiusPicometers,
                     entry.AromaticBondRadiusPicometers),
                 StringComparer.Ordinal),
+            standardStates,
             new PredictionModel(
                 ions,
                 new ReactionPredictor(
@@ -42,7 +45,7 @@ internal sealed record ChemistryReference(
                     new SynthesisRule(series, ions),
                     new DecompositionRule(ions)
                 ]),
-                EnergyEstimatorOf(document.Thermodynamics, ions)));
+                EnergyEstimatorOf(document.Thermodynamics, standardStates)));
     }
 
     private static IonTable IonTableOf(IonDataset dataset) =>
@@ -57,14 +60,20 @@ internal sealed record ChemistryReference(
                 dataset.Behaviors.UnstableAcidAnions,
                 dataset.Behaviors.HydrolyzingAnions));
 
-    private static EnergyEstimator EnergyEstimatorOf(ThermodynamicsDataset dataset, IonTable ions) =>
+    private static StandardStateTable StandardStateTableOf(ThermodynamicsDataset dataset, IonTable ions) =>
         new(
-            new StandardStateTable(
-                [.. dataset.Species.Select(species =>
-                    new SpeciesEnthalpy(species.Formula, species.Phase, species.FormationEnthalpyKilojoulesPerMole))],
-                [.. dataset.AqueousIons.Select(ion =>
-                    new AqueousIon(new Ion(ion.Formula, ion.Charge), ion.FormationEnthalpyKilojoulesPerMole))],
-                ions),
+            [.. dataset.Species.Select(species => new SpeciesStandardState(
+                species.Formula,
+                species.Phase,
+                species.FormationEnthalpyKilojoulesPerMole,
+                species.StandardEntropyJoulesPerMoleKelvin))],
+            [.. dataset.AqueousIons.Select(ion =>
+                new AqueousIon(new Ion(ion.Formula, ion.Charge), ion.FormationEnthalpyKilojoulesPerMole))],
+            ions);
+
+    private static EnergyEstimator EnergyEstimatorOf(ThermodynamicsDataset dataset, StandardStateTable standardStates) =>
+        new(
+            standardStates,
             [.. dataset.Barriers.Select(barrier => new ActivationBarrier(
                 barrier.Family,
                 barrier.IntrinsicKilojoulesPerMole,

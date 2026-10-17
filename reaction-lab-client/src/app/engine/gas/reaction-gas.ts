@@ -55,6 +55,11 @@ export class ReactionGas implements Disposable {
     begin(run: GasRun | null): void {
         this.run = run;
         this.feed = run === null ? null : new GasFeed(run);
+
+        if (run !== null) {
+            this.solver.mist.uAmbientKelvin.value = run.trace.ambientKelvin;
+        }
+
         this.restart();
     }
 

@@ -34,7 +34,7 @@
                     >
                         <rl-chem-formula
                             [formula]="item.substance.formula"
-                            [state]="stateSymbol(item.substance.stateAtRoomTemperature)"
+                            [state]="stateSymbol(labStates.stateOf(item.substance))"
                         ></rl-chem-formula>
 
                         <span class="bench-count">&times;{{ item.count }}</span>
@@ -53,7 +53,7 @@
             <rl-icon class="bench-peek-icon" [icon]="icons.chevronUp" size="sm"></rl-icon>
             <span>{{ t('peek', { count: reactions.scored().length }) }}</span>
 
-            @if (reactions.readyCount(); as ready) {
+            @if (conditions.runnableCount(); as ready) {
                 <span class="bench-peek-ready">{{ t('ready', { count: ready }) }}</span>
             }
         </button>

@@ -21,6 +21,7 @@ export function buildReactionTrace(sources: DynamicsSources, bondChanges: BondCh
         breakingBonds: recordedBondsOf(bondChanges.breaking, sources.reactantIndexByAtom),
         formingBonds: recordedBondsOf(bondChanges.forming, sources.productIndexByAtom),
         meeting: sources.gathering.meeting.clone(),
+        ambientKelvin: script.ambientKelvin,
         temperatureKelvinAt: (atomIndex, seconds) => ledger.temperatureKelvinAt(atomIndex, seconds),
         placeAt: (atomIndex, seconds, target) => recordedPositionAt(recording, atomIndex, seconds, target)
             .lerp(restPlaces[atomIndex], smoothProgressBetween(landing.start, landing.end, seconds))

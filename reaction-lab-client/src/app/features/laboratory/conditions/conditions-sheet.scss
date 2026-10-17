@@ -1,0 +1,58 @@
+:host {
+    display: contents;
+}
+
+.conditions-sheet {
+    display: grid;
+    align-content: start;
+    gap: var(--space-5);
+    overflow: hidden auto;
+}
+
+.conditions-sheet-controls {
+    display: grid;
+    gap: var(--space-3);
+}
+
+.conditions-sheet-control {
+    display: grid;
+    grid-template-columns: 5.5rem 1fr 5rem;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.conditions-sheet-label {
+    color: var(--text-secondary);
+    font-size: var(--text-xs);
+}
+
+.conditions-sheet-value {
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    text-align: end;
+}
+
+.conditions-sheet-reset {
+    justify-self: start;
+}
+
+.conditions-sheet-reaction {
+    display: grid;
+    justify-items: start;
+    gap: var(--space-2);
+}
+
+.conditions-sheet-catalog,
+.conditions-sheet-note,
+.conditions-sheet-footnote {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: var(--text-xs);
+    line-height: var(--leading-normal);
+}
+
+.conditions-sheet-footnote {
+    color: var(--text-tertiary);
+    font-size: var(--text-2xs);
+}

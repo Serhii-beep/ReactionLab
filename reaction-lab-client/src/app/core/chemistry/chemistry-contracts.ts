@@ -113,6 +113,63 @@ export interface PredictionResult {
     readonly invalidFormula?: string;
 }
 
+export interface ConditionsParticipantEntry {
+    readonly formula: string;
+    readonly phase: StandardState;
+    readonly stoichiometricNumber: number;
+    readonly moles: number;
+}
+
+export interface ConditionsReactionEntry {
+    readonly participants: readonly ConditionsParticipantEntry[];
+    readonly activationEnergyKilojoulesPerMole?: number;
+}
+
+export interface ConditionsRequest {
+    readonly kelvin: number;
+    readonly kilopascals: number;
+    readonly reactions: readonly ConditionsReactionEntry[];
+    readonly includeCurves?: boolean;
+}
+
+export interface ReactionKinetics {
+    readonly log10RateFactor: number;
+    readonly log10ShareOverBarrier: number;
+    readonly log10CollisionFactor?: number;
+}
+
+export interface ReactionEquilibrium {
+    readonly enthalpyKilojoulesPerMole: number;
+    readonly entropyJoulesPerMoleKelvin: number;
+    readonly gibbsKilojoulesPerMole: number;
+    readonly log10EquilibriumConstant: number;
+    readonly crossoverKelvin?: number;
+    readonly phases: readonly StandardState[];
+    readonly conversion: number;
+    readonly molesAtEquilibrium: readonly number[];
+    readonly halfConversionKelvin?: number;
+}
+
+export interface ConditionsCurve {
+    readonly kelvins: readonly number[];
+    readonly conversions?: readonly (number | null)[];
+    readonly conversionsAtTenfoldPressure?: readonly (number | null)[];
+    readonly conversionsAtTenthPressure?: readonly (number | null)[];
+    readonly log10SharesOverBarrier?: readonly number[];
+}
+
+export interface ReactionConditions {
+    readonly kinetics?: ReactionKinetics;
+    readonly equilibrium?: ReactionEquilibrium;
+    readonly curve?: ConditionsCurve;
+    readonly speciesWithoutEntropy: readonly string[];
+}
+
+export interface ConditionsResult {
+    readonly thermalEnergyKilojoulesPerMole: number;
+    readonly reactions: readonly ReactionConditions[];
+}
+
 export type ChemistryRequest =
     | { readonly operation: 'loadReferenceData'; readonly elementsJson: string; readonly referenceJson: string }
     | { readonly operation: 'parseFormula'; readonly formula: string }
@@ -121,7 +178,8 @@ export type ChemistryRequest =
     | { readonly operation: 'assemble'; readonly requestJson: string }
     | { readonly operation: 'describeSketch'; readonly requestJson: string }
     | { readonly operation: 'detectSymmetry'; readonly requestJson: string }
-    | { readonly operation: 'predict'; readonly requestJson: string };
+    | { readonly operation: 'predict'; readonly requestJson: string }
+    | { readonly operation: 'describeConditions'; readonly requestJson: string };
 
 export interface ChemistryResultByOperation {
     readonly parseFormula: FormulaResult;
@@ -131,6 +189,7 @@ export interface ChemistryResultByOperation {
     readonly describeSketch: SketchDescription;
     readonly detectSymmetry: SymmetryResult;
     readonly predict: PredictionResult;
+    readonly describeConditions: ConditionsResult;
 }
 
 export type ChemistryWorkerRequest = ChemistryRequest & { readonly id: number };

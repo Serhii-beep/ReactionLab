@@ -4,7 +4,7 @@ import { ElementsClient } from '../../data/elements/elements-client';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { catchError, combineLatest, defer, filter, first, map, Observable, shareReplay, switchMap, throwError } from 'rxjs';
 import { ChemistryWorkerConnection } from './chemistry-worker-connection';
-import { AssemblyResult, AtomEntry, BalanceResult, BondEntry, ChemistryRequest, ChemistryResultByOperation, ElementEntry, FormulaResult, MolarMassResult, PredictionResult, SketchAtomEntry, SketchDescription, StandardState, SymmetryResult } from './chemistry-contracts';
+import { AssemblyResult, AtomEntry, BalanceResult, BondEntry, ChemistryRequest, ChemistryResultByOperation, ConditionsRequest, ConditionsResult, ElementEntry, FormulaResult, MolarMassResult, PredictionResult, SketchAtomEntry, SketchDescription, StandardState, SymmetryResult } from './chemistry-contracts';
 
 @Service()
 export class ChemistryEngine {
@@ -42,6 +42,10 @@ export class ChemistryEngine {
 
     predict(formulas: readonly string[], standardStates: Readonly<Record<string, StandardState>>): Observable<PredictionResult> {
         return this.request({ operation: 'predict', requestJson: JSON.stringify({ formulas, standardStates }) });
+    }
+
+    describeConditions(request: ConditionsRequest): Observable<ConditionsResult> {
+        return this.request({ operation: 'describeConditions', requestJson: JSON.stringify(request) });
     }
 
     private request<Operation extends keyof ChemistryResultByOperation>(

@@ -1,4 +1,3 @@
-import { ROOM_TEMPERATURE_KELVIN } from "../core/matter";
 import { INCANDESCENCE_SHADER } from "../rendering/incandescence-texture";
 
 export const GLOW_CELL_VOXELS = 4;
@@ -32,9 +31,9 @@ export const GLOW_CELLS_SHADER = `
     uniform float uParticleAbsorption;
     uniform float uVoxelSize;
     uniform vec3 uFlameLight;
+    uniform float uAmbientKelvin;
 
     const int CELL_VOXELS = ${GLOW_CELL_VOXELS};
-    const float ROOM_KELVIN = ${ROOM_TEMPERATURE_KELVIN.toFixed(1)};
     const float FLAME_BODY = 0.12;
 
     void main() {
@@ -47,7 +46,7 @@ export const GLOW_CELLS_SHADER = `
                 for (int row = 0; row < CELL_VOXELS; row++) {
                     for (int column = 0; column < CELL_VOXELS; column++) {
                         vec4 scalars = fetchVoxel(uScalars, cell * CELL_VOXELS + ivec3(column, row, layer));
-                        vec3 glow = incandescence(ROOM_KELVIN + scalars.r);
+                        vec3 glow = incandescence(uAmbientKelvin + scalars.r);
 
                         emission += uFlameLight * FLAME_BODY * (1.0 - exp(-scalars.b)) + scalars.a * uMistExtinction * glow;
                         absorption += scalars.a * uMistExtinction * uParticleAbsorption;

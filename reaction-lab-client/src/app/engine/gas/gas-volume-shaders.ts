@@ -1,6 +1,5 @@
 import { GAS_GRID_SHADER } from "./gas-grid";
 import { VISIBLE_VAPOR } from "./gas-lighting-shader";
-import { ROOM_TEMPERATURE_KELVIN } from "../core/matter";
 import { INCANDESCENCE_SHADER } from "../rendering/incandescence-texture";
 
 export const VOLUME_VERTEX_SHADER = `
@@ -42,7 +41,6 @@ export const VOLUME_MARCH_SHADER = `
 
     varying vec2 vUv;
 
-    const float ROOM_KELVIN = ${ROOM_TEMPERATURE_KELVIN.toFixed(1)};
     const int MAX_STEPS = 320;
     const float STEP_VOXELS = 1.5;
     const float EMPTY_STRIDE = 2.0;
@@ -120,7 +118,7 @@ export const VOLUME_MARCH_SHADER = `
         float stepTransmittance = exp(-mist * uMistExtinction * segment);
         vec3 albedo = mix(vec3(1.0), uParticleAlbedo, particleShare);
         vec3 inscatter = (uKeyLight * lighting.r * phase + uSkyLight * lighting.a) * albedo + uFlameLight * lighting.g * FLAME_GLOW_SHARE;
-        vec3 particleGlow = particleShare * incandescence(ROOM_KELVIN + scalars.r);
+        vec3 particleGlow = particleShare * incandescence(uAmbientKelvin + scalars.r);
 
         light.rgb += light.a * (uFlameLight * glow * segment + (inscatter + particleGlow) * (1.0 - stepTransmittance));
         light.a *= stepTransmittance;

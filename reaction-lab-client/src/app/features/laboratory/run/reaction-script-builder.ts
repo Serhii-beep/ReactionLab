@@ -1,7 +1,7 @@
 import { ElementSummary } from "../../../data/elements/element";
 import { ReactionSummary } from "../../../data/reactions/reaction";
 import { ReactionPhase, ReactionTimeline } from "../../../data/reactions/reaction-phases";
-import { SubstanceDetail } from "../../../data/substances/substance";
+import { MatterState, SubstanceDetail } from "../../../data/substances/substance";
 import { PhaseSpansByName, PhaseSpanSeconds, ReactionScript } from "../../../engine/animation/reaction-script";
 import { WorkspaceItem } from "../../../state/workspace-store";
 import { buildBenchUnits } from "../scene/bench-units";
@@ -14,6 +14,8 @@ export interface ScriptSources {
     readonly entriesAfter: readonly WorkspaceItem[];
     readonly details: ReadonlyMap<string, SubstanceDetail>;
     readonly elements: readonly ElementSummary[];
+    readonly ambientKelvin: number;
+    readonly statesBySubstanceId: ReadonlyMap<string, MatterState>;
 }
 
 export function buildReactionScript(reaction: ReactionSummary, timeline: ReactionTimeline, sources: ScriptSources): ReactionScript {
@@ -24,12 +26,13 @@ export function buildReactionScript(reaction: ReactionSummary, timeline: Reactio
         durationSeconds: timeline.durationSeconds,
         phases: phaseSpansOf(timeline),
         energetics: reactionEnergeticsOf(reaction),
+        ambientKelvin: sources.ambientKelvin,
         massBySymbol: new Map(sources.elements.map((element) => [element.symbol, element.mass])),
         randomSeed: reaction.id,
-        gas: gasPlanOf(reaction, sources.details, precipitate),
+        gas: gasPlanOf(reaction, sources.details, precipitate, sources.ambientKelvin),
         precipitate,
-        unitsBefore: buildBenchUnits(sources.entriesBefore, sources.details, sources.elements),
-        unitsAfter: buildBenchUnits(sources.entriesAfter, sources.details, sources.elements)
+        unitsBefore: buildBenchUnits(sources.entriesBefore, sources.details, sources.elements, sources.statesBySubstanceId),
+        unitsAfter: buildBenchUnits(sources.entriesAfter, sources.details, sources.elements, sources.statesBySubstanceId)
     };
 }
 

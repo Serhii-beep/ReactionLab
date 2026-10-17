@@ -1,0 +1,99 @@
+<ng-container *transloco="let t; prefix: 'lab.conditions'">
+    <rl-dialog
+        placement="end"
+        [(open)]="ui.conditionsOpen"
+        [modal]="false"
+        [label]="t('title')"
+        [closeLabel]="t('close')"
+        (keydown.escape)="$event.stopPropagation()"
+    >
+        <div class="conditions-sheet">
+            <section class="conditions-sheet-controls" [attr.aria-label]="t('controls')">
+                <div class="conditions-sheet-control">
+                    <span class="conditions-sheet-label">{{ t('temperature') }}</span>
+                    <rl-slider
+                        [label]="t('temperature')"
+                        [min]="0"
+                        [max]="hottestCelsius"
+                        [step]="celsiusStep"
+                        [value]="celsius()"
+                        [valueText]="t('celsius', { value: celsius() })"
+                        (valueChange)="setCelsius($event)"
+                    ></rl-slider>
+                    <span class="conditions-sheet-value" aria-hidden="true">{{ t('celsius', { value: celsius() }) }}</span>
+                </div>
+
+                <div class="conditions-sheet-control">
+                    <span class="conditions-sheet-label">{{ t('pressure') }}</span>
+                    <rl-slider
+                        [label]="t('pressure')"
+                        [min]="0"
+                        [max]="lastPressureStop"
+                        [step]="1"
+                        [value]="pressureStop()"
+                        [valueText]="t('atmospheres', { value: atmospheres() })"
+                        (valueChange)="setPressureStop($event)"
+                    ></rl-slider>
+                    <span class="conditions-sheet-value" aria-hidden="true">{{ t('atmospheres', { value: atmospheres() }) }}</span>
+                </div>
+
+                <button rlButton variant="ghost" size="sm" class="conditions-sheet-reset" (click)="lab.reset()">
+                    {{ t('reset') }}
+                </button>
+            </section>
+
+            @if (reaction(); as reaction) {
+                <section class="conditions-sheet-reaction" [attr.aria-label]="t('reaction')">
+                    <rl-select [options]="reactionOptions()" [label]="t('reaction')" [value]="reaction.id" (valueChange)="focus($event)"></rl-select>
+                    <rl-chem-equation
+                        [reactants]="reactants()"
+                        [products]="products()"
+                        [reversible]="reaction.isReversible || verdict()?.lean === 'equilibrium'"
+                        [arrowLabel]="t('yields')"
+                    ></rl-chem-equation>
+
+                    @if (catalogCelsius() !== null || reaction.catalyst !== null) {
+                        <p class="conditions-sheet-catalog">
+                            @if (catalogCelsius() !== null) {
+                                {{ t('catalogTemperature', { celsius: catalogCelsius() }) }}
+                            }
+                            @if (reaction.catalyst; as catalyst) {
+                                {{ t('catalogCatalyst', { catalyst: catalyst }) }}
+                            }
+                        </p>
+
+                        @if (catalogCelsius() !== null) {
+                            <button rlButton variant="secondary" size="sm" (click)="useCatalogConditions()">{{ t('useCatalog') }}</button>
+                        }
+                    }
+                </section>
+
+                @if (analysis.focusFailed()) {
+                    <p class="conditions-sheet-note" role="alert">{{ t('failed') }}</p>
+                } @else if (focused(); as focused) {
+                    @if (focused.conditions.equilibrium; as equilibrium) {
+                        <app-equilibrium-panel [focused]="focused" [equilibrium]="equilibrium" [verdict]="verdict()"></app-equilibrium-panel>
+                    } @else if (inWater()) {
+                        <p class="conditions-sheet-note">{{ t('equilibrium.inWater') }}</p>
+                    } @else {
+                        <p class="conditions-sheet-note">
+                            {{ t('equilibrium.missingEntropy', { formulas: focused.conditions.speciesWithoutEntropy.join(', ') }) }}
+                        </p>
+                    }
+
+                    @if (focused.conditions.kinetics; as kinetics) {
+                        <app-rate-panel [focused]="focused" [kinetics]="kinetics"></app-rate-panel>
+                    } @else {
+                        <p class="conditions-sheet-note">{{ t('rate.noBarrier') }}</p>
+                    }
+
+                    <p class="conditions-sheet-footnote">{{ t('footnote') }}</p>
+                } @else {
+                    <rl-spinner size="sm" [label]="t('working')"></rl-spinner>
+                }
+            } @else {
+                <p class="conditions-sheet-note">{{ t('empty') }}</p>
+            }
+        </div>
+    </rl-dialog>
+</ng-container>

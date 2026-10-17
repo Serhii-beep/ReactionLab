@@ -15,6 +15,7 @@ export class Slider {
     readonly max = input(100);
     readonly step = input(1);
     readonly unit = input<string>();
+    readonly valueText = input<string>();
     readonly showValue = input(false);
     readonly disabled = input(false);
 
