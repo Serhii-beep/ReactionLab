@@ -68,6 +68,9 @@ internal static class ApiProblems
         StatusCodes.Status413PayloadTooLarge => ("Request.TooLarge", "payload-too-large", "Request too large"),
         StatusCodes.Status415UnsupportedMediaType => ("Request.UnsupportedMediaType", "unsupported-media-type", "Unsupported media type"),
         StatusCodes.Status429TooManyRequests => ("Request.RateLimited", "rate-limited", "Too many requests"),
+        StatusCodes.Status502BadGateway => ("Service.Unreachable", "service-unreachable", "Service unreachable"),
+        StatusCodes.Status503ServiceUnavailable => ("Service.Unavailable", "service-unavailable", "Service unavailable"),
+        StatusCodes.Status504GatewayTimeout => ("Service.Timeout", "service-timeout", "Service timed out"),
         _ when status >= StatusCodes.Status500InternalServerError => ("General.Unexpected", "unexpected", "Unexpected error"),
         _ => ("Request.Invalid", "bad-request", "Bad request")
     };

@@ -23,6 +23,9 @@
     <Project Path="src/Chemistry/ReactionLab.Chemistry.Browser/ReactionLab.Chemistry.Browser.csproj" />
     <Project Path="src/Chemistry/ReactionLab.Chemistry/ReactionLab.Chemistry.csproj" />
   </Folder>
+  <Folder Name="/src/Gateway/">
+    <Project Path="src/Gateway/ReactionLab.Gateway/ReactionLab.Gateway.csproj" />
+  </Folder>
   <Folder Name="/src/Services/" />
   <Folder Name="/src/Services/Catalog/">
     <Project Path="src/Services/Catalog/ReactionLab.Catalog.Api/ReactionLab.Catalog.Api.csproj" />

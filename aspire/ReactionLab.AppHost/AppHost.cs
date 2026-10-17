@@ -16,10 +16,19 @@ var catalogMigrator = builder.AddProject<Projects.ReactionLab_Catalog_Migrator>(
     .WithReference(catalogDatabase, connectionName: "DefaultConnection")
     .WaitFor(catalogDatabase);
 
-builder.AddProject<Projects.ReactionLab_Catalog_Api>("catalog")
+var catalog = builder.AddProject<Projects.ReactionLab_Catalog_Api>("catalog")
     .WithReference(catalogDatabase, connectionName: "DefaultConnection")
     .WithReference(cache, connectionName: "Redis")
     .WaitForCompletion(catalogMigrator)
     .WaitFor(cache);
+
+var gateway = builder.AddProject<Projects.ReactionLab_Gateway>("gateway")
+    .WithReference(catalog)
+    .WithExternalHttpEndpoints();
+
+if (builder.ExecutionContext.IsRunMode)
+{
+    gateway.WithEnvironment("ReverseProxy__Clusters__catalog__HttpRequest__ActivityTimeout", "01:00:00");
+}
 
 await builder.Build().RunAsync();

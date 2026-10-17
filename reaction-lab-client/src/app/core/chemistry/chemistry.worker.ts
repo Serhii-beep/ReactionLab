@@ -39,7 +39,7 @@ chemistryExports.then(
 );
 
 async function boot(): Promise<ChemistryExports> {
-  const runtimeModule = await import(new URL(RUNTIME_PATH, self.location.href).href) as DotnetModule;
+  const runtimeModule = await import(/* @vite-ignore */ new URL(RUNTIME_PATH, self.location.href).href) as DotnetModule;
   const runtime = await runtimeModule.dotnet.create();
   const exports = await runtime.getAssemblyExports(runtime.getConfig().mainAssemblyName);
 

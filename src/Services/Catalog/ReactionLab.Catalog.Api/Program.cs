@@ -12,18 +12,18 @@ builder.AddServiceDefaults();
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
-builder.Services.AddApi(builder.Configuration);
+builder.Services.AddApi();
 
 builder.WebHost.ConfigureKestrel(options =>
     options.Limits.MaxRequestBodySize = 64 * 1024);
 
 var app = builder.Build();
 
+app.UseForwardedHeaders();
 app.UseErrorContract();
 
 app.UseHttpsRedirection();
 app.UseResponseCompression();
-app.UseCors(ReactionLab.Catalog.Api.DependencyInjection.CorsPolicy);
 
 app.UseRateLimiter();
 
