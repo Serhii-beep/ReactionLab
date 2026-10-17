@@ -9,9 +9,11 @@
     "test": "ng test",
     "lint": "ng lint",
     "lint:styles": "stylelint \"src/**/*.scss\"",
+    "typecheck:worker": "tsc -p tsconfig.worker.json --noEmit",
     "format": "prettier --write \"src/**/*.{ts,html,scss,json}\"",
     "format:check": "prettier --check \"src/**/*.{ts,html,scss,json}\"",
     "icons": "node tools/generate-icons.mjs",
+    "chemistry": "node tools/publish-chemistry.mjs",
     "check:contrast": "node tools/check-contrast.mjs"
   },
   "private": true,

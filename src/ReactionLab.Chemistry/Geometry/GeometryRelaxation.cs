@@ -82,12 +82,13 @@ public static class GeometryRelaxation
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(attempts);
 
-        var best = Minimize(start, targets, 0);
+        DistanceTarget[] targetArray = [.. targets];
+        var best = Minimize(start, targetArray, 0);
         var least = Strain(best, targets);
 
         for (var seed = 1; seed < attempts && least > Settled; seed++)
         {
-            var candidate = Minimize(start, targets, seed);
+            var candidate = Minimize(start, targetArray, seed);
             var strain = Strain(candidate, targets);
 
             if (strain < least)
@@ -118,7 +119,7 @@ public static class GeometryRelaxation
     }
 
     private static Vector3[] Minimize(
-        IReadOnlyList<Vector3> start, IReadOnlyList<DistanceTarget> targets, int seed)
+        IReadOnlyList<Vector3> start, DistanceTarget[] targets, int seed)
     {
         var current = start.ToArray();
         var gradient = new Vector3[current.Length];

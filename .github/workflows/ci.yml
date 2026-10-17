@@ -59,18 +59,32 @@ jobs:
           node-version: 24
           cache: npm
           cache-dependency-path: reaction-lab-client/package-lock.json
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Install the WebAssembly workload
+        run: dotnet workload install wasm-tools
       
       - name: Install
         run: npm ci
       
       - name: Lint
         run: npm run lint
+
+      - name: Type-check the worker
+        run: npm run typecheck:worker
       
       - name: Lint styles
         run: npm run lint:styles
       
       - name: Contrast
         run: npm run check:contrast
+
+      - name: Publish the chemistry engine
+        run: npm run chemistry
       
       - name: Build
         run: npm run build

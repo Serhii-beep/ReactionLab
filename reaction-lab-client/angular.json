@@ -33,6 +33,11 @@
                 "glob": "inter-latin-600-normal.woff",
                 "input": "node_modules/@fontsource/inter/files",
                 "output": "fonts"
+              },
+              {
+                "glob": "**/*",
+                "input": "chemistry-wasm/wwwroot/_framework",
+                "output": "chemistry/_framework"
               }
             ],
             "allowedCommonJsDependencies": ["@messageformat/core"],
@@ -42,7 +47,8 @@
               "node_modules/@fontsource-variable/inter/index.css",
               "node_modules/@fontsource-variable/jetbrains-mono/index.css",
               "src/styles.scss"
-            ]
+            ],
+            "webWorkerTsConfig": "tsconfig.worker.json"
           },
           "configurations": {
             "production": {
@@ -87,7 +93,10 @@
           "defaultConfiguration": "development"
         },
         "test": {
-          "builder": "@angular/build:unit-test"
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "webWorkerTsConfig": "tsconfig.worker.json"
+          }
         },
         "lint": {
           "builder": "@angular-eslint/builder:lint",

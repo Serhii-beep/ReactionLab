@@ -5,6 +5,7 @@
 /tmp
 /out-tsc
 /bazel-out
+/chemistry-wasm
 
 # Node
 /node_modules
