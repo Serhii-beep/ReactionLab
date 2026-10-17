@@ -1,0 +1,6 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Chemistry\ReactionLab.Chemistry\ReactionLab.Chemistry.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\ReactionLab.SharedKernel\ReactionLab.SharedKernel.csproj" />
+  </ItemGroup>
+</Project>

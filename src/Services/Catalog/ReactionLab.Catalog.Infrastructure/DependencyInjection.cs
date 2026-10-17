@@ -1,0 +1,76 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
+using ReactionLab.Catalog.Application.Common.Abstractions;
+using ReactionLab.Catalog.Infrastructure.Persistence;
+using ReactionLab.Catalog.Infrastructure.Persistence.Interceptors;
+using ReactionLab.Catalog.Infrastructure.Persistence.Seeding;
+using StackExchange.Redis;
+
+namespace ReactionLab.Catalog.Infrastructure;
+
+public static class DependencyInjection
+{
+    private static readonly TimeSpan SlowQueryThreshold = TimeSpan.FromMilliseconds(200);
+
+    public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
+    {
+        var connectionString = configuration.GetConnectionString("DefaultConnection")
+            ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured.");
+
+        services.TryAddSingleton(TimeProvider.System);
+
+        services.AddScoped<ISaveChangesInterceptor, AuditInterceptor>();
+        services.AddScoped<ISaveChangesInterceptor, SearchProjectionInterceptor>();
+
+        services.AddSingleton(sp => new SlowQueryInterceptor(
+            sp.GetRequiredService<ILogger<SlowQueryInterceptor>>(),
+            SlowQueryThreshold));
+
+        services.AddDbContext<AppDbContext>((sp, options) => options
+            .UseNpgsql(connectionString, NpgsqlSetup.Configure)
+            .AddInterceptors(sp.GetRequiredService<SlowQueryInterceptor>())
+            .AddInterceptors(sp.GetServices<ISaveChangesInterceptor>()));
+
+        services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbContext>());
+
+        services.AddHealthChecks().AddDbContextCheck<AppDbContext>("database");
+
+        services.AddSingleton<ICatalogSearch, TrigramCatalogSearch>();
+        services.AddSingleton<IReactionMatching, ReactantSignatureMatching>();
+        services.AddSingleton<ISubstanceFiltering, ElementSymbolFiltering>();
+
+        var redis = configuration.GetConnectionString("Redis");
+
+        if (!string.IsNullOrWhiteSpace(redis))
+        {
+            services.AddStackExchangeRedisCache(options =>
+            {
+                var parsed = ConfigurationOptions.Parse(redis);
+
+                parsed.AbortOnConnectFail = false;
+                parsed.ConnectTimeout = 200;
+                parsed.ConnectRetry = 1;
+                parsed.SyncTimeout = 200;
+
+                options.ConfigurationOptions = parsed;
+            });
+        }
+
+        services.AddHybridCache();
+
+        return services;
+    }
+
+    public static IServiceCollection AddCatalogSeeding(this IServiceCollection services)
+    {
+        services.AddScoped<ICatalogSource, JsonCatalogSource>();
+        services.AddScoped<CatalogSeeder>();
+        services.AddScoped<ReferenceSeeder>();
+
+        return services;
+    }
+}

@@ -1,6 +1,6 @@
 using System.Text.Json;
-using ReactionLab.Domain.Reactions;
-using ReactionLab.Infrastructure.Persistence.Seeding.Catalog;
+using ReactionLab.Catalog.Domain.Reactions;
+using ReactionLab.Catalog.Infrastructure.Persistence.Seeding.Catalog;
 
 namespace ReactionLab.CatalogBuilder;
 

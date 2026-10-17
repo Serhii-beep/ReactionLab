@@ -2,11 +2,11 @@ using System.Globalization;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
+using ReactionLab.Catalog.Domain.Elements;
+using ReactionLab.Catalog.Domain.Substances;
+using ReactionLab.Catalog.Infrastructure.Persistence.Seeding.Catalog;
 using ReactionLab.CatalogBuilder;
 using ReactionLab.Chemistry.Formulas;
-using ReactionLab.Domain.Elements;
-using ReactionLab.Domain.Substances;
-using ReactionLab.Infrastructure.Persistence.Seeding.Catalog;
 
 var root = FindRepositoryRoot();
 

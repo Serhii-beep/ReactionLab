@@ -1,11 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Services\Catalog\ReactionLab.Catalog.Infrastructure\ReactionLab.Catalog.Infrastructure.csproj" />
+  </ItemGroup>
+
   <PropertyGroup>
     <OutputType>Exe</OutputType>
   </PropertyGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\..\src\ReactionLab.Infrastructure\ReactionLab.Infrastructure.csproj" />
-  </ItemGroup>
 
 </Project>

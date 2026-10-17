@@ -14,19 +14,34 @@
     <Project Path="aspire/ReactionLab.AppHost/ReactionLab.AppHost.csproj" />
     <Project Path="aspire/ReactionLab.ServiceDefaults/ReactionLab.ServiceDefaults.csproj" />
   </Folder>
-  <Folder Name="/src/">
-    <Project Path="src/ReactionLab.API/ReactionLab.API.csproj" />
-    <Project Path="src/ReactionLab.Application/ReactionLab.Application.csproj" />
-    <Project Path="src/ReactionLab.Chemistry.Browser/ReactionLab.Chemistry.Browser.csproj" />
-    <Project Path="src/ReactionLab.Chemistry/ReactionLab.Chemistry.csproj" />
-    <Project Path="src/ReactionLab.DbMigrator/ReactionLab.DbMigrator.csproj" />
-    <Project Path="src/ReactionLab.Domain/ReactionLab.Domain.csproj" />
-    <Project Path="src/ReactionLab.Infrastructure/ReactionLab.Infrastructure.csproj" />
+  <Folder Name="/src/" />
+  <Folder Name="/src/BuildingBlocks/">
+    <Project Path="src/BuildingBlocks/ReactionLab.SharedKernel/ReactionLab.SharedKernel.csproj" />
+    <Project Path="src/BuildingBlocks/ReactionLab.Web/ReactionLab.Web.csproj" />
   </Folder>
-  <Folder Name="/tests/">
-    <Project Path="tests/ReactionLab.Chemistry.UnitTests/ReactionLab.Chemistry.UnitTests.csproj" />
-    <Project Path="tests/ReactionLab.Domain.UnitTests/ReactionLab.Domain.UnitTests.csproj" />
-    <Project Path="tests/ReactionLab.Infrastructure.UnitTests/ReactionLab.Infrastructure.UnitTests.csproj" />
+  <Folder Name="/src/Chemistry/">
+    <Project Path="src/Chemistry/ReactionLab.Chemistry.Browser/ReactionLab.Chemistry.Browser.csproj" />
+    <Project Path="src/Chemistry/ReactionLab.Chemistry/ReactionLab.Chemistry.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/" />
+  <Folder Name="/src/Services/Catalog/">
+    <Project Path="src/Services/Catalog/ReactionLab.Catalog.Api/ReactionLab.Catalog.Api.csproj" />
+    <Project Path="src/Services/Catalog/ReactionLab.Catalog.Application/ReactionLab.Catalog.Application.csproj" />
+    <Project Path="src/Services/Catalog/ReactionLab.Catalog.Domain/ReactionLab.Catalog.Domain.csproj" />
+    <Project Path="src/Services/Catalog/ReactionLab.Catalog.Infrastructure/ReactionLab.Catalog.Infrastructure.csproj" />
+    <Project Path="src/Services/Catalog/ReactionLab.Catalog.Migrator/ReactionLab.Catalog.Migrator.csproj" />
+  </Folder>
+  <Folder Name="/tests/" />
+  <Folder Name="/tests/BuildingBlocks/">
+    <Project Path="tests/BuildingBlocks/ReactionLab.SharedKernel.UnitTests/ReactionLab.SharedKernel.UnitTests.csproj" />
+  </Folder>
+  <Folder Name="/tests/Chemistry/">
+    <Project Path="tests/Chemistry/ReactionLab.Chemistry.UnitTests/ReactionLab.Chemistry.UnitTests.csproj" />
+  </Folder>
+  <Folder Name="/tests/Services/" />
+  <Folder Name="/tests/Services/Catalog/">
+    <Project Path="tests/Services/Catalog/ReactionLab.Catalog.Domain.UnitTests/ReactionLab.Catalog.Domain.UnitTests.csproj" />
+    <Project Path="tests/Services/Catalog/ReactionLab.Catalog.Infrastructure.UnitTests/ReactionLab.Catalog.Infrastructure.UnitTests.csproj" />
   </Folder>
   <Folder Name="/tools/">
     <Project Path="tools/ReactionLab.CatalogBuilder/ReactionLab.CatalogBuilder.csproj" />

@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const project = join(root, '..', 'src', 'ReactionLab.Chemistry.Browser');
+const project = join(root, '..', 'src', 'Chemistry', 'ReactionLab.Chemistry.Browser');
 const output = join(root, 'chemistry-wasm');
 
 for (const folder of [output, join(project, 'obj', 'Release'), join(project, 'bin', 'Release')]) {
