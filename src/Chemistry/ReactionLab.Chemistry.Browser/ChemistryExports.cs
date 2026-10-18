@@ -4,6 +4,7 @@ using System.Runtime.Versioning;
 using System.Text.Json;
 using ReactionLab.Chemistry.Balancing;
 using ReactionLab.Chemistry.Browser.Contracts;
+using ReactionLab.Chemistry.Constitution;
 using ReactionLab.Chemistry.Formulas;
 using ReactionLab.Chemistry.Geometry;
 
@@ -113,6 +114,18 @@ internal static partial class ChemistryExports
 
         return JsonSerializer.Serialize(
             SketchDescriber.Describe(request, Reference), ChemistryJsonContext.Default.SketchDescription);
+    }
+
+    [JSExport]
+    internal static string StructureKey(string requestJson)
+    {
+        var request = JsonSerializer.Deserialize(requestJson, ChemistryJsonContext.Default.SketchRequest)
+            ?? throw new JsonException("The sketch request is missing.");
+        var key = ConstitutionKey.Of(
+            [.. request.Atoms.Select(atom => atom.Symbol)],
+            [.. request.Bonds.Select(bond => new AtomBond(bond.From, bond.To, bond.Order))]);
+
+        return JsonSerializer.Serialize(new StructureKeyResult(key), ChemistryJsonContext.Default.StructureKeyResult);
     }
 
     [JSExport]

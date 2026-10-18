@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using ReactionLab.Catalog.Domain.Substances;
-using ReactionLab.Catalog.Infrastructure.Persistence.Converters;
+using ReactionLab.Chemistry.Constitution;
 
 namespace ReactionLab.Catalog.Infrastructure.Persistence.Configurations;
 
@@ -11,36 +11,24 @@ internal sealed class SubstanceConfiguration : IEntityTypeConfiguration<Substanc
     {
         builder.ToTable("substances");
         builder.HasKey(s => s.Id);
-        builder.Property(s => s.Id).ValueGeneratedNever();
 
-        builder.Property(s => s.Formula).IsRequired();
+        SubstanceMapping.MapContent(builder);
+
         builder.HasIndex(s => s.Formula);
+        builder.HasIndex(s => s.Category);
 
         builder.Property<string[]>(PersistenceColumns.ElementSymbols).IsRequired();
         builder.HasIndex(PersistenceColumns.ElementSymbols).HasMethod("gin");
 
-        builder.Property(s => s.Kind).IsRequired();
-        builder.Property(s => s.StateAtRoomTemperature).IsRequired();
-        builder.Property(s => s.IsOrganic).IsRequired();
-
-        builder.Property(s => s.Category).HasMaxLength(Substance.MaximumCategoryLength);
-        builder.HasIndex(s => s.Category);
-
-        builder.Property(s => s.Structure)
-            .HasColumnType("jsonb")
-            .HasConversion<MolecularStructureConverter>();
-
-        builder.Property(s => s.Translations)
-            .UsePropertyAccessMode(PropertyAccessMode.Field)
-            .HasColumnName("translations")
-            .HasColumnType("jsonb")
-            .HasConversion<SubstanceTranslationsConverter>()
+        builder.Property<string>(PersistenceColumns.NaturalKey)
+            .HasMaxLength(NaturalKeys.MaximumLength)
             .IsRequired();
+        builder.HasIndex(PersistenceColumns.NaturalKey).IsUnique();
+
+        builder.Property<string?>(PersistenceColumns.StructureKey).HasMaxLength(ConstitutionKey.Length);
+        builder.HasIndex(PersistenceColumns.StructureKey);
 
         builder.HasSearchText();
         builder.HasAuditTimestamps();
-
-        builder.Ignore(s => s.Locales);
-        builder.Ignore(s => s.DomainEvents);
     }
 }

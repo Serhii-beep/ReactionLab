@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using ReactionLab.Catalog.Infrastructure.Persistence.Seeding;
 using ReactionLab.Catalog.Infrastructure.Releases;
 
 namespace ReactionLab.Catalog.Migrator;
@@ -14,8 +13,7 @@ internal sealed class CatalogWorker(
     {
         try
         {
-            await CatalogSeeding.SeedAsync(services, stoppingToken);
-            await CatalogPublishing.PublishAsync(services, stoppingToken);
+            await CatalogMaintenance.RunAsync(services, stoppingToken);
         }
         catch (Exception ex)
         {

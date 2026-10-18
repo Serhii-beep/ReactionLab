@@ -29,12 +29,14 @@
 
     <h4 class="element-detail-heading">{{ t('build') }}</h4>
 
-    @if (substances.page.isLoading() && rows().length === 0) {
+    @if (substances.isLoading() && rows().length === 0) {
         <div class="element-detail-rows">
             @for (row of skeletonRows; track row) {
                 <span rlSkeleton class="element-detail-skeleton"></span>
             }
         </div>
+    } @else if (rows().length === 0 && substances.unavailable()) {
+        <p class="element-detail-none">{{ t('unavailable') }}</p>
     } @else if (rows().length === 0) {
         <p class="element-detail-none">{{ t('none') }}</p>
     } @else {

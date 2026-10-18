@@ -2,10 +2,12 @@ import { computed, inject, linkedSignal, Service, signal } from "@angular/core";
 import { CursorPage } from "../cursor-page";
 import { ReactantMatch, ReactionSummary } from "./reaction";
 import { httpResource } from "@angular/common/http";
-import { environment } from "../../../environments/environment";
 import { RequestLocale } from "../i18n/request-locale";
+import { CatalogRelease } from "../catalog/catalog-release";
+import { answerUrl } from "../catalog/catalog-answer-url";
 
 const PAGE_SIZE = 30;
+const MAXIMUM_BENCH_SUBSTANCES = 32;
 
 const EMPTY_PAGE: CursorPage<ReactionSummary> = {
     items: [],
@@ -18,12 +20,17 @@ const EMPTY_PAGE: CursorPage<ReactionSummary> = {
 export class ReactionsClient {
     readonly available = signal<readonly string[]>([]);
     readonly match = signal<ReactantMatch>('Partial');
+
+    private readonly release = inject(CatalogRelease);
     private readonly locale = inject(RequestLocale);
 
     private readonly request = computed(() => {
-        const ids = [...this.available()].sort();
+        const release = this.release.release();
+        const bench = benchOf(this.available());
 
-        return ids.length === 0 ? undefined : { url: this.url(ids, this.match()), headers: this.locale.headers() };
+        return release === undefined || bench.length === 0
+            ? undefined
+            : answerUrl(release, this.locale.lang(), `reactions?available=${bench.join(',')}&match=${this.match()}`);
     });
 
     readonly page = httpResource<CursorPage<ReactionSummary>>(
@@ -31,20 +38,17 @@ export class ReactionsClient {
         { defaultValue: EMPTY_PAGE }
     );
 
-    private readonly pageState = computed(() => ({ page: this.page.value(), loading: this.page.isLoading() }));
+    private readonly pageState = computed(() => ({
+        page: this.page.hasValue() ? this.page.value() : EMPTY_PAGE,
+        loading: this.page.isLoading()
+    }));
 
     readonly reactions = linkedSignal<{ page: CursorPage<ReactionSummary>; loading: boolean }, readonly ReactionSummary[]>({
         source: this.pageState,
         computation: ({ page, loading }, previous) => (loading && previous !== undefined ? previous.value : page.items)
     });
+}
 
-    private url(ids: readonly string[], match: ReactantMatch): string {
-        const params = new URLSearchParams({ pageSize: String(PAGE_SIZE), match });
-
-        for (const id of ids) {
-            params.append('available', id);
-        }
-
-        return `${environment.apiUrl}/reactions?${params}`;
-    }
+function benchOf(ids: readonly string[]): readonly string[] {
+    return [...new Set(ids)].slice(-MAXIMUM_BENCH_SUBSTANCES).sort();
 }

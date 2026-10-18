@@ -22,6 +22,20 @@ if (args.Contains("emit", StringComparer.OrdinalIgnoreCase))
     return;
 }
 
+if (args.Contains("synthesize", StringComparer.OrdinalIgnoreCase))
+{
+    await CatalogSynthesis.RunAsync(root, args);
+
+    return;
+}
+
+if (args.Contains("verify", StringComparer.OrdinalIgnoreCase))
+{
+    Environment.ExitCode = await CatalogVerification.RunAsync(root, args);
+
+    return;
+}
+
 if (args.Contains("rmsd", StringComparer.OrdinalIgnoreCase))
 {
     GeometryAccuracy.Run(root);
@@ -131,6 +145,9 @@ async Task<SubstanceRecord?> FetchSubstanceAsync(WantedSubstance wanted)
     }
 
     var sdf = found.Verified ? await GetTextAsync($"compound/cid/{found.Cid}/SDF?record_type=3d") : null;
+    var iupacName = Chemistry.IsSingleAtom(wanted.Formula ?? found.Properties.Formula)
+        ? wanted.Name.ToLowerInvariant()
+        : found.Properties.IupacName;
 
     return new SubstanceRecord
     {
@@ -147,7 +164,7 @@ async Task<SubstanceRecord?> FetchSubstanceAsync(WantedSubstance wanted)
         Translations = new Dictionary<string, SubstanceRecord.SubstanceText>
         {
             ["en"] = new(
-                Capitalize(wanted.Name), found.Verified ? found.Properties.IupacName : null,
+                Capitalize(wanted.Name), found.Verified ? iupacName : null,
                 null, null, null, null, null)
         }
     };
@@ -373,6 +390,8 @@ internal static class Chemistry
             && parsed.Value.CountOf(ElementSymbol.Create("C").Value) > 0
             && parsed.Value.CountOf(ElementSymbol.Create("H").Value) > 0;
     }
+
+    public static bool IsSingleAtom(string formula) => ElementSymbol.Create(formula).IsSuccess;
 
     public static bool SameComposition(string declared, string reported)
     {

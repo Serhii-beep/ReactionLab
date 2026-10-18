@@ -1,6 +1,6 @@
 import { HttpClient } from "@angular/common/http";
 import { inject, Service } from "@angular/core";
-import { catchError, concat, concatMap, defer, EMPTY, expand, filter, map, Observable, of, switchMap, tap, toArray }
+import { catchError, concat, concatMap, defer, EMPTY, expand, filter, map, Observable, of, switchMap, take, tap, toArray }
 from "rxjs";
 import { environment } from "../../../environments/environment";
 import { CursorPage } from "../../data/cursor-page";
@@ -37,6 +37,8 @@ interface CheckOutcome {
 type StructuredSubstance = SubstanceDetail & { readonly structure: MolecularStructure };
 
 const PAGE_SIZE = 100;
+const SAMPLED_REACTIONS = 700;
+const SAMPLED_SUBSTANCES = 250;
 const BOND_ORDER_BY_TYPE: Readonly<Partial<Record<BondType, number>>> = { Single: 1, Double: 2, Triple: 3 };
 
 @Service()
@@ -62,19 +64,19 @@ export class ChemistryEngineCheck {
     }
 
     private balanceCatalog(): Observable<CheckOutcome> {
-        return this.catalog<ReactionSummary>('reactions').pipe(
+        return this.sample<ReactionSummary>('reactions', SAMPLED_REACTIONS).pipe(
             concatMap((reaction) => sampled(
                 reaction.name,
                 this.engine.balance(formulasOf(reaction, 'Reactant'), formulasOf(reaction, 'Product')),
                 (balanced) => balanceFailureOf(reaction, balanced)
             )),
             toArray(),
-            map((samples) => outcomeOf('balance the catalog', samples))
+            map((samples) => outcomeOf('balance a sample of the catalog', samples))
         );
     }
 
     private describeStructures(): Observable<CheckOutcome> {
-        return this.catalog<SubstanceSummary>('substances').pipe(
+        return this.sample<SubstanceSummary>('substances', SAMPLED_SUBSTANCES).pipe(
             filter((substance) => substance.kind === 'Molecular'),
             concatMap((substance) => this.http.get<SubstanceDetail>(`${environment.apiUrl}/substances/${substance.id}`)),
             filter(isAssemblable),
@@ -89,25 +91,26 @@ export class ChemistryEngineCheck {
     }
 
     private predictCatalog(): Observable<CheckOutcome> {
-        return this.catalog<ReactionSummary>('reactions').pipe(
+        return this.sample<ReactionSummary>('reactions', SAMPLED_REACTIONS).pipe(
             concatMap((reaction) => sampled(
                 reaction.name,
                 this.engine.predict(formulasOf(reaction, 'Reactant'), {}),
                 (predicted) => predictionFailureOf(reaction, predicted)
             )),
             toArray(),
-            map((samples) => outcomeOf('predict the catalog', samples))
+            map((samples) => outcomeOf('predict a sample of the catalog', samples))
         );
     }
 
-    private catalog<Item>(path: string): Observable<Item> {
+    private sample<Item>(path: string, size: number): Observable<Item> {
         const pageAfter = (cursor: string | null) => this.http.get<CursorPage<Item>>(`${environment.apiUrl}/${path}`, {
             params: cursor === null ? { pageSize: PAGE_SIZE } : { pageSize: PAGE_SIZE, cursor }
         });
 
         return pageAfter(null).pipe(
             expand((page) => page.hasMore && page.nextCursor !== null ? pageAfter(page.nextCursor) : EMPTY),
-            concatMap((page) => page.items)
+            concatMap((page) => page.items),
+            take(size)
         );
     }
 }

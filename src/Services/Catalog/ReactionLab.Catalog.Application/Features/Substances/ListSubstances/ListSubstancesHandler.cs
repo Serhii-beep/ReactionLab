@@ -14,7 +14,8 @@ public sealed class ListSubstancesHandler(
     IAppDbContext context,
     ICatalogSearch search,
     ISubstanceFiltering filtering,
-    HybridCache cache)
+    HybridCache cache,
+    CatalogCacheScope scope)
     : IQueryHandler<ListSubstancesQuery, CursorPagedResult<SubstanceSummaryResponse>>
 {
     private const int MaximumSearchDepth = 1000;
@@ -59,7 +60,7 @@ public sealed class ListSubstancesHandler(
         }
 
         var page = await cache.GetOrCreateAsync(
-            CacheKeys.SubstanceList(query.Search, element?.Value, query.Page.Cursor, query.Page.Limit, query.Locale),
+            CacheKeys.SubstanceList(scope.Name, query.Search, element?.Value, query.Page.Cursor, query.Page.Limit, query.Locale),
             async token => browsing
                 ? await BrowseAsync(cursor, element, query, token)
                 : await SearchAsync(cursor, element, query, token),
@@ -72,7 +73,7 @@ public sealed class ListSubstancesHandler(
 
     private IQueryable<Substance> Scope(ElementSymbol? element)
     {
-        var substances = context.Substances.AsNoTracking();
+        var substances = context.Substances.AsNoTracking().Where(substance => substance.RetiredAt == null);
 
         return element is null ? substances : filtering.Containing(substances, element);
     }

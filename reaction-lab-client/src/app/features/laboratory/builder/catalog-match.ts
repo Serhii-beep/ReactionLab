@@ -1,6 +1,7 @@
 import { computed, inject, Injectable, signal } from "@angular/core";
 import { takeUntilDestroyed, toObservable } from "@angular/core/rxjs-interop";
 import { catchError, map, Observable, of, switchMap, tap, timer } from "rxjs";
+import { ChemistryEngine } from "../../../core/chemistry/chemistry-engine";
 import { SubstanceDetail, SubstanceSummary } from "../../../data/substances/substance";
 import { SubstanceDetailsClient } from "../../../data/substances/substance-details-client";
 import { SubstanceLookupClient } from "../../../data/substances/substance-lookup-client";
@@ -20,6 +21,7 @@ const LARGEST_FORMULA_DECIDED = 2;
 
 @Injectable()
 export class CatalogMatch {
+    private readonly engine = inject(ChemistryEngine);
     private readonly lookup = inject(SubstanceLookupClient);
     private readonly details = inject(SubstanceDetailsClient);
     private readonly analysis = inject(SketchAnalysis);
@@ -51,11 +53,33 @@ export class CatalogMatch {
         ).subscribe();
     }
 
-    private find(query: MatchQuery): Observable<SubstanceSummary | null> {
-        return this.lookup.search(query.hill, CANDIDATE_LIMIT).pipe(
-            switchMap((candidates) => (candidates.length === 0 ? of([]) : this.details.detailsOf(candidates.map((candidate) => candidate.id)))),
-            map((details) => details.find((detail) => matches(detail, query)) ?? null),
+    private find(query: MatchQuery): Observable<SubstanceDetail | null> {
+        return this.byStructure(query).pipe(
+            switchMap((found) => (found !== null || query.sketch.atoms.length > LARGEST_FORMULA_DECIDED
+                ? of(found)
+                : this.byFormula(query))),
+            tap((found) => {
+                if (found !== null) {
+                    this.details.remember(found);
+                }
+            }),
             catchError(() => of(null))
+        );
+    }
+
+    private byStructure(query: MatchQuery): Observable<SubstanceDetail | null> {
+        return this.engine.structureKey(query.sketch.atoms.map(({ symbol, formalCharge }) => ({ symbol, formalCharge })), query.sketch.bonds).pipe(
+            switchMap(({ key }) => this.lookup.byStructure(key)),
+            map((candidates) => candidates.find((candidate) => matches(candidate, query)) ?? null)
+        );
+    }
+
+    private byFormula(query: MatchQuery): Observable<SubstanceDetail | null> {
+        return this.lookup.byFormula(query.hill).pipe(
+            switchMap((candidates) => (candidates.length === 0
+                ? of([])
+                : this.details.detailsOf(candidates.slice(0, CANDIDATE_LIMIT).map((candidate) => candidate.id)))),
+            map((details) => details.find((detail) => matches(detail, query)) ?? null)
         );
     }
 }

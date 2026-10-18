@@ -60,7 +60,14 @@ public sealed class PhaseResolution(IonTable table, IReadOnlyDictionary<string, 
             return true;
         }
 
-        return standardStates.TryGetValue(formula, out phase);
+        if (standardStates.TryGetValue(formula, out phase))
+        {
+            return true;
+        }
+
+        phase = Phase.Solid;
+
+        return table.TrySplit(formula, out _, out _);
     }
 
     private bool TryAll(string rule, IReadOnlyList<string> species, out IReadOnlyList<Phase> phases)

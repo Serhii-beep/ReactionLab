@@ -7,6 +7,7 @@ using ReactionLab.Catalog.Application.Features.Elements.ListElements;
 using ReactionLab.Catalog.Application.Features.Elements.TranslateElement;
 using ReactionLab.Catalog.Application.Features.Reactions.GetReactionById;
 using ReactionLab.Catalog.Application.Features.Reactions.ListReactions;
+using ReactionLab.Catalog.Application.Features.Releases.Reads;
 using ReactionLab.Catalog.Application.Features.Substances.GetSubstanceById;
 using ReactionLab.Catalog.Application.Features.Substances.ListSubstances;
 
@@ -17,11 +18,13 @@ public static class DependencyInjection
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
         services.AddScoped<CacheInvalidator>();
+        services.AddScoped<CatalogCacheScope>();
 
         services.AddElementHandlers();
         services.AddSubstanceHandlers();
         services.AddReactionHandlers();
         services.AddChemistryHandlers();
+        services.AddReleaseHandlers();
 
         return services;
     }
@@ -48,6 +51,17 @@ public static class DependencyInjection
     {
         services.AddScoped<ListReactionsHandler>();
         services.AddScoped<GetReactionByIdHandler>();
+
+        return services;
+    }
+
+    private static IServiceCollection AddReleaseHandlers(this IServiceCollection services)
+    {
+        services.AddScoped<SearchReleaseSubstancesHandler>();
+        services.AddScoped<GetReleaseSubstanceHandler>();
+        services.AddScoped<FindReleaseSubstancesByStructureHandler>();
+        services.AddScoped<MatchReleaseReactionsHandler>();
+        services.AddScoped<GetReleaseReactionHandler>();
 
         return services;
     }

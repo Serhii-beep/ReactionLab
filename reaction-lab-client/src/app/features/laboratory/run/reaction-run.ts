@@ -222,7 +222,7 @@ export class ReactionRun {
             entriesBefore: this.workspace.entries(),
             entriesAfter: this.workspace.entriesAfter(outcome),
             details: this.details.loaded(),
-            elements: this.elements.all.value(),
+            elements: this.elements.table(),
             ambientKelvin: this.conditions().kelvin,
             statesBySubstanceId: this.labStates.overrides()
         });

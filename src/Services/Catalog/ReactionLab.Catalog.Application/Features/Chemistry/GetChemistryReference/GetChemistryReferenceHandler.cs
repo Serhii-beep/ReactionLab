@@ -6,7 +6,7 @@ using ReactionLab.SharedKernel;
 
 namespace ReactionLab.Catalog.Application.Features.Chemistry.GetChemistryReference;
 
-public sealed class GetChemistryReferenceHandler(IAppDbContext context, HybridCache cache)
+public sealed class GetChemistryReferenceHandler(IAppDbContext context, HybridCache cache, CatalogCacheScope scope)
     : IQueryHandler<GetChemistryReferenceQuery, string>
 {
     public async ValueTask<Result<string>> HandleAsync(
@@ -14,7 +14,7 @@ public sealed class GetChemistryReferenceHandler(IAppDbContext context, HybridCa
         CancellationToken cancellationToken)
     {
         var document = await cache.GetOrCreateAsync(
-            CacheKeys.ChemistryReference,
+            CacheKeys.ChemistryReference(scope.Name),
             async token => await ChemistryQueries.DocumentAsync(
                 context.ChemistryReferences.AsNoTracking(), token),
             CachePolicies.Reference,

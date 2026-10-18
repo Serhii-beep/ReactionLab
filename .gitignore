@@ -70,3 +70,6 @@ tools/**/.httpcache/
 
 # Local API test collection (Postman); not part of the shipped repo
 tools/postman/
+
+# Catalog builds the CatalogBuilder writes (synthesize); they live in object storage, not git
+data/builds/

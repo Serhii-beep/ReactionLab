@@ -10,7 +10,7 @@ builder.AddServiceDefaults();
 builder.AddAzureBlobServiceClient("blobs");
 
 builder.Services.AddInfrastructure(builder.Configuration);
-builder.Services.AddCatalogSeeding();
+builder.Services.AddCatalogSeeding(builder.Configuration);
 builder.Services.AddCatalogPublishing();
 builder.Services.AddHostedService<MigrationWorker>();
 builder.Services.AddHostedService<CatalogWorker>();

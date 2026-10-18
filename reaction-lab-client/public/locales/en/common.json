@@ -22,6 +22,10 @@
             "title": "You are offline",
             "detail": "The catalog can't be reached. Anything already loaded keeps working."
         },
+        "catalogUnavailable": {
+            "title": "The catalog can't be reached",
+            "detail": "Search, details and reactions come back as soon as it answers."
+        },
         "errors": {
             "unexpected": "Something went wrong",
             "unexpectedDetail": "Unexpected error occurred."
@@ -47,7 +51,7 @@
             "needs": "Needs",
             "yields": "yields",
             "failed": "Could not load the reactions",
-            "failedDetail": "The catalog did not respond",
+            "failedDetail": "The catalog did not respond. The engine's predictions for your bench are below.",
             "retry": "Retry",
             "close": "Close",
             "summary": "{count, plural, one {# reaction involves} other {# reactions involve}} what is on the bench · {ready, plural, =0 {none can run yet} one {# can run now} other {# can run now}}",
@@ -87,6 +91,7 @@
             "cancel": "Cancel",
             "placeholder": "Type a formula, a name, or an element",
             "empty": "Nothing in the catalog matches",
+            "unavailable": "Search is unavailable right now",
             "substances": "Substances",
             "elements": "Elements",
             "reactions": "Reactions",
@@ -111,6 +116,7 @@
             "position": "Period · group",
             "build": "Substances you can build",
             "none": "Nothing in the catalog contains this element yet.",
+            "unavailable": "The catalog can't be reached right now, so the substances with this element can't be listed.",
             "more": "Show more",
             "categories": {
                 "AlkaliMetal": "Alkali metal",

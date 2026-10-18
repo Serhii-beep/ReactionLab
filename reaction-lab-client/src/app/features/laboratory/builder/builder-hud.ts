@@ -49,7 +49,7 @@ export class BuilderHud {
 
     private readonly analysis = inject(SketchAnalysis);
     private readonly catalog = inject(CatalogMatch);
-    private readonly allElements = inject(ElementsClient).all;
+    private readonly allElements = inject(ElementsClient).table;
     private readonly transloco = inject(TranslocoService);
     private readonly notifications = inject(NotificationService);
     private readonly announcer = inject(LiveAnnouncer);
@@ -63,7 +63,7 @@ export class BuilderHud {
         { initialValue: NO_BOND_LABELS });
 
     protected readonly elements = computed(() =>
-        (this.allElements.hasValue() ? this.allElements.value() : [])
+        this.allElements()
             .filter((element) => this.buildable()?.has(element.symbol) ?? false)
             .sort((first, second) => first.atomicNumber - second.atomicNumber));
     protected readonly bondOrders = computed<readonly SegmentedOption<BondOrder>[]>(() =>

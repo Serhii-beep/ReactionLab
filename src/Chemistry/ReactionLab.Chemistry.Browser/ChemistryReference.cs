@@ -14,6 +14,10 @@ internal sealed record ChemistryReference(
     StandardStateTable StandardStates,
     PredictionModel Prediction)
 {
+    private const decimal RoomKelvin = 298.15m;
+
+    private const decimal RoomKilopascals = 101.325m;
+
     public static ChemistryReference From(IReadOnlyList<ElementEntry> elements, ChemistryReferenceDocument document)
     {
         var ions = IonTableOf(document.Ions);
@@ -45,7 +49,25 @@ internal sealed record ChemistryReference(
                     new SynthesisRule(series, ions),
                     new DecompositionRule(ions)
                 ]),
-                EnergyEstimatorOf(document.Thermodynamics, standardStates)));
+                EnergyEstimatorOf(document.Thermodynamics, standardStates),
+                RoomPhasesOf(document.Thermodynamics, standardStates)));
+    }
+
+    private static Dictionary<string, Phase> RoomPhasesOf(ThermodynamicsDataset dataset, StandardStateTable table)
+    {
+        var phases = new Dictionary<string, Phase>(StringComparer.Ordinal);
+
+        foreach (var species in dataset.Species)
+        {
+            if (species.Phase != Phase.Aqueous
+                && !phases.ContainsKey(species.Formula)
+                && table.TryFindStable(species.Formula, species.Phase, RoomKelvin, RoomKilopascals, out var stable, out _))
+            {
+                phases[species.Formula] = stable;
+            }
+        }
+
+        return phases;
     }
 
     private static IonTable IonTableOf(IonDataset dataset) =>

@@ -67,6 +67,8 @@ public sealed class Reaction : AggregateRoot<ReactionId>
 
     public ReactionProvenance Provenance { get; private set; } = ReactionProvenance.Curated;
 
+    public DateTimeOffset? RetiredAt { get; private set; }
+
     public IReadOnlyList<ReactionParticipant> Participants => _participants.AsReadOnly();
 
     public IReadOnlyList<string> Tags => _tags.AsReadOnly();
@@ -164,6 +166,20 @@ public sealed class Reaction : AggregateRoot<ReactionId>
     public Result DescribeProvenance(ReactionProvenance provenance)
     {
         Provenance = provenance;
+
+        return Result.Success();
+    }
+
+    public Result Retire(DateTimeOffset retiredAt)
+    {
+        RetiredAt ??= retiredAt;
+
+        return Result.Success();
+    }
+
+    public Result Restore()
+    {
+        RetiredAt = null;
 
         return Result.Success();
     }

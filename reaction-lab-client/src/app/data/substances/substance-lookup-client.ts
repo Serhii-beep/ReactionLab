@@ -1,20 +1,25 @@
-import { HttpClient } from "@angular/common/http";
 import { inject, Service } from "@angular/core";
-import { map, Observable } from "rxjs";
-import { environment } from "../../../environments/environment";
+import { map, Observable, of } from "rxjs";
 import { CursorPage } from "../cursor-page";
-import { RequestLocale } from "../i18n/request-locale";
-import { SubstanceSummary } from "./substance";
+import { SubstanceDetail, SubstanceSummary } from "./substance";
+import { CatalogRelease } from "../catalog/catalog-release";
+import { searchTermOf } from "../catalog/search-key";
 
 @Service()
 export class SubstanceLookupClient {
-    private readonly http = inject(HttpClient);
-    private readonly locale = inject(RequestLocale);
+    private readonly release = inject(CatalogRelease);
 
-    search(query: string, pageSize: number): Observable<readonly SubstanceSummary[]> {
-        return this.http.get<CursorPage<SubstanceSummary>>(`${environment.apiUrl}/substances`, {
-            params: { q: query, pageSize },
-            headers: this.locale.headers()
-        }).pipe(map((page) => page.items));
+    byStructure(structureKey: string): Observable<readonly SubstanceDetail[]> {
+        return this.release.answer<readonly SubstanceDetail[]>(`substances/by-structure/${structureKey}`);
+    }
+
+    byFormula(formula: string): Observable<readonly SubstanceSummary[]> {
+        const term = searchTermOf(formula);
+
+        return term === null
+            ? of([])
+            : this.release
+                .answer<CursorPage<SubstanceSummary>>(`substances?${new URLSearchParams({ q: term })}`)
+                .pipe(map((page) => page.items));
     }
 }

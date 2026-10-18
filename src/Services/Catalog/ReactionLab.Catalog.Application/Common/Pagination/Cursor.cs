@@ -69,7 +69,7 @@ public sealed record Cursor
         return bytes[0] switch
         {
             KeysetKind => new Cursor(KeysetKind, new Guid(bytes[1..]), 0),
-            OffsetKind => new Cursor(OffsetKind, Guid.Empty, BinaryPrimitives.ReadInt32LittleEndian(bytes[1..])),
+            OffsetKind when BinaryPrimitives.ReadInt32LittleEndian(bytes[1..]) is var skip and >= 0 => new Cursor(OffsetKind, Guid.Empty, skip),
             _ => Malformed
         };
     }

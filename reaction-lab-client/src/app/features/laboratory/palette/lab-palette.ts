@@ -45,6 +45,7 @@ export class LabPalette {
     readonly label = input.required<string>();
     readonly placeholder = input.required<string>();
     readonly emptyText = input.required<string>();
+    readonly unavailableText = input.required<string>();
     readonly substancesLabel = input.required<string>();
     readonly elementsLabel = input.required<string>();
     readonly reactionsLabel = input.required<string>();
@@ -66,7 +67,8 @@ export class LabPalette {
     private readonly molecules = inject(UserMoleculesStore);
     private readonly builder = inject(MoleculeBuilder);
 
-    protected readonly busy = computed(() => this.substances.page.isLoading());
+    protected readonly busy = computed(() => this.substances.isLoading());
+    protected readonly emptyMessage = computed(() => (this.substances.unavailable() ? this.unavailableText() : this.emptyText()));
 
     protected readonly options = computed<readonly ListboxOption<PaletteChoice>[]>(() => [
         ...matchingMolecules(this.molecules.molecules(), this.query()).slice(0, MOLECULE_LIMIT).map((molecule) => ({
@@ -85,7 +87,7 @@ export class LabPalette {
             label: `${substance.formula} ${substance.name}`,
             group: this.substancesLabel()
         })),
-        ...matchingElements(this.elements.all.value(), this.query()).slice(0, ELEMENT_LIMIT).map((element) => ({
+        ...matchingElements(this.elements.table(), this.query()).slice(0, ELEMENT_LIMIT).map((element) => ({
             value: { kind: 'element' as const, element },
             label: `${element.symbol} ${element.name}`,
             group: this.elementsLabel()

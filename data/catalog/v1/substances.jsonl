@@ -112,8 +112,8 @@
 {"formula":"Cu","kind":"Metallic","isOrganic":false,"state":"Solid","molecularWeight":63.55,"category":"element","pubChemCid":23978,"translations":{"en":{"name":"Copper","iupacName":"copper"}}}
 {"formula":"Ag","kind":"Metallic","isOrganic":false,"state":"Solid","molecularWeight":107.868,"category":"element","pubChemCid":23954,"translations":{"en":{"name":"Silver","iupacName":"silver"}}}
 {"formula":"Al","kind":"Metallic","isOrganic":false,"state":"Solid","molecularWeight":26.981538,"category":"element","pubChemCid":5359268,"translations":{"en":{"name":"Aluminum","iupacName":"aluminum"}}}
-{"formula":"C","kind":"Networkcovalent","isOrganic":false,"state":"Solid","molecularWeight":12.011,"category":"element","pubChemCid":5462310,"translations":{"en":{"name":"Carbon","iupacName":"methane"}}}
-{"formula":"S","kind":"Molecular","isOrganic":false,"state":"Solid","molecularWeight":32.07,"category":"element","pubChemCid":5362487,"translations":{"en":{"name":"Sulfur","iupacName":"sulfane"}}}
+{"formula":"C","kind":"Networkcovalent","isOrganic":false,"state":"Solid","molecularWeight":12.011,"category":"element","pubChemCid":5462310,"translations":{"en":{"name":"Carbon","iupacName":"carbon"}}}
+{"formula":"S","kind":"Molecular","isOrganic":false,"state":"Solid","molecularWeight":32.07,"category":"element","pubChemCid":5362487,"translations":{"en":{"name":"Sulfur","iupacName":"sulfur"}}}
 {"formula":"MgO","kind":"Ionic","isOrganic":false,"state":"Solid","molecularWeight":40.305,"category":"oxide","pubChemCid":14792,"translations":{"en":{"name":"Magnesium oxide","iupacName":"oxomagnesium"}}}
 {"formula":"CuO","kind":"Ionic","isOrganic":false,"state":"Solid","molecularWeight":79.55,"category":"oxide","pubChemCid":164827,"translations":{"en":{"name":"Copper(II) oxide","iupacName":"copper oxygen(2-)"}}}
 {"formula":"Al2O3","kind":"Ionic","isOrganic":false,"state":"Solid","molecularWeight":101.961,"category":"oxide","pubChemCid":9989226,"translations":{"en":{"name":"Aluminum oxide","iupacName":"dialuminum;tris(oxygen(2-))"}}}

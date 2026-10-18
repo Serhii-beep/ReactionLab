@@ -1,18 +1,15 @@
-import { HttpClient } from "@angular/common/http";
 import { inject, Service, signal } from "@angular/core";
-import { RequestLocale } from "../i18n/request-locale";
 import { SubstanceDetail } from "./substance";
-import { environment } from "../../../environments/environment";
-import { combineLatest, filter, finalize, first, map, Observable, of, switchMap, tap, throwError } from "rxjs";
-import { toObservable } from "@angular/core/rxjs-interop";
+import { combineLatest, filter, finalize, first, map, Observable, of, pairwise, switchMap, tap, throwError } from "rxjs";
+import { takeUntilDestroyed, toObservable } from "@angular/core/rxjs-interop";
 import { isUserMoleculeId } from "../molecules/user-molecules";
+import { CatalogRelease } from "../catalog/catalog-release";
 
 type DetailsSettlement = 'pending' | 'failed' | readonly SubstanceDetail[];
 
 @Service()
 export class SubstanceDetailsClient {
-    private readonly http = inject(HttpClient);
-    private readonly locale = inject(RequestLocale);
+    private readonly release = inject(CatalogRelease);
     private readonly details = signal<ReadonlyMap<string, SubstanceDetail>>(new Map());
     private readonly failures = signal<ReadonlySet<string>>(new Set());
     private readonly pending = new Set<string>();
@@ -21,6 +18,15 @@ export class SubstanceDetailsClient {
 
     readonly loaded = this.details.asReadonly();
     readonly failed = this.failures.asReadonly();
+
+    constructor() {
+        toObservable(this.release.failed).pipe(
+            pairwise(),
+            filter(([before, after]) => before && !after),
+            tap(() => this.retryFailures()),
+            takeUntilDestroyed()
+        ).subscribe();
+    }
 
     remember(detail: SubstanceDetail): void {
         this.details.update((current) => new Map(current).set(detail.id, detail));
@@ -33,8 +39,8 @@ export class SubstanceDetailsClient {
 
         this.pending.add(id);
 
-        this.http
-            .get<SubstanceDetail>(`${environment.apiUrl}/substances/${id}`, { headers: this.locale.headers() })
+        this.release
+            .answer<SubstanceDetail>(`substances/${id}`)
             .pipe(
                 tap({
                     next: (detail) => this.details.update((current) => new Map(current).set(id, detail)),
@@ -53,6 +59,12 @@ export class SubstanceDetailsClient {
             return next;
         });
         this.ensure(id);
+    }
+
+    retryFailures(): void {
+        for (const id of this.failures()) {
+            this.retry(id);
+        }
     }
 
     detailsOf(ids: readonly string[]): Observable<readonly SubstanceDetail[]> {

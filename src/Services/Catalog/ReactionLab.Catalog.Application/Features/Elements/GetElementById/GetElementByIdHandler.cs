@@ -8,7 +8,7 @@ using ReactionLab.SharedKernel;
 
 namespace ReactionLab.Catalog.Application.Features.Elements.GetElementById;
 
-public sealed class GetElementByIdHandler(IAppDbContext context, HybridCache cache)
+public sealed class GetElementByIdHandler(IAppDbContext context, HybridCache cache, CatalogCacheScope scope)
     : IQueryHandler<GetElementByIdQuery, ElementResponse>
 {
     public async ValueTask<Result<ElementResponse>> HandleAsync(
@@ -18,7 +18,7 @@ public sealed class GetElementByIdHandler(IAppDbContext context, HybridCache cac
         var id = ElementId.From(query.Id);
 
         var response = await cache.GetOrCreateAsync(
-            CacheKeys.Element(query.Id, query.Locale),
+            CacheKeys.Element(scope.Name, query.Id, query.Locale),
             async token => await ElementQueries.FirstResponseAsync(
                 context.Elements.AsNoTracking().Where(element => element.Id == id),
                 query.Locale,

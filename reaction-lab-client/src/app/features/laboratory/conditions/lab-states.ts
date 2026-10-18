@@ -27,7 +27,7 @@ export class LabStates {
         const setting: LabSetting = {
             kelvin: this.lab.kelvin(),
             kilopascals: this.lab.kilopascals(),
-            elements: new Map(this.elements.all.value().map((element) => [element.symbol, element]))
+            elements: new Map(this.elements.table().map((element) => [element.symbol, element]))
         };
         const overrides = new Map<string, MatterState>();
 

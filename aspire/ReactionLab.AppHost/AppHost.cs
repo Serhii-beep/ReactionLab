@@ -1,11 +1,15 @@
+const string SyntheticBuild = "synthetic-100k-1m";
+
 var builder = DistributedApplication.CreateBuilder(args);
+
+var completeVolume = string.Equals(builder.Configuration["CatalogVolume"], "complete", StringComparison.OrdinalIgnoreCase);
 
 var postgres = builder.AddPostgres("postgres")
     .WithDataVolume("reactionlab-pgdata")
     .WithLifetime(ContainerLifetime.Persistent)
     .WithPgAdmin();
 
-var catalogDatabase = postgres.AddDatabase("reactionlab");
+var catalogDatabase = postgres.AddDatabase("catalog-db", completeVolume ? "catalog_complete" : "catalog");
 
 var cache = builder.AddRedis("cache")
     .WithDataVolume("reactionlab-redisdata")
@@ -24,6 +28,18 @@ var catalogMigrator = builder.AddProject<Projects.ReactionLab_Catalog_Migrator>(
     .WithReference(blobs)
     .WaitFor(catalogDatabase)
     .WaitFor(blobs);
+
+if (completeVolume)
+{
+    var synthesizer = builder.AddProject<Projects.ReactionLab_CatalogBuilder>("catalog-synthesizer")
+        .WithArgs("synthesize", "--upload", "--build", SyntheticBuild)
+        .WithReference(blobs)
+        .WaitFor(blobs);
+
+    catalogMigrator
+        .WithEnvironment("CatalogImport__Build", SyntheticBuild)
+        .WaitForCompletion(synthesizer);
+}
 
 var catalog = builder.AddProject<Projects.ReactionLab_Catalog_Api>("catalog")
     .WithReference(catalogDatabase, connectionName: "DefaultConnection")

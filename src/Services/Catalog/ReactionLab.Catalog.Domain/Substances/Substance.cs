@@ -54,6 +54,8 @@ public sealed class Substance : AggregateRoot<SubstanceId>
 
     public string? Category { get; private set; }
 
+    public DateTimeOffset? RetiredAt { get; private set; }
+
     public Translations<SubstanceContent> Translations => _translations;
 
     public IReadOnlyList<SupportedLocale> Locales => _translations.Locales;
@@ -139,6 +141,20 @@ public sealed class Substance : AggregateRoot<SubstanceId>
     public Result RecordWeight(MolecularWeight weight)
     {
         Weight = weight;
+
+        return Result.Success();
+    }
+
+    public Result Retire(DateTimeOffset retiredAt)
+    {
+        RetiredAt ??= retiredAt;
+
+        return Result.Success();
+    }
+
+    public Result Restore()
+    {
+        RetiredAt = null;
 
         return Result.Success();
     }

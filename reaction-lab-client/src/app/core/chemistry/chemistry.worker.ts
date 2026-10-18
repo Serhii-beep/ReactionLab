@@ -7,6 +7,7 @@ interface ChemistryExports {
   Balance(requestJson: string): string;
   Assemble(requestJson: string): string;
   DescribeSketch(requestJson: string): string;
+  StructureKey(requestJson: string): string;
   DetectSymmetry(requestJson: string): string;
   Predict(requestJson: string): string;
   DescribeConditions(requestJson: string): string;
@@ -25,7 +26,19 @@ interface DotnetModule {
   readonly dotnet: { create(): Promise<DotnetRuntime> };
 }
 
+type JsonOperation = Extract<ChemistryRequest, { readonly requestJson: string }>['operation'];
+
 const RUNTIME_PATH = 'chemistry/_framework/dotnet.js';
+
+const JSON_OPERATIONS: Readonly<Record<JsonOperation, (exports: ChemistryExports, requestJson: string) => string>> = {
+  balance: (exports, requestJson) => exports.Balance(requestJson),
+  assemble: (exports, requestJson) => exports.Assemble(requestJson),
+  describeSketch: (exports, requestJson) => exports.DescribeSketch(requestJson),
+  structureKey: (exports, requestJson) => exports.StructureKey(requestJson),
+  detectSymmetry: (exports, requestJson) => exports.DetectSymmetry(requestJson),
+  predict: (exports, requestJson) => exports.Predict(requestJson),
+  describeConditions: (exports, requestJson) => exports.DescribeConditions(requestJson)
+};
 
 const chemistryExports = boot();
 
@@ -63,18 +76,8 @@ function invoke(exports: ChemistryExports, request: ChemistryRequest): string | 
       return exports.ParseFormula(request.formula);
     case 'molarMassOf':
       return exports.MolarMassOf(request.formula);
-    case 'balance':
-      return exports.Balance(request.requestJson);
-    case 'assemble':
-      return exports.Assemble(request.requestJson);
-    case 'describeSketch':
-      return exports.DescribeSketch(request.requestJson);
-    case 'detectSymmetry':
-      return exports.DetectSymmetry(request.requestJson);
-    case 'predict':
-      return exports.Predict(request.requestJson);
-    case 'describeConditions':
-      return exports.DescribeConditions(request.requestJson);
+    default:
+      return JSON_OPERATIONS[request.operation](exports, request.requestJson);
   }
 }
 

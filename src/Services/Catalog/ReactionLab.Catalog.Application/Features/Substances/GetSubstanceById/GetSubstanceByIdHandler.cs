@@ -8,7 +8,7 @@ using ReactionLab.SharedKernel;
 
 namespace ReactionLab.Catalog.Application.Features.Substances.GetSubstanceById;
 
-public sealed class GetSubstanceByIdHandler(IAppDbContext context, HybridCache cache)
+public sealed class GetSubstanceByIdHandler(IAppDbContext context, HybridCache cache, CatalogCacheScope scope)
     : IQueryHandler<GetSubstanceByIdQuery, SubstanceResponse>
 {
     public async ValueTask<Result<SubstanceResponse>> HandleAsync(GetSubstanceByIdQuery query, CancellationToken cancellationToken)
@@ -16,7 +16,7 @@ public sealed class GetSubstanceByIdHandler(IAppDbContext context, HybridCache c
         var id = SubstanceId.From(query.Id);
 
         var response = await cache.GetOrCreateAsync(
-            CacheKeys.Substance(query.Id, query.Locale),
+            CacheKeys.Substance(scope.Name, query.Id, query.Locale),
             async token => await SubstanceQueries.FirstResponseAsync(
                 context.Substances.AsNoTracking().Where(substance => substance.Id == id),
                 query.Locale,

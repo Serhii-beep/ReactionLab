@@ -162,6 +162,10 @@ namespace ReactionLab.Catalog.Infrastructure.Persistence.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("is_reversible");
 
+                    b.Property<DateTimeOffset?>("RetiredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("retired_at");
+
                     b.Property<string>("Translations")
                         .IsRequired()
                         .HasColumnType("jsonb")
@@ -181,6 +185,12 @@ namespace ReactionLab.Catalog.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset>("created_at")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
+
+                    b.Property<string>("natural_key")
+                        .IsRequired()
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)")
+                        .HasColumnName("natural_key");
 
                     b.PrimitiveCollection<Guid[]>("reactant_signature")
                         .IsRequired()
@@ -267,6 +277,10 @@ namespace ReactionLab.Catalog.Infrastructure.Persistence.Migrations
                     b.HasIndex("Type")
                         .HasDatabaseName("ix_reactions_type");
 
+                    b.HasIndex("natural_key")
+                        .IsUnique()
+                        .HasDatabaseName("ix_reactions_natural_key");
+
                     b.HasIndex("reactant_signature")
                         .HasDatabaseName("ix_reactions_reactant_signature");
 
@@ -322,9 +336,31 @@ namespace ReactionLab.Catalog.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<DateTimeOffset?>("ActivatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("activated_at");
+
+                    b.Property<int>("AnswerVersion")
+                        .HasColumnType("integer")
+                        .HasColumnName("answer_version");
+
+                    b.Property<long>("ChangeMark")
+                        .HasColumnType("bigint")
+                        .HasColumnName("change_mark");
+
                     b.Property<DateTimeOffset>("PublishedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("published_at");
+
+                    b.Property<DateTimeOffset?>("RetiredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("retired_at");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
 
                     b.Property<string>("Version")
                         .IsRequired()
@@ -337,6 +373,9 @@ namespace ReactionLab.Catalog.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("PublishedAt")
                         .HasDatabaseName("ix_catalog_releases_published_at");
+
+                    b.HasIndex("Status")
+                        .HasDatabaseName("ix_catalog_releases_status");
 
                     b.ToTable("catalog_releases", (string)null);
                 });
@@ -368,6 +407,10 @@ namespace ReactionLab.Catalog.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(20)")
                         .HasColumnName("kind");
 
+                    b.Property<DateTimeOffset?>("RetiredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("retired_at");
+
                     b.Property<string>("StateAtRoomTemperature")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -397,10 +440,21 @@ namespace ReactionLab.Catalog.Infrastructure.Persistence.Migrations
                         .HasColumnType("text[]")
                         .HasColumnName("element_symbols");
 
+                    b.Property<string>("natural_key")
+                        .IsRequired()
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)")
+                        .HasColumnName("natural_key");
+
                     b.Property<string>("search_text")
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("search_text");
+
+                    b.Property<string>("structure_key")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("structure_key");
 
                     b.Property<DateTimeOffset>("updated_at")
                         .HasColumnType("timestamp with time zone")
@@ -420,11 +474,18 @@ namespace ReactionLab.Catalog.Infrastructure.Persistence.Migrations
 
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("element_symbols"), "gin");
 
+                    b.HasIndex("natural_key")
+                        .IsUnique()
+                        .HasDatabaseName("ix_substances_natural_key");
+
                     b.HasIndex("search_text")
                         .HasDatabaseName("ix_substances_search_text");
 
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("search_text"), "gin");
                     NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("search_text"), new[] { "gin_trgm_ops" });
+
+                    b.HasIndex("structure_key")
+                        .HasDatabaseName("ix_substances_structure_key");
 
                     b.ToTable("substances", (string)null);
                 });

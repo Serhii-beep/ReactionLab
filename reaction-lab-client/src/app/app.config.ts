@@ -10,6 +10,8 @@ import { AppErrorHandler } from './core/errors/app-error-handler';
 import { LanguagePreference } from './core/i18n/language-preference';
 import { LANGUAGES } from './data/i18n/request-locale';
 import { provideChemistryEngineCheck } from './core/chemistry/chemistry-engine-check-provider';
+import { provideCatalogPrefetch } from './data/catalog/catalog-prefetch-provider';
+import { catalogReleaseInterceptor } from './data/catalog/catalog-release-interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -19,7 +21,7 @@ export const appConfig: ApplicationConfig = {
       useClass: AppErrorHandler
     },
     provideRouter(routes),
-    provideHttpClient(withInterceptors([apiErrorInterceptor])),
+    provideHttpClient(withInterceptors([apiErrorInterceptor, catalogReleaseInterceptor])),
     provideTransloco({
       config: {
         availableLangs: [...LANGUAGES],
@@ -33,6 +35,7 @@ export const appConfig: ApplicationConfig = {
     }),
     provideTranslocoMessageformat(),
     provideAppInitializer(() => inject(LanguagePreference).restore()),
+    provideCatalogPrefetch(),
     provideChemistryEngineCheck()
   ],
 };

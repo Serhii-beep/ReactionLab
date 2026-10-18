@@ -35,7 +35,7 @@ export class PeriodicTableSheet {
     protected readonly categories = CATEGORIES;
 
     protected readonly cells = computed<readonly PeriodicCell[]>(() =>
-        this.elements.all.value().map((element) => ({
+        this.elements.table().map((element) => ({
             symbol: element.symbol,
             atomicNumber: element.atomicNumber,
             name: element.name,
@@ -47,6 +47,6 @@ export class PeriodicTableSheet {
     protected readonly selected = computed(() => {
         const symbol = this.ui.tableElement();
 
-        return this.elements.all.value().find((element) => element.symbol === symbol) ?? null;
+        return this.elements.table().find((element) => element.symbol === symbol) ?? null;
     })
 }

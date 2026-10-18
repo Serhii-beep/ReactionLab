@@ -1,16 +1,16 @@
-import { computed, inject, Service } from '@angular/core';
+import { inject, Service } from '@angular/core';
 import { ChemistryReferenceClient } from '../../data/chemistry/chemistry-reference-client';
 import { ElementsClient } from '../../data/elements/elements-client';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { catchError, combineLatest, defer, filter, first, map, Observable, shareReplay, switchMap, throwError } from 'rxjs';
 import { ChemistryWorkerConnection } from './chemistry-worker-connection';
-import { AssemblyResult, AtomEntry, BalanceResult, BondEntry, ChemistryRequest, ChemistryResultByOperation, ConditionsRequest, ConditionsResult, ElementEntry, FormulaResult, MolarMassResult, PredictionResult, SketchAtomEntry, SketchDescription, StandardState, SymmetryResult } from './chemistry-contracts';
+import { AssemblyResult, AtomEntry, BalanceResult, BondEntry, ChemistryRequest, ChemistryResultByOperation, ConditionsRequest, ConditionsResult, ElementEntry, FormulaResult, MolarMassResult, PredictionResult, SketchAtomEntry, SketchDescription, StandardState, StructureKeyResult, SymmetryResult } from './chemistry-contracts';
 
 @Service()
 export class ChemistryEngine {
     private readonly reference = inject(ChemistryReferenceClient);
-    private readonly elements = inject(ElementsClient).all;
-    private readonly elementEntries$ = toObservable(computed(() => (this.elements.hasValue() ? this.elements.value() : []))).pipe(
+    private readonly elements = inject(ElementsClient).table;
+    private readonly elementEntries$ = toObservable(this.elements).pipe(
         filter((elements) => elements.length > 0),
         map((elements) => elements.map(({ symbol, mass, period }): ElementEntry => ({ symbol, mass, period })))
     );
@@ -34,6 +34,10 @@ export class ChemistryEngine {
 
     describeSketch(atoms: readonly SketchAtomEntry[], bonds: readonly BondEntry[]): Observable<SketchDescription> {
         return this.request({ operation: 'describeSketch', requestJson: JSON.stringify({ atoms, bonds }) });
+    }
+
+    structureKey(atoms: readonly SketchAtomEntry[], bonds: readonly BondEntry[]): Observable<StructureKeyResult> {
+        return this.request({ operation: 'structureKey', requestJson: JSON.stringify({ atoms, bonds }) });
     }
 
     detectSymmetry(symbols: readonly string[], positionsAngstroms: readonly number[]): Observable<SymmetryResult> {

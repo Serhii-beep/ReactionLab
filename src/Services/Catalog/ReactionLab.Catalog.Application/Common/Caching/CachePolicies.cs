@@ -16,6 +16,12 @@ public static class CachePolicies
         LocalCacheExpiration = TimeSpan.FromMinutes(2)
     };
 
+    public static readonly HybridCacheEntryOptions Release = new()
+    {
+        Expiration = TimeSpan.FromHours(6),
+        LocalCacheExpiration = TimeSpan.FromMinutes(10)
+    };
+
     public static readonly HybridCacheEntryOptions Query = new()
     {
         Expiration = TimeSpan.FromMinutes(2),

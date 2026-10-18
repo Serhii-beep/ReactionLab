@@ -39,8 +39,16 @@ public sealed class PhaseResolutionTests
     }
 
     [Fact]
-    public void TryPhaseOf_RefusesASpeciesWithNoRecordedState() =>
-        Resolution.TryPhaseOf("synthesis.metalAndNonMetal", "K3N", out _).ShouldBeFalse();
+    public void TryPhaseOf_RefusesAMolecularSpeciesWithNoRecordedState() =>
+        Resolution.TryPhaseOf("combustion.complete", "C6H12O6", out _).ShouldBeFalse();
+
+    [Fact]
+    public void TryPhaseOf_PlacesAnIonicCompoundWithNoRecordedStateAsASolid()
+    {
+        Resolution.TryPhaseOf("synthesis.metalAndNonMetal", "K3N", out var phase).ShouldBeTrue();
+
+        phase.ShouldBe(Phase.Solid);
+    }
 
     [Fact]
     public void TryResolve_AssignsEveryParticipant()
@@ -55,5 +63,5 @@ public sealed class PhaseResolutionTests
 
     [Fact]
     public void TryResolve_RefusesWhenOneParticipantCannotBePlaced() =>
-        Resolution.TryResolve("synthesis.metalAndNonMetal", ["K", "N2"], ["K3N"], out _).ShouldBeFalse();
+        Resolution.TryResolve("combustion.complete", ["C6H12O6", "O2"], ["CO2", "H2O"], out _).ShouldBeFalse();
 }

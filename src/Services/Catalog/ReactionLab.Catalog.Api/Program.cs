@@ -12,6 +12,7 @@ builder.AddServiceDefaults();
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddCatalogReleaseReads();
 builder.Services.AddApi();
 
 builder.WebHost.ConfigureKestrel(options =>
@@ -40,5 +41,7 @@ api.MapElementEndpoints();
 api.MapSubstanceEndpoints();
 api.MapReactionEndpoints();
 api.MapChemistryEndpoints();
+
+app.MapReleaseEndpoints();
 
 await app.RunAsync();

@@ -4,6 +4,7 @@ using ReactionLab.Catalog.Application.Common.Abstractions;
 using ReactionLab.Catalog.Application.Common.Caching;
 using ReactionLab.Catalog.Application.Common.Pagination;
 using ReactionLab.Catalog.Application.Features.Reactions.Contracts;
+using ReactionLab.Catalog.Application.Features.Releases;
 using ReactionLab.Catalog.Domain.Reactions;
 using ReactionLab.SharedKernel;
 
@@ -13,7 +14,10 @@ public sealed class ListReactionsHandler(
     IAppDbContext context,
     ICatalogSearch search,
     IReactionMatching matching,
-    HybridCache cache)
+    ICatalogReleases releases,
+    IReleaseReadContext release,
+    HybridCache cache,
+    CatalogCacheScope scope)
     : IQueryHandler<ListReactionsQuery, CursorPagedResult<ReactionSummaryResponse>>
 {
     private const int MaximumSearchDepth = 1000;
@@ -52,6 +56,7 @@ public sealed class ListReactionsHandler(
 
         var page = await cache.GetOrCreateAsync(
             CacheKeys.ReactionList(
+                scope.Name,
                 query.Search, query.AvailableSubstanceIds, query.Match, query.Page.Cursor, query.Page.Limit, query.Locale),
             async token => browsing
                 ? await BrowseAsync(cursor, query, token)
@@ -65,7 +70,7 @@ public sealed class ListReactionsHandler(
 
     private IQueryable<Reaction> Candidates(ListReactionsQuery query)
     {
-        var reactions = context.Reactions.AsNoTracking();
+        var reactions = context.Reactions.AsNoTracking().Where(reaction => reaction.RetiredAt == null);
 
         return query.AvailableSubstanceIds is { Count: > 0 } available
             ? matching.PossibleWith(reactions, available, query.Match)
@@ -81,6 +86,20 @@ public sealed class ListReactionsHandler(
 
         if (query.AvailableSubstanceIds is { Count: > 0 } available)
         {
+            if (releases.ActiveRelease is { } active
+                && releases.Match(active, available, query.Match, query.Page.Limit) is { } matched)
+            {
+                release.UseRelease(active);
+
+                return new CursorPagedResult<ReactionSummaryResponse>
+                {
+                    Items = await ReleaseMatching.SummariesAsync(release, matched, query.Locale, cancellationToken),
+                    PageSize = query.Page.Limit,
+                    HasMore = false,
+                    NextCursor = null
+                };
+            }
+
             var ranked = await ReactionQueries.SummariesAsync(
                 matching.NearestFirst(reactions, available).Take(query.Page.Limit),
                 context.Substances.AsNoTracking(),

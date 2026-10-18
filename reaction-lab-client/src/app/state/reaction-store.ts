@@ -6,6 +6,7 @@ import { WorkspaceStore } from "./workspace-store";
 import { ApiError } from "../data/errors/api-error";
 import { resourceError } from "../data/errors/resource-error";
 import { isUserMoleculeId } from "../data/molecules/user-molecules";
+import { CatalogRelease } from "../data/catalog/catalog-release";
 
 export interface ScoredReaction {
     readonly reaction: ReactionSummary;
@@ -16,9 +17,10 @@ export interface ScoredReaction {
 export class ReactionStore {
     private readonly reactions = inject(ReactionsClient);
     private readonly workspace = inject(WorkspaceStore);
+    private readonly release = inject(CatalogRelease);
 
-    readonly isLoading = computed(() => this.reactions.page.isLoading());
-    readonly error = computed<ApiError | undefined>(() => resourceError(this.reactions.page.error()));
+    readonly isLoading = computed(() => this.reactions.page.isLoading() || this.release.isLoading());
+    readonly error = computed<ApiError | undefined>(() => resourceError(this.reactions.page.error()) ?? this.release.error());
 
     readonly scored = computed<readonly ScoredReaction[]>(() => {
         const counts = this.workspace.counts();
@@ -33,6 +35,10 @@ export class ReactionStore {
     }
 
     reload(): void {
-        this.reactions.page.reload();
+        if (this.release.failed()) {
+            this.release.reload();
+        } else {
+            this.reactions.page.reload();
+        }
     }
 }

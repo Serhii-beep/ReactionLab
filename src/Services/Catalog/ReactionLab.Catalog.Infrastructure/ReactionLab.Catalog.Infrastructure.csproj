@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="ReactionLab.Catalog.Infrastructure.UnitTests" />
+    <InternalsVisibleTo Include="ReactionLab.CatalogBuilder" />
   </ItemGroup>
 
   <ItemGroup>

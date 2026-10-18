@@ -6,7 +6,7 @@ using ReactionLab.SharedKernel;
 
 namespace ReactionLab.Catalog.Application.Features.Elements.TranslateElement;
 
-public sealed class TranslateElementHandler(IAppDbContext context, CacheInvalidator invalidator)
+public sealed class TranslateElementHandler(IAppDbContext context, CacheInvalidator invalidator, CatalogCacheScope scope)
     : ICommandHandler<TranslateElementCommand>
 {
     public async ValueTask<Result> HandleAsync(
@@ -45,8 +45,8 @@ public sealed class TranslateElementHandler(IAppDbContext context, CacheInvalida
 
         await invalidator.InvalidateAsync(
             [
-                .. SupportedLocale.All.Select(locale => CacheKeys.Element(command.ElementId, locale)),
-                .. SupportedLocale.All.Select(locale => CacheKeys.ElementBySymbol(element.Symbol.Value, locale))
+                .. SupportedLocale.All.Select(locale => CacheKeys.Element(scope.Name, command.ElementId, locale)),
+                .. SupportedLocale.All.Select(locale => CacheKeys.ElementBySymbol(scope.Name, element.Symbol.Value, locale))
             ],
             CacheTags.Elements,
             cancellationToken);

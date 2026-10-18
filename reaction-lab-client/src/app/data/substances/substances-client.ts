@@ -4,11 +4,13 @@ import { SubstanceSummary } from "./substance";
 import { toObservable, toSignal } from "@angular/core/rxjs-interop";
 import { debounceTime } from "rxjs";
 import { httpResource } from "@angular/common/http";
-import { environment } from "../../../environments/environment";
 import { RequestLocale } from "../i18n/request-locale";
+import { CatalogRelease } from "../catalog/catalog-release";
+import { answerUrl } from "../catalog/catalog-answer-url";
+import { lengthOf, MINIMUM_SEARCH_KEY_LENGTH, searchKeyOf, searchTermOf } from "../catalog/search-key";
+import { resourceError } from "../errors/resource-error";
 
-const MINIMUM_QUERY = 2;
-const DEBOUNCE_MS = 500;
+const DEBOUNCE_MS = 300;
 const PAGE_SIZE = 30;
 
 const EMPTY_PAGE: CursorPage<SubstanceSummary> = {
@@ -18,10 +20,17 @@ const EMPTY_PAGE: CursorPage<SubstanceSummary> = {
     pageSize: PAGE_SIZE
 };
 
+interface PageState {
+    readonly page: CursorPage<SubstanceSummary>;
+    readonly loading: boolean;
+    readonly loaded: readonly SubstanceSummary[];
+}
+
 @Service()
 export class SubstancesClient {
     readonly query = signal('');
 
+    private readonly release = inject(CatalogRelease);
     private readonly locale = inject(RequestLocale);
 
     private readonly elementSource = signal<() => string | null>(() => null);
@@ -32,13 +41,10 @@ export class SubstancesClient {
         { initialValue: '' }
     );
 
-    private readonly search = computed(() => {
-        const value = this.debounced().trim();
+    private readonly search = computed(() => searchTermOf(this.debounced()) ?? '');
 
-        return value.length >= MINIMUM_QUERY ? value : '';
-    });
-
-    private readonly scope = computed(() => `${this.search()}|${this.element() ?? ''}`);
+    private readonly scope = computed(() =>
+        `${this.release.release() ?? ''}|${this.locale.lang()}|${this.search()}|${this.element() ?? ''}`);
 
     private readonly cursor = linkedSignal<string, string | null>({
         source: () => this.scope(),
@@ -51,19 +57,40 @@ export class SubstancesClient {
     });
 
     readonly page = httpResource<CursorPage<SubstanceSummary>>(
-        () => ({ url: this.url(this.search(), this.element(), this.cursor()), headers: this.locale.headers() }),
+        () => {
+            const release = this.release.release();
+
+            return release === undefined
+                ? undefined
+                : answerUrl(release, this.locale.lang(), `substances${queryOf(this.search(), this.element(), this.cursor())}`);
+        },
         { defaultValue: EMPTY_PAGE }
     );
 
-    readonly items = computed(() =>
-        this.page.isLoading() ? this.loaded() : [...this.loaded(), ...this.page.value().items]);
+    private readonly current = computed(() => (this.page.hasValue() ? this.page.value() : EMPTY_PAGE));
 
-    readonly hasMore = computed(() => !this.page.isLoading() && this.page.value().hasMore);
+    private readonly pageState = computed<PageState>(() => ({
+        page: this.current(),
+        loading: this.page.isLoading(),
+        loaded: this.loaded()
+    }));
+
+    readonly items = linkedSignal<PageState, readonly SubstanceSummary[]>({
+        source: this.pageState,
+        computation: ({ page, loading, loaded }, previous) =>
+            (loading && previous !== undefined ? previous.value : [...loaded, ...page.items])
+    });
+
+    readonly hasMore = computed(() => !this.page.isLoading() && this.current().hasMore);
+
+    readonly isLoading = computed(() => this.page.isLoading() || this.release.isLoading());
+
+    readonly unavailable = computed(() => this.release.failed() || (resourceError(this.page.error())?.isRetryable ?? false));
 
     readonly needsMoreInput = computed(() => {
-        const value = this.query().trim();
+        const key = searchKeyOf(this.query());
 
-        return value.length > 0 && value.length < MINIMUM_QUERY;
+        return lengthOf(key) > 0 && lengthOf(key) < MINIMUM_SEARCH_KEY_LENGTH;
     });
 
     bindElement(source: () => string | null): void {
@@ -71,7 +98,7 @@ export class SubstancesClient {
     }
 
     more(): void {
-        const page = this.page.value();
+        const page = this.current();
 
         if (page.nextCursor === null) {
             return;
@@ -80,22 +107,22 @@ export class SubstancesClient {
         this.loaded.update((items) => [...items, ...page.items]);
         this.cursor.set(page.nextCursor);
     }
+}
 
-    private url(search: string, element: string | null, cursor: string | null): string {
-        const params = new URLSearchParams({ pageSize: String(PAGE_SIZE) });
+function queryOf(search: string, element: string | null, cursor: string | null): string {
+    const params = new URLSearchParams();
 
-        if (search !== '') {
-            params.set('q', search);
-        }
-
-        if (element !== null) {
-            params.set('element', element);
-        }
-
-        if (cursor !== null) {
-            params.set('cursor', cursor);
-        }
-
-        return `${environment.apiUrl}/substances?${params}`;
+    if (search !== '') {
+        params.set('q', search);
+    } else if (element !== null) {
+        params.set('element', element);
     }
+
+    if (cursor !== null) {
+        params.set('cursor', cursor);
+    }
+
+    const query = params.toString();
+
+    return query === '' ? '' : `?${query}`;
 }

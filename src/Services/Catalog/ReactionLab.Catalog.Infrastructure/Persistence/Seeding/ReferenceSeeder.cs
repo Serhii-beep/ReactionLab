@@ -47,7 +47,7 @@ internal sealed class ReferenceSeeder(AppDbContext context, ILogger<ReferenceSee
 
             if (byKey.TryGetValue(key.Value.Value, out var existing))
             {
-                if (string.Equals(existing.Payload, payload, StringComparison.Ordinal))
+                if (SamePayload(existing.Payload, payload))
                 {
                     unchanged++;
 
@@ -84,6 +84,14 @@ internal sealed class ReferenceSeeder(AppDbContext context, ILogger<ReferenceSee
         await context.SaveChangesAsync(cancellationToken);
 
         logger.LogInformation("Reference data: {Added} added, {Replaced} replaced, {Unchanged} unchanged.", added, replaced, unchanged);
+    }
+
+    private static bool SamePayload(string stored, string payload)
+    {
+        using var storedDocument = JsonDocument.Parse(stored);
+        using var payloadDocument = JsonDocument.Parse(payload);
+
+        return JsonElement.DeepEquals(storedDocument.RootElement, payloadDocument.RootElement);
     }
 
     private static bool IsJsonObject(string payload)

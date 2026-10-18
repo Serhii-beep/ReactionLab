@@ -89,7 +89,7 @@ export class SceneCanvas {
     private readonly reducedMotion = this.view.matchMedia('(prefers-reduced-motion: reduce)');
 
     private readonly units = computed(() =>
-        buildBenchUnits(this.workspace.entries(), this.details.loaded(), this.elements.all.value()));
+        buildBenchUnits(this.workspace.entries(), this.details.loaded(), this.elements.table()));
 
     private readonly highlightLevels = computed<HighlightLevelsByUnitId>(() => {
         const selected = this.selection.selectedId();

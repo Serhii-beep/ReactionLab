@@ -170,6 +170,10 @@ export interface ConditionsResult {
     readonly reactions: readonly ReactionConditions[];
 }
 
+export interface StructureKeyResult {
+    readonly key: string;
+}
+
 export type ChemistryRequest =
     | { readonly operation: 'loadReferenceData'; readonly elementsJson: string; readonly referenceJson: string }
     | { readonly operation: 'parseFormula'; readonly formula: string }
@@ -177,6 +181,7 @@ export type ChemistryRequest =
     | { readonly operation: 'balance'; readonly requestJson: string }
     | { readonly operation: 'assemble'; readonly requestJson: string }
     | { readonly operation: 'describeSketch'; readonly requestJson: string }
+    | { readonly operation: 'structureKey'; readonly requestJson: string }
     | { readonly operation: 'detectSymmetry'; readonly requestJson: string }
     | { readonly operation: 'predict'; readonly requestJson: string }
     | { readonly operation: 'describeConditions'; readonly requestJson: string };
@@ -187,6 +192,7 @@ export interface ChemistryResultByOperation {
     readonly balance: BalanceResult;
     readonly assemble: AssemblyResult;
     readonly describeSketch: SketchDescription;
+    readonly structureKey: StructureKeyResult;
     readonly detectSymmetry: SymmetryResult;
     readonly predict: PredictionResult;
     readonly describeConditions: ConditionsResult;

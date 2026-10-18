@@ -16,8 +16,20 @@ internal sealed class CatalogReleaseConfiguration : IEntityTypeConfiguration<Cat
             .HasMaxLength(CatalogRelease.VersionLength)
             .IsRequired();
 
+        builder.Property(r => r.Status)
+            .HasConversion<string>()
+            .HasMaxLength(20)
+            .IsRequired();
+        builder.HasIndex(r => r.Status);
+
+        builder.Property(r => r.AnswerVersion).IsRequired();
+        builder.Property(r => r.ChangeMark).IsRequired();
+
         builder.Property(r => r.PublishedAt).IsRequired();
         builder.HasIndex(r => r.PublishedAt);
+
+        builder.Property(r => r.ActivatedAt);
+        builder.Property(r => r.RetiredAt);
 
         builder.Ignore(r => r.DomainEvents);
     }

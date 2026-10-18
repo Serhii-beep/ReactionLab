@@ -8,7 +8,7 @@ using ReactionLab.SharedKernel;
 
 namespace ReactionLab.Catalog.Application.Features.Elements.GetElementBySymbol;
 
-public sealed class GetElementBySymbolHandler(IAppDbContext context, HybridCache cache)
+public sealed class GetElementBySymbolHandler(IAppDbContext context, HybridCache cache, CatalogCacheScope scope)
     : IQueryHandler<GetElementBySymbolQuery, ElementResponse>
 {
     public async ValueTask<Result<ElementResponse>> HandleAsync(GetElementBySymbolQuery query, CancellationToken cancellationToken)
@@ -19,7 +19,7 @@ public sealed class GetElementBySymbolHandler(IAppDbContext context, HybridCache
         }
 
         var response = await cache.GetOrCreateAsync(
-            CacheKeys.ElementBySymbol(symbol.Value, query.Locale),
+            CacheKeys.ElementBySymbol(scope.Name, symbol.Value, query.Locale),
             async token => await ElementQueries.FirstResponseAsync(
                 context.Elements.AsNoTracking().Where(element => element.Symbol == symbol),
                 query.Locale,

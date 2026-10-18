@@ -6,7 +6,11 @@ using ReactionLab.Chemistry.Thermochemistry;
 
 namespace ReactionLab.Chemistry.Browser;
 
-internal sealed record PredictionModel(IonTable Ions, ReactionPredictor Predictor, EnergyEstimator Energetics)
+internal sealed record PredictionModel(
+    IonTable Ions,
+    ReactionPredictor Predictor,
+    EnergyEstimator Energetics,
+    IReadOnlyDictionary<string, Phase> RoomPhases)
 {
     private const string InvalidFormula = "InvalidFormula";
 
@@ -24,8 +28,14 @@ internal sealed record PredictionModel(IonTable Ions, ReactionPredictor Predicto
             reagents.Add(reagent);
         }
 
-        var phases = new PhaseResolution(
-            Ions, request.StandardStates ?? new Dictionary<string, Phase>(StringComparer.Ordinal));
+        var standardStates = new Dictionary<string, Phase>(RoomPhases, StringComparer.Ordinal);
+
+        foreach (var (formula, phase) in request.StandardStates ?? new Dictionary<string, Phase>())
+        {
+            standardStates[formula] = phase;
+        }
+
+        var phases = new PhaseResolution(Ions, standardStates);
 
         return new PredictionResult(
             [.. new ReactionGenerator(Predictor, phases, Energetics).From(reagents).Select(Entry)], null, null);

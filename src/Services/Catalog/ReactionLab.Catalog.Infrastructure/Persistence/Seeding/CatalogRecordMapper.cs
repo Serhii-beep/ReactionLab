@@ -8,9 +8,9 @@ using ReactionLab.SharedKernel;
 
 namespace ReactionLab.Catalog.Infrastructure.Persistence.Seeding;
 
-internal sealed class JsonCatalogSource : ICatalogSource
+internal sealed class CatalogRecordMapper
 {
-    private static readonly Dictionary<string, BondType> BondTypes = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly Dictionary<string, BondType> BondTypesByName = new(StringComparer.OrdinalIgnoreCase)
     {
         ["single"] = BondType.Single,
         ["double"] = BondType.Double,
@@ -23,49 +23,9 @@ internal sealed class JsonCatalogSource : ICatalogSource
 
     private readonly List<string> _rejections = [];
 
-    public string Name => "catalog-v1";
+    public IReadOnlyList<string> Rejections => _rejections;
 
-    public async Task<CatalogBatch> LoadAsync(CancellationToken cancellationToken)
-    {
-        _rejections.Clear();
-
-        var directory = Path.Combine(AppContext.BaseDirectory, "catalog");
-
-        var elements = new List<Element>();
-        var substances = new List<Substance>();
-        var reactions = new List<ReactionSeed>();
-
-        await foreach (var record in Read<ElementRecord>(directory, "elements.jsonl", cancellationToken))
-        {
-            if (BuildElement(record) is { } element)
-            {
-                elements.Add(element);
-            }
-        }
-
-        await foreach (var record in Read<SubstanceRecord>(directory, "substances.jsonl", cancellationToken))
-        {
-            if (BuildSubstance(record) is { } substance)
-            {
-                substances.Add(substance);
-            }
-        }
-
-        await foreach (var record in Read<ReactionRecord>(directory, "reactions.jsonl", cancellationToken))
-        {
-            if (BuildReaction(record) is { } reaction)
-            {
-                reactions.Add(reaction);
-            }
-        }
-
-        return new CatalogBatch(elements, substances, reactions, [.. _rejections]);
-    }
-
-    private static IAsyncEnumerable<T> Read<T>(string directory, string file, CancellationToken cancellationToken) =>
-        CatalogJson.ReadLinesAsync<T>(Path.Combine(directory, file), cancellationToken);
-
-    private Element? BuildElement(ElementRecord record)
+    public Element? MapElement(ElementRecord record)
     {
         if (!record.Translations.TryGetValue(SupportedLocale.Default.Code, out var translation))
         {
@@ -131,26 +91,7 @@ internal sealed class JsonCatalogSource : ICatalogSource
         return element;
     }
 
-    private AtomicRadii? BuildRadii(ElementRecord record)
-    {
-        if (record.CovalentRadiusPm is not { } covalent)
-        {
-            return null;
-        }
-
-        var radii = AtomicRadii.Create(covalent, record.VanDerWaalsRadiusPm);
-
-        if (radii.IsFailure)
-        {
-            Reject($"{record.Symbol} radii", radii.Error);
-
-            return null;
-        }
-
-        return radii.Value;
-    }
-
-    private Substance? BuildSubstance(SubstanceRecord record)
+    public Substance? MapSubstance(SubstanceRecord record)
     {
         if (!record.Translations.TryGetValue(SupportedLocale.Default.Code, out var translation))
         {
@@ -225,49 +166,7 @@ internal sealed class JsonCatalogSource : ICatalogSource
         return substance;
     }
 
-    private MolecularStructure? BuildStructure(SubstanceRecord record)
-    {
-        if (record.Structure is not { Atoms.Count: > 0 } source)
-        {
-            return null;
-        }
-
-        var atoms = new List<AtomPlacement>(source.Atoms.Count);
-
-        foreach (var atom in source.Atoms)
-        {
-            var symbol = ElementSymbol.Create(atom.Symbol);
-
-            if (symbol.IsFailure)
-            {
-                Reject($"{record.Formula} structure", symbol.Error);
-
-                return null;
-            }
-
-            atoms.Add(new AtomPlacement(symbol.Value, atom.X, atom.Y, atom.Z));
-        }
-
-        var bonds = source.Bonds
-            .Select(bond => new Bond(
-                bond.From,
-                bond.To,
-                BondTypes.GetValueOrDefault(bond.Type, BondType.Single)))
-            .ToList();
-
-        var structure = MolecularStructure.Create(atoms, bonds);
-
-        if (structure.IsFailure)
-        {
-            Reject($"{record.Formula} structure", structure.Error);
-
-            return null;
-        }
-
-        return structure.Value;
-    }
-
-    private ReactionSeed? BuildReaction(ReactionRecord record)
+    public ReactionSeed? MapReaction(ReactionRecord record)
     {
         if (!record.Translations.TryGetValue(SupportedLocale.Default.Code, out var translation))
         {
@@ -284,6 +183,19 @@ internal sealed class JsonCatalogSource : ICatalogSource
         if (AnyFailed(record.Key, content, difficulty))
         {
             return null;
+        }
+
+        var translations = ReactionLab.SharedKernel.Translations.Create(content.Value).Value;
+
+        foreach (var (locale, text) in Translations(record.Translations))
+        {
+            var translated = ReactionContent.Create(
+                text.Name, text.Description, text.Mechanism, text.SafetyWarnings, text.RealWorldExamples);
+
+            if (translated.IsSuccess)
+            {
+                translations = translations.With(locale, translated.Value);
+            }
         }
 
         if (!Enum.TryParse<ReactionType>(record.Type, ignoreCase: true, out var type))
@@ -337,7 +249,7 @@ internal sealed class JsonCatalogSource : ICatalogSource
 
         return new ReactionSeed(
             record.Key,
-            content.Value,
+            translations,
             type,
             difficulty.Value,
             record.IsReversible,
@@ -347,6 +259,67 @@ internal sealed class JsonCatalogSource : ICatalogSource
             visualization.IsSuccess ? visualization.Value : null,
             provenance.IsSuccess ? provenance.Value : ReactionProvenance.Curated,
             record.Tags ?? []);
+    }
+
+    private AtomicRadii? BuildRadii(ElementRecord record)
+    {
+        if (record.CovalentRadiusPm is not { } covalent)
+        {
+            return null;
+        }
+
+        var radii = AtomicRadii.Create(covalent, record.VanDerWaalsRadiusPm);
+
+        if (radii.IsFailure)
+        {
+            Reject($"{record.Symbol} radii", radii.Error);
+
+            return null;
+        }
+
+        return radii.Value;
+    }
+
+    private MolecularStructure? BuildStructure(SubstanceRecord record)
+    {
+        if (record.Structure is not { Atoms.Count: > 0 } source)
+        {
+            return null;
+        }
+
+        var atoms = new List<AtomPlacement>(source.Atoms.Count);
+
+        foreach (var atom in source.Atoms)
+        {
+            var symbol = ElementSymbol.Create(atom.Symbol);
+
+            if (symbol.IsFailure)
+            {
+                Reject($"{record.Formula} structure", symbol.Error);
+
+                return null;
+            }
+
+            atoms.Add(new AtomPlacement(symbol.Value, atom.X, atom.Y, atom.Z));
+        }
+
+        var bonds = source.Bonds
+            .Select(bond => new Bond(
+                bond.From,
+                bond.To,
+                BondTypesByName.GetValueOrDefault(bond.Type, BondType.Single)))
+            .ToList();
+
+        var structure = MolecularStructure.Create(atoms, bonds);
+
+        if (structure.IsFailure)
+        {
+            Reject($"{record.Formula} structure", structure.Error);
+
+            return null;
+        }
+
+        return structure.Value;
     }
 
     private static IEnumerable<(SupportedLocale Locale, TText Text)> Translations<TText>(Dictionary<string, TText> translations)

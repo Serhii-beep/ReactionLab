@@ -79,7 +79,7 @@ export class AboutSheet {
             return [];
         }
 
-        const elementsBySymbol = new Map(this.elements.all.value().map((element) => [element.symbol, element]));
+        const elementsBySymbol = new Map(this.elements.table().map((element) => [element.symbol, element]));
 
         return parseHillFormula(detail.hillFormula).flatMap(({ symbol, count }) => {
             const element = elementsBySymbol.get(symbol);

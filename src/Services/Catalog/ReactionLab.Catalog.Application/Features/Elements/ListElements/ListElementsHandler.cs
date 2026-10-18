@@ -7,13 +7,13 @@ using ReactionLab.SharedKernel;
 
 namespace ReactionLab.Catalog.Application.Features.Elements.ListElements;
 
-public sealed class ListElementsHandler(IAppDbContext context, ICatalogSearch search, HybridCache cache)
+public sealed class ListElementsHandler(IAppDbContext context, ICatalogSearch search, HybridCache cache, CatalogCacheScope scope)
     : IQueryHandler<ListElementsQuery, IReadOnlyList<ElementSummaryResponse>>
 {
     public async ValueTask<Result<IReadOnlyList<ElementSummaryResponse>>> HandleAsync(ListElementsQuery query, CancellationToken cancellationToken)
     {
         var summaries = await cache.GetOrCreateAsync(
-            CacheKeys.ElementList(query.Search, query.Locale),
+            CacheKeys.ElementList(scope.Name, query.Search, query.Locale),
             async token =>
             {
                 var elements = context.Elements.AsNoTracking();

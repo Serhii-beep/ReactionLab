@@ -8,6 +8,10 @@ internal static class PersistenceColumns
 
     public const string ElementSymbols = "element_symbols";
 
+    public const string NaturalKey = "natural_key";
+
+    public const string StructureKey = "structure_key";
+
     public const string CreatedAt = "created_at";
 
     public const string UpdatedAt = "updated_at";

@@ -18,6 +18,7 @@ namespace ReactionLab.Chemistry.Browser.Contracts;
 [JsonSerializable(typeof(AssemblyResult))]
 [JsonSerializable(typeof(SketchRequest))]
 [JsonSerializable(typeof(SketchDescription))]
+[JsonSerializable(typeof(StructureKeyResult))]
 [JsonSerializable(typeof(SymmetryRequest))]
 [JsonSerializable(typeof(SymmetryResult))]
 [JsonSerializable(typeof(PredictionRequest))]

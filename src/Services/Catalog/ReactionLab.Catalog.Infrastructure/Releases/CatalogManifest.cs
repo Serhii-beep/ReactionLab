@@ -1,3 +1,3 @@
 namespace ReactionLab.Catalog.Infrastructure.Releases;
 
-internal sealed record CatalogManifest(string Version, IReadOnlyDictionary<string, string> Documents);
+internal sealed record CatalogManifest(Guid Release, string Version, CatalogManifestDocuments Documents);

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using ReactionLab.Catalog.Application.Common.Abstractions;
 using ReactionLab.Catalog.Application.Features.Reactions.Contracts;
 using ReactionLab.Catalog.Domain.Enums;
 using ReactionLab.Catalog.Domain.Reactions;
@@ -38,19 +39,18 @@ internal static class ReactionQueries
                 reaction.Visualization,
                 reaction.Provenance,
                 reaction.Translations,
-                reaction.Tags,
+                Tags = EF.Property<List<string>>(reaction, PersistedFields.ReactionTags),
                 Participants = reaction.Participants
-                    .Join(substances, participant => participant.SubstanceId, substance => substance.Id,
-                        (participant, substance) => new ParticipantRow(
-                            participant.SubstanceId,
-                            participant.Role,
-                            participant.Coefficient,
-                            participant.State,
-                            substance.Formula,
-                            substance.Translations))
+                    .Select(participant => new ParticipantRow(
+                        participant.SubstanceId,
+                        participant.Role,
+                        participant.Coefficient,
+                        participant.State))
                     .ToList()
             })
             .ToListAsync(cancellationToken);
+
+        var names = await NamesAsync(substances, rows.SelectMany(row => row.Participants), cancellationToken);
 
         return rows.ConvertAll(row =>
         {
@@ -66,7 +66,7 @@ internal static class ReactionQueries
                 row.Type,
                 row.Difficulty.Value,
                 row.IsReversible,
-                Map(row.Participants, locale),
+                Map(row.Participants, names, locale),
                 row.Energetics.EnthalpyChange?.KilojoulesPerMole,
                 row.Energetics.ActivationEnergyKilojoulesPerMole,
                 row.Energetics.ReverseActivationEnergyKilojoulesPerMole,
@@ -99,19 +99,18 @@ internal static class ReactionQueries
                 reaction.Visualization,
                 reaction.Conditions,
                 reaction.Translations,
-                reaction.Tags,
+                Tags = EF.Property<List<string>>(reaction, PersistedFields.ReactionTags),
                 Participants = reaction.Participants
-                    .Join(substances, participant => participant.SubstanceId, substance => substance.Id,
-                        (participant, substance) => new ParticipantRow(
-                            participant.SubstanceId,
-                            participant.Role,
-                            participant.Coefficient,
-                            participant.State,
-                            substance.Formula,
-                            substance.Translations))
+                    .Select(participant => new ParticipantRow(
+                        participant.SubstanceId,
+                        participant.Role,
+                        participant.Coefficient,
+                        participant.State))
                     .ToList()
             })
             .ToListAsync(cancellationToken);
+
+        var names = await NamesAsync(substances, rows.SelectMany(row => row.Participants), cancellationToken);
 
         return rows.ConvertAll(row => new ReactionSummaryResponse(
             row.Id.Value,
@@ -128,24 +127,56 @@ internal static class ReactionQueries
             row.Conditions.Pressure?.Kilopascals,
             row.Conditions.Catalyst,
             row.Tags,
-            Map(row.Participants, locale)));
+            Map(row.Participants, names, locale)));
+    }
+
+    private static async Task<Dictionary<SubstanceId, SubstanceName>> NamesAsync(
+        IQueryable<Substance> substances,
+        IEnumerable<ParticipantRow> participants,
+        CancellationToken cancellationToken)
+    {
+        var ids = participants.Select(participant => participant.SubstanceId).Distinct().ToList();
+
+        if (ids.Count == 0)
+        {
+            return [];
+        }
+
+        var rows = await substances
+            .Where(substance => ids.Contains(substance.Id))
+            .Select(substance => new SubstanceName(substance.Id, substance.Formula, substance.Translations))
+            .ToListAsync(cancellationToken);
+
+        return rows.ToDictionary(row => row.Id);
     }
 
     private static List<ReactionParticipantResponse> Map(
-        List<ParticipantRow> rows, SupportedLocale locale) =>
-        rows.ConvertAll(row => new ReactionParticipantResponse(
-            row.SubstanceId.Value,
-            row.Formula.Value,
-            row.Translations.Resolve(locale).Name,
-            row.Role,
-            row.Coefficient,
-            row.State));
+        List<ParticipantRow> rows,
+        Dictionary<SubstanceId, SubstanceName> names,
+        SupportedLocale locale) =>
+        [.. rows
+            .Where(row => names.ContainsKey(row.SubstanceId))
+            .Select(row =>
+            {
+                var substance = names[row.SubstanceId];
+
+                return new ReactionParticipantResponse(
+                    row.SubstanceId.Value,
+                    substance.Formula.Value,
+                    substance.Translations.Resolve(locale).Name,
+                    row.Role,
+                    row.Coefficient,
+                    row.State);
+            })];
 
     private sealed record ParticipantRow(
         SubstanceId SubstanceId,
         ParticipantRole Role,
         int Coefficient,
-        MatterState? State,
+        MatterState? State);
+
+    private sealed record SubstanceName(
+        SubstanceId Id,
         ChemicalFormula Formula,
         Translations<SubstanceContent> Translations);
 }

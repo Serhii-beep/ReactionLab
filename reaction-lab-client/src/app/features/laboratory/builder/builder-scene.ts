@@ -94,7 +94,7 @@ export class BuilderScene {
 
         effect(() => {
             const placed = this.analysis.placed();
-            const elements = this.elements.all.value();
+            const elements = this.elements.table();
 
             untracked(() => this.show(placed, new Map(elements.map((element) => [element.symbol, element]))));
         });

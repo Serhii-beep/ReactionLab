@@ -3,16 +3,15 @@ import { takeUntilDestroyed, toObservable } from "@angular/core/rxjs-interop";
 import { catchError, EMPTY, filter, finalize, Observable, switchMap, tap } from "rxjs";
 import { ChemistryEngine } from "../../../core/chemistry/chemistry-engine";
 import { PredictedReaction, PredictionResult, StandardState } from "../../../core/chemistry/chemistry-contracts";
-import { CatalogStatesClient, StateByFormula } from "../../../data/substances/catalog-states-client";
 import { ReactionStore } from "../../../state/reaction-store";
 import { UiStore } from "../../../state/ui-store";
 import { WorkspaceStore } from "../../../state/workspace-store";
+import { SubstanceSummary } from "../../../data/substances/substance";
 import { predictedReactionViews } from "./predicted-reaction-view";
 
 @Injectable()
 export class BenchPrediction {
     private readonly engine = inject(ChemistryEngine);
-    private readonly states = inject(CatalogStatesClient);
     private readonly workspace = inject(WorkspaceStore);
     private readonly reactions = inject(ReactionStore);
     private readonly ui = inject(UiStore);
@@ -44,8 +43,7 @@ export class BenchPrediction {
         this.loading.set(true);
         this.failed.set(false);
 
-        return this.states.states$.pipe(
-            switchMap((states) => this.engine.predict(formulas, standardStatesOf(states))),
+        return this.engine.predict(formulas, standardStatesOf(this.workspace.entries().map((entry) => entry.substance))).pipe(
             tap({
                 next: (result) => {
                     this.predicted.set(result.reactions ?? []);
@@ -59,11 +57,11 @@ export class BenchPrediction {
     }
 }
 
-function standardStatesOf(states: StateByFormula): Record<string, StandardState> {
+function standardStatesOf(substances: readonly SubstanceSummary[]): Record<string, StandardState> {
     const standard: Record<string, StandardState> = {};
 
-    for (const [formula, state] of states) {
-        if (state !== 'Plasma') {
+    for (const { formula, stateAtRoomTemperature: state } of substances) {
+        if (state !== null && state !== 'Plasma') {
             standard[formula] = state;
         }
     }

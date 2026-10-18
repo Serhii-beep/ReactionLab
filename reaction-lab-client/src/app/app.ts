@@ -23,6 +23,8 @@ import { ReactionsClient } from './data/reactions/reactions-client';
 import { Skeleton } from "./design-system/primitives/skeleton/skeleton";
 import { LanguageToggle } from './core/i18n/language-toggle';
 import { Spinner } from "./design-system/primitives/spinner/spinner";
+import { CatalogRelease } from './data/catalog/catalog-release';
+import { SubstanceDetailsClient } from './data/substances/substance-details-client';
 
 @Component({
   selector: 'app-root',
@@ -61,14 +63,23 @@ export class App {
   private readonly locale = inject(RequestLocale);
   private readonly elements = inject(ElementsClient);
   private readonly reactions = inject(ReactionsClient);
+  private readonly catalog = inject(CatalogRelease);
+  private readonly details = inject(SubstanceDetailsClient);
 
   private offlineNotice: number | null = null;
+  private catalogNotice: number | null = null;
 
   constructor() {
     effect(() => {
       const online = this.connectivity.online();
 
       untracked(() => (online ? this.reconnected() : this.disconnected()));
+    });
+
+    effect(() => {
+      const failed = this.catalog.failed() && this.connectivity.online();
+
+      untracked(() => (failed ? this.catalogFailed() : this.catalogRecovered()));
     });
   }
 
@@ -83,6 +94,21 @@ export class App {
       this.transloco.translate('app.offline.title'),
       this.transloco.translate('app.offline.detail'),
       true);
+  }
+
+  private catalogFailed(): void {
+    this.catalogNotice ??= this.notifications.show(
+      'warning',
+      this.transloco.translate('app.catalogUnavailable.title'),
+      this.transloco.translate('app.catalogUnavailable.detail'),
+      true);
+  }
+
+  private catalogRecovered(): void {
+    if (this.catalogNotice !== null) {
+      this.notifications.dismiss(this.catalogNotice);
+      this.catalogNotice = null;
+    }
   }
 
   private reconnected(): void {
@@ -100,5 +126,7 @@ export class App {
     if (this.reactions.page.error()) {
       this.reactions.page.reload();
     }
+
+    this.details.retryFailures();
   }
 }
