@@ -34,6 +34,11 @@
     <Project Path="src/Services/Catalog/ReactionLab.Catalog.Infrastructure/ReactionLab.Catalog.Infrastructure.csproj" />
     <Project Path="src/Services/Catalog/ReactionLab.Catalog.Migrator/ReactionLab.Catalog.Migrator.csproj" />
   </Folder>
+  <Folder Name="/src/Services/Identity/">
+    <Project Path="src/Services/Identity/ReactionLab.Identity.Api/ReactionLab.Identity.Api.csproj" />
+    <Project Path="src/Services/Identity/ReactionLab.Identity.Migrator/ReactionLab.Identity.Migrator.csproj" />
+    <Project Path="src/Services/Identity/ReactionLab.Identity.Persistence/ReactionLab.Identity.Persistence.csproj" />
+  </Folder>
   <Folder Name="/tests/" />
   <Folder Name="/tests/BuildingBlocks/">
     <Project Path="tests/BuildingBlocks/ReactionLab.SharedKernel.UnitTests/ReactionLab.SharedKernel.UnitTests.csproj" />

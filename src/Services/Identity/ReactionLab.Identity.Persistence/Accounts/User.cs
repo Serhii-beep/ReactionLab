@@ -1,0 +1,193 @@
+using System.ComponentModel.DataAnnotations;
+using System.Globalization;
+using System.Text;
+using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Identity;
+using ReactionLab.SharedKernel;
+
+namespace ReactionLab.Identity.Persistence.Accounts;
+
+public sealed partial class User : IdentityUser<Guid>
+{
+    public const int MaximumEmailLength = 256;
+    public const int MaximumDisplayNameLength = 64;
+    public const int MaximumLocaleLength = 10;
+    public const int MinimumSelfRegistrationAge = 13;
+    public const int EarliestBirthYear = 1900;
+
+    public static readonly Error EmailRequired = Error.Validation(
+        "Account.EmailRequired",
+        "An email address is required.",
+        nameof(Email));
+
+    public static readonly Error EmailTooLong = Error.Validation(
+        "Account.EmailTooLong",
+        $"An email address must not exceed {MaximumEmailLength} characters.",
+        nameof(Email))
+        .WithArgs(("max", MaximumEmailLength));
+
+    public static readonly Error EmailInvalid = Error.Validation(
+        "Account.EmailInvalid",
+        "The email address is not valid.",
+        nameof(Email));
+
+    public static readonly Error DisplayNameRequired = Error.Validation(
+        "Account.DisplayNameRequired",
+        "A display name is required.",
+        nameof(DisplayName));
+
+    public static readonly Error DisplayNameTooLong = Error.Validation(
+        "Account.DisplayNameTooLong",
+        $"A display name must not exceed {MaximumDisplayNameLength} characters.",
+        nameof(DisplayName))
+        .WithArgs(("max", MaximumDisplayNameLength));
+
+    public static readonly Error DisplayNameInvalid = Error.Validation(
+        "Account.DisplayNameInvalid",
+        "A display name needs a letter, digit or symbol, and cannot hold invisible or text-direction characters.",
+        nameof(DisplayName));
+
+    public static readonly Error BirthYearInvalid = Error.Validation(
+        "Account.BirthYearInvalid",
+        "The birth year is not a valid year.",
+        nameof(BirthYear));
+
+    public static readonly Error SchoolAccountRequired = Error.Validation(
+        "Account.SchoolAccountRequired",
+        "This account can only be created by a school.");
+
+    private const int ZeroWidthNonJoiner = 0x200C;
+    private const int ZeroWidthJoiner = 0x200D;
+
+    private static readonly EmailAddressAttribute EmailFormat = new();
+    private static readonly int[] BlankLookingCharacters = [0x115F, 0x1160, 0x2800, 0x3164, 0xFFA0];
+
+    private User()
+    {
+
+    }
+
+    public string DisplayName { get; private set; } = string.Empty;
+
+    public string PreferredLocale { get; private set; } = string.Empty;
+
+    public int? BirthYear { get; private set; }
+
+    public DateTimeOffset CreatedAt { get; private set; }
+
+    public static Result<User> Register(
+        string? email,
+        string? displayName,
+        SupportedLocale locale,
+        int? birthYear,
+        DateTimeOffset now)
+    {
+        var address = NormalizeEmail(email);
+
+        if (address.IsFailure)
+        {
+            return address.Error;
+        }
+
+        var name = NormalizeDisplayName(displayName);
+
+        if (name.IsFailure)
+        {
+            return name.Error;
+        }
+
+        var eligibility = CheckSelfRegistrationAge(birthYear, now);
+
+        if (eligibility.IsFailure)
+        {
+            return eligibility.Error;
+        }
+
+        return new User
+        {
+            Id = Guid.CreateVersion7(now),
+            UserName = address.Value,
+            Email = address.Value,
+            DisplayName = name.Value,
+            PreferredLocale = locale.Code,
+            BirthYear = birthYear,
+            CreatedAt = now
+        };
+    }
+
+    public static Result<string> NormalizeEmail(string? email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return EmailRequired;
+        }
+
+        if (!UnicodeText.TryNormalize(email.Trim(), out var normalized) || normalized.Any(char.IsControl))
+        {
+            return EmailInvalid;
+        }
+
+        if (normalized.Length > MaximumEmailLength)
+        {
+            return EmailTooLong;
+        }
+
+        return EmailFormat.IsValid(normalized) ? normalized : EmailInvalid;
+    }
+
+    private static Result<string> NormalizeDisplayName(string? displayName)
+    {
+        if (string.IsNullOrWhiteSpace(displayName))
+        {
+            return DisplayNameRequired;
+        }
+
+        if (!UnicodeText.TryNormalize(WhitespaceRun().Replace(displayName.Trim(), " "), out var normalized))
+        {
+            return DisplayNameInvalid;
+        }
+
+        var characters = normalized.EnumerateRunes().ToList();
+
+        if (characters.Count > MaximumDisplayNameLength)
+        {
+            return DisplayNameTooLong;
+        }
+
+        return characters.Any(IsHiddenOrUnassigned) || !characters.Any(IsVisibleSign)
+            ? DisplayNameInvalid
+            : normalized;
+    }
+
+    private static Result CheckSelfRegistrationAge(int? birthYear, DateTimeOffset now)
+    {
+        if (birthYear is not { } year || year < EarliestBirthYear || year > now.Year)
+        {
+            return Result.Failure(BirthYearInvalid);
+        }
+
+        var youngestPossibleAge = now.Year - year - 1;
+
+        return youngestPossibleAge >= MinimumSelfRegistrationAge
+            ? Result.Success()
+            : Result.Failure(SchoolAccountRequired);
+    }
+
+    private static bool IsHiddenOrUnassigned(Rune character) =>
+        BlankLookingCharacters.Contains(character.Value) || Rune.GetUnicodeCategory(character) switch
+        {
+            UnicodeCategory.Control or
+            UnicodeCategory.LineSeparator or
+            UnicodeCategory.ParagraphSeparator or
+            UnicodeCategory.PrivateUse or
+            UnicodeCategory.OtherNotAssigned => true,
+            UnicodeCategory.Format => character.Value is not (ZeroWidthNonJoiner or ZeroWidthJoiner),
+            _ => false
+        };
+
+    private static bool IsVisibleSign(Rune character) =>
+        Rune.IsLetterOrDigit(character) || Rune.IsSymbol(character);
+
+    [GeneratedRegex(@"\s+", RegexOptions.CultureInvariant)]
+    private static partial Regex WhitespaceRun();
+}

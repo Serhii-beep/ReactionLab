@@ -10,6 +10,7 @@ var postgres = builder.AddPostgres("postgres")
     .WithPgAdmin();
 
 var catalogDatabase = postgres.AddDatabase("catalog-db", completeVolume ? "catalog_complete" : "catalog");
+var identityDatabase = postgres.AddDatabase("identity-db", "identity");
 
 var cache = builder.AddRedis("cache")
     .WithDataVolume("reactionlab-redisdata")
@@ -47,13 +48,23 @@ var catalog = builder.AddProject<Projects.ReactionLab_Catalog_Api>("catalog")
     .WaitForCompletion(catalogMigrator)
     .WaitFor(cache);
 
+var identityMigrator = builder.AddProject<Projects.ReactionLab_Identity_Migrator>("identity-migrator")
+    .WithReference(identityDatabase, connectionName: "DefaultConnection")
+    .WaitFor(identityDatabase);
+
+var identity = builder.AddProject<Projects.ReactionLab_Identity_Api>("identity")
+    .WithReference(identityDatabase, connectionName: "DefaultConnection")
+    .WaitForCompletion(identityMigrator);
+
 var gateway = builder.AddProject<Projects.ReactionLab_Gateway>("gateway")
     .WithReference(catalog)
+    .WithReference(identity)
     .WithExternalHttpEndpoints();
 
 if (builder.ExecutionContext.IsRunMode)
 {
     gateway.WithEnvironment("ReverseProxy__Clusters__catalog__HttpRequest__ActivityTimeout", "01:00:00")
+        .WithEnvironment("ReverseProxy__Clusters__identity__HttpRequest__ActivityTimeout", "01:00:00")
         .WithEnvironment(
             "ReverseProxy__Clusters__releases__Destinations__storage__Address",
             ReferenceExpression.Create($"{storage.Resource.BlobUriExpression}/devstoreaccount1/catalog-releases"));

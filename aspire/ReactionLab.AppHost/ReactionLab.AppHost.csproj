@@ -20,6 +20,8 @@
       <ProjectReference Include="..\..\src\Services\Catalog\ReactionLab.Catalog.Migrator\ReactionLab.Catalog.Migrator.csproj" />
       <ProjectReference Include="..\..\src\Gateway\ReactionLab.Gateway\ReactionLab.Gateway.csproj" />
       <ProjectReference Include="..\..\tools\ReactionLab.CatalogBuilder\ReactionLab.CatalogBuilder.csproj" />
+      <ProjectReference Include="..\..\src\Services\Identity\ReactionLab.Identity.Migrator\ReactionLab.Identity.Migrator.csproj" />
+      <ProjectReference Include="..\..\src\Services\Identity\ReactionLab.Identity.Api\ReactionLab.Identity.Api.csproj" />
     </ItemGroup>
 
   </Project>
