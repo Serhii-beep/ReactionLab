@@ -5,9 +5,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using ReactionLab.Catalog.Application.Common.Abstractions;
+using ReactionLab.Catalog.Application.Features.Releases;
 using ReactionLab.Catalog.Infrastructure.Persistence;
 using ReactionLab.Catalog.Infrastructure.Persistence.Interceptors;
 using ReactionLab.Catalog.Infrastructure.Persistence.Seeding;
+using ReactionLab.Catalog.Infrastructure.Releases;
 using StackExchange.Redis;
 
 namespace ReactionLab.Catalog.Infrastructure;
@@ -70,6 +72,15 @@ public static class DependencyInjection
         services.AddScoped<ICatalogSource, JsonCatalogSource>();
         services.AddScoped<CatalogSeeder>();
         services.AddScoped<ReferenceSeeder>();
+
+        return services;
+    }
+
+    public static IServiceCollection AddCatalogPublishing(this IServiceCollection services)
+    {
+        services.AddScoped<CatalogDocumentBuilder>();
+        services.AddSingleton<CatalogReleaseStore>();
+        services.AddScoped<CatalogReleasePublisher>();
 
         return services;
     }

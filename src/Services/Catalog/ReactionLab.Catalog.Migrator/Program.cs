@@ -7,10 +7,13 @@ using ReactionLab.ServiceDefaults;
 var builder = Host.CreateApplicationBuilder(args);
 
 builder.AddServiceDefaults();
+builder.AddAzureBlobServiceClient("blobs");
+
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddCatalogSeeding();
+builder.Services.AddCatalogPublishing();
 builder.Services.AddHostedService<MigrationWorker>();
-builder.Services.AddHostedService<SeedWorker>();
+builder.Services.AddHostedService<CatalogWorker>();
 
 var host = builder.Build();
 

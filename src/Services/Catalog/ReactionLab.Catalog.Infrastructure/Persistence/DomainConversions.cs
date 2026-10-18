@@ -4,6 +4,7 @@ using ReactionLab.Catalog.Domain.Elements;
 using ReactionLab.Catalog.Domain.Enums;
 using ReactionLab.Catalog.Domain.Reactions;
 using ReactionLab.Catalog.Domain.Reference;
+using ReactionLab.Catalog.Domain.Releases;
 using ReactionLab.Catalog.Domain.Substances;
 using ReactionLab.Catalog.Infrastructure.Persistence.Converters;
 
@@ -18,6 +19,7 @@ internal static class DomainConversions
         builder.Properties<ReactionId>().HaveConversion<StronglyTypedIdConverter<ReactionId>>();
         builder.Properties<ReactionParticipantId>().HaveConversion<StronglyTypedIdConverter<ReactionParticipantId>>();
         builder.Properties<ChemistryReferenceId>().HaveConversion<StronglyTypedIdConverter<ChemistryReferenceId>>();
+        builder.Properties<CatalogReleaseId>().HaveConversion<StronglyTypedIdConverter<CatalogReleaseId>>();
 
         builder.Properties<ElementSymbol>().HaveConversion<ElementSymbolConverter>().HaveMaxLength(3);
         builder.Properties<AtomicNumber>().HaveConversion<AtomicNumberConverter>();

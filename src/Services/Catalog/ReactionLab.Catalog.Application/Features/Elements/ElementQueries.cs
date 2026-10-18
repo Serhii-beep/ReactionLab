@@ -12,7 +12,17 @@ internal static class ElementQueries
         SupportedLocale locale,
         CancellationToken cancellationToken)
     {
-        var row = await elements
+        var responses = await ResponsesAsync(elements.OrderBy(element => element.Id).Take(1), locale, cancellationToken);
+
+        return responses.Count > 0 ? responses[0] : null;
+    }
+
+    public static async Task<IReadOnlyList<ElementResponse>> ResponsesAsync(
+        IQueryable<Element> elements,
+        SupportedLocale locale,
+        CancellationToken cancellationToken)
+    {
+        var rows = await elements
             .Select(element => new
             {
                 element.Id,
@@ -30,34 +40,32 @@ internal static class ElementQueries
                 element.ElectronConfiguration,
                 element.Translations
             })
-            .FirstOrDefaultAsync(cancellationToken);
+            .ToListAsync(cancellationToken);
 
-        if (row is null)
+        return rows.ConvertAll(row =>
         {
-            return null;
-        }
+            var content = row.Translations.Resolve(locale);
 
-        var content = row.Translations.Resolve(locale);
-
-        return new ElementResponse(
-            row.Id.Value,
-            row.AtomicNumber.Value,
-            row.Symbol.Value,
-            content.Name,
-            row.Mass.Daltons,
-            row.Category,
-            row.StateAtRoomTemperature,
-            row.Position.Period,
-            row.Position.Group,
-            row.DisplayColor.Value,
-            row.Electronegativity?.Pauling,
-            row.Radii?.CovalentPicometers,
-            row.Radii?.VanDerWaalsPicometers,
-            row.MeltingPoint?.Kelvin,
-            row.BoilingPoint?.Kelvin,
-            row.ElectronConfiguration,
-            content.DiscoveryInfo,
-            content.InterestingFacts);
+            return new ElementResponse(
+                row.Id.Value,
+                row.AtomicNumber.Value,
+                row.Symbol.Value,
+                content.Name,
+                row.Mass.Daltons,
+                row.Category,
+                row.StateAtRoomTemperature,
+                row.Position.Period,
+                row.Position.Group,
+                row.DisplayColor.Value,
+                row.Electronegativity?.Pauling,
+                row.Radii?.CovalentPicometers,
+                row.Radii?.VanDerWaalsPicometers,
+                row.MeltingPoint?.Kelvin,
+                row.BoilingPoint?.Kelvin,
+                row.ElectronConfiguration,
+                content.DiscoveryInfo,
+                content.InterestingFacts);
+        });
     }
 
     public static async Task<IReadOnlyList<ElementSummaryResponse>> SummariesAsync(

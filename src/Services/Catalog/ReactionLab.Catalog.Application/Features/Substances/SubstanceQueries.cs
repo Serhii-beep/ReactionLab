@@ -12,7 +12,17 @@ internal static class SubstanceQueries
         SupportedLocale locale,
         CancellationToken cancellationToken)
     {
-        var row = await substances
+        var responses = await ResponsesAsync(substances.OrderBy(substance => substance.Id).Take(1), locale, cancellationToken);
+
+        return responses.Count > 0 ? responses[0] : null;
+    }
+
+    public static async Task<IReadOnlyList<SubstanceResponse>> ResponsesAsync(
+        IQueryable<Substance> substances,
+        SupportedLocale locale,
+        CancellationToken cancellationToken)
+    {
+        var rows = await substances
             .Select(substance => new
             {
                 substance.Id,
@@ -25,32 +35,30 @@ internal static class SubstanceQueries
                 substance.Category,
                 substance.Translations
             })
-            .FirstOrDefaultAsync(cancellationToken);
+            .ToListAsync(cancellationToken);
 
-        if (row is null)
+        return rows.ConvertAll(row =>
         {
-            return null;
-        }
+            var content = row.Translations.Resolve(locale);
 
-        var content = row.Translations.Resolve(locale);
-
-        return new SubstanceResponse(
-            row.Id.Value,
-            row.Formula.Value,
-            row.Formula.Hill,
-            content.Name,
-            content.IupacName,
-            content.Description,
-            content.SafetyInformation,
-            content.CommonNames,
-            content.Uses,
-            content.InterestingFacts,
-            row.Kind,
-            row.IsOrganic,
-            row.StateAtRoomTemperature,
-            row.Weight?.GramsPerMole,
-            row.Category,
-            ToStructure(row.Structure));
+            return new SubstanceResponse(
+                row.Id.Value,
+                row.Formula.Value,
+                row.Formula.Hill,
+                content.Name,
+                content.IupacName,
+                content.Description,
+                content.SafetyInformation,
+                content.CommonNames,
+                content.Uses,
+                content.InterestingFacts,
+                row.Kind,
+                row.IsOrganic,
+                row.StateAtRoomTemperature,
+                row.Weight?.GramsPerMole,
+                row.Category,
+                ToStructure(row.Structure));
+        });
     }
 
     public static async Task<IReadOnlyList<SubstanceSummaryResponse>> SummariesAsync(

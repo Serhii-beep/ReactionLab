@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using ReactionLab.Catalog.Application.Common.Serialization;
 using ReactionLab.Catalog.Domain.Reference;
 
 namespace ReactionLab.Catalog.Application.Features.Chemistry;
@@ -18,7 +19,7 @@ internal static class ChemistryQueries
 
         using var buffer = new MemoryStream();
 
-        using var writer = new Utf8JsonWriter(buffer);
+        using var writer = new Utf8JsonWriter(buffer, new JsonWriterOptions { Encoder = ResponseJson.Options.Encoder });
 
         writer.WriteStartObject();
 

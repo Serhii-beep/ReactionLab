@@ -3,6 +3,7 @@ using ReactionLab.Catalog.Application.Common.Abstractions;
 using ReactionLab.Catalog.Domain.Elements;
 using ReactionLab.Catalog.Domain.Reactions;
 using ReactionLab.Catalog.Domain.Reference;
+using ReactionLab.Catalog.Domain.Releases;
 using ReactionLab.Catalog.Domain.Substances;
 
 namespace ReactionLab.Catalog.Infrastructure.Persistence;
@@ -17,6 +18,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<Reaction> Reactions => Set<Reaction>();
 
     public DbSet<ChemistryReference> ChemistryReferences => Set<ChemistryReference>();
+
+    public DbSet<CatalogRelease> CatalogReleases => Set<CatalogRelease>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) =>
         optionsBuilder.UseSnakeCaseNamingConvention();

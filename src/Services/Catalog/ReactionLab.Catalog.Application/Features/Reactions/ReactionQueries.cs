@@ -15,7 +15,18 @@ internal static class ReactionQueries
         SupportedLocale locale,
         CancellationToken cancellationToken)
     {
-        var row = await reactions
+        var responses = await ResponsesAsync(reactions.OrderBy(reaction => reaction.Id).Take(1), substances, locale, cancellationToken);
+
+        return responses.Count > 0 ? responses[0] : null;
+    }
+
+    public static async Task<IReadOnlyList<ReactionResponse>> ResponsesAsync(
+        IQueryable<Reaction> reactions,
+        IQueryable<Substance> substances,
+        SupportedLocale locale,
+        CancellationToken cancellationToken)
+    {
+        var rows = await reactions
             .Select(reaction => new
             {
                 reaction.Id,
@@ -39,38 +50,36 @@ internal static class ReactionQueries
                             substance.Translations))
                     .ToList()
             })
-            .FirstOrDefaultAsync(cancellationToken);
+            .ToListAsync(cancellationToken);
 
-        if (row is null)
+        return rows.ConvertAll(row =>
         {
-            return null;
-        }
+            var content = row.Translations.Resolve(locale);
 
-        var content = row.Translations.Resolve(locale);
-
-        return new ReactionResponse(
-            row.Id.Value,
-            content.Name,
-            content.Description,
-            content.Mechanism,
-            content.SafetyWarnings,
-            content.RealWorldExamples,
-            row.Type,
-            row.Difficulty.Value,
-            row.IsReversible,
-            Map(row.Participants, locale),
-            row.Energetics.EnthalpyChange?.KilojoulesPerMole,
-            row.Energetics.ActivationEnergyKilojoulesPerMole,
-            row.Energetics.ReverseActivationEnergyKilojoulesPerMole,
-            row.Energetics.IsExothermic,
-            row.Conditions.Temperature?.Kelvin,
-            row.Conditions.Pressure?.Kilopascals,
-            row.Conditions.Catalyst,
-            row.Visualization.PresetKey,
-            row.Visualization.DurationMilliseconds,
-            row.Tags,
-            row.Provenance.Rule,
-            row.Provenance.Confidence);
+            return new ReactionResponse(
+                row.Id.Value,
+                content.Name,
+                content.Description,
+                content.Mechanism,
+                content.SafetyWarnings,
+                content.RealWorldExamples,
+                row.Type,
+                row.Difficulty.Value,
+                row.IsReversible,
+                Map(row.Participants, locale),
+                row.Energetics.EnthalpyChange?.KilojoulesPerMole,
+                row.Energetics.ActivationEnergyKilojoulesPerMole,
+                row.Energetics.ReverseActivationEnergyKilojoulesPerMole,
+                row.Energetics.IsExothermic,
+                row.Conditions.Temperature?.Kelvin,
+                row.Conditions.Pressure?.Kilopascals,
+                row.Conditions.Catalyst,
+                row.Visualization.PresetKey,
+                row.Visualization.DurationMilliseconds,
+                row.Tags,
+                row.Provenance.Rule,
+                row.Provenance.Confidence);
+        });
     }
 
     public static async Task<IReadOnlyList<ReactionSummaryResponse>> SummariesAsync(

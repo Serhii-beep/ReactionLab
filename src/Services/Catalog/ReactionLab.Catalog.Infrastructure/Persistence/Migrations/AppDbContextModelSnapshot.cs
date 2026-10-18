@@ -316,6 +316,31 @@ namespace ReactionLab.Catalog.Infrastructure.Persistence.Migrations
                     b.ToTable("chemistry_reference", (string)null);
                 });
 
+            modelBuilder.Entity("ReactionLab.Catalog.Domain.Releases.CatalogRelease", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("PublishedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("published_at");
+
+                    b.Property<string>("Version")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id")
+                        .HasName("pk_catalog_releases");
+
+                    b.HasIndex("PublishedAt")
+                        .HasDatabaseName("ix_catalog_releases_published_at");
+
+                    b.ToTable("catalog_releases", (string)null);
+                });
+
             modelBuilder.Entity("ReactionLab.Catalog.Domain.Substances.Substance", b =>
                 {
                     b.Property<Guid>("Id")

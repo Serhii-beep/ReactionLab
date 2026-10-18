@@ -12,9 +12,18 @@ var cache = builder.AddRedis("cache")
     .WithLifetime(ContainerLifetime.Persistent)
     .WithRedisCommander();
 
+var storage = builder.AddAzureStorage("storage")
+    .RunAsEmulator(emulator => emulator
+        .WithDataVolume("reactionlab-storagedata")
+        .WithLifetime(ContainerLifetime.Persistent));
+
+var blobs = storage.AddBlobs("blobs");
+
 var catalogMigrator = builder.AddProject<Projects.ReactionLab_Catalog_Migrator>("catalog-migrator")
     .WithReference(catalogDatabase, connectionName: "DefaultConnection")
-    .WaitFor(catalogDatabase);
+    .WithReference(blobs)
+    .WaitFor(catalogDatabase)
+    .WaitFor(blobs);
 
 var catalog = builder.AddProject<Projects.ReactionLab_Catalog_Api>("catalog")
     .WithReference(catalogDatabase, connectionName: "DefaultConnection")
@@ -28,7 +37,10 @@ var gateway = builder.AddProject<Projects.ReactionLab_Gateway>("gateway")
 
 if (builder.ExecutionContext.IsRunMode)
 {
-    gateway.WithEnvironment("ReverseProxy__Clusters__catalog__HttpRequest__ActivityTimeout", "01:00:00");
+    gateway.WithEnvironment("ReverseProxy__Clusters__catalog__HttpRequest__ActivityTimeout", "01:00:00")
+        .WithEnvironment(
+            "ReverseProxy__Clusters__releases__Destinations__storage__Address",
+            ReferenceExpression.Create($"{storage.Resource.BlobUriExpression}/devstoreaccount1/catalog-releases"));
 }
 
 await builder.Build().RunAsync();
