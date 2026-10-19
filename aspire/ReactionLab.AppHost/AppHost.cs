@@ -12,6 +12,12 @@ var postgres = builder.AddPostgres("postgres")
 var catalogDatabase = postgres.AddDatabase("catalog-db", completeVolume ? "catalog_complete" : "catalog");
 var identityDatabase = postgres.AddDatabase("identity-db", "identity");
 
+var gatewayClientSecret = builder.AddParameter(
+    "gateway-client-secret",
+    new GenerateParameterDefault { MinLength = 32, Special = false },
+    secret: true,
+    persist: true);
+
 var cache = builder.AddRedis("cache")
     .WithDataVolume("reactionlab-redisdata")
     .WithLifetime(ContainerLifetime.Persistent)
@@ -60,6 +66,17 @@ var gateway = builder.AddProject<Projects.ReactionLab_Gateway>("gateway")
     .WithReference(catalog)
     .WithReference(identity)
     .WithExternalHttpEndpoints();
+
+var gatewayAddress = gateway.GetEndpoint("https");
+
+identity.WithEnvironment("OpenId__Issuer", gatewayAddress);
+
+identityMigrator
+    .WithEnvironment("OpenId__Gateway__Secret", gatewayClientSecret)
+    .WithEnvironment("OpenId__Gateway__RedirectUri", ReferenceExpression.Create($"{gatewayAddress}/signin-oidc"))
+    .WithEnvironment(
+        "OpenId__Gateway__PostLogoutRedirectUri",
+        ReferenceExpression.Create($"{gatewayAddress}/signout-callback-oidc"));
 
 if (builder.ExecutionContext.IsRunMode)
 {

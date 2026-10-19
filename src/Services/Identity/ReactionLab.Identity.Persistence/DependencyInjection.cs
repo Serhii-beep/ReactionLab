@@ -25,6 +25,11 @@ public static class DependencyInjection
         services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString, NpgsqlSetup.Configure));
         services.AddHealthChecks().AddDbContextCheck<AppDbContext>("database");
 
+        services.AddOpenIddict()
+            .AddCore(core => core.UseEntityFrameworkCore()
+                .UseDbContext<AppDbContext>()
+                .ReplaceDefaultEntities<Guid>());
+
         return services;
     }
 }

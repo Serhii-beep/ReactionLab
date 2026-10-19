@@ -25,10 +25,12 @@ internal sealed class MigrationWorker(
             await context.Database.MigrateAsync(stoppingToken);
 
             logger.LogInformation("Database schema is up to date.");
+
+            await scope.ServiceProvider.GetRequiredService<OpenIdRegistration>().RegisterAsync(stoppingToken);
         }
         catch (Exception ex)
         {
-            logger.LogCritical(ex, "Database migration failed.");
+            logger.LogCritical(ex, "Database migration or OpenID registration failed.");
             Environment.ExitCode = 1;
         }
         finally

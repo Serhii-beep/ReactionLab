@@ -11,6 +11,7 @@ builder.AddServiceDefaults();
 
 builder.Services.AddPersistence(builder.Configuration);
 builder.Services.AddAccounts();
+builder.Services.AddOpenIdServer(builder.Configuration, builder.Environment);
 builder.Services.AddApi();
 
 builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = 64 * 1024);
@@ -21,6 +22,7 @@ app.UseForwardedHeaders();
 app.UseErrorContract();
 
 app.UseHttpsRedirection();
+app.UseAuthentication();
 app.UseRateLimiter();
 
 app.MapDefaultEndpoints();
@@ -30,6 +32,8 @@ if (app.Environment.IsDevelopment())
 {
     app.MapScalarApiReference();
 }
+
+app.MapOpenIdEndpoints();
 
 var api = app.MapGroup("/api/v1");
 api.MapAccountEndpoints();
