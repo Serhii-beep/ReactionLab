@@ -1,11 +1,11 @@
 using ReactionLab.Catalog.Api.Http;
 using ReactionLab.Catalog.Application.Common.Abstractions;
-using ReactionLab.Catalog.Application.Common.Pagination;
 using ReactionLab.Catalog.Application.Features.Reactions.Contracts;
 using ReactionLab.Catalog.Application.Features.Releases;
 using ReactionLab.Catalog.Application.Features.Releases.Reads;
 using ReactionLab.Catalog.Application.Features.Substances.Contracts;
 using ReactionLab.SharedKernel;
+using ReactionLab.SharedKernel.Pagination;
 using ReactionLab.Web;
 
 namespace ReactionLab.Catalog.Api.Endpoints;

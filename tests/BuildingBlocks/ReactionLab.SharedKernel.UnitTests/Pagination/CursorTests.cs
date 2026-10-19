@@ -1,8 +1,8 @@
-using ReactionLab.Catalog.Application.Common.Pagination;
+using ReactionLab.SharedKernel.Pagination;
 using Shouldly;
 using Xunit;
 
-namespace ReactionLab.Catalog.Infrastructure.UnitTests.Pagination;
+namespace ReactionLab.SharedKernel.UnitTests.Pagination;
 
 public sealed class CursorTests
 {

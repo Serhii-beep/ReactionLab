@@ -20,5 +20,10 @@ internal sealed class OpenIddictAuthorizationConfiguration
         builder.HasIndex(authorization => authorization.CreationDate, "Revoked")
             .HasDatabaseName("ix_openiddict_authorizations_revoked")
             .HasFilter("status <> 'valid'");
+
+        builder.HasIndex(authorization => new { authorization.Subject, authorization.Id }, "Valid")
+            .HasDatabaseName("ix_openiddict_authorizations_valid")
+            .HasFilter("status = 'valid'")
+            .IsCreatedConcurrently();
     }
 }

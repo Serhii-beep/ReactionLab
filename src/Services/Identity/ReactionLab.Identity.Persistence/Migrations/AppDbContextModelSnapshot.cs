@@ -247,6 +247,11 @@ namespace ReactionLab.Identity.Persistence.Migrations
                         .HasDatabaseName("ix_openiddict_authorizations_revoked")
                         .HasFilter("status <> 'valid'");
 
+                    b.HasIndex(new[] { "Subject", "Id" }, "Valid")
+                        .HasDatabaseName("ix_openiddict_authorizations_valid")
+                        .HasFilter("status = 'valid'")
+                        .HasAnnotation("Npgsql:CreatedConcurrently", true);
+
                     b.ToTable("openiddict_authorizations", (string)null);
                 });
 

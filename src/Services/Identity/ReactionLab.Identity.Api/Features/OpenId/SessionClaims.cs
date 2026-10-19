@@ -59,7 +59,8 @@ internal sealed class SessionClaims(
             Claims.Name,
             Claims.Role);
 
-        identity.SetRefreshTokenLifetime(remaining < SessionPolicy.IdleTimeout ? remaining : null);
+        identity.SetRefreshTokenLifetime(remaining < SessionPolicy.IdleTimeout ? remaining : null)
+            .SetAccessTokenLifetime(remaining < SessionPolicy.AccessTokenLifetime ? remaining : null);
 
         return Describe(identity, user);
     }
@@ -78,7 +79,7 @@ internal sealed class SessionClaims(
     {
         Claims.Subject or JwtRegisteredClaimNames.Sid or Claims.AuthenticationMethodReference =>
             [Destinations.AccessToken, Destinations.IdentityToken],
-        Claims.AuthenticationTime => [Destinations.IdentityToken],
+        Claims.AuthenticationTime => [Destinations.AccessToken, Destinations.IdentityToken],
         Claims.Name or Claims.Locale when claim.Subject?.HasScope(Scopes.Profile) is true =>
             [Destinations.IdentityToken],
         _ => []

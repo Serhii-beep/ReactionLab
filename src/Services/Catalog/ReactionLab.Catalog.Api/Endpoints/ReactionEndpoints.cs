@@ -1,9 +1,9 @@
 using ReactionLab.Catalog.Api.Http;
 using ReactionLab.Catalog.Application.Common.Abstractions;
-using ReactionLab.Catalog.Application.Common.Pagination;
 using ReactionLab.Catalog.Application.Features.Reactions.Contracts;
 using ReactionLab.Catalog.Application.Features.Reactions.GetReactionById;
 using ReactionLab.Catalog.Application.Features.Reactions.ListReactions;
+using ReactionLab.SharedKernel.Pagination;
 using ReactionLab.Web;
 
 namespace ReactionLab.Catalog.Api.Endpoints;

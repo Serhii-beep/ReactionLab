@@ -23,6 +23,7 @@ app.UseErrorContract();
 
 app.UseHttpsRedirection();
 app.UseAuthentication();
+app.UseAuthorization();
 app.UseRateLimiter();
 
 app.MapDefaultEndpoints();
@@ -37,5 +38,6 @@ app.MapOpenIdEndpoints();
 
 var api = app.MapGroup("/api/v1");
 api.MapAccountEndpoints();
+api.MapSessionEndpoints();
 
 await app.RunAsync();

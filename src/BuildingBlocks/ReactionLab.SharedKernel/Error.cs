@@ -23,6 +23,9 @@ public sealed record Error(
     public static Error Conflict(string code, string description, string? field = null) =>
         new(code, description, ErrorType.Conflict, Field: field);
 
+    public static Error Unauthorized(string code, string description, string? field = null) =>
+        new(code, description, ErrorType.Unauthorized, Field: field);
+
     public static Error Forbidden(string code, string description, string? field = null) =>
         new(code, description, ErrorType.Forbidden, Field: field);
 

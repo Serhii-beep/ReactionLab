@@ -1,5 +1,5 @@
-using ReactionLab.Catalog.Application.Common.Pagination;
 using ReactionLab.SharedKernel;
+using ReactionLab.SharedKernel.Pagination;
 
 namespace ReactionLab.Catalog.Application.Features.Substances.ListSubstances;
 

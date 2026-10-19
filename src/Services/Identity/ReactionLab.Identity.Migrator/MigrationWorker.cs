@@ -11,12 +11,16 @@ internal sealed class MigrationWorker(
     IHostApplicationLifetime lifetime,
     ILogger<MigrationWorker> logger) : BackgroundService
 {
+    private const int CommandTimeoutSeconds = 3600;
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         try
         {
             await using var scope = services.CreateAsyncScope();
             var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+            context.Database.SetCommandTimeout(CommandTimeoutSeconds);
 
             var pending = (await context.Database.GetPendingMigrationsAsync(stoppingToken)).ToList();
 

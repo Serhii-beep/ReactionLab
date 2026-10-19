@@ -1,8 +1,7 @@
 using System.Buffers.Binary;
 using System.Buffers.Text;
-using ReactionLab.SharedKernel;
 
-namespace ReactionLab.Catalog.Application.Common.Pagination;
+namespace ReactionLab.SharedKernel.Pagination;
 
 public sealed record Cursor
 {

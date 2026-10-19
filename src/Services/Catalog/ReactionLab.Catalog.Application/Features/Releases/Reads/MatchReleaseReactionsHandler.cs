@@ -1,9 +1,9 @@
 using Microsoft.Extensions.Caching.Hybrid;
 using ReactionLab.Catalog.Application.Common.Abstractions;
 using ReactionLab.Catalog.Application.Common.Caching;
-using ReactionLab.Catalog.Application.Common.Pagination;
 using ReactionLab.Catalog.Application.Features.Reactions.Contracts;
 using ReactionLab.SharedKernel;
+using ReactionLab.SharedKernel.Pagination;
 
 namespace ReactionLab.Catalog.Application.Features.Releases.Reads;
 

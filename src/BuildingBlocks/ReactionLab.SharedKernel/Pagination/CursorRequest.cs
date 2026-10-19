@@ -1,4 +1,4 @@
-namespace ReactionLab.Catalog.Application.Common.Pagination;
+namespace ReactionLab.SharedKernel.Pagination;
 
 public record CursorRequest
 {

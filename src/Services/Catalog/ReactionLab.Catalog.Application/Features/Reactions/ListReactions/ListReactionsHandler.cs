@@ -2,11 +2,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Hybrid;
 using ReactionLab.Catalog.Application.Common.Abstractions;
 using ReactionLab.Catalog.Application.Common.Caching;
-using ReactionLab.Catalog.Application.Common.Pagination;
 using ReactionLab.Catalog.Application.Features.Reactions.Contracts;
 using ReactionLab.Catalog.Application.Features.Releases;
 using ReactionLab.Catalog.Domain.Reactions;
 using ReactionLab.SharedKernel;
+using ReactionLab.SharedKernel.Pagination;
 
 namespace ReactionLab.Catalog.Application.Features.Reactions.ListReactions;
 

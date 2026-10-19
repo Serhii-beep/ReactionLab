@@ -7,6 +7,9 @@ using ReactionLab.Identity.Api.Features.Accounts.RegisterAccount;
 using ReactionLab.Identity.Api.Features.Accounts.SignIn;
 using ReactionLab.Identity.Api.Features.Accounts.SignOut;
 using ReactionLab.Identity.Api.Features.OpenId;
+using ReactionLab.Identity.Api.Features.Sessions.ListSessions;
+using ReactionLab.Identity.Api.Features.Sessions.RevokeOtherSessions;
+using ReactionLab.Identity.Api.Features.Sessions.RevokeSession;
 using ReactionLab.Identity.Api.Http;
 using ReactionLab.Identity.Api.OpenId;
 using ReactionLab.Identity.Api.Passwords;
@@ -32,6 +35,7 @@ internal static class DependencyInjection
         services.AddOpenApi();
 
         services.AddRateLimiter(RateLimitPolicies.Configure);
+        services.AddAuthorization(AuthorizationPolicies.Configure);
 
         return services;
     }
@@ -105,19 +109,24 @@ internal static class DependencyInjection
                 AddCredentials(server, environment);
 
                 server.AddEventHandler(SkipSelfContainedTokenEntries.Descriptor)
-                    .AddEventHandler(RevokeSessionWithRefreshToken.Descriptor);
+                    .AddEventHandler(RevokeSessionWithRefreshToken.Descriptor)
+                    .AddEventHandler(RevokeSessionOnTokenReplay.Descriptor);
 
                 server.UseAspNetCore()
                     .EnableAuthorizationEndpointPassthrough()
                     .EnableTokenEndpointPassthrough()
                     .EnableEndSessionEndpointPassthrough();
-            });
+            })
+            .AddValidation(ConfigureAccessTokenValidation);
 
         services.AddScoped<SessionClaims>();
         services.AddScoped<SessionRevocation>();
         services.AddScoped<AuthorizationEndpointHandler>();
         services.AddScoped<TokenEndpointHandler>();
         services.AddScoped<EndSessionEndpointHandler>();
+        services.AddScoped<ListSessionsHandler>();
+        services.AddScoped<RevokeSessionHandler>();
+        services.AddScoped<RevokeOtherSessionsHandler>();
         services.AddHostedService<TokenPruningWorker>();
 
         return services;
@@ -139,6 +148,18 @@ internal static class DependencyInjection
 
         server.AddDevelopmentEncryptionCertificate()
             .AddDevelopmentSigningCertificate();
+    }
+
+    private static void ConfigureAccessTokenValidation(OpenIddictValidationBuilder validation)
+    {
+        validation.UseLocalServer();
+        validation.AddAudiences(OpenIdNames.IdentityAudience);
+        validation.EnableAuthorizationEntryValidation();
+        validation.AddEventHandler(ResolveSessionFromAccessToken.Descriptor);
+
+        validation.UseAspNetCore()
+            .DisableAccessTokenExtractionFromBodyForm()
+            .DisableAccessTokenExtractionFromQueryString();
     }
 
     private static void ExcludePwnedPasswordsFromTraces(HttpClientTraceInstrumentationOptions options)

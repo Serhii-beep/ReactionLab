@@ -1,7 +1,7 @@
-using ReactionLab.Catalog.Application.Common.Pagination;
 using ReactionLab.Catalog.Application.Features.Substances.Contracts;
 using ReactionLab.Catalog.Application.Features.Substances.GetSubstanceById;
 using ReactionLab.Catalog.Application.Features.Substances.ListSubstances;
+using ReactionLab.SharedKernel.Pagination;
 using ReactionLab.Web;
 
 namespace ReactionLab.Catalog.Api.Endpoints;

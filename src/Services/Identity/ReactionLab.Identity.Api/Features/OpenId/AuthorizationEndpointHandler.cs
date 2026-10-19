@@ -8,7 +8,10 @@ using OpenIddict.Abstractions;
 using OpenIddict.Server;
 using OpenIddict.Server.AspNetCore;
 using ReactionLab.Identity.Api.Features.Accounts;
+using ReactionLab.Identity.Api.OpenId;
+using ReactionLab.Identity.Persistence;
 using ReactionLab.Identity.Persistence.Accounts;
+using ReactionLab.Identity.Persistence.OpenId;
 using static OpenIddict.Abstractions.OpenIddictConstants;
 using static OpenIddict.Server.OpenIddictServerEvents;
 
@@ -20,7 +23,9 @@ internal sealed class AuthorizationEndpointHandler(
     IOpenIddictAuthorizationManager authorizationManager,
     IOpenIddictScopeManager scopeManager,
     SessionClaims sessionClaims,
-    TimeProvider timeProvider)
+    AppDbContext context,
+    TimeProvider timeProvider,
+    ILogger<AuthorizationEndpointHandler> logger)
 {
     public const string SignInPagePath = "/sign-in";
 
@@ -53,15 +58,18 @@ internal sealed class AuthorizationEndpointHandler(
         var session = await authorizationManager.CreateAsync(DescribeSession(
             await applicationManager.GetIdAsync(application),
             user,
+            signedInAt,
             scopes,
             httpContext));
+        var sessionId = await authorizationManager.GetIdAsync(session)
+            ?? throw new InvalidOperationException("The session has no identifier.");
 
         await httpContext.SignOutAsync(IdentityConstants.ApplicationScheme);
+        await RevokeOldestSessionsAsync(user, sessionId);
 
         var identity = await sessionClaims.CreateAsync(
             user,
-            await authorizationManager.GetIdAsync(session)
-                ?? throw new InvalidOperationException("The session has no identifier."),
+            sessionId,
             signedInAt,
             [.. signIn.Principal!.FindAll(AuthenticationMethods.ClaimType).Select(claim => claim.Value)],
             scopes,
@@ -85,6 +93,7 @@ internal sealed class AuthorizationEndpointHandler(
     private OpenIddictAuthorizationDescriptor DescribeSession(
         string? applicationId,
         User user,
+        DateTimeOffset signedInAt,
         ImmutableArray<string> scopes,
         HttpContext httpContext)
     {
@@ -104,8 +113,26 @@ internal sealed class AuthorizationEndpointHandler(
             JsonSerializer.SerializeToElement(device.Length > MaximumDeviceLength ? device[..MaximumDeviceLength] : device);
         descriptor.Properties[SessionProperties.Address] =
             JsonSerializer.SerializeToElement(httpContext.Connection.RemoteIpAddress?.ToString());
+        descriptor.Properties[SessionProperties.SignedInAt] =
+            JsonSerializer.SerializeToElement(signedInAt.ToUnixTimeSeconds());
 
         return descriptor;
+    }
+
+    private async Task RevokeOldestSessionsAsync(User user, string sessionId)
+    {
+        var revoked = await context.RevokeOldestSessionsAsync(
+            user.Id.ToString(),
+            SessionPolicy.MaximumSessionsPerAccount);
+
+        if (revoked > 0)
+        {
+            logger.LogInformation(
+                "Session {SessionId} put account {AccountId} over the limit. Ended {SessionCount} older sign-in(s).",
+                sessionId,
+                user.Id,
+                revoked);
+        }
     }
 
     private static DateTimeOffset? GetRequestedAt(HttpContext httpContext) =>

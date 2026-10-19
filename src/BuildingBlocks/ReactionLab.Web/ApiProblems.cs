@@ -50,6 +50,7 @@ internal static class ApiProblems
         ErrorType.Validation => (StatusCodes.Status400BadRequest, "Validation failed", "validation"),
         ErrorType.NotFound => (StatusCodes.Status404NotFound, "Resource not found", "not-found"),
         ErrorType.Conflict => (StatusCodes.Status409Conflict, "Conflict", "conflict"),
+        ErrorType.Unauthorized => (StatusCodes.Status401Unauthorized, "Authentication required", "unauthorized"),
         ErrorType.Forbidden => (StatusCodes.Status403Forbidden, "Forbidden", "forbidden"),
         ErrorType.Unexpected => (StatusCodes.Status500InternalServerError, "Unexpected error", "unexpected"),
         ErrorType.None => (StatusCodes.Status500InternalServerError, "Unexpected error", "unexpected"),
