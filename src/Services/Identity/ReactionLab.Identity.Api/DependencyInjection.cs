@@ -3,9 +3,12 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Instrumentation.Http;
 using ReactionLab.Identity.Api.Features.Accounts;
+using ReactionLab.Identity.Api.Features.Accounts.ChangePassword;
+using ReactionLab.Identity.Api.Features.Accounts.GetProfile;
 using ReactionLab.Identity.Api.Features.Accounts.RegisterAccount;
 using ReactionLab.Identity.Api.Features.Accounts.SignIn;
 using ReactionLab.Identity.Api.Features.Accounts.SignOut;
+using ReactionLab.Identity.Api.Features.Accounts.UpdateProfile;
 using ReactionLab.Identity.Api.Features.OpenId;
 using ReactionLab.Identity.Api.Features.Sessions.ListSessions;
 using ReactionLab.Identity.Api.Features.Sessions.RevokeOtherSessions;
@@ -68,6 +71,9 @@ internal static class DependencyInjection
         services.AddScoped<RegisterAccountHandler>();
         services.AddScoped<SignInHandler>();
         services.AddScoped<SignOutHandler>();
+        services.AddScoped<GetProfileHandler>();
+        services.AddScoped<UpdateProfileHandler>();
+        services.AddScoped<ChangePasswordHandler>();
 
         return services;
     }
@@ -121,6 +127,7 @@ internal static class DependencyInjection
 
         services.AddScoped<SessionClaims>();
         services.AddScoped<SessionRevocation>();
+        services.AddScoped<SecurityStampRotation>();
         services.AddScoped<AuthorizationEndpointHandler>();
         services.AddScoped<TokenEndpointHandler>();
         services.AddScoped<EndSessionEndpointHandler>();

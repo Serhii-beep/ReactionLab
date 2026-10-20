@@ -25,7 +25,8 @@ public static class OpenIdPruningStatements
                 SELECT id FROM openiddict_tokens
                 WHERE status = 'redeemed' AND redemption_date < {redeemedBefore}
                 ORDER BY redemption_date
-                LIMIT {TokenBatchSize})
+                LIMIT {TokenBatchSize}
+                FOR UPDATE SKIP LOCKED)
             """,
             cancellationToken);
 
@@ -41,7 +42,8 @@ public static class OpenIdPruningStatements
                 WHERE status = 'valid' AND type <> 'urn:ietf:params:oauth:token-type:refresh_token'
                     AND expiration_date < {expiredBefore}
                 ORDER BY expiration_date
-                LIMIT {TokenBatchSize})
+                LIMIT {TokenBatchSize}
+                FOR UPDATE SKIP LOCKED)
             """,
             cancellationToken);
 
@@ -52,7 +54,8 @@ public static class OpenIdPruningStatements
                 SELECT id FROM openiddict_authorizations
                 WHERE status <> 'valid'
                 ORDER BY creation_date
-                LIMIT {SessionBatchSize}),
+                LIMIT {SessionBatchSize}
+                FOR UPDATE SKIP LOCKED),
             ended_tokens AS (
                 DELETE FROM openiddict_tokens WHERE authorization_id IN (SELECT id FROM ended))
             DELETE FROM openiddict_authorizations WHERE id IN (SELECT id FROM ended)
@@ -69,7 +72,8 @@ public static class OpenIdPruningStatements
                 SELECT id FROM openiddict_authorizations
                 WHERE creation_date < {createdBefore}
                 ORDER BY creation_date
-                LIMIT {SessionBatchSize}),
+                LIMIT {SessionBatchSize}
+                FOR UPDATE SKIP LOCKED),
             ended_tokens AS (
                 DELETE FROM openiddict_tokens WHERE authorization_id IN (SELECT id FROM ended))
             DELETE FROM openiddict_authorizations WHERE id IN (SELECT id FROM ended)

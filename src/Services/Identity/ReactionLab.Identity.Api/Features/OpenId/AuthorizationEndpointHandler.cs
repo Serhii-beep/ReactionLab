@@ -115,6 +115,8 @@ internal sealed class AuthorizationEndpointHandler(
             JsonSerializer.SerializeToElement(httpContext.Connection.RemoteIpAddress?.ToString());
         descriptor.Properties[SessionProperties.SignedInAt] =
             JsonSerializer.SerializeToElement(signedInAt.ToUnixTimeSeconds());
+        descriptor.Properties[SessionProperties.SecurityStampHash] =
+            JsonSerializer.SerializeToElement(SessionSecurityStamps.Hash(user.SecurityStamp ?? string.Empty));
 
         return descriptor;
     }

@@ -38,6 +38,7 @@ app.MapOpenIdEndpoints();
 
 var api = app.MapGroup("/api/v1");
 api.MapAccountEndpoints();
+api.MapAccountSettingsEndpoints();
 api.MapSessionEndpoints();
 
 await app.RunAsync();

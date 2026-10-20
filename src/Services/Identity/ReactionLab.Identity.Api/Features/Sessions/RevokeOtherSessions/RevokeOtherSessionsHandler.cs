@@ -1,12 +1,10 @@
 using ReactionLab.Identity.Api.OpenId;
-using ReactionLab.Identity.Persistence;
-using ReactionLab.Identity.Persistence.OpenId;
 using ReactionLab.SharedKernel;
 
 namespace ReactionLab.Identity.Api.Features.Sessions.RevokeOtherSessions;
 
 internal sealed class RevokeOtherSessionsHandler(
-    AppDbContext context,
+    SecurityStampRotation securityStampRotation,
     TimeProvider timeProvider,
     ILogger<RevokeOtherSessionsHandler> logger) : ICommandHandler<RevokeOtherSessionsCommand>
 {
@@ -22,9 +20,9 @@ internal sealed class RevokeOtherSessionsHandler(
             return Result.Failure(SessionErrors.RecentSignInRequired);
         }
 
-        var revocation = await context.RevokeOtherSessionsAsync(command.AccountId.ToString(), command.CurrentSessionId);
+        var rotation = await securityStampRotation.RotateAsync(command.AccountId, command.CurrentSessionId);
 
-        if (!revocation.ActingSessionValid)
+        if (!rotation.AccountMatched || !rotation.ActingSessionValid)
         {
             return Result.Failure(SessionErrors.Ended);
         }
@@ -32,7 +30,7 @@ internal sealed class RevokeOtherSessionsHandler(
         logger.LogInformation(
             "Session {ActingSessionId} ended {SessionCount} other session(s) of account {AccountId}.",
             command.CurrentSessionId,
-            revocation.EndedSessionCount,
+            rotation.EndedSessionCount,
             command.AccountId);
 
         return Result.Success();

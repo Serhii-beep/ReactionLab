@@ -86,4 +86,70 @@ public static class SessionStatements
             """)
             .ToListAsync(CancellationToken.None))
             .Single();
+
+    public static Task<int> KeepSessionThroughStampChangeAsync(
+        this AppDbContext context,
+        string subject,
+        Guid sessionId,
+        string previousStampHash,
+        string securityStampHash) =>
+        context.Database.ExecuteSqlAsync(
+            $"""
+            UPDATE openiddict_authorizations
+            SET properties = ((properties::jsonb - {SessionProperties.StampCarriedOverBy}) || jsonb_build_object(
+                {SessionProperties.SecurityStampHash}, {securityStampHash},
+                {SessionProperties.StampCarryOver}, {securityStampHash}))::text
+            WHERE id = {sessionId} AND subject = {subject} AND status = 'valid'
+                AND properties::jsonb ->> {SessionProperties.SecurityStampHash} = {previousStampHash}
+            """,
+            CancellationToken.None);
+
+    public static async Task<string?> CarrySessionOverStampChangeAsync(
+        this AppDbContext context,
+        Guid userId,
+        Guid sessionId,
+        string tokenId) =>
+        (await context.Database.SqlQuery<string>(
+            $"""
+            WITH account AS MATERIALIZED (
+                SELECT security_stamp FROM users WHERE id = {userId} FOR SHARE)
+            UPDATE openiddict_authorizations
+            SET properties = (properties::jsonb
+                || jsonb_build_object({SessionProperties.StampCarriedOverBy}, {tokenId}))::text
+            FROM account
+            WHERE openiddict_authorizations.id = {sessionId} AND openiddict_authorizations.status = 'valid'
+                AND properties::jsonb ->> {SessionProperties.StampCarryOver}
+                    = upper(encode(sha256(convert_to(account.security_stamp, 'UTF8')), 'hex'))
+                AND coalesce(properties::jsonb ->> {SessionProperties.StampCarriedOverBy}, {tokenId}) = {tokenId}
+            RETURNING account.security_stamp AS "Value"
+            """)
+            .ToListAsync(CancellationToken.None))
+            .SingleOrDefault();
+
+    public static async Task<int> ClaimPasswordCheckAsync(
+        this AppDbContext context,
+        string subject,
+        Guid sessionId,
+        int maximumChecks) =>
+        (await context.Database.SqlQuery<int>(
+            $"""
+            UPDATE openiddict_authorizations
+            SET properties = (properties::jsonb || jsonb_build_object(
+                {SessionProperties.PasswordChecks},
+                coalesce((properties::jsonb ->> {SessionProperties.PasswordChecks})::int, 0) + 1))::text
+            WHERE id = {sessionId} AND subject = {subject} AND status = 'valid'
+                AND coalesce((properties::jsonb ->> {SessionProperties.PasswordChecks})::int, 0) < {maximumChecks}
+            RETURNING (properties::jsonb ->> {SessionProperties.PasswordChecks})::int AS "Value"
+            """)
+            .ToListAsync(CancellationToken.None))
+            .SingleOrDefault();
+
+    public static Task<int> ResetPasswordChecksAsync(this AppDbContext context, Guid sessionId) =>
+        context.Database.ExecuteSqlAsync(
+            $"""
+            UPDATE openiddict_authorizations
+            SET properties = (properties::jsonb - {SessionProperties.PasswordChecks})::text
+            WHERE id = {sessionId}
+            """,
+            CancellationToken.None);
 }

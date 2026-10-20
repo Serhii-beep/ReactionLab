@@ -6,7 +6,9 @@ using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using OpenIddict.Abstractions;
 using ReactionLab.Identity.Api.OpenId;
+using ReactionLab.Identity.Persistence;
 using ReactionLab.Identity.Persistence.Accounts;
+using ReactionLab.Identity.Persistence.OpenId;
 using static OpenIddict.Abstractions.OpenIddictConstants;
 
 namespace ReactionLab.Identity.Api.Features.OpenId;
@@ -14,6 +16,7 @@ namespace ReactionLab.Identity.Api.Features.OpenId;
 internal sealed class SessionClaims(
     UserManager<User> userManager,
     SignInManager<User> signInManager,
+    AppDbContext context,
     IOptions<IdentityOptions> identityOptions,
     TimeProvider timeProvider)
 {
@@ -47,10 +50,21 @@ internal sealed class SessionClaims(
 
         if (remaining <= TimeSpan.Zero
             || await userManager.FindByIdAsync(principal.GetClaim(Claims.Subject) ?? string.Empty) is not { } user
-            || !await signInManager.CanSignInAsync(user)
-            || principal.GetClaim(SecurityStampClaimType) != await userManager.GetSecurityStampAsync(user))
+            || !await signInManager.CanSignInAsync(user))
         {
             return null;
+        }
+
+        var securityStamp = await userManager.GetSecurityStampAsync(user);
+
+        if (principal.GetClaim(SecurityStampClaimType) != securityStamp)
+        {
+            if (await CarryOverStampChangeAsync(principal, user.Id) is not { } carriedOverStamp)
+            {
+                return null;
+            }
+
+            securityStamp = carriedOverStamp;
         }
 
         var identity = new ClaimsIdentity(
@@ -59,7 +73,8 @@ internal sealed class SessionClaims(
             Claims.Name,
             Claims.Role);
 
-        identity.SetRefreshTokenLifetime(remaining < SessionPolicy.IdleTimeout ? remaining : null)
+        identity.SetClaim(SecurityStampClaimType, securityStamp)
+            .SetRefreshTokenLifetime(remaining < SessionPolicy.IdleTimeout ? remaining : null)
             .SetAccessTokenLifetime(remaining < SessionPolicy.AccessTokenLifetime ? remaining : null);
 
         return Describe(identity, user);
@@ -69,6 +84,18 @@ internal sealed class SessionClaims(
         long.TryParse(principal.GetClaim(Claims.AuthenticationTime), out var signedInAt)
             ? DateTimeOffset.FromUnixTimeSeconds(signedInAt) + SessionPolicy.MaximumLifetime - timeProvider.GetUtcNow()
             : TimeSpan.Zero;
+
+    private async Task<string?> CarryOverStampChangeAsync(ClaimsPrincipal principal, Guid userId)
+    {
+        if (!Guid.TryParse(principal.GetAuthorizationId(), out var sessionId)
+            || principal.GetTokenId() is not { } tokenId)
+        {
+            return null;
+        }
+
+        return await context.CarrySessionOverStampChangeAsync(userId, sessionId, tokenId)
+            ?? await context.CarrySessionOverStampChangeAsync(userId, sessionId, tokenId);
+    }
 
     private static ClaimsIdentity Describe(ClaimsIdentity identity, User user) =>
         identity.SetClaim(Claims.Name, user.DisplayName)

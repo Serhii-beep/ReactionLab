@@ -44,7 +44,7 @@ public sealed partial class User : IdentityUser<Guid>
 
     public static readonly Error DisplayNameInvalid = Error.Validation(
         "Account.DisplayNameInvalid",
-        "A display name needs a letter, digit or symbol, and cannot hold invisible or text-direction characters.",
+        "A display name needs a letter, digit or symbol, and no invisible, text-direction or stacked characters.",
         nameof(DisplayName));
 
     public static readonly Error BirthYearInvalid = Error.Validation(
@@ -58,9 +58,11 @@ public sealed partial class User : IdentityUser<Guid>
 
     private const int ZeroWidthNonJoiner = 0x200C;
     private const int ZeroWidthJoiner = 0x200D;
+    private const int MaximumCombiningMarksInARow = 4;
 
     private static readonly EmailAddressAttribute EmailFormat = new();
-    private static readonly int[] BlankLookingCharacters = [0x115F, 0x1160, 0x2800, 0x3164, 0xFFA0];
+    private static readonly int[] BlankLookingCharacters =
+        [0x034F, 0x115F, 0x1160, 0x17B4, 0x17B5, 0x2800, 0x3164, 0xFFA0];
 
     private User()
     {
@@ -135,7 +137,7 @@ public sealed partial class User : IdentityUser<Guid>
         return EmailFormat.IsValid(normalized) ? normalized : EmailInvalid;
     }
 
-    private static Result<string> NormalizeDisplayName(string? displayName)
+    public static Result<string> NormalizeDisplayName(string? displayName)
     {
         if (string.IsNullOrWhiteSpace(displayName))
         {
@@ -154,7 +156,7 @@ public sealed partial class User : IdentityUser<Guid>
             return DisplayNameTooLong;
         }
 
-        return characters.Any(IsHiddenOrUnassigned) || !characters.Any(IsVisibleSign)
+        return characters.Any(IsHiddenOrUnassigned) || !characters.Any(IsVisibleSign) || HasStackedMarks(characters)
             ? DisplayNameInvalid
             : normalized;
     }
@@ -187,6 +189,28 @@ public sealed partial class User : IdentityUser<Guid>
 
     private static bool IsVisibleSign(Rune character) =>
         Rune.IsLetterOrDigit(character) || Rune.IsSymbol(character);
+
+    private static bool HasStackedMarks(List<Rune> characters)
+    {
+        var marksInARow = 0;
+
+        foreach (var character in characters)
+        {
+            marksInARow = IsCombiningMark(character) ? marksInARow + 1 : 0;
+
+            if (marksInARow > MaximumCombiningMarksInARow)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool IsCombiningMark(Rune character) =>
+        Rune.GetUnicodeCategory(character) is UnicodeCategory.NonSpacingMark
+            or UnicodeCategory.SpacingCombiningMark
+            or UnicodeCategory.EnclosingMark;
 
     [GeneratedRegex(@"\s+", RegexOptions.CultureInvariant)]
     private static partial Regex WhitespaceRun();

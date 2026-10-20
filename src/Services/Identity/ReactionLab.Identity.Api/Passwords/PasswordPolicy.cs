@@ -7,6 +7,7 @@ internal static class PasswordPolicy
     public const int MinimumLength = 15;
     public const int MaximumLength = 256;
     public const int HashIterations = 220_000;
+    public const int CurrentPasswordChecksPerSession = 5;
 
     public static readonly LockoutSchedule Lockout = new(
         FailuresPerLockout: 10,

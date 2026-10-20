@@ -8,6 +8,15 @@ internal static class AccountErrors
         "Account.SignInFailed",
         "The email address or the password is incorrect, or there were too many failed attempts.");
 
+    public static readonly Error NotFound = Error.NotFound(
+        "Account.NotFound",
+        "The account no longer exists.");
+
+    public static readonly Error CurrentPasswordIncorrect = Error.Validation(
+        "Account.CurrentPasswordIncorrect",
+        "The current password is incorrect.",
+        "CurrentPassword");
+
     public static Error Rejected(string description) =>
         Error.Validation("Account.Rejected", description);
 }
