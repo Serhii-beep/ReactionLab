@@ -6,9 +6,15 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="OpenIddict.Client.AspNetCore" />
+    <PackageReference Include="OpenIddict.Client.SystemNetHttp" />
+    <PackageReference Include="OpenIddict.Client.WebIntegration" />
     <PackageReference Include="OpenIddict.Server.AspNetCore" />
     <PackageReference Include="OpenIddict.Validation.AspNetCore" />
     <PackageReference Include="OpenIddict.Validation.ServerIntegration" />
     <PackageReference Include="Scalar.AspNetCore" />
   </ItemGroup>
+  <PropertyGroup>
+    <UserSecretsId>reactionlab-identity</UserSecretsId>
+  </PropertyGroup>
 </Project>

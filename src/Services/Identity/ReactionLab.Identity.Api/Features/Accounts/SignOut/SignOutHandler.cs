@@ -10,8 +10,9 @@ internal sealed class SignOutHandler(SignInManager<User> signInManager) : IComma
     public async ValueTask<Result> HandleAsync(SignOutCommand command, CancellationToken cancellationToken)
     {
         var session = await signInManager.Context.AuthenticateAsync(IdentityConstants.ApplicationScheme);
+        var pendingSignIn = await signInManager.Context.AuthenticateAsync(IdentityConstants.ExternalScheme);
 
-        if (session.Succeeded)
+        if (session.Succeeded || pendingSignIn.Succeeded)
         {
             await signInManager.SignOutAsync();
         }

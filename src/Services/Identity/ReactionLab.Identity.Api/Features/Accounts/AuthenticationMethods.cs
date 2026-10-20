@@ -4,4 +4,5 @@ internal static class AuthenticationMethods
 {
     public const string ClaimType = "amr";
     public const string Password = "pwd";
+    public const string Federated = "fed";
 }

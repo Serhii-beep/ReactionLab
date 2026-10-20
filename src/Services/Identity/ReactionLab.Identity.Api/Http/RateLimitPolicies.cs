@@ -11,10 +11,13 @@ internal static class RateLimitPolicies
     public const string SignIn = "sign-in";
     public const string Registration = "registration";
     public const string PasswordChange = "password-change";
+    public const string ExternalRegistration = "external-registration";
 
     private const int RetryAfterSeconds = 1;
     private const int SignInsInFlightPerCore = 4;
     private const int QueuedSignInsPerCore = 4;
+    private const int ExternalRegistrationsInFlightPerCore = 4;
+    private const int QueuedExternalRegistrationsPerCore = 4;
     private const int ProcessorsPerRegistration = 4;
     private const int QueuedRegistrationsPerPermit = 4;
     private const int ProcessorsPerPasswordChange = 4;
@@ -42,6 +45,13 @@ internal static class RateLimitPolicies
         {
             limiter.PermitLimit = Math.Max(1, Environment.ProcessorCount / ProcessorsPerRegistration);
             limiter.QueueLimit = limiter.PermitLimit * QueuedRegistrationsPerPermit;
+            limiter.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        });
+
+        options.AddConcurrencyLimiter(ExternalRegistration, limiter =>
+        {
+            limiter.PermitLimit = Environment.ProcessorCount * ExternalRegistrationsInFlightPerCore;
+            limiter.QueueLimit = Environment.ProcessorCount * QueuedExternalRegistrationsPerCore;
             limiter.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
         });
 

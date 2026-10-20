@@ -12,6 +12,7 @@ public sealed partial class User : IdentityUser<Guid>
     public const int MaximumEmailLength = 256;
     public const int MaximumDisplayNameLength = 64;
     public const int MaximumLocaleLength = 10;
+    public const int MaximumLoginKeyLength = 128;
     public const int MinimumSelfRegistrationAge = 13;
     public const int EarliestBirthYear = 1900;
 
@@ -91,30 +92,29 @@ public sealed partial class User : IdentityUser<Guid>
             return address.Error;
         }
 
-        var name = NormalizeDisplayName(displayName);
+        return Create(address.Value, emailConfirmed: false, displayName, locale, birthYear, now);
+    }
 
-        if (name.IsFailure)
+    public static Result<User> RegisterExternal(
+        string? verifiedEmail,
+        string? displayName,
+        SupportedLocale locale,
+        int? birthYear,
+        DateTimeOffset now)
+    {
+        if (verifiedEmail is null)
         {
-            return name.Error;
+            return Create(null, emailConfirmed: false, displayName, locale, birthYear, now);
         }
 
-        var eligibility = CheckSelfRegistrationAge(birthYear, now);
+        var address = NormalizeEmail(verifiedEmail);
 
-        if (eligibility.IsFailure)
+        if (address.IsFailure)
         {
-            return eligibility.Error;
+            return address.Error;
         }
 
-        return new User
-        {
-            Id = Guid.CreateVersion7(now),
-            UserName = address.Value,
-            Email = address.Value,
-            DisplayName = name.Value,
-            PreferredLocale = locale.Code,
-            BirthYear = birthYear,
-            CreatedAt = now
-        };
+        return Create(address.Value, emailConfirmed: true, displayName, locale, birthYear, now);
     }
 
     public static Result<string> NormalizeEmail(string? email)
@@ -159,6 +159,43 @@ public sealed partial class User : IdentityUser<Guid>
         return characters.Any(IsHiddenOrUnassigned) || !characters.Any(IsVisibleSign) || HasStackedMarks(characters)
             ? DisplayNameInvalid
             : normalized;
+    }
+
+    private static Result<User> Create(
+        string? email,
+        bool emailConfirmed,
+        string? displayName,
+        SupportedLocale locale,
+        int? birthYear,
+        DateTimeOffset now)
+    {
+        var name = NormalizeDisplayName(displayName);
+
+        if (name.IsFailure)
+        {
+            return name.Error;
+        }
+
+        var eligibility = CheckSelfRegistrationAge(birthYear, now);
+
+        if (eligibility.IsFailure)
+        {
+            return eligibility.Error;
+        }
+
+        var id = Guid.CreateVersion7(now);
+
+        return new User
+        {
+            Id = id,
+            UserName = email ?? id.ToString(),
+            Email = email,
+            EmailConfirmed = emailConfirmed,
+            DisplayName = name.Value,
+            PreferredLocale = locale.Code,
+            BirthYear = birthYear,
+            CreatedAt = now
+        };
     }
 
     private static Result CheckSelfRegistrationAge(int? birthYear, DateTimeOffset now)
