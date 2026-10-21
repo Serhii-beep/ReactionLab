@@ -10,6 +10,10 @@ public static class ProfileQueries
         CancellationToken cancellationToken) =>
         context.Users.AsNoTracking()
             .Where(user => user.Id == userId)
-            .Select(user => new AccountProfile(user.Email, user.DisplayName, user.PreferredLocale))
+            .Select(user => new AccountProfile(
+                user.Email,
+                user.DisplayName,
+                user.PreferredLocale,
+                user.PasswordHash != null))
             .SingleOrDefaultAsync(cancellationToken);
 }

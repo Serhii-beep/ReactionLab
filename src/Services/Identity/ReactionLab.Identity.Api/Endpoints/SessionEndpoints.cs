@@ -44,7 +44,7 @@ internal static class SessionEndpoints
             var command = new RevokeSessionCommand(
                 user.GetAccountId(),
                 user.GetSessionId(),
-                user.GetSignedInAt(),
+                user.GetSessionSignIn(),
                 sessionId);
 
             var result = await handler.HandleAsync(command, cancellationToken);
@@ -52,7 +52,7 @@ internal static class SessionEndpoints
             return result.ToHttpResult();
         })
         .WithName("RevokeSession")
-        .WithSummary("Sign one session out. Another session than the caller's needs a recent sign-in.")
+        .WithSummary("Sign one session out. Another session than the caller's needs a recent sign-in or password.")
         .Produces(StatusCodes.Status204NoContent)
         .ProducesProblem(StatusCodes.Status401Unauthorized)
         .ProducesProblem(StatusCodes.Status403Forbidden)
@@ -66,17 +66,18 @@ internal static class SessionEndpoints
             var command = new RevokeOtherSessionsCommand(
                 user.GetAccountId(),
                 user.GetSessionId(),
-                user.GetSignedInAt());
+                user.GetSessionSignIn());
 
             var result = await handler.HandleAsync(command, cancellationToken);
 
             return result.ToHttpResult();
         })
         .WithName("RevokeOtherSessions")
-        .WithSummary("Sign every other session out. Needs a recent sign-in.")
+        .WithSummary("Sign every other session out. Needs a recent sign-in or password.")
         .Produces(StatusCodes.Status204NoContent)
         .ProducesProblem(StatusCodes.Status401Unauthorized)
-        .ProducesProblem(StatusCodes.Status403Forbidden);
+        .ProducesProblem(StatusCodes.Status403Forbidden)
+        .ProducesProblem(StatusCodes.Status404NotFound);
 
         return api;
     }

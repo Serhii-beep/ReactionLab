@@ -17,6 +17,14 @@ internal static class AccountErrors
         "The current password is incorrect.",
         "CurrentPassword");
 
+    public static readonly Error PasswordNotSet = Error.Conflict(
+        "Account.PasswordNotSet",
+        "This account has no password.");
+
+    public static readonly Error PasswordCheckLocked = Error.Forbidden(
+        "Account.PasswordCheckLocked",
+        "Password checks are locked after too many wrong passwords.");
+
     public static Error Rejected(string description) =>
         Error.Validation("Account.Rejected", description);
 }

@@ -2,6 +2,7 @@ using System.Security.Claims;
 using ReactionLab.Identity.Api.Features.Accounts.ChangePassword;
 using ReactionLab.Identity.Api.Features.Accounts.Contracts;
 using ReactionLab.Identity.Api.Features.Accounts.GetProfile;
+using ReactionLab.Identity.Api.Features.Accounts.Reauthenticate;
 using ReactionLab.Identity.Api.Features.Accounts.UpdateProfile;
 using ReactionLab.Identity.Api.Http;
 using ReactionLab.Web;
@@ -60,6 +61,7 @@ internal static class AccountSettingsEndpoints
             var command = new ChangePasswordCommand(
                 user.GetAccountId(),
                 user.GetSessionId(),
+                user.GetSessionSignIn(),
                 request.CurrentPassword,
                 request.NewPassword);
 
@@ -73,7 +75,36 @@ internal static class AccountSettingsEndpoints
         .Produces(StatusCodes.Status204NoContent)
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status401Unauthorized)
+        .ProducesProblem(StatusCodes.Status403Forbidden)
         .ProducesProblem(StatusCodes.Status404NotFound)
+        .ProducesProblem(StatusCodes.Status409Conflict)
+        .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
+
+        group.MapPost("/reauthentications", async (
+            ReauthenticateRequest request,
+            ClaimsPrincipal user,
+            ReauthenticateHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            var command = new ReauthenticateCommand(
+                user.GetAccountId(),
+                user.GetSessionId(),
+                user.GetSessionSignIn(),
+                request.CurrentPassword);
+
+            var result = await handler.HandleAsync(command, cancellationToken);
+
+            return result.ToHttpResult();
+        })
+        .WithName("Reauthenticate")
+        .WithSummary("Confirm the password in this session, which privileged actions accept for 10 minutes.")
+        .RequireRateLimiting(RateLimitPolicies.Reauthentication)
+        .Produces(StatusCodes.Status204NoContent)
+        .ProducesProblem(StatusCodes.Status400BadRequest)
+        .ProducesProblem(StatusCodes.Status401Unauthorized)
+        .ProducesProblem(StatusCodes.Status403Forbidden)
+        .ProducesProblem(StatusCodes.Status404NotFound)
+        .ProducesProblem(StatusCodes.Status409Conflict)
         .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
 
         return api;

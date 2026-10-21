@@ -35,6 +35,10 @@ internal sealed class UpdateProfileHandler(AppDbContext context, ILogger<UpdateP
 
         logger.LogInformation("Account {AccountId} updated its profile.", command.AccountId);
 
-        return Result.Success(new ProfileResponse(profile.Email, profile.DisplayName, profile.PreferredLocale));
+        return Result.Success(new ProfileResponse(
+            profile.Email,
+            profile.DisplayName,
+            profile.PreferredLocale,
+            profile.HasPassword));
     }
 }

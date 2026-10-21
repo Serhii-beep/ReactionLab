@@ -4,20 +4,27 @@ using ReactionLab.SharedKernel;
 namespace ReactionLab.Identity.Api.Features.Sessions.RevokeOtherSessions;
 
 internal sealed class RevokeOtherSessionsHandler(
+    RecentSignInCheck recentSignInCheck,
     SecurityStampRotation securityStampRotation,
-    TimeProvider timeProvider,
     ILogger<RevokeOtherSessionsHandler> logger) : ICommandHandler<RevokeOtherSessionsCommand>
 {
     public async ValueTask<Result> HandleAsync(RevokeOtherSessionsCommand command, CancellationToken cancellationToken)
     {
-        if (!SessionPolicy.IsRecentSignIn(command.SignedInAt, timeProvider.GetUtcNow()))
+        var recentSignIn = await recentSignInCheck.CheckAsync(
+            command.AccountId,
+            command.CurrentSessionId,
+            command.SignIn,
+            cancellationToken);
+
+        if (recentSignIn.IsFailure)
         {
             logger.LogInformation(
-                "Session {ActingSessionId} needs a recent sign-in to end the other sessions of account {AccountId}.",
+                "Session {ActingSessionId} may not end the other sessions of account {AccountId}: {ErrorCode}.",
                 command.CurrentSessionId,
-                command.AccountId);
+                command.AccountId,
+                recentSignIn.Error.Code);
 
-            return Result.Failure(SessionErrors.RecentSignInRequired);
+            return recentSignIn;
         }
 
         var rotation = await securityStampRotation.RotateAsync(command.AccountId, command.CurrentSessionId);

@@ -16,6 +16,10 @@ internal sealed class GetProfileHandler(AppDbContext context) : IQueryHandler<Ge
             return Result.Failure<ProfileResponse>(AccountErrors.NotFound);
         }
 
-        return Result.Success(new ProfileResponse(profile.Email, profile.DisplayName, profile.PreferredLocale));
+        return Result.Success(new ProfileResponse(
+            profile.Email,
+            profile.DisplayName,
+            profile.PreferredLocale,
+            profile.HasPassword));
     }
 }

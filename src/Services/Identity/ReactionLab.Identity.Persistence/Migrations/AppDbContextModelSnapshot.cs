@@ -416,6 +416,14 @@ namespace ReactionLab.Identity.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
+                    b.Property<int>("CurrentPasswordFailures")
+                        .HasColumnType("integer")
+                        .HasColumnName("current_password_failures");
+
+                    b.Property<DateTimeOffset?>("CurrentPasswordLockoutEnd")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("current_password_lockout_end");
+
                     b.Property<string>("DisplayName")
                         .IsRequired()
                         .HasMaxLength(64)

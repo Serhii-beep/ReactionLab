@@ -11,6 +11,7 @@ internal static class RateLimitPolicies
     public const string SignIn = "sign-in";
     public const string Registration = "registration";
     public const string PasswordChange = "password-change";
+    public const string Reauthentication = "reauthentication";
     public const string ExternalRegistration = "external-registration";
 
     private const int RetryAfterSeconds = 1;
@@ -20,8 +21,8 @@ internal static class RateLimitPolicies
     private const int QueuedExternalRegistrationsPerCore = 4;
     private const int ProcessorsPerRegistration = 4;
     private const int QueuedRegistrationsPerPermit = 4;
-    private const int ProcessorsPerPasswordChange = 4;
-    private const int QueuedPasswordChangesPerPermit = 4;
+    private const int ProcessorsPerPasswordCheck = 4;
+    private const int QueuedPasswordChecksPerPermit = 4;
 
     public static void Configure(RateLimiterOptions options)
     {
@@ -55,25 +56,32 @@ internal static class RateLimitPolicies
             limiter.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
         });
 
-        var passwordChanges = SharedPasswordChangeLimiter();
+        var passwordChecks = SharedPasswordCheckLimiter();
 
         options.AddPolicy(PasswordChange, httpContext => RateLimitPartition.Get(
             httpContext.User.GetClaim(Claims.Subject) ?? string.Empty,
-            _ => RateLimiter.CreateChained(OnePasswordChangePerAccount(), passwordChanges)));
+            _ => RateLimiter.CreateChained(OnePasswordCheckAtATime(), passwordChecks)));
+
+        options.AddPolicy(Reauthentication, httpContext => RateLimitPartition.Get(
+            AccountAndSignInMethod(httpContext),
+            _ => RateLimiter.CreateChained(OnePasswordCheckAtATime(), passwordChecks)));
     }
 
-    private static ConcurrencyLimiter SharedPasswordChangeLimiter()
+    private static (string AccountId, bool WithPassword) AccountAndSignInMethod(HttpContext httpContext) =>
+        (httpContext.User.GetClaim(Claims.Subject) ?? string.Empty, httpContext.User.GetSessionSignIn().WithPassword);
+
+    private static ConcurrencyLimiter SharedPasswordCheckLimiter()
     {
-        var permits = Math.Max(1, Environment.ProcessorCount / ProcessorsPerPasswordChange);
+        var permits = Math.Max(1, Environment.ProcessorCount / ProcessorsPerPasswordCheck);
 
         return new ConcurrencyLimiter(new ConcurrencyLimiterOptions
         {
             PermitLimit = permits,
-            QueueLimit = permits * QueuedPasswordChangesPerPermit,
+            QueueLimit = permits * QueuedPasswordChecksPerPermit,
             QueueProcessingOrder = QueueProcessingOrder.OldestFirst
         });
     }
 
-    private static ConcurrencyLimiter OnePasswordChangePerAccount() =>
+    private static ConcurrencyLimiter OnePasswordCheckAtATime() =>
         new(new ConcurrencyLimiterOptions { PermitLimit = 1, QueueLimit = 0 });
 }

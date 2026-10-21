@@ -3,19 +3,16 @@ using ReactionLab.Identity.Api.Features.Accounts.Contracts;
 using ReactionLab.Identity.Api.Features.Sessions;
 using ReactionLab.Identity.Api.OpenId;
 using ReactionLab.Identity.Api.Passwords;
-using ReactionLab.Identity.Persistence;
 using ReactionLab.Identity.Persistence.Accounts;
-using ReactionLab.Identity.Persistence.OpenId;
 using ReactionLab.SharedKernel;
 
 namespace ReactionLab.Identity.Api.Features.Accounts.ChangePassword;
 
 internal sealed class ChangePasswordHandler(
-    AppDbContext context,
     UserManager<User> userManager,
+    CurrentPasswordCheck currentPasswordCheck,
     PasswordVerificationGate verificationGate,
     SecurityStampRotation securityStampRotation,
-    SessionRevocation sessionRevocation,
     ILogger<ChangePasswordHandler> logger) : ICommandHandler<ChangePasswordCommand>
 {
     public async ValueTask<Result> HandleAsync(ChangePasswordCommand command, CancellationToken cancellationToken)
@@ -25,38 +22,17 @@ internal sealed class ChangePasswordHandler(
             return Result.Failure(AccountErrors.NotFound);
         }
 
-        if (user.PasswordHash is not { } passwordHash
-            || string.IsNullOrEmpty(command.CurrentPassword)
-            || !UnicodeText.TryNormalize(command.CurrentPassword, out var currentPassword))
-        {
-            return Result.Failure(AccountErrors.CurrentPasswordIncorrect);
-        }
-
-        var checks = await context.ClaimPasswordCheckAsync(
-            command.AccountId.ToString(),
+        var verifiedHash = await currentPasswordCheck.GetVerifiedHashAsync(
+            user,
             command.CurrentSessionId,
-            PasswordPolicy.CurrentPasswordChecksPerSession);
-
-        if (checks == 0)
-        {
-            await sessionRevocation.RevokeAsync(command.CurrentSessionId.ToString(), CancellationToken.None);
-
-            return Result.Failure(SessionErrors.Ended);
-        }
-
-        var verification = await verificationGate.RunAsync(
-            () => userManager.PasswordHasher.VerifyHashedPassword(user, passwordHash, currentPassword),
+            command.SignIn.WithPassword,
+            command.CurrentPassword,
             cancellationToken);
 
-        if (verification is PasswordVerificationResult.Failed)
+        if (verifiedHash.IsFailure)
         {
-            return checks < PasswordPolicy.CurrentPasswordChecksPerSession
-                ? RefuseCurrentPassword(command, checks)
-                : await EndSessionAsync(command);
+            return Result.Failure(verifiedHash.Error);
         }
-
-        await context.ResetPasswordChecksAsync(command.CurrentSessionId);
-        await context.ResetSignInAttemptsAsync(user.Id);
 
         var newPassword = await ValidateNewPasswordAsync(user, command.NewPassword);
 
@@ -72,7 +48,7 @@ internal sealed class ChangePasswordHandler(
         var rotation = await securityStampRotation.ReplacePasswordAsync(
             command.AccountId,
             command.CurrentSessionId,
-            passwordHash,
+            verifiedHash.Value,
             replacementHash);
 
         if (!rotation.AccountMatched)
@@ -102,30 +78,6 @@ internal sealed class ChangePasswordHandler(
             rotation.EndedSessionCount);
 
         return Result.Success();
-    }
-
-    private Result RefuseCurrentPassword(ChangePasswordCommand command, int checks)
-    {
-        logger.LogInformation(
-            "Session {SessionId} gave a wrong current password for account {AccountId}.",
-            command.CurrentSessionId,
-            command.AccountId);
-
-        return Result.Failure(AccountErrors.CurrentPasswordIncorrect.WithArgs(
-            ("remainingAttempts", PasswordPolicy.CurrentPasswordChecksPerSession - checks)));
-    }
-
-    private async Task<Result> EndSessionAsync(ChangePasswordCommand command)
-    {
-        await sessionRevocation.RevokeAsync(command.CurrentSessionId.ToString(), CancellationToken.None);
-
-        logger.LogWarning(
-            "Ended session {SessionId} of account {AccountId} after {AttemptCount} wrong current passwords.",
-            command.CurrentSessionId,
-            command.AccountId,
-            PasswordPolicy.CurrentPasswordChecksPerSession);
-
-        return Result.Failure(SessionErrors.Ended);
     }
 
     private async Task<Result<string>> ValidateNewPasswordAsync(User user, string? newPassword)

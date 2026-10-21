@@ -9,4 +9,5 @@ public static class SessionProperties
     public const string StampCarryOver = "stamp_carry_over";
     public const string StampCarriedOverBy = "stamp_carried_over_by";
     public const string PasswordChecks = "password_checks";
+    public const string PasswordVerifiedAt = "password_verified_at";
 }

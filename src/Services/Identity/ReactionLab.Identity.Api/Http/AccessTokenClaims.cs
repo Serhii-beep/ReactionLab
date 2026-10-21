@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using OpenIddict.Abstractions;
+using ReactionLab.Identity.Api.Features.Accounts;
 using static OpenIddict.Abstractions.OpenIddictConstants;
 
 namespace ReactionLab.Identity.Api.Http;
@@ -20,4 +21,9 @@ internal static class AccessTokenClaims
         long.TryParse(principal.GetClaim(Claims.AuthenticationTime), out var signedInAt)
             ? DateTimeOffset.FromUnixTimeSeconds(signedInAt)
             : null;
+
+    public static SessionSignIn GetSessionSignIn(this ClaimsPrincipal principal) =>
+        new(
+            principal.GetSignedInAt(),
+            principal.HasClaim(Claims.AuthenticationMethodReference, AuthenticationMethods.Password));
 }

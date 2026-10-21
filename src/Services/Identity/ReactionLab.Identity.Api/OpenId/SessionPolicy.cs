@@ -10,7 +10,8 @@ internal static class SessionPolicy
     public static readonly TimeSpan PushedRequestLifetime = TimeSpan.FromMinutes(10);
     public static readonly TimeSpan RedeemedTokenRetention = TimeSpan.FromDays(1);
     public static readonly TimeSpan RecentSignInWindow = TimeSpan.FromMinutes(10);
+    public static readonly TimeSpan MaximumClockSkew = TimeSpan.FromMinutes(1);
 
     public static bool IsRecentSignIn(DateTimeOffset? signedInAt, DateTimeOffset now) =>
-        signedInAt is { } time && now - time <= RecentSignInWindow;
+        signedInAt is { } time && now - time <= RecentSignInWindow && time - now <= MaximumClockSkew;
 }

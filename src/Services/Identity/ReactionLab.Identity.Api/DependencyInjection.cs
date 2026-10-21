@@ -7,6 +7,7 @@ using ReactionLab.Identity.Api.ExternalSignIn;
 using ReactionLab.Identity.Api.Features.Accounts;
 using ReactionLab.Identity.Api.Features.Accounts.ChangePassword;
 using ReactionLab.Identity.Api.Features.Accounts.GetProfile;
+using ReactionLab.Identity.Api.Features.Accounts.Reauthenticate;
 using ReactionLab.Identity.Api.Features.Accounts.RegisterAccount;
 using ReactionLab.Identity.Api.Features.Accounts.SignIn;
 using ReactionLab.Identity.Api.Features.Accounts.SignOut;
@@ -19,6 +20,7 @@ using ReactionLab.Identity.Api.Features.ExternalSignIn.ListSignInMethods;
 using ReactionLab.Identity.Api.Features.ExternalSignIn.RegisterExternalAccount;
 using ReactionLab.Identity.Api.Features.ExternalSignIn.StartExternalSignIn;
 using ReactionLab.Identity.Api.Features.OpenId;
+using ReactionLab.Identity.Api.Features.Sessions;
 using ReactionLab.Identity.Api.Features.Sessions.ListSessions;
 using ReactionLab.Identity.Api.Features.Sessions.RevokeOtherSessions;
 using ReactionLab.Identity.Api.Features.Sessions.RevokeSession;
@@ -87,7 +89,9 @@ internal static class DependencyInjection
         services.AddScoped<SignOutHandler>();
         services.AddScoped<GetProfileHandler>();
         services.AddScoped<UpdateProfileHandler>();
+        services.AddScoped<CurrentPasswordCheck>();
         services.AddScoped<ChangePasswordHandler>();
+        services.AddScoped<ReauthenticateHandler>();
 
         return services;
     }
@@ -143,6 +147,7 @@ internal static class DependencyInjection
         services.AddScoped<AuthorizationEndpointHandler>();
         services.AddScoped<TokenEndpointHandler>();
         services.AddScoped<EndSessionEndpointHandler>();
+        services.AddScoped<RecentSignInCheck>();
         services.AddScoped<ListSessionsHandler>();
         services.AddScoped<RevokeSessionHandler>();
         services.AddScoped<RevokeOtherSessionsHandler>();

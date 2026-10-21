@@ -144,12 +144,17 @@ public static class SessionStatements
             .ToListAsync(CancellationToken.None))
             .SingleOrDefault();
 
-    public static Task<int> ResetPasswordChecksAsync(this AppDbContext context, Guid sessionId) =>
+    public static Task<int> MarkPasswordVerifiedAsync(
+        this AppDbContext context,
+        string subject,
+        Guid sessionId,
+        DateTimeOffset verifiedAt) =>
         context.Database.ExecuteSqlAsync(
             $"""
             UPDATE openiddict_authorizations
-            SET properties = (properties::jsonb - {SessionProperties.PasswordChecks})::text
-            WHERE id = {sessionId}
+            SET properties = ((properties::jsonb - {SessionProperties.PasswordChecks}) || jsonb_build_object(
+                {SessionProperties.PasswordVerifiedAt}, {verifiedAt.ToUnixTimeSeconds()}))::text
+            WHERE id = {sessionId} AND subject = {subject} AND status = 'valid'
             """,
             CancellationToken.None);
 }

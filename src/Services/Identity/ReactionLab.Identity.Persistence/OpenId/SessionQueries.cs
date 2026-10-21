@@ -31,4 +31,22 @@ public static class SessionQueries
             LIMIT {count}
             """)
             .ToListAsync(cancellationToken);
+
+    public static async Task<ReauthenticationState?> FindReauthenticationStateAsync(
+        this AppDbContext context,
+        Guid userId,
+        Guid sessionId,
+        CancellationToken cancellationToken) =>
+        (await context.Database.SqlQuery<ReauthenticationState>(
+            $"""
+            SELECT account.password_hash IS NOT NULL AS account_has_password,
+                to_timestamp((session.properties::jsonb ->> {SessionProperties.PasswordVerifiedAt})::bigint)
+                    AS password_verified_at
+            FROM users AS account
+            LEFT JOIN openiddict_authorizations AS session
+                ON session.id = {sessionId} AND session.subject = account.id::text AND session.status = 'valid'
+            WHERE account.id = {userId}
+            """)
+            .ToListAsync(cancellationToken))
+            .SingleOrDefault();
 }

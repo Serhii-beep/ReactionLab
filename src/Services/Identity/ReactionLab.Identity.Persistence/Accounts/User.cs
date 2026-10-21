@@ -78,6 +78,10 @@ public sealed partial class User : IdentityUser<Guid>
 
     public DateTimeOffset CreatedAt { get; private set; }
 
+    public int CurrentPasswordFailures { get; private set; }
+
+    public DateTimeOffset? CurrentPasswordLockoutEnd { get; private set; }
+
     public static Result<User> Register(
         string? email,
         string? displayName,

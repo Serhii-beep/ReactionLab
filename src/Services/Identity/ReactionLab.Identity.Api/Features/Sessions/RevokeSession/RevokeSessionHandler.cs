@@ -1,3 +1,4 @@
+using ReactionLab.Identity.Api.Http;
 using ReactionLab.Identity.Api.OpenId;
 using ReactionLab.Identity.Persistence;
 using ReactionLab.Identity.Persistence.OpenId;
@@ -7,20 +8,29 @@ namespace ReactionLab.Identity.Api.Features.Sessions.RevokeSession;
 
 internal sealed class RevokeSessionHandler(
     AppDbContext context,
-    TimeProvider timeProvider,
+    RecentSignInCheck recentSignInCheck,
     ILogger<RevokeSessionHandler> logger) : ICommandHandler<RevokeSessionCommand>
 {
     public async ValueTask<Result> HandleAsync(RevokeSessionCommand command, CancellationToken cancellationToken)
     {
-        if (command.SessionId != command.CurrentSessionId
-            && !SessionPolicy.IsRecentSignIn(command.SignedInAt, timeProvider.GetUtcNow()))
+        if (command.SessionId != command.CurrentSessionId)
         {
-            logger.LogInformation(
-                "Session {ActingSessionId} needs a recent sign-in to end session {SessionId}.",
+            var recentSignIn = await recentSignInCheck.CheckAsync(
+                command.AccountId,
                 command.CurrentSessionId,
-                command.SessionId);
+                command.SignIn,
+                cancellationToken);
 
-            return Result.Failure(SessionErrors.RecentSignInRequired);
+            if (recentSignIn.IsFailure)
+            {
+                logger.LogInformation(
+                    "Session {ActingSessionId} may not end session {SessionId}: {ErrorCode}.",
+                    command.CurrentSessionId,
+                    command.SessionId,
+                    recentSignIn.Error.Code);
+
+                return recentSignIn;
+            }
         }
 
         var revocation = await context.RevokeSessionAsync(

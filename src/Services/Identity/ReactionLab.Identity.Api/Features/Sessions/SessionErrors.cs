@@ -15,6 +15,11 @@ internal static class SessionErrors
 
     public static readonly Error RecentSignInRequired = Error.Forbidden(
         "Session.RecentSignInRequired",
-        "Ending another session needs a sign-in from the last 10 minutes.")
+        "This needs a sign-in from the last 10 minutes.")
+        .WithArgs(("maxAge", (int)SessionPolicy.RecentSignInWindow.TotalSeconds));
+
+    public static readonly Error RecentPasswordRequired = Error.Forbidden(
+        "Session.RecentPasswordRequired",
+        "This needs the account's password from the last 10 minutes.")
         .WithArgs(("maxAge", (int)SessionPolicy.RecentSignInWindow.TotalSeconds));
 }

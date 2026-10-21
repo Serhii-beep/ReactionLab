@@ -16,7 +16,7 @@ public static class ProfileStatements
                 preferred_locale = coalesce({preferredLocale}, preferred_locale),
                 concurrency_stamp = gen_random_uuid()::text
             WHERE id = {userId}
-            RETURNING email, display_name, preferred_locale
+            RETURNING email, display_name, preferred_locale, password_hash IS NOT NULL AS has_password
             """)
             .ToListAsync(CancellationToken.None))
             .SingleOrDefault();
