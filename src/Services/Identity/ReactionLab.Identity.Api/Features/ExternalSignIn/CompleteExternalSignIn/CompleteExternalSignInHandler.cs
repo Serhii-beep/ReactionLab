@@ -1,15 +1,15 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
-using OpenIddict.Abstractions;
 using OpenIddict.Client.AspNetCore;
 using ReactionLab.Identity.Api.ExternalSignIn;
 using ReactionLab.Identity.Api.Features.Accounts;
+using ReactionLab.Identity.Api.Features.Logins;
+using ReactionLab.Identity.Api.Features.Logins.CompleteLoginConnection;
 using ReactionLab.Identity.Api.Http;
 using ReactionLab.Identity.Persistence.Accounts;
 using ReactionLab.SharedKernel;
 using ReactionLab.Web;
-using static OpenIddict.Abstractions.OpenIddictConstants;
 
 namespace ReactionLab.Identity.Api.Features.ExternalSignIn.CompleteExternalSignIn;
 
@@ -18,6 +18,7 @@ internal sealed class CompleteExternalSignInHandler(
     PendingExternalSignIns pendingSignIns,
     UserManager<User> userManager,
     SignInManager<User> signInManager,
+    CompleteLoginConnectionHandler connectionHandler,
     ILogger<CompleteExternalSignInHandler> logger)
 {
     public const string ExternalIdentityPagePath = "/sign-in/external";
@@ -31,12 +32,15 @@ internal sealed class CompleteExternalSignInHandler(
 
         var authentication = await httpContext.AuthenticateAsync(
             OpenIddictClientAspNetCoreDefaults.AuthenticationScheme);
+
+        if (LoginConnections.Find(authentication.Properties) is { } connection)
+        {
+            return await connectionHandler.HandleAsync(provider, authentication, connection);
+        }
+
         var returnUrl = LocalReturnUrls.OrDefault(authentication.Properties?.RedirectUri);
 
-        if (!authentication.Succeeded
-            || authentication.Principal.GetClaim(Claims.Private.ProviderName) != provider.Name
-            || provider.ReadIdentity(authentication.Principal) is not { } identity
-            || identity.Subject.Length > User.MaximumLoginKeyLength)
+        if (authentication.ReadIdentity(provider) is not { } identity)
         {
             return Refuse(provider, authentication, returnUrl);
         }
@@ -79,14 +83,8 @@ internal sealed class CompleteExternalSignInHandler(
             provider.Name,
             error ?? "no usable identity");
 
-        var errorCode = error switch
-        {
-            Errors.AccessDenied => ExternalSignInErrors.CanceledCode,
-            Errors.ServerError or Errors.TemporarilyUnavailable => ExternalSignInErrors.UnavailableCode,
-            _ => ExternalSignInErrors.FailedCode
-        };
-
-        return Results.Redirect(SignInPageRedirects.WithError(errorCode, returnUrl));
+        return Results.Redirect(
+            SignInPageRedirects.WithError(ExternalSignInErrors.CodeForProviderError(error), returnUrl));
     }
 
     private static ExternalIdentity Normalize(ExternalIdentity identity) =>

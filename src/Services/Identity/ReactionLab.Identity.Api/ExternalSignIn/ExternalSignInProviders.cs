@@ -6,6 +6,8 @@ internal sealed class ExternalSignInProviders(IReadOnlyList<IExternalSignInProvi
 
     public IReadOnlyList<IExternalSignInProvider> All => providers;
 
+    public string[] Names => [.. providers.Select(provider => provider.Name)];
+
     public static ExternalSignInProviders FromConfiguration(IConfiguration configuration)
     {
         var settings = configuration.GetSection(SettingsSection);

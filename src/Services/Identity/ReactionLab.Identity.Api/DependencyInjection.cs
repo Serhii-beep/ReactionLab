@@ -9,6 +9,8 @@ using ReactionLab.Identity.Api.Features.Accounts.ChangePassword;
 using ReactionLab.Identity.Api.Features.Accounts.GetProfile;
 using ReactionLab.Identity.Api.Features.Accounts.Reauthenticate;
 using ReactionLab.Identity.Api.Features.Accounts.RegisterAccount;
+using ReactionLab.Identity.Api.Features.Accounts.RemovePassword;
+using ReactionLab.Identity.Api.Features.Accounts.SetPassword;
 using ReactionLab.Identity.Api.Features.Accounts.SignIn;
 using ReactionLab.Identity.Api.Features.Accounts.SignOut;
 using ReactionLab.Identity.Api.Features.Accounts.UpdateProfile;
@@ -19,6 +21,10 @@ using ReactionLab.Identity.Api.Features.ExternalSignIn.LinkExternalSignIn;
 using ReactionLab.Identity.Api.Features.ExternalSignIn.ListSignInMethods;
 using ReactionLab.Identity.Api.Features.ExternalSignIn.RegisterExternalAccount;
 using ReactionLab.Identity.Api.Features.ExternalSignIn.StartExternalSignIn;
+using ReactionLab.Identity.Api.Features.Logins.CompleteLoginConnection;
+using ReactionLab.Identity.Api.Features.Logins.ConnectLogin;
+using ReactionLab.Identity.Api.Features.Logins.DisconnectLogin;
+using ReactionLab.Identity.Api.Features.Logins.ListLogins;
 using ReactionLab.Identity.Api.Features.OpenId;
 using ReactionLab.Identity.Api.Features.Sessions;
 using ReactionLab.Identity.Api.Features.Sessions.ListSessions;
@@ -90,8 +96,11 @@ internal static class DependencyInjection
         services.AddScoped<GetProfileHandler>();
         services.AddScoped<UpdateProfileHandler>();
         services.AddScoped<CurrentPasswordCheck>();
+        services.AddScoped<NewPasswordCheck>();
         services.AddScoped<ChangePasswordHandler>();
         services.AddScoped<ReauthenticateHandler>();
+        services.AddScoped<SetPasswordHandler>();
+        services.AddScoped<RemovePasswordHandler>();
 
         return services;
     }
@@ -175,6 +184,10 @@ internal static class DependencyInjection
         services.AddScoped<GetExternalIdentityHandler>();
         services.AddScoped<RegisterExternalAccountHandler>();
         services.AddScoped<LinkExternalSignInHandler>();
+        services.AddScoped<ListLoginsHandler>();
+        services.AddScoped<ConnectLoginHandler>();
+        services.AddScoped<CompleteLoginConnectionHandler>();
+        services.AddScoped<DisconnectLoginHandler>();
 
         if (providers.All.Count == 0)
         {
@@ -188,7 +201,8 @@ internal static class DependencyInjection
             {
                 client.AllowAuthorizationCodeFlow()
                     .DisableTokenStorage()
-                    .SetStateTokenLifetime(ExternalSignInStateLifetime);
+                    .SetStateTokenLifetime(ExternalSignInStateLifetime)
+                    .SetClientUri(issuer);
 
                 AddStateTokenCredentials(client, environment);
 

@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Identity;
-using ReactionLab.Identity.Api.Features.Accounts.Contracts;
 using ReactionLab.Identity.Api.Features.Sessions;
 using ReactionLab.Identity.Api.OpenId;
-using ReactionLab.Identity.Api.Passwords;
 using ReactionLab.Identity.Persistence.Accounts;
 using ReactionLab.SharedKernel;
 
@@ -11,7 +9,7 @@ namespace ReactionLab.Identity.Api.Features.Accounts.ChangePassword;
 internal sealed class ChangePasswordHandler(
     UserManager<User> userManager,
     CurrentPasswordCheck currentPasswordCheck,
-    PasswordVerificationGate verificationGate,
+    NewPasswordCheck newPasswordCheck,
     SecurityStampRotation securityStampRotation,
     ILogger<ChangePasswordHandler> logger) : ICommandHandler<ChangePasswordCommand>
 {
@@ -34,22 +32,18 @@ internal sealed class ChangePasswordHandler(
             return Result.Failure(verifiedHash.Error);
         }
 
-        var newPassword = await ValidateNewPasswordAsync(user, command.NewPassword);
+        var replacementHash = await newPasswordCheck.GetValidHashAsync(user, command.NewPassword, cancellationToken);
 
-        if (newPassword.IsFailure)
+        if (replacementHash.IsFailure)
         {
-            return Result.Failure(newPassword.Error);
+            return Result.Failure(replacementHash.Error);
         }
-
-        var replacementHash = await verificationGate.RunAsync(
-            () => userManager.PasswordHasher.HashPassword(user, newPassword.Value),
-            cancellationToken);
 
         var rotation = await securityStampRotation.ReplacePasswordAsync(
             command.AccountId,
             command.CurrentSessionId,
             verifiedHash.Value,
-            replacementHash);
+            replacementHash.Value);
 
         if (!rotation.AccountMatched)
         {
@@ -78,20 +72,5 @@ internal sealed class ChangePasswordHandler(
             rotation.EndedSessionCount);
 
         return Result.Success();
-    }
-
-    private async Task<Result<string>> ValidateNewPasswordAsync(User user, string? newPassword)
-    {
-        foreach (var validator in userManager.PasswordValidators)
-        {
-            var validation = await validator.ValidateAsync(userManager, user, newPassword);
-
-            if (!validation.Succeeded)
-            {
-                return validation.Errors.First().ToError() with { Field = nameof(ChangePasswordRequest.NewPassword) };
-            }
-        }
-
-        return newPassword ?? string.Empty;
     }
 }

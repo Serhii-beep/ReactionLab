@@ -1,10 +1,9 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using Npgsql;
 using ReactionLab.Identity.Api.ExternalSignIn;
 using ReactionLab.Identity.Api.Features.Accounts;
 using ReactionLab.Identity.Api.Features.Accounts.SignIn;
+using ReactionLab.Identity.Api.Features.Logins;
 using ReactionLab.Identity.Persistence;
 using ReactionLab.Identity.Persistence.Accounts;
 using ReactionLab.SharedKernel;
@@ -36,10 +35,25 @@ internal sealed class LinkExternalSignInHandler(
             return Result.Failure(user.Error);
         }
 
-        if (!await TryAddLoginAsync(user.Value, identity, provider)
-            && (await userManager.FindByLoginAsync(identity.Provider, identity.Subject))?.Id != user.Value.Id)
+        var added = await context.AddLoginAsync(
+            user.Value.Id,
+            identity.Provider,
+            identity.Subject,
+            provider.DisplayName);
+
+        if (added == 0)
         {
-            return Result.Failure(ExternalSignInErrors.AlreadyLinked);
+            var linked = await userManager.FindByLoginAsync(identity.Provider, identity.Subject);
+
+            if (linked is null)
+            {
+                return Result.Failure(LoginErrors.AlreadyConnected);
+            }
+
+            if (linked.Id != user.Value.Id)
+            {
+                return Result.Failure(ExternalSignInErrors.AlreadyLinked);
+            }
         }
 
         await pendingSignIns.EndAsync();
@@ -51,33 +65,11 @@ internal sealed class LinkExternalSignInHandler(
                 new Claim(AuthenticationMethods.ClaimType, AuthenticationMethods.Federated)
             ]);
 
-        logger.LogInformation("Linked {Provider} to account {AccountId}.", identity.Provider, user.Value.Id);
+        if (added == 1)
+        {
+            logger.LogInformation("Linked {Provider} to account {AccountId}.", identity.Provider, user.Value.Id);
+        }
 
         return Result.Success();
-    }
-
-    private async Task<bool> TryAddLoginAsync(User user, ExternalIdentity identity, IExternalSignInProvider provider)
-    {
-        context.UserLogins.Add(new IdentityUserLogin<Guid>
-        {
-            LoginProvider = identity.Provider,
-            ProviderKey = identity.Subject,
-            ProviderDisplayName = provider.DisplayName,
-            UserId = user.Id
-        });
-
-        try
-        {
-            await context.SaveChangesAsync(CancellationToken.None);
-
-            return true;
-        }
-        catch (DbUpdateException ex)
-            when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
-        {
-            context.ChangeTracker.Clear();
-
-            return false;
-        }
     }
 }

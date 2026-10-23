@@ -64,6 +64,12 @@ namespace ReactionLab.Identity.Persistence.Migrations
                         .HasColumnType("character varying(128)")
                         .HasColumnName("provider_key");
 
+                    b.Property<DateTimeOffset?>("ConnectedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("connected_at")
+                        .HasDefaultValueSql("now()");
+
                     b.Property<string>("ProviderDisplayName")
                         .HasColumnType("text")
                         .HasColumnName("provider_display_name");
@@ -75,8 +81,10 @@ namespace ReactionLab.Identity.Persistence.Migrations
                     b.HasKey("LoginProvider", "ProviderKey")
                         .HasName("pk_user_logins");
 
-                    b.HasIndex("UserId")
-                        .HasDatabaseName("ix_user_logins_user_id");
+                    b.HasIndex("UserId", "LoginProvider")
+                        .IsUnique()
+                        .HasDatabaseName("ix_user_logins_user_id_login_provider")
+                        .HasAnnotation("Npgsql:CreatedConcurrently", true);
 
                     b.ToTable("user_logins", (string)null);
                 });
@@ -460,6 +468,10 @@ namespace ReactionLab.Identity.Persistence.Migrations
                     b.Property<string>("PasswordHash")
                         .HasColumnType("text")
                         .HasColumnName("password_hash");
+
+                    b.Property<DateTimeOffset?>("PasswordProbationEndsAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("password_probation_ends_at");
 
                     b.Property<string>("PhoneNumber")
                         .HasColumnType("text")

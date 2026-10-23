@@ -1,5 +1,3 @@
-using ReactionLab.Identity.Api.Http;
-using ReactionLab.Identity.Api.OpenId;
 using ReactionLab.Identity.Persistence;
 using ReactionLab.Identity.Persistence.OpenId;
 using ReactionLab.SharedKernel;

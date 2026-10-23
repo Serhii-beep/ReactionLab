@@ -12,5 +12,7 @@ internal sealed class UserLoginConfiguration : IEntityTypeConfiguration<Identity
         builder.ToTable("user_logins");
         builder.Property(login => login.LoginProvider).HasMaxLength(User.MaximumLoginKeyLength);
         builder.Property(login => login.ProviderKey).HasMaxLength(User.MaximumLoginKeyLength);
+        builder.Property<DateTimeOffset?>(UserLoginProperties.ConnectedAt).HasDefaultValueSql("now()");
+        builder.HasIndex(login => new { login.UserId, login.LoginProvider }).IsUnique().IsCreatedConcurrently();
     }
 }

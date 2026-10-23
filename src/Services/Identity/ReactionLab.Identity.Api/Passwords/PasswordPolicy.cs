@@ -15,4 +15,5 @@ internal static class PasswordPolicy
         FirstLockout: TimeSpan.FromMinutes(5));
 
     public static readonly TimeSpan MinimumFailedSignInDuration = TimeSpan.FromMilliseconds(250);
+    public static readonly TimeSpan Probation = TimeSpan.FromDays(7);
 }

@@ -157,4 +157,14 @@ public static class SessionStatements
             WHERE id = {sessionId} AND subject = {subject} AND status = 'valid'
             """,
             CancellationToken.None);
+
+    public static async Task<bool> LockValidSessionAsync(this AppDbContext context, string subject, Guid sessionId) =>
+        (await context.Database.SqlQuery<bool>(
+            $"""
+            SELECT true AS "Value" FROM openiddict_authorizations
+            WHERE id = {sessionId} AND subject = {subject} AND status = 'valid'
+            FOR SHARE
+            """)
+            .ToListAsync(CancellationToken.None))
+            .SingleOrDefault();
 }

@@ -22,4 +22,9 @@ internal static class SessionErrors
         "Session.RecentPasswordRequired",
         "This needs the account's password from the last 10 minutes.")
         .WithArgs(("maxAge", (int)SessionPolicy.RecentSignInWindow.TotalSeconds));
+
+    public static readonly Error PasswordConfirmationRequired = Error.Forbidden(
+        "Session.PasswordConfirmationRequired",
+        "This needs the account's password, confirmed in this session in the last 10 minutes.")
+        .WithArgs(("maxAge", (int)SessionPolicy.RecentSignInWindow.TotalSeconds));
 }

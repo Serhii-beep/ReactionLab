@@ -3,6 +3,8 @@ using ReactionLab.Identity.Api.Features.Accounts.ChangePassword;
 using ReactionLab.Identity.Api.Features.Accounts.Contracts;
 using ReactionLab.Identity.Api.Features.Accounts.GetProfile;
 using ReactionLab.Identity.Api.Features.Accounts.Reauthenticate;
+using ReactionLab.Identity.Api.Features.Accounts.RemovePassword;
+using ReactionLab.Identity.Api.Features.Accounts.SetPassword;
 using ReactionLab.Identity.Api.Features.Accounts.UpdateProfile;
 using ReactionLab.Identity.Api.Http;
 using ReactionLab.Web;
@@ -106,6 +108,55 @@ internal static class AccountSettingsEndpoints
         .ProducesProblem(StatusCodes.Status404NotFound)
         .ProducesProblem(StatusCodes.Status409Conflict)
         .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
+
+        group.MapPut("/password", async (
+            SetPasswordRequest request,
+            ClaimsPrincipal user,
+            SetPasswordHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            var command = new SetPasswordCommand(
+                user.GetAccountId(),
+                user.GetSessionId(),
+                user.GetSessionSignIn(),
+                request.NewPassword);
+
+            var result = await handler.HandleAsync(command, cancellationToken);
+
+            return result.ToHttpResult();
+        })
+        .WithName("SetPassword")
+        .WithSummary("Set a password on an account that has none.")
+        .RequireRateLimiting(RateLimitPolicies.PasswordChange)
+        .Produces(StatusCodes.Status204NoContent)
+        .ProducesProblem(StatusCodes.Status400BadRequest)
+        .ProducesProblem(StatusCodes.Status401Unauthorized)
+        .ProducesProblem(StatusCodes.Status403Forbidden)
+        .ProducesProblem(StatusCodes.Status404NotFound)
+        .ProducesProblem(StatusCodes.Status409Conflict)
+        .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
+
+        group.MapDelete("/password", async (
+            ClaimsPrincipal user,
+            RemovePasswordHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            var command = new RemovePasswordCommand(
+                user.GetAccountId(),
+                user.GetSessionId(),
+                user.GetSessionSignIn());
+
+            var result = await handler.HandleAsync(command, cancellationToken);
+
+            return result.ToHttpResult();
+        })
+        .WithName("RemovePassword")
+        .WithSummary("Remove the password, keeping a way to sign in, and sign every other session out.")
+        .Produces(StatusCodes.Status204NoContent)
+        .ProducesProblem(StatusCodes.Status401Unauthorized)
+        .ProducesProblem(StatusCodes.Status403Forbidden)
+        .ProducesProblem(StatusCodes.Status404NotFound)
+        .ProducesProblem(StatusCodes.Status409Conflict);
 
         return api;
     }

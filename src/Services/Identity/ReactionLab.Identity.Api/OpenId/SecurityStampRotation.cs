@@ -22,6 +22,22 @@ internal sealed class SecurityStampRotation(AppDbContext context)
         RunAsync(accountId, currentSessionId, securityStamp =>
             context.ReplacePasswordAndSecurityStampAsync(accountId, previousHash, replacementHash, securityStamp));
 
+    public Task<SecurityStampRotationOutcome> RemoveLoginAsync(
+        Guid accountId,
+        Guid currentSessionId,
+        string provider,
+        string[] usableProviders,
+        DateTimeOffset now) =>
+        RunAsync(accountId, currentSessionId, securityStamp =>
+            context.RemoveLoginAndReplaceSecurityStampAsync(accountId, provider, usableProviders, now, securityStamp));
+
+    public Task<SecurityStampRotationOutcome> RemovePasswordAsync(
+        Guid accountId,
+        Guid currentSessionId,
+        string[] usableProviders) =>
+        RunAsync(accountId, currentSessionId, securityStamp =>
+            context.RemovePasswordAndReplaceSecurityStampAsync(accountId, usableProviders, securityStamp));
+
     private Task<SecurityStampRotationOutcome> RunAsync(
         Guid accountId,
         Guid currentSessionId,

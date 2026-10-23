@@ -1,4 +1,5 @@
 using ReactionLab.SharedKernel;
+using static OpenIddict.Abstractions.OpenIddictConstants;
 
 namespace ReactionLab.Identity.Api.Features.ExternalSignIn;
 
@@ -28,4 +29,11 @@ internal static class ExternalSignInErrors
     public static readonly Error AlreadyLinked = Error.Conflict(
         "ExternalSignIn.AlreadyLinked",
         "This provider account is already connected to an account. Sign in with it instead.");
+
+    public static string CodeForProviderError(string? error) => error switch
+    {
+        Errors.AccessDenied => CanceledCode,
+        Errors.ServerError or Errors.TemporarilyUnavailable => UnavailableCode,
+        _ => FailedCode
+    };
 }

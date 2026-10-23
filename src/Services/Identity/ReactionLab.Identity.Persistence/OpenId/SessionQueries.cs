@@ -40,6 +40,8 @@ public static class SessionQueries
         (await context.Database.SqlQuery<ReauthenticationState>(
             $"""
             SELECT account.password_hash IS NOT NULL AS account_has_password,
+                account.password_probation_ends_at,
+                session.id IS NOT NULL AS session_valid,
                 to_timestamp((session.properties::jsonb ->> {SessionProperties.PasswordVerifiedAt})::bigint)
                     AS password_verified_at
             FROM users AS account

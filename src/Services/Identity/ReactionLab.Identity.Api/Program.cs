@@ -43,6 +43,7 @@ var api = app.MapGroup("/api/v1");
 api.MapAccountEndpoints();
 api.MapAccountSettingsEndpoints();
 api.MapSessionEndpoints();
+api.MapLoginEndpoints();
 api.MapExternalSignInEndpoints();
 
 await app.RunAsync();
