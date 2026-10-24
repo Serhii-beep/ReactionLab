@@ -9,6 +9,7 @@ using ReactionLab.Identity.Api.OpenId;
 using ReactionLab.Identity.Persistence;
 using ReactionLab.Identity.Persistence.Accounts;
 using ReactionLab.Identity.Persistence.OpenId;
+using ReactionLab.Identity.Persistence.PlatformRoles;
 using static OpenIddict.Abstractions.OpenIddictConstants;
 
 namespace ReactionLab.Identity.Api.Features.OpenId;
@@ -20,6 +21,8 @@ internal sealed class SessionClaims(
     IOptions<IdentityOptions> identityOptions,
     TimeProvider timeProvider)
 {
+    private const string PlatformRoleClaimType = "platform_role";
+
     private string SecurityStampClaimType => identityOptions.Value.ClaimsIdentity.SecurityStampClaimType;
 
     public async Task<ClaimsIdentity> CreateAsync(
@@ -41,7 +44,7 @@ internal sealed class SessionClaims(
             .SetResources(resources)
             .SetAuthorizationId(sessionId);
 
-        return Describe(identity, user);
+        return await DescribeAsync(identity, user);
     }
 
     public async Task<ClaimsIdentity?> RenewAsync(ClaimsPrincipal principal)
@@ -77,7 +80,7 @@ internal sealed class SessionClaims(
             .SetRefreshTokenLifetime(remaining < SessionPolicy.IdleTimeout ? remaining : null)
             .SetAccessTokenLifetime(remaining < SessionPolicy.AccessTokenLifetime ? remaining : null);
 
-        return Describe(identity, user);
+        return await DescribeAsync(identity, user);
     }
 
     private TimeSpan RemainingLifetime(ClaimsPrincipal principal) =>
@@ -97,16 +100,22 @@ internal sealed class SessionClaims(
             ?? await context.CarrySessionOverStampChangeAsync(userId, sessionId, tokenId);
     }
 
-    private static ClaimsIdentity Describe(ClaimsIdentity identity, User user) =>
-        identity.SetClaim(Claims.Name, user.DisplayName)
+    private async Task<ClaimsIdentity> DescribeAsync(ClaimsIdentity identity, User user)
+    {
+        ImmutableArray<string> platformRoles =
+            [.. await context.ListPlatformRolesAsync(user.Id, CancellationToken.None)];
+
+        return identity.SetClaim(Claims.Name, user.DisplayName)
             .SetClaim(Claims.Locale, user.PreferredLocale)
+            .SetClaims(PlatformRoleClaimType, platformRoles)
             .SetDestinations(GetDestinations);
+    }
 
     private static IEnumerable<string> GetDestinations(Claim claim) => claim.Type switch
     {
         Claims.Subject or JwtRegisteredClaimNames.Sid or Claims.AuthenticationMethodReference =>
             [Destinations.AccessToken, Destinations.IdentityToken],
-        Claims.AuthenticationTime => [Destinations.AccessToken, Destinations.IdentityToken],
+        Claims.AuthenticationTime or PlatformRoleClaimType => [Destinations.AccessToken, Destinations.IdentityToken],
         Claims.Name or Claims.Locale when claim.Subject?.HasScope(Scopes.Profile) is true =>
             [Destinations.IdentityToken],
         _ => []

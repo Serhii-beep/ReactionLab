@@ -47,6 +47,6 @@ internal static class AccountErrors
     public static Error PasswordTooNew(DateTimeOffset probationEndsAt) =>
         Error.Conflict(
             "Account.PasswordTooNew",
-            "A password set in the last 7 days can't yet add or replace a way to sign in.")
+            "The account's password was set in the last 7 days and is still on probation.")
         .WithArgs(("probationEndsAt", probationEndsAt));
 }

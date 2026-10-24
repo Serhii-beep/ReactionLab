@@ -78,6 +78,16 @@ identityMigrator
         "OpenId__Gateway__PostLogoutRedirectUri",
         ReferenceExpression.Create($"{gatewayAddress}/signout-callback-oidc"));
 
+if (builder.Configuration["Identity:FirstPlatformAdminEmail"] is { Length: > 0 } firstPlatformAdminEmail)
+{
+    identityMigrator.WithEnvironment("Identity__FirstPlatformAdminEmail", firstPlatformAdminEmail);
+}
+
+if (builder.Configuration["Identity:BreakGlassPlatformAdminAccountId"] is { Length: > 0 } breakGlassAccountId)
+{
+    identityMigrator.WithEnvironment("Identity__BreakGlassPlatformAdminAccountId", breakGlassAccountId);
+}
+
 if (builder.ExecutionContext.IsRunMode)
 {
     gateway.WithEnvironment("ReverseProxy__Clusters__catalog__HttpRequest__ActivityTimeout", "01:00:00")

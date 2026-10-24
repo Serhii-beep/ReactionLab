@@ -31,10 +31,11 @@ internal sealed class MigrationWorker(
             logger.LogInformation("Database schema is up to date.");
 
             await scope.ServiceProvider.GetRequiredService<OpenIdRegistration>().RegisterAsync(stoppingToken);
+            await scope.ServiceProvider.GetRequiredService<PlatformAdminSeeding>().SeedAsync(stoppingToken);
         }
         catch (Exception ex)
         {
-            logger.LogCritical(ex, "Database migration or OpenID registration failed.");
+            logger.LogCritical(ex, "Database migration, OpenID registration or platform admin seeding failed.");
             Environment.ExitCode = 1;
         }
         finally

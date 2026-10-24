@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenIddict.Client.AspNetCore;
@@ -26,6 +27,12 @@ using ReactionLab.Identity.Api.Features.Logins.ConnectLogin;
 using ReactionLab.Identity.Api.Features.Logins.DisconnectLogin;
 using ReactionLab.Identity.Api.Features.Logins.ListLogins;
 using ReactionLab.Identity.Api.Features.OpenId;
+using ReactionLab.Identity.Api.Features.PlatformRoles;
+using ReactionLab.Identity.Api.Features.PlatformRoles.GrantPlatformRole;
+using ReactionLab.Identity.Api.Features.PlatformRoles.ListPlatformRoleAccounts;
+using ReactionLab.Identity.Api.Features.PlatformRoles.ListPlatformRoleChanges;
+using ReactionLab.Identity.Api.Features.PlatformRoles.LookUpPlatformRoleAccount;
+using ReactionLab.Identity.Api.Features.PlatformRoles.RevokePlatformRole;
 using ReactionLab.Identity.Api.Features.Sessions;
 using ReactionLab.Identity.Api.Features.Sessions.ListSessions;
 using ReactionLab.Identity.Api.Features.Sessions.RevokeOtherSessions;
@@ -225,6 +232,19 @@ internal static class DependencyInjection
             });
 
         services.AddHostedService<ProviderDiscoveryWorker>();
+
+        return services;
+    }
+
+    public static IServiceCollection AddPlatformRoles(this IServiceCollection services)
+    {
+        services.AddScoped<IAuthorizationHandler, PlatformRoleRequirementHandler>();
+        services.AddScoped<PlatformRoleChangeTransaction>();
+        services.AddScoped<ListPlatformRoleAccountsHandler>();
+        services.AddScoped<LookUpPlatformRoleAccountHandler>();
+        services.AddScoped<GrantPlatformRoleHandler>();
+        services.AddScoped<RevokePlatformRoleHandler>();
+        services.AddScoped<ListPlatformRoleChangesHandler>();
 
         return services;
     }

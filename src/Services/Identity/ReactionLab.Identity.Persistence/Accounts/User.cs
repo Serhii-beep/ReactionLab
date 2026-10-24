@@ -130,7 +130,9 @@ public sealed partial class User : IdentityUser<Guid>
             return EmailRequired;
         }
 
-        if (!UnicodeText.TryNormalize(email.Trim(), out var normalized) || normalized.Any(char.IsControl))
+        if (!UnicodeText.TryNormalize(email.Trim(), out var normalized)
+            || normalized.Any(char.IsControl)
+            || normalized.Any(UpperCasesIntoAscii))
         {
             return EmailInvalid;
         }
@@ -254,6 +256,9 @@ public sealed partial class User : IdentityUser<Guid>
         Rune.GetUnicodeCategory(character) is UnicodeCategory.NonSpacingMark
             or UnicodeCategory.SpacingCombiningMark
             or UnicodeCategory.EnclosingMark;
+
+    private static bool UpperCasesIntoAscii(char character) =>
+        !char.IsAscii(character) && char.IsAscii(char.ToUpperInvariant(character));
 
     [GeneratedRegex(@"\s+", RegexOptions.CultureInvariant)]
     private static partial Regex WhitespaceRun();

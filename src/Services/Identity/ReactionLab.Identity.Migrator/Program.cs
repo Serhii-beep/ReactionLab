@@ -12,6 +12,7 @@ builder.AddServiceDefaults();
 builder.Services.AddPersistence(builder.Configuration);
 builder.Services.AddSingleton(Options.Create(GatewayClientOptions.Read(builder.Configuration)));
 builder.Services.AddScoped<OpenIdRegistration>();
+builder.Services.AddScoped<PlatformAdminSeeding>();
 builder.Services.AddHostedService<MigrationWorker>();
 
 var host = builder.Build();
