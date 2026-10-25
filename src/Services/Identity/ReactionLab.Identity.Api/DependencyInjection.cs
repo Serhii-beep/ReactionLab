@@ -15,6 +15,8 @@ using ReactionLab.Identity.Api.Features.Accounts.SetPassword;
 using ReactionLab.Identity.Api.Features.Accounts.SignIn;
 using ReactionLab.Identity.Api.Features.Accounts.SignOut;
 using ReactionLab.Identity.Api.Features.Accounts.UpdateProfile;
+using ReactionLab.Identity.Api.Features.AccountSetups.CompleteAccountSetup;
+using ReactionLab.Identity.Api.Features.AccountSetups.LookUpAccountSetup;
 using ReactionLab.Identity.Api.Features.ExternalSignIn;
 using ReactionLab.Identity.Api.Features.ExternalSignIn.CompleteExternalSignIn;
 using ReactionLab.Identity.Api.Features.ExternalSignIn.GetExternalIdentity;
@@ -27,6 +29,10 @@ using ReactionLab.Identity.Api.Features.Logins.ConnectLogin;
 using ReactionLab.Identity.Api.Features.Logins.DisconnectLogin;
 using ReactionLab.Identity.Api.Features.Logins.ListLogins;
 using ReactionLab.Identity.Api.Features.OpenId;
+using ReactionLab.Identity.Api.Features.Organizations.CreateOrganization;
+using ReactionLab.Identity.Api.Features.Organizations.GetOrganization;
+using ReactionLab.Identity.Api.Features.Organizations.IssueAdminSetupLink;
+using ReactionLab.Identity.Api.Features.Organizations.ListOrganizations;
 using ReactionLab.Identity.Api.Features.PlatformRoles;
 using ReactionLab.Identity.Api.Features.PlatformRoles.GrantPlatformRole;
 using ReactionLab.Identity.Api.Features.PlatformRoles.ListPlatformRoleAccounts;
@@ -40,7 +46,6 @@ using ReactionLab.Identity.Api.Features.Sessions.RevokeSession;
 using ReactionLab.Identity.Api.Http;
 using ReactionLab.Identity.Api.OpenId;
 using ReactionLab.Identity.Api.Passwords;
-using ReactionLab.Identity.Persistence;
 using ReactionLab.Identity.Persistence.Accounts;
 using ReactionLab.Identity.Persistence.OpenId;
 using ReactionLab.Web;
@@ -76,7 +81,7 @@ internal static class DependencyInjection
         services.TryAddSingleton(TimeProvider.System);
 
         services.AddIdentityCore<User>(ConfigureIdentity)
-            .AddEntityFrameworkStores<AppDbContext>()
+            .AddUserStore<RegularAccountUserStore>()
             .AddSignInManager();
 
         services.RemoveAll<IPasswordValidator<User>>();
@@ -239,12 +244,24 @@ internal static class DependencyInjection
     public static IServiceCollection AddPlatformRoles(this IServiceCollection services)
     {
         services.AddScoped<IAuthorizationHandler, PlatformRoleRequirementHandler>();
-        services.AddScoped<PlatformRoleChangeTransaction>();
+        services.AddScoped<PlatformAdminTransaction>();
         services.AddScoped<ListPlatformRoleAccountsHandler>();
         services.AddScoped<LookUpPlatformRoleAccountHandler>();
         services.AddScoped<GrantPlatformRoleHandler>();
         services.AddScoped<RevokePlatformRoleHandler>();
         services.AddScoped<ListPlatformRoleChangesHandler>();
+
+        return services;
+    }
+
+    public static IServiceCollection AddOrganizations(this IServiceCollection services)
+    {
+        services.AddScoped<CreateOrganizationHandler>();
+        services.AddScoped<ListOrganizationsHandler>();
+        services.AddScoped<GetOrganizationHandler>();
+        services.AddScoped<IssueAdminSetupLinkHandler>();
+        services.AddScoped<LookUpAccountSetupHandler>();
+        services.AddScoped<CompleteAccountSetupHandler>();
 
         return services;
     }

@@ -7,7 +7,7 @@ namespace ReactionLab.Identity.Api.Features.PlatformRoles.GrantPlatformRole;
 
 internal sealed class GrantPlatformRoleHandler(
     RecentSignInCheck recentSignInCheck,
-    PlatformRoleChangeTransaction changeTransaction,
+    PlatformAdminTransaction adminTransaction,
     AppDbContext context,
     IHostEnvironment environment,
     ILogger<GrantPlatformRoleHandler> logger) : ICommandHandler<GrantPlatformRoleCommand>
@@ -41,7 +41,7 @@ internal sealed class GrantPlatformRoleHandler(
             return proof;
         }
 
-        var granted = await changeTransaction.RunAsync(
+        var granted = await adminTransaction.RunAsync(
             command.AdminId,
             command.AdminSessionId,
             () => GrantAsync(command));

@@ -41,6 +41,7 @@ internal sealed class AuthorizationEndpointHandler(
         var user = signIn.Succeeded ? await userManager.GetUserAsync(signIn.Principal!) : null;
 
         if (user is null
+            || user.OrganizationId is not null
             || signIn.Properties?.IssuedUtc is not { } signedInAt
             || !IsRecentEnough(signedInAt, request, httpContext))
         {

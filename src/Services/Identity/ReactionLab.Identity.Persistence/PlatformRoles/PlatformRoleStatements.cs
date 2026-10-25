@@ -19,7 +19,7 @@ public static class PlatformRoleStatements
             WITH granted AS (
                 INSERT INTO user_platform_roles (user_id, role_id)
                 SELECT users.id, platform_roles.id FROM users CROSS JOIN platform_roles
-                WHERE users.id = {accountId} AND platform_roles.name = {role}
+                WHERE users.id = {accountId} AND users.organization_id IS NULL AND platform_roles.name = {role}
                 ON CONFLICT DO NOTHING
                 RETURNING user_id)
             INSERT INTO platform_role_changes

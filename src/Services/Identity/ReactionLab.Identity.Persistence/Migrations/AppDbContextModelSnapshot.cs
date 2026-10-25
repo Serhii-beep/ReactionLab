@@ -474,6 +474,43 @@ namespace ReactionLab.Identity.Persistence.Migrations
                     b.ToTable("openiddict_tokens", (string)null);
                 });
 
+            modelBuilder.Entity("ReactionLab.Identity.Persistence.AccountSetups.AccountSetup", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<DateTimeOffset>("IssuedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("issued_at");
+
+                    b.Property<Guid?>("IssuedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("issued_by");
+
+                    b.Property<Guid?>("IssuedInSession")
+                        .HasColumnType("uuid")
+                        .HasColumnName("issued_in_session");
+
+                    b.Property<byte[]>("TokenHash")
+                        .IsRequired()
+                        .HasColumnType("bytea")
+                        .HasColumnName("token_hash");
+
+                    b.HasKey("UserId")
+                        .HasName("pk_account_setups");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique()
+                        .HasDatabaseName("ix_account_setups_token_hash");
+
+                    b.ToTable("account_setups", (string)null);
+                });
+
             modelBuilder.Entity("ReactionLab.Identity.Persistence.Accounts.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -538,6 +575,15 @@ namespace ReactionLab.Identity.Persistence.Migrations
                         .HasColumnType("character varying(256)")
                         .HasColumnName("normalized_user_name");
 
+                    b.Property<Guid?>("OrganizationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("organization_id");
+
+                    b.Property<string>("OrganizationUsername")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("organization_username");
+
                     b.Property<string>("PasswordHash")
                         .HasColumnType("text")
                         .HasColumnName("password_hash");
@@ -584,7 +630,148 @@ namespace ReactionLab.Identity.Persistence.Migrations
                         .IsUnique()
                         .HasDatabaseName("ix_users_normalized_user_name");
 
-                    b.ToTable("users", (string)null);
+                    b.HasIndex("OrganizationId", "NormalizedEmail")
+                        .IsUnique()
+                        .HasDatabaseName("ix_users_organization_id_normalized_email")
+                        .HasFilter("organization_id IS NOT NULL AND normalized_email IS NOT NULL");
+
+                    b.HasIndex("OrganizationId", "OrganizationUsername")
+                        .IsUnique()
+                        .HasDatabaseName("ix_users_organization_id_organization_username")
+                        .HasFilter("organization_id IS NOT NULL");
+
+                    b.HasIndex(new[] { "NormalizedEmail" }, "ix_users_regular_account_normalized_email")
+                        .IsUnique()
+                        .HasDatabaseName("ix_users_regular_account_normalized_email")
+                        .HasFilter("organization_id IS NULL");
+
+                    b.ToTable("users", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_users_organization_username", "(organization_id IS NULL) = (organization_username IS NULL)");
+                        });
+                });
+
+            modelBuilder.Entity("ReactionLab.Identity.Persistence.Organizations.Organization", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("DistrictId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("district_id");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("kind");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("SignInCode")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("sign_in_code");
+
+                    b.HasKey("Id")
+                        .HasName("pk_organizations");
+
+                    b.HasIndex("SignInCode")
+                        .IsUnique()
+                        .HasDatabaseName("ix_organizations_sign_in_code");
+
+                    b.HasIndex("DistrictId", "Id")
+                        .HasDatabaseName("ix_organizations_district_id_id");
+
+                    b.ToTable("organizations", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_organizations_district_id", "kind = 'school' OR district_id IS NULL");
+
+                            t.HasCheckConstraint("ck_organizations_kind", "kind IN ('district', 'school')");
+                        });
+                });
+
+            modelBuilder.Entity("ReactionLab.Identity.Persistence.Organizations.OrganizationChange", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("AccountId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("account_id");
+
+                    b.Property<string>("Change")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("change");
+
+                    b.Property<DateTimeOffset>("ChangedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("changed_at");
+
+                    b.Property<Guid?>("ChangedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("changed_by");
+
+                    b.Property<Guid?>("ChangedInSession")
+                        .HasColumnType("uuid")
+                        .HasColumnName("changed_in_session");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("organization_id");
+
+                    b.Property<string>("Role")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("role");
+
+                    b.HasKey("Id")
+                        .HasName("pk_organization_changes");
+
+                    b.HasIndex("OrganizationId", "Id")
+                        .HasDatabaseName("ix_organization_changes_organization_id_id");
+
+                    b.ToTable("organization_changes", (string)null);
+                });
+
+            modelBuilder.Entity("ReactionLab.Identity.Persistence.Organizations.UserSchoolRole", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("organization_id");
+
+                    b.Property<string>("Role")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("role");
+
+                    b.HasKey("UserId", "OrganizationId", "Role")
+                        .HasName("pk_user_school_roles");
+
+                    b.HasIndex("OrganizationId", "Role")
+                        .HasDatabaseName("ix_user_school_roles_organization_id_role");
+
+                    b.ToTable("user_school_roles", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_user_school_roles_role", "role IN ('school-admin', 'teacher', 'student', 'district-admin')");
+                        });
                 });
 
             modelBuilder.Entity("ReactionLab.Identity.Persistence.PlatformRoles.PlatformRoleChange", b =>
@@ -706,6 +893,51 @@ namespace ReactionLab.Identity.Persistence.Migrations
                     b.Navigation("Application");
 
                     b.Navigation("Authorization");
+                });
+
+            modelBuilder.Entity("ReactionLab.Identity.Persistence.AccountSetups.AccountSetup", b =>
+                {
+                    b.HasOne("ReactionLab.Identity.Persistence.Accounts.User", null)
+                        .WithOne()
+                        .HasForeignKey("ReactionLab.Identity.Persistence.AccountSetups.AccountSetup", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_account_setups_users_user_id");
+                });
+
+            modelBuilder.Entity("ReactionLab.Identity.Persistence.Accounts.User", b =>
+                {
+                    b.HasOne("ReactionLab.Identity.Persistence.Organizations.Organization", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_users_organizations_organization_id");
+                });
+
+            modelBuilder.Entity("ReactionLab.Identity.Persistence.Organizations.Organization", b =>
+                {
+                    b.HasOne("ReactionLab.Identity.Persistence.Organizations.Organization", null)
+                        .WithMany()
+                        .HasForeignKey("DistrictId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_organizations_organizations_district_id");
+                });
+
+            modelBuilder.Entity("ReactionLab.Identity.Persistence.Organizations.UserSchoolRole", b =>
+                {
+                    b.HasOne("ReactionLab.Identity.Persistence.Organizations.Organization", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_user_school_roles_organizations_organization_id");
+
+                    b.HasOne("ReactionLab.Identity.Persistence.Accounts.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_user_school_roles_users_user_id");
                 });
 
             modelBuilder.Entity("OpenIddict.EntityFrameworkCore.Models.OpenIddictEntityFrameworkCoreApplication<System.Guid>", b =>

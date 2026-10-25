@@ -26,5 +26,5 @@ internal static class PlatformRoleErrors
 
     public static readonly Error AdminRequired = Error.Forbidden(
         "PlatformRole.AdminRequired",
-        "Only a platform admin changes platform roles.");
+        "Only a platform admin does this.");
 }

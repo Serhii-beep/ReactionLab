@@ -7,7 +7,7 @@ namespace ReactionLab.Identity.Api.Features.PlatformRoles.RevokePlatformRole;
 
 internal sealed class RevokePlatformRoleHandler(
     RecentSignInCheck recentSignInCheck,
-    PlatformRoleChangeTransaction changeTransaction,
+    PlatformAdminTransaction adminTransaction,
     AppDbContext context,
     TimeProvider timeProvider,
     ILogger<RevokePlatformRoleHandler> logger) : ICommandHandler<RevokePlatformRoleCommand>
@@ -41,7 +41,7 @@ internal sealed class RevokePlatformRoleHandler(
             return proof;
         }
 
-        var revoked = await changeTransaction.RunAsync(
+        var revoked = await adminTransaction.RunAsync(
             command.AdminId,
             command.AdminSessionId,
             () => RevokeAsync(command));

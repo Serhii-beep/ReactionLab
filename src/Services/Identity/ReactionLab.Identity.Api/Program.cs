@@ -15,6 +15,7 @@ builder.Services.AddAccounts();
 builder.Services.AddOpenIdServer(builder.Configuration, builder.Environment);
 builder.Services.AddExternalSignIn(builder.Configuration, builder.Environment);
 builder.Services.AddPlatformRoles();
+builder.Services.AddOrganizations();
 builder.Services.AddApi();
 
 builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = 64 * 1024);
@@ -47,5 +48,7 @@ api.MapSessionEndpoints();
 api.MapLoginEndpoints();
 api.MapExternalSignInEndpoints();
 api.MapPlatformRoleEndpoints();
+api.MapOrganizationEndpoints();
+api.MapAccountSetupEndpoints();
 
 await app.RunAsync();

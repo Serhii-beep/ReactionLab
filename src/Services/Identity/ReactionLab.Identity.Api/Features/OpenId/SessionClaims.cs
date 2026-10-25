@@ -53,6 +53,7 @@ internal sealed class SessionClaims(
 
         if (remaining <= TimeSpan.Zero
             || await userManager.FindByIdAsync(principal.GetClaim(Claims.Subject) ?? string.Empty) is not { } user
+            || user.OrganizationId is not null
             || !await signInManager.CanSignInAsync(user))
         {
             return null;

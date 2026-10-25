@@ -8,7 +8,7 @@ using ReactionLab.SharedKernel;
 
 namespace ReactionLab.Identity.Api.Features.PlatformRoles;
 
-internal sealed class PlatformRoleChangeTransaction(AppDbContext context, RecentSignInCheck recentSignInCheck)
+internal sealed class PlatformAdminTransaction(AppDbContext context, RecentSignInCheck recentSignInCheck)
 {
     public Task<Result<TOutcome>> RunAsync<TOutcome>(
         Guid adminId,

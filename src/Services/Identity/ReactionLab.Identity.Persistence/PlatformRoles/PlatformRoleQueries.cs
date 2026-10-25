@@ -31,7 +31,8 @@ public static class PlatformRoleQueries
 
         return context.Set<IdentityUserRole<Guid>>().AnyAsync(
             userRole => userRole.UserId == accountId
-                && roles.Any(platformRole => platformRole.Id == userRole.RoleId && platformRole.Name == role),
+                && roles.Any(platformRole => platformRole.Id == userRole.RoleId && platformRole.Name == role)
+                && context.Users.Any(user => user.Id == accountId && user.OrganizationId == null),
             cancellationToken);
     }
 
@@ -48,7 +49,8 @@ public static class PlatformRoleQueries
                 && roles.Any(role => role.Id == userRole.RoleId && role.Name == PlatformRoleNames.Admin))
             .Join(context.Users, userRole => userRole.UserId, user => user.Id, (_, user) => user)
             .CountAsync(
-                user => user.PasswordHash != null
+                user => user.OrganizationId == null
+                    && user.PasswordHash != null
                     && (user.PasswordProbationEndsAt == null || user.PasswordProbationEndsAt <= now),
                 cancellationToken);
     }
@@ -74,7 +76,7 @@ public static class PlatformRoleQueries
         Guid accountId,
         CancellationToken cancellationToken) =>
         context.Users.AsNoTracking()
-            .Where(user => user.Id == accountId)
+            .Where(user => user.Id == accountId && user.OrganizationId == null)
             .Select(user => new PlatformRoleCandidate(user.Id, user.EmailConfirmed))
             .SingleOrDefaultAsync(cancellationToken);
 
@@ -83,7 +85,7 @@ public static class PlatformRoleQueries
         string normalizedEmail,
         CancellationToken cancellationToken) =>
         context.Users.AsNoTracking()
-            .Where(user => user.NormalizedEmail == normalizedEmail)
+            .Where(user => user.NormalizedEmail == normalizedEmail && user.OrganizationId == null)
             .Select(user => new PlatformRoleCandidate(user.Id, user.EmailConfirmed))
             .SingleOrDefaultAsync(cancellationToken);
 
