@@ -51,17 +51,20 @@ internal sealed class CompleteAccountSetupHandler(
         {
             await using var transaction = await context.Database.BeginTransactionAsync(CancellationToken.None);
 
+            var securityStamp = RandomNumberGenerator.GetHexString(SecurityStampLength);
             var completed = await context.CompleteAccountSetupAsync(
                 accountId,
                 tokenHash,
                 passwordHash,
-                RandomNumberGenerator.GetHexString(SecurityStampLength),
+                securityStamp,
                 timeProvider.GetUtcNow());
 
             if (completed is null)
             {
                 return await context.FindCompletedAccountSetupAsync(accountId, passwordHash);
             }
+
+            await context.EndAccountSessionsAsync(completed.AccountId, securityStamp);
 
             await context.RecordOrganizationChangeAsync(
                 completed.OrganizationId,

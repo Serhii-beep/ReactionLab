@@ -158,6 +158,20 @@ public static class SessionStatements
             """,
             CancellationToken.None);
 
+    public static Task<int> SetActiveOrganizationAsync(
+        this AppDbContext context,
+        string subject,
+        Guid sessionId,
+        Guid organizationId) =>
+        context.Database.ExecuteSqlAsync(
+            $"""
+            UPDATE openiddict_authorizations
+            SET properties = (properties::jsonb
+                || jsonb_build_object({SessionProperties.ActiveOrganizationId}, {organizationId}))::text
+            WHERE id = {sessionId} AND subject = {subject} AND status = 'valid'
+            """,
+            CancellationToken.None);
+
     public static async Task<bool> LockValidSessionAsync(this AppDbContext context, string subject, Guid sessionId) =>
         (await context.Database.SqlQuery<bool>(
             $"""

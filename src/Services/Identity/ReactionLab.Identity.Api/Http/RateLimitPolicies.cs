@@ -14,6 +14,8 @@ internal static class RateLimitPolicies
     public const string Reauthentication = "reauthentication";
     public const string ExternalRegistration = "external-registration";
     public const string AccountSetup = "account-setup";
+    public const string MemberCredentials = "member-credentials";
+    public const string MemberImports = "member-imports";
 
     private const int RetryAfterSeconds = 1;
     private const int SignInsInFlightPerCore = 4;
@@ -24,6 +26,10 @@ internal static class RateLimitPolicies
     private const int QueuedRegistrationsPerPermit = 4;
     private const int ProcessorsPerAccountSetup = 4;
     private const int QueuedAccountSetupsPerPermit = 4;
+    private const int ProcessorsPerMemberCredential = 4;
+    private const int QueuedMemberCredentialsPerPermit = 4;
+    private const int ProcessorsPerMemberImport = 4;
+    private const int QueuedMemberImportsPerPermit = 1;
     private const int ProcessorsPerPasswordCheck = 4;
     private const int QueuedPasswordChecksPerPermit = 4;
 
@@ -66,32 +72,42 @@ internal static class RateLimitPolicies
             limiter.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
         });
 
-        var passwordChecks = SharedPasswordCheckLimiter();
+        var passwordChecks = SharedLimiter(ProcessorsPerPasswordCheck, QueuedPasswordChecksPerPermit);
+        var memberCredentials = SharedLimiter(ProcessorsPerMemberCredential, QueuedMemberCredentialsPerPermit);
+        var memberImports = SharedLimiter(ProcessorsPerMemberImport, QueuedMemberImportsPerPermit);
 
         options.AddPolicy(PasswordChange, httpContext => RateLimitPartition.Get(
             httpContext.User.GetClaim(Claims.Subject) ?? string.Empty,
-            _ => RateLimiter.CreateChained(OnePasswordCheckAtATime(), passwordChecks)));
+            _ => RateLimiter.CreateChained(OneRequestAtATime(), passwordChecks)));
 
         options.AddPolicy(Reauthentication, httpContext => RateLimitPartition.Get(
             AccountAndSignInMethod(httpContext),
-            _ => RateLimiter.CreateChained(OnePasswordCheckAtATime(), passwordChecks)));
+            _ => RateLimiter.CreateChained(OneRequestAtATime(), passwordChecks)));
+
+        options.AddPolicy(MemberCredentials, httpContext => RateLimitPartition.Get(
+            httpContext.User.GetClaim(Claims.Subject) ?? string.Empty,
+            _ => RateLimiter.CreateChained(OneRequestAtATime(), memberCredentials)));
+
+        options.AddPolicy(MemberImports, httpContext => RateLimitPartition.Get(
+            httpContext.User.GetClaim(Claims.Subject) ?? string.Empty,
+            _ => RateLimiter.CreateChained(OneRequestAtATime(), memberImports)));
     }
 
     private static (string AccountId, bool WithPassword) AccountAndSignInMethod(HttpContext httpContext) =>
         (httpContext.User.GetClaim(Claims.Subject) ?? string.Empty, httpContext.User.GetSessionSignIn().WithPassword);
 
-    private static ConcurrencyLimiter SharedPasswordCheckLimiter()
+    private static ConcurrencyLimiter SharedLimiter(int processorsPerPermit, int queuedPerPermit)
     {
-        var permits = Math.Max(1, Environment.ProcessorCount / ProcessorsPerPasswordCheck);
+        var permits = Math.Max(1, Environment.ProcessorCount / processorsPerPermit);
 
         return new ConcurrencyLimiter(new ConcurrencyLimiterOptions
         {
             PermitLimit = permits,
-            QueueLimit = permits * QueuedPasswordChecksPerPermit,
+            QueueLimit = permits * queuedPerPermit,
             QueueProcessingOrder = QueueProcessingOrder.OldestFirst
         });
     }
 
-    private static ConcurrencyLimiter OnePasswordCheckAtATime() =>
+    private static ConcurrencyLimiter OneRequestAtATime() =>
         new(new ConcurrencyLimiterOptions { PermitLimit = 1, QueueLimit = 0 });
 }

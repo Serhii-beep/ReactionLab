@@ -5,6 +5,7 @@
     <ProjectReference Include="..\ReactionLab.Identity.Persistence\ReactionLab.Identity.Persistence.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="CsvHelper" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
     <PackageReference Include="OpenIddict.Client.AspNetCore" />
     <PackageReference Include="OpenIddict.Client.SystemNetHttp" />

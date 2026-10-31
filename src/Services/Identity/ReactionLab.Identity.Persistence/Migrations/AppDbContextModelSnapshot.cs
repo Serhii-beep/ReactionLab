@@ -542,6 +542,10 @@ namespace ReactionLab.Identity.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("current_password_lockout_end");
 
+                    b.Property<DateTimeOffset?>("DisabledAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("disabled_at");
+
                     b.Property<string>("DisplayName")
                         .IsRequired()
                         .HasMaxLength(64)
@@ -626,6 +630,10 @@ namespace ReactionLab.Identity.Persistence.Migrations
                         .IsUnique()
                         .HasDatabaseName("ix_users_normalized_user_name");
 
+                    b.HasIndex("OrganizationId", "Id")
+                        .HasDatabaseName("ix_users_organization_id_id")
+                        .HasFilter("organization_id IS NOT NULL");
+
                     b.HasIndex("OrganizationId", "NormalizedEmail")
                         .IsUnique()
                         .HasDatabaseName("ix_users_organization_id_normalized_email")
@@ -667,6 +675,14 @@ namespace ReactionLab.Identity.Persistence.Migrations
                         .HasColumnType("character varying(16)")
                         .HasColumnName("kind");
 
+                    b.Property<string>("Locale")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasDefaultValue("en")
+                        .HasColumnName("locale");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(128)
@@ -682,6 +698,18 @@ namespace ReactionLab.Identity.Persistence.Migrations
                     b.Property<DateTimeOffset?>("SuspendedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("suspended_at");
+
+                    b.Property<bool>("TeachersMayResetStudentPasswords")
+                        .HasColumnType("boolean")
+                        .HasColumnName("teachers_may_reset_student_passwords");
+
+                    b.Property<string>("TimeZone")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasDefaultValue("Etc/UTC")
+                        .HasColumnName("time_zone");
 
                     b.HasKey("Id")
                         .HasName("pk_organizations");

@@ -19,7 +19,32 @@ internal static class OrganizationErrors
 
     public static readonly Error AlreadySetUp = Error.Conflict(
         "Organization.AlreadySetUp",
-        "An admin of this organization has set a password, so its school issues setup links now.");
+        "An admin of this organization or its district can sign in, so they issue its setup links.");
+
+    public static readonly Error AdminDisabled = Error.Conflict(
+        "Organization.AdminDisabled",
+        "This admin's account is disabled, so a setup link wouldn't let it sign in.");
+
+    public static readonly Error AdminRequired = Error.Forbidden(
+        "Organization.AdminRequired",
+        "Only the organization's admins can do this.");
+
+    public static readonly Error DistrictAdminRequired = Error.Forbidden(
+        "Organization.DistrictAdminRequired",
+        "Only the district's admins can do this.");
+
+    public static readonly Error Suspended = Error.Forbidden(
+        "Organization.Suspended",
+        "The organization is suspended.");
+
+    public static readonly Error SignInCodeInUse = Error.Conflict(
+        "Organization.SignInCodeInUse",
+        "Another organization has this sign-in code.",
+        "SignInCode");
+
+    public static readonly Error SettingsRequired = Error.Validation(
+        "Organization.SettingsRequired",
+        "Give at least one setting to change.");
 
     public static readonly Error NotSuspended = Error.NotFound(
         "Organization.NotSuspended",

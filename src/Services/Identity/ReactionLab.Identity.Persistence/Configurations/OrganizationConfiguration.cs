@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using ReactionLab.Identity.Persistence.Accounts;
 using ReactionLab.Identity.Persistence.Organizations;
+using ReactionLab.SharedKernel;
 
 namespace ReactionLab.Identity.Persistence.Configurations;
 
@@ -26,6 +28,16 @@ internal sealed class OrganizationConfiguration : IEntityTypeConfiguration<Organ
 
         builder.Property(organization => organization.SignInCode)
             .HasMaxLength(Organization.MaximumSignInCodeLength)
+            .IsRequired();
+
+        builder.Property(organization => organization.Locale)
+            .HasMaxLength(User.MaximumLocaleLength)
+            .HasDefaultValue(SupportedLocale.Default.Code)
+            .IsRequired();
+
+        builder.Property(organization => organization.TimeZone)
+            .HasMaxLength(Organization.MaximumTimeZoneLength)
+            .HasDefaultValue(Organization.DefaultTimeZone)
             .IsRequired();
 
         builder.HasIndex(organization => organization.SignInCode).IsUnique();

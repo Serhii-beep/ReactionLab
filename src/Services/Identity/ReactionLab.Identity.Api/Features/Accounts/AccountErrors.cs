@@ -12,6 +12,15 @@ internal static class AccountErrors
         "Account.ManagedBySchool",
         "The account's school sets its display name and how it signs in.");
 
+    public static readonly Error OrganizationRequired = Error.Validation(
+        "Account.OrganizationRequired",
+        "Name the organization to switch to.",
+        "OrganizationId");
+
+    public static readonly Error OrganizationUnavailable = Error.NotFound(
+        "Account.OrganizationUnavailable",
+        "The account holds no role at this organization.");
+
     public static readonly Error NotFound = Error.NotFound(
         "Account.NotFound",
         "The account no longer exists.");

@@ -1,3 +1,3 @@
 namespace ReactionLab.Identity.Persistence.AccountSetups;
 
-public sealed record AdminSetupState(string Username, bool HasPassword, bool OrganizationHasAdminWithPassword);
+public sealed record AdminSetupState(string Username, bool IsDisabled, bool OrganizationHasAdminWhoCanSignIn);

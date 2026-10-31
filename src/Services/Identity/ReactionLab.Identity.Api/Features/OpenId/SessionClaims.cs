@@ -47,7 +47,7 @@ internal sealed class SessionClaims(
             .SetResources(resources)
             .SetAuthorizationId(sessionId);
 
-        return await DescribeAsync(identity, user);
+        return await DescribeAsync(identity, user, renewing: false);
     }
 
     public async Task<ClaimsIdentity?> RenewAsync(ClaimsPrincipal principal)
@@ -83,7 +83,7 @@ internal sealed class SessionClaims(
             .SetRefreshTokenLifetime(remaining < SessionPolicy.IdleTimeout ? remaining : null)
             .SetAccessTokenLifetime(remaining < SessionPolicy.AccessTokenLifetime ? remaining : null);
 
-        return await DescribeAsync(identity, user);
+        return await DescribeAsync(identity, user, renewing: true);
     }
 
     private TimeSpan RemainingLifetime(ClaimsPrincipal principal) =>
@@ -103,7 +103,7 @@ internal sealed class SessionClaims(
             ?? await context.CarrySessionOverStampChangeAsync(userId, sessionId, tokenId);
     }
 
-    private async Task<ClaimsIdentity?> DescribeAsync(ClaimsIdentity identity, User user)
+    private async Task<ClaimsIdentity?> DescribeAsync(ClaimsIdentity identity, User user, bool renewing)
     {
         identity.SetClaim(Claims.Name, user.DisplayName)
             .SetClaim(Claims.Locale, user.PreferredLocale);
@@ -117,9 +117,15 @@ internal sealed class SessionClaims(
                 .SetDestinations(GetDestinations);
         }
 
-        var access = await context.FindSchoolAccountAccessAsync(user.Id, CancellationToken.None);
+        var preferredOrganizationId = renewing && Guid.TryParse(identity.GetAuthorizationId(), out var sessionId)
+            ? await context.FindActiveOrganizationIdAsync(sessionId, CancellationToken.None)
+            : null;
+        var access = await context.FindSchoolAccountAccessAsync(
+            user.Id,
+            preferredOrganizationId,
+            CancellationToken.None);
 
-        if (access is not { IsSuspended: false })
+        if (access is null)
         {
             return null;
         }

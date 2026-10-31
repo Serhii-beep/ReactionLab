@@ -89,7 +89,7 @@ internal sealed class AuthorizationEndpointHandler(
             await sessionRevocation.RevokeAsync(sessionId, CancellationToken.None);
 
             logger.LogInformation(
-                "Account {AccountId} can't start session {SessionId}: its organization is suspended.",
+                "Account {AccountId} can't start session {SessionId}: it is disabled or its organization is suspended.",
                 user.Id,
                 sessionId);
 

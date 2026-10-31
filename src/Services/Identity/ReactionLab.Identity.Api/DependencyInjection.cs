@@ -8,6 +8,7 @@ using ReactionLab.Identity.Api.ExternalSignIn;
 using ReactionLab.Identity.Api.Features.Accounts;
 using ReactionLab.Identity.Api.Features.Accounts.ChangePassword;
 using ReactionLab.Identity.Api.Features.Accounts.GetProfile;
+using ReactionLab.Identity.Api.Features.Accounts.ListAccountOrganizations;
 using ReactionLab.Identity.Api.Features.Accounts.Reauthenticate;
 using ReactionLab.Identity.Api.Features.Accounts.RegisterAccount;
 using ReactionLab.Identity.Api.Features.Accounts.RemovePassword;
@@ -15,6 +16,7 @@ using ReactionLab.Identity.Api.Features.Accounts.SchoolSignIn;
 using ReactionLab.Identity.Api.Features.Accounts.SetPassword;
 using ReactionLab.Identity.Api.Features.Accounts.SignIn;
 using ReactionLab.Identity.Api.Features.Accounts.SignOut;
+using ReactionLab.Identity.Api.Features.Accounts.SwitchActiveOrganization;
 using ReactionLab.Identity.Api.Features.Accounts.UpdateProfile;
 using ReactionLab.Identity.Api.Features.AccountSetups.CompleteAccountSetup;
 using ReactionLab.Identity.Api.Features.AccountSetups.LookUpAccountSetup;
@@ -29,13 +31,30 @@ using ReactionLab.Identity.Api.Features.Logins.CompleteLoginConnection;
 using ReactionLab.Identity.Api.Features.Logins.ConnectLogin;
 using ReactionLab.Identity.Api.Features.Logins.DisconnectLogin;
 using ReactionLab.Identity.Api.Features.Logins.ListLogins;
+using ReactionLab.Identity.Api.Features.Members;
+using ReactionLab.Identity.Api.Features.Members.CreateMember;
+using ReactionLab.Identity.Api.Features.Members.DeleteMember;
+using ReactionLab.Identity.Api.Features.Members.DisableMember;
+using ReactionLab.Identity.Api.Features.Members.EnableMember;
+using ReactionLab.Identity.Api.Features.Members.EndMemberSessions;
+using ReactionLab.Identity.Api.Features.Members.GetMember;
+using ReactionLab.Identity.Api.Features.Members.GrantMemberRole;
+using ReactionLab.Identity.Api.Features.Members.ImportMembers;
+using ReactionLab.Identity.Api.Features.Members.ListMembers;
+using ReactionLab.Identity.Api.Features.Members.RenameMember;
+using ReactionLab.Identity.Api.Features.Members.ResetMemberPassword;
+using ReactionLab.Identity.Api.Features.Members.RevokeMemberRole;
+using ReactionLab.Identity.Api.Features.Members.TransferMember;
 using ReactionLab.Identity.Api.Features.OpenId;
 using ReactionLab.Identity.Api.Features.Organizations.CreateOrganization;
 using ReactionLab.Identity.Api.Features.Organizations.GetOrganization;
+using ReactionLab.Identity.Api.Features.Organizations.GetOrganizationSettings;
 using ReactionLab.Identity.Api.Features.Organizations.IssueAdminSetupLink;
+using ReactionLab.Identity.Api.Features.Organizations.ListOrganizationChanges;
 using ReactionLab.Identity.Api.Features.Organizations.ListOrganizations;
 using ReactionLab.Identity.Api.Features.Organizations.ReinstateOrganization;
 using ReactionLab.Identity.Api.Features.Organizations.SuspendOrganization;
+using ReactionLab.Identity.Api.Features.Organizations.UpdateOrganizationSettings;
 using ReactionLab.Identity.Api.Features.PlatformRoles;
 using ReactionLab.Identity.Api.Features.PlatformRoles.GrantPlatformRole;
 using ReactionLab.Identity.Api.Features.PlatformRoles.ListPlatformRoleAccounts;
@@ -268,6 +287,32 @@ internal static class DependencyInjection
         services.AddScoped<ReinstateOrganizationHandler>();
         services.AddScoped<LookUpAccountSetupHandler>();
         services.AddScoped<CompleteAccountSetupHandler>();
+
+        return services;
+    }
+
+    public static IServiceCollection AddSchoolAdministration(this IServiceCollection services)
+    {
+        services.AddScoped<SchoolAdminTransaction>();
+        services.AddScoped<MemberCredentials>();
+        services.AddScoped<ListMembersHandler>();
+        services.AddScoped<GetMemberHandler>();
+        services.AddScoped<CreateMemberHandler>();
+        services.AddScoped<ImportMembersHandler>();
+        services.AddScoped<GrantMemberRoleHandler>();
+        services.AddScoped<RevokeMemberRoleHandler>();
+        services.AddScoped<ResetMemberPasswordHandler>();
+        services.AddScoped<RenameMemberHandler>();
+        services.AddScoped<DisableMemberHandler>();
+        services.AddScoped<EnableMemberHandler>();
+        services.AddScoped<EndMemberSessionsHandler>();
+        services.AddScoped<DeleteMemberHandler>();
+        services.AddScoped<TransferMemberHandler>();
+        services.AddScoped<GetOrganizationSettingsHandler>();
+        services.AddScoped<UpdateOrganizationSettingsHandler>();
+        services.AddScoped<ListOrganizationChangesHandler>();
+        services.AddScoped<ListAccountOrganizationsHandler>();
+        services.AddScoped<SwitchActiveOrganizationHandler>();
 
         return services;
     }

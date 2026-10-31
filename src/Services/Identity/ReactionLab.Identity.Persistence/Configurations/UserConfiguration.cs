@@ -36,6 +36,10 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
             .IsUnique()
             .HasFilter("organization_id IS NOT NULL");
 
+        builder.HasIndex(user => new { user.OrganizationId, user.Id })
+            .HasDatabaseName("ix_users_organization_id_id")
+            .HasFilter("organization_id IS NOT NULL");
+
         builder.Property(user => user.DisplayName)
             .HasMaxLength(User.MaximumDisplayNameLength)
             .IsRequired();

@@ -9,6 +9,8 @@ public sealed class Organization
     public const int MaximumKindLength = 16;
     public const int MaximumNameLength = 128;
     public const int MaximumSignInCodeLength = 16;
+    public const int MaximumTimeZoneLength = 64;
+    public const string DefaultTimeZone = "Etc/UTC";
 
     public static readonly Error KindUnknown = Error.Validation(
         "Organization.KindUnknown",
@@ -42,6 +44,11 @@ public sealed class Organization
         nameof(SignInCode))
         .WithArgs(("max", MaximumSignInCodeLength));
 
+    public static readonly Error TimeZoneInvalid = Error.Validation(
+        "Organization.TimeZoneInvalid",
+        "A time zone is an IANA name, such as Europe/Kyiv.",
+        nameof(TimeZone));
+
     private const int SignInCodeLength = 6;
     private const string SignInCodeCharacters = "23456789ABCDEFGHJKMNPQRSTVWXYZ";
 
@@ -64,6 +71,12 @@ public sealed class Organization
 
     public DateTimeOffset? SuspendedAt { get; private set; }
 
+    public string Locale { get; private set; } = SupportedLocale.Default.Code;
+
+    public string TimeZone { get; private set; } = DefaultTimeZone;
+
+    public bool TeachersMayResetStudentPasswords { get; private set; }
+
     public static Result<Organization> Create(string? kind, Guid? districtId, string? name, DateTimeOffset now)
     {
         if (kind is not (OrganizationKinds.District or OrganizationKinds.School))
@@ -76,7 +89,7 @@ public sealed class Organization
             return DistrictNotAllowed;
         }
 
-        var normalizedName = DisplayNames.Normalize(name, MaximumNameLength, NameRequired, NameTooLong, NameInvalid);
+        var normalizedName = NormalizeName(name);
 
         if (normalizedName.IsFailure)
         {
@@ -92,6 +105,22 @@ public sealed class Organization
             SignInCode = NewSignInCode(),
             CreatedAt = now
         };
+    }
+
+    public static Result<string> NormalizeName(string? name) =>
+        DisplayNames.Normalize(name, MaximumNameLength, NameRequired, NameTooLong, NameInvalid);
+
+    public static Result<string> NormalizeTimeZone(string? timeZone)
+    {
+        var trimmed = timeZone?.Trim() ?? string.Empty;
+
+        return trimmed.Length is > 0 and <= MaximumTimeZoneLength
+            && trimmed.Split('/').All(segment => segment.Length > 0)
+            && TimeZoneInfo.TryFindSystemTimeZoneById(trimmed, out var zone)
+            && zone.HasIanaId
+            && zone.Id == trimmed
+                ? trimmed
+                : TimeZoneInvalid;
     }
 
     public static Result<string> NormalizeSignInCode(string? signInCode)
@@ -118,6 +147,48 @@ public sealed class Organization
 
         return Result.Success();
     }
+
+    public Result<IReadOnlyList<string>> ChangeSettings(
+        string? name,
+        string? locale,
+        string? timeZone,
+        string? signInCode,
+        bool? teachersMayResetStudentPasswords)
+    {
+        Result<string> newName = name is null ? Name : NormalizeName(name);
+        Result<string> newLocale = locale is null ? Locale : LocaleCode(SupportedLocale.Create(locale));
+        Result<string> newTimeZone = timeZone is null ? TimeZone : NormalizeTimeZone(timeZone);
+        Result<string> newSignInCode = signInCode is null ? SignInCode : NormalizeSignInCode(signInCode);
+
+        if (new[] { newName, newLocale, newTimeZone, newSignInCode }.FirstOrDefault(result => result.IsFailure)
+            is { } failure)
+        {
+            return failure.Error;
+        }
+
+        var newTeacherResets = teachersMayResetStudentPasswords ?? TeachersMayResetStudentPasswords;
+        string?[] changes =
+        [
+            newName.Value == Name ? null : OrganizationChangeNames.Renamed,
+            newLocale.Value == Locale ? null : OrganizationChangeNames.LocaleChanged,
+            newTimeZone.Value == TimeZone ? null : OrganizationChangeNames.TimeZoneChanged,
+            newSignInCode.Value == SignInCode ? null : OrganizationChangeNames.SignInCodeChanged,
+            newTeacherResets == TeachersMayResetStudentPasswords ? null
+                : newTeacherResets ? OrganizationChangeNames.TeacherResetsAllowed
+                : OrganizationChangeNames.TeacherResetsDisallowed
+        ];
+
+        Name = newName.Value;
+        Locale = newLocale.Value;
+        TimeZone = newTimeZone.Value;
+        SignInCode = newSignInCode.Value;
+        TeachersMayResetStudentPasswords = newTeacherResets;
+
+        return changes.OfType<string>().ToList();
+    }
+
+    private static Result<string> LocaleCode(Result<SupportedLocale> locale) =>
+        locale.IsSuccess ? locale.Value.Code : locale.Error;
 
     private static string NewSignInCode() =>
         RandomNumberGenerator.GetString(SignInCodeCharacters, SignInCodeLength);

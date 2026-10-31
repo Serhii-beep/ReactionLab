@@ -99,6 +99,8 @@ public sealed partial class User : IdentityUser<Guid>
 
     public string? OrganizationUsername { get; private set; }
 
+    public DateTimeOffset? DisabledAt { get; private set; }
+
     public static Result<User> Register(
         string? email,
         string? displayName,

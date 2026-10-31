@@ -51,4 +51,17 @@ public static class SessionQueries
             """)
             .ToListAsync(cancellationToken))
             .SingleOrDefault();
+
+    public static async Task<Guid?> FindActiveOrganizationIdAsync(
+        this AppDbContext context,
+        Guid sessionId,
+        CancellationToken cancellationToken) =>
+        (await context.Database.SqlQuery<Guid?>(
+            $"""
+            SELECT (properties::jsonb ->> {SessionProperties.ActiveOrganizationId})::uuid AS "Value"
+            FROM openiddict_authorizations
+            WHERE id = {sessionId} AND status = 'valid'
+            """)
+            .ToListAsync(cancellationToken))
+            .SingleOrDefault();
 }

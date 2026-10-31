@@ -40,20 +40,32 @@ public static class AccountSetupQueries
         Guid accountId,
         CancellationToken cancellationToken)
     {
-        var adminRoles = context.Set<UserSchoolRole>()
+        var schoolRoles = context.Set<UserSchoolRole>();
+        var districtId = context.Set<Organization>()
+            .Where(organization => organization.Id == organizationId)
+            .Select(organization => organization.DistrictId);
+        var ownAdminRoles = schoolRoles
             .Where(schoolRole => schoolRole.OrganizationId == organizationId
                 && (schoolRole.Role == SchoolRoleNames.SchoolAdmin
                     || schoolRole.Role == SchoolRoleNames.DistrictAdmin));
+        var administeringRoles = schoolRoles
+            .Where(schoolRole => (schoolRole.OrganizationId == organizationId
+                    && (schoolRole.Role == SchoolRoleNames.SchoolAdmin
+                        || schoolRole.Role == SchoolRoleNames.DistrictAdmin))
+                || (schoolRole.Role == SchoolRoleNames.DistrictAdmin
+                    && schoolRole.OrganizationId == districtId.FirstOrDefault()));
 
         return context.Users.AsNoTracking()
             .Where(user => user.Id == accountId
                 && user.OrganizationId == organizationId
-                && adminRoles.Any(schoolRole => schoolRole.UserId == user.Id))
+                && ownAdminRoles.Any(schoolRole => schoolRole.UserId == user.Id))
             .Select(user => new AdminSetupState(
                 user.OrganizationUsername!,
-                user.PasswordHash != null,
-                adminRoles.Any(schoolRole => context.Users.Any(
-                    admin => admin.Id == schoolRole.UserId && admin.PasswordHash != null))))
+                user.DisabledAt != null,
+                administeringRoles.Any(schoolRole => context.Users.Any(admin => admin.Id == schoolRole.UserId
+                    && admin.PasswordHash != null
+                    && admin.DisabledAt == null
+                    && admin.LockoutEnd != DateTimeOffset.MaxValue))))
             .SingleOrDefaultAsync(cancellationToken);
     }
 

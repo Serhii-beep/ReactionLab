@@ -10,4 +10,5 @@ public static class SessionProperties
     public const string StampCarriedOverBy = "stamp_carried_over_by";
     public const string PasswordChecks = "password_checks";
     public const string PasswordVerifiedAt = "password_verified_at";
+    public const string ActiveOrganizationId = "active_organization_id";
 }

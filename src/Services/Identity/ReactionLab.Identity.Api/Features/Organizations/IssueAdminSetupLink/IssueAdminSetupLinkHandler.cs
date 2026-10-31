@@ -80,6 +80,7 @@ internal sealed class IssueAdminSetupLinkHandler(
         DateTimeOffset now,
         DateTimeOffset setupExpiresAt)
     {
+        await context.LockOrganizationsAsync([command.OrganizationId]);
         await context.LockSchoolAccountAsync(command.OrganizationId, command.AccountId);
 
         var state = CheckWaiting(await context.FindAdminSetupStateAsync(
@@ -120,7 +121,8 @@ internal sealed class IssueAdminSetupLinkHandler(
     private static Result<AdminSetupState> CheckWaiting(AdminSetupState? state) => state switch
     {
         null => OrganizationErrors.AdminNotFound,
-        { HasPassword: true } or { OrganizationHasAdminWithPassword: true } => OrganizationErrors.AlreadySetUp,
+        { IsDisabled: true } => OrganizationErrors.AdminDisabled,
+        { OrganizationHasAdminWhoCanSignIn: true } => OrganizationErrors.AlreadySetUp,
         _ => state
     };
 }
