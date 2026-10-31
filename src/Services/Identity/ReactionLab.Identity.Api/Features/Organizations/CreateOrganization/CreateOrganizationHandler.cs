@@ -1,6 +1,4 @@
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using Npgsql;
 using ReactionLab.Identity.Api.Features.Accounts;
 using ReactionLab.Identity.Api.Features.AccountSetups;
 using ReactionLab.Identity.Api.Features.Organizations.Contracts;
@@ -25,7 +23,6 @@ internal sealed class CreateOrganizationHandler(
 {
     private const int SignInCodeDraws = 10;
     private const string FirstAdminField = "firstAdmin";
-    private const string AddressIndex = "ix_users_normalized_email";
 
     public async ValueTask<Result<CreatedOrganizationResponse>> HandleAsync(
         CreateOrganizationCommand command,
@@ -175,18 +172,9 @@ internal sealed class CreateOrganizationHandler(
 
     private async Task<Result> SaveFirstAdminAsync(User firstAdmin)
     {
-        try
-        {
-            var saved = await userManager.CreateAsync(firstAdmin);
+        var saved = await userManager.CreateAsync(firstAdmin);
 
-            return saved.Succeeded ? Result.Success() : Result.Failure(ForFirstAdmin(saved.Errors.First().ToError()));
-        }
-        catch (DbUpdateException ex)
-            when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation } violation
-                && violation.ConstraintName == AddressIndex)
-        {
-            return Result.Failure(OrganizationErrors.AddressInUse);
-        }
+        return saved.Succeeded ? Result.Success() : Result.Failure(ForFirstAdmin(saved.Errors.First().ToError()));
     }
 
     private async Task<bool> DrawFreeSignInCodeAsync(Organization organization)

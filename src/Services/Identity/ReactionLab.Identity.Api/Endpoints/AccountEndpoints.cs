@@ -1,5 +1,6 @@
 using ReactionLab.Identity.Api.Features.Accounts.Contracts;
 using ReactionLab.Identity.Api.Features.Accounts.RegisterAccount;
+using ReactionLab.Identity.Api.Features.Accounts.SchoolSignIn;
 using ReactionLab.Identity.Api.Features.Accounts.SignIn;
 using ReactionLab.Identity.Api.Features.Accounts.SignOut;
 using ReactionLab.Identity.Api.Http;
@@ -50,6 +51,23 @@ internal static class AccountEndpoints
         })
         .WithName("SignIn")
         .WithSummary("Sign in with an email address and a password")
+        .RequireRateLimiting(RateLimitPolicies.SignIn)
+        .Produces(StatusCodes.Status204NoContent)
+        .ProducesProblem(StatusCodes.Status400BadRequest)
+        .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
+
+        group.MapPost("/school-sign-in", async (
+            SchoolSignInRequest request,
+            SchoolSignInHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            var command = new SchoolSignInCommand(request.SignInCode, request.Username, request.Password);
+            var result = await handler.HandleAsync(command, cancellationToken);
+
+            return result.ToHttpResult();
+        })
+        .WithName("SchoolSignIn")
+        .WithSummary("Sign in to a school account with the school's sign-in code, a username, and a password")
         .RequireRateLimiting(RateLimitPolicies.SignIn)
         .Produces(StatusCodes.Status204NoContent)
         .ProducesProblem(StatusCodes.Status400BadRequest)

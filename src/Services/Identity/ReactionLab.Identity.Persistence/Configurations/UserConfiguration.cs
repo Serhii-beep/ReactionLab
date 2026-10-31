@@ -19,9 +19,7 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
             .HasDatabaseName("ix_users_normalized_user_name")
             .IsUnique();
 
-        builder.HasIndex(user => user.NormalizedEmail)
-            .HasDatabaseName("ix_users_normalized_email")
-            .IsUnique();
+        builder.Metadata.RemoveIndex([builder.Property(user => user.NormalizedEmail).Metadata]);
 
         builder.HasIndex(user => user.NormalizedEmail, "ix_users_regular_account_normalized_email")
             .HasDatabaseName("ix_users_regular_account_normalized_email")

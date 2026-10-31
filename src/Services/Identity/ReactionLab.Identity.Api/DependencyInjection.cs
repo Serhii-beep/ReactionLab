@@ -11,6 +11,7 @@ using ReactionLab.Identity.Api.Features.Accounts.GetProfile;
 using ReactionLab.Identity.Api.Features.Accounts.Reauthenticate;
 using ReactionLab.Identity.Api.Features.Accounts.RegisterAccount;
 using ReactionLab.Identity.Api.Features.Accounts.RemovePassword;
+using ReactionLab.Identity.Api.Features.Accounts.SchoolSignIn;
 using ReactionLab.Identity.Api.Features.Accounts.SetPassword;
 using ReactionLab.Identity.Api.Features.Accounts.SignIn;
 using ReactionLab.Identity.Api.Features.Accounts.SignOut;
@@ -33,6 +34,8 @@ using ReactionLab.Identity.Api.Features.Organizations.CreateOrganization;
 using ReactionLab.Identity.Api.Features.Organizations.GetOrganization;
 using ReactionLab.Identity.Api.Features.Organizations.IssueAdminSetupLink;
 using ReactionLab.Identity.Api.Features.Organizations.ListOrganizations;
+using ReactionLab.Identity.Api.Features.Organizations.ReinstateOrganization;
+using ReactionLab.Identity.Api.Features.Organizations.SuspendOrganization;
 using ReactionLab.Identity.Api.Features.PlatformRoles;
 using ReactionLab.Identity.Api.Features.PlatformRoles.GrantPlatformRole;
 using ReactionLab.Identity.Api.Features.PlatformRoles.ListPlatformRoleAccounts;
@@ -104,6 +107,7 @@ internal static class DependencyInjection
         services.AddScoped<PasswordSignInVerifier>();
         services.AddScoped<RegisterAccountHandler>();
         services.AddScoped<SignInHandler>();
+        services.AddScoped<SchoolSignInHandler>();
         services.AddScoped<SignOutHandler>();
         services.AddScoped<GetProfileHandler>();
         services.AddScoped<UpdateProfileHandler>();
@@ -260,6 +264,8 @@ internal static class DependencyInjection
         services.AddScoped<ListOrganizationsHandler>();
         services.AddScoped<GetOrganizationHandler>();
         services.AddScoped<IssueAdminSetupLinkHandler>();
+        services.AddScoped<SuspendOrganizationHandler>();
+        services.AddScoped<ReinstateOrganizationHandler>();
         services.AddScoped<LookUpAccountSetupHandler>();
         services.AddScoped<CompleteAccountSetupHandler>();
 

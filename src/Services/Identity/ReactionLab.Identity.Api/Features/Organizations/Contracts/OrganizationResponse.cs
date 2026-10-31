@@ -8,7 +8,8 @@ internal sealed record OrganizationResponse(
     string Name,
     Guid? DistrictId,
     string SignInCode,
-    DateTimeOffset CreatedAt)
+    DateTimeOffset CreatedAt,
+    DateTimeOffset? SuspendedAt)
 {
     public static OrganizationResponse From(Organization organization) =>
         new(
@@ -17,5 +18,6 @@ internal sealed record OrganizationResponse(
             organization.Name,
             organization.DistrictId,
             organization.SignInCode,
-            organization.CreatedAt);
+            organization.CreatedAt,
+            organization.SuspendedAt);
 }

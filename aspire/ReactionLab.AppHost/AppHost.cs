@@ -95,6 +95,14 @@ if (builder.ExecutionContext.IsRunMode)
         .WithEnvironment(
             "ReverseProxy__Clusters__releases__Destinations__storage__Address",
             ReferenceExpression.Create($"{storage.Resource.BlobUriExpression}/devstoreaccount1/catalog-releases"));
+
+    var demoPassword = builder.AddParameter(
+        "demo-password",
+        new GenerateParameterDefault { MinLength = 32, Special = false },
+        secret: true,
+        persist: true);
+
+    identityMigrator.WithEnvironment("Identity__DemoPassword", demoPassword);
 }
 
 await builder.Build().RunAsync();

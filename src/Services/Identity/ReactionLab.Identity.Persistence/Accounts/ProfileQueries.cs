@@ -16,4 +16,10 @@ public static class ProfileQueries
                 user.PreferredLocale,
                 user.PasswordHash != null))
             .SingleOrDefaultAsync(cancellationToken);
+
+    public static Task<bool> IsSchoolAccountAsync(
+        this AppDbContext context,
+        Guid userId,
+        CancellationToken cancellationToken) =>
+        context.Users.AnyAsync(user => user.Id == userId && user.OrganizationId != null, cancellationToken);
 }

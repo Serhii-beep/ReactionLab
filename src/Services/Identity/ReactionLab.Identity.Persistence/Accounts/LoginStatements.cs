@@ -21,6 +21,7 @@ public static class LoginStatements
             WITH session AS MATERIALIZED (
                 SELECT id FROM openiddict_authorizations
                 WHERE id = {sessionId} AND subject = {userId.ToString()} AND status = 'valid'
+                    AND EXISTS (SELECT 1 FROM users WHERE users.id = {userId} AND users.organization_id IS NULL)
                 FOR SHARE)
             INSERT INTO user_logins (login_provider, provider_key, provider_display_name, user_id)
             SELECT {provider}, {providerKey}, {providerDisplayName}, {userId} FROM session
@@ -38,7 +39,9 @@ public static class LoginStatements
         context.Database.ExecuteSqlAsync(
             $"""
             INSERT INTO user_logins (login_provider, provider_key, provider_display_name, user_id)
-            VALUES ({provider}, {providerKey}, {providerDisplayName}, {userId})
+            SELECT {provider}, {providerKey}, {providerDisplayName}, id
+            FROM users
+            WHERE id = {userId} AND organization_id IS NULL
             ON CONFLICT DO NOTHING
             """,
             CancellationToken.None);

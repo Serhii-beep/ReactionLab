@@ -70,6 +70,11 @@ internal sealed class RemovePasswordHandler(
             return AccountErrors.NotFound;
         }
 
+        if (methods.IsSchoolAccount)
+        {
+            return AccountErrors.ManagedBySchool;
+        }
+
         if (!methods.HasPassword)
         {
             return AccountErrors.PasswordNotSet;

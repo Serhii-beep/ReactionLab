@@ -36,6 +36,12 @@ public sealed class Organization
         "A name needs a letter, digit or symbol, and no invisible, text-direction or stacked characters.",
         nameof(Name));
 
+    public static readonly Error SignInCodeInvalid = Error.Validation(
+        "Organization.SignInCodeInvalid",
+        $"A sign-in code is 1 to {MaximumSignInCodeLength} letters and digits.",
+        nameof(SignInCode))
+        .WithArgs(("max", MaximumSignInCodeLength));
+
     private const int SignInCodeLength = 6;
     private const string SignInCodeCharacters = "23456789ABCDEFGHJKMNPQRSTVWXYZ";
 
@@ -55,6 +61,8 @@ public sealed class Organization
     public string SignInCode { get; private set; } = string.Empty;
 
     public DateTimeOffset CreatedAt { get; private set; }
+
+    public DateTimeOffset? SuspendedAt { get; private set; }
 
     public static Result<Organization> Create(string? kind, Guid? districtId, string? name, DateTimeOffset now)
     {
@@ -86,7 +94,30 @@ public sealed class Organization
         };
     }
 
+    public static Result<string> NormalizeSignInCode(string? signInCode)
+    {
+        var trimmed = signInCode?.Trim() ?? string.Empty;
+
+        return trimmed.Length is > 0 and <= MaximumSignInCodeLength && trimmed.All(char.IsAsciiLetterOrDigit)
+            ? trimmed.ToUpperInvariant()
+            : SignInCodeInvalid;
+    }
+
     public void ReplaceSignInCode() => SignInCode = NewSignInCode();
+
+    public Result ChangeSignInCode(string? signInCode)
+    {
+        var normalized = NormalizeSignInCode(signInCode);
+
+        if (normalized.IsFailure)
+        {
+            return Result.Failure(normalized.Error);
+        }
+
+        SignInCode = normalized.Value;
+
+        return Result.Success();
+    }
 
     private static string NewSignInCode() =>
         RandomNumberGenerator.GetString(SignInCodeCharacters, SignInCodeLength);

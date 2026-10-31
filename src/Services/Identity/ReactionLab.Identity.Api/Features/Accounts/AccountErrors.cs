@@ -6,7 +6,11 @@ internal static class AccountErrors
 {
     public static readonly Error SignInFailed = Error.Validation(
         "Account.SignInFailed",
-        "The email address or the password is incorrect, or there were too many failed attempts.");
+        "The sign-in details are incorrect, or there were too many failed attempts.");
+
+    public static readonly Error ManagedBySchool = Error.Forbidden(
+        "Account.ManagedBySchool",
+        "The account's school sets its display name and how it signs in.");
 
     public static readonly Error NotFound = Error.NotFound(
         "Account.NotFound",

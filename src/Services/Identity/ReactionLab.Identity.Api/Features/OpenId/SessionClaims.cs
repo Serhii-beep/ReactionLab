@@ -9,6 +9,7 @@ using ReactionLab.Identity.Api.OpenId;
 using ReactionLab.Identity.Persistence;
 using ReactionLab.Identity.Persistence.Accounts;
 using ReactionLab.Identity.Persistence.OpenId;
+using ReactionLab.Identity.Persistence.Organizations;
 using ReactionLab.Identity.Persistence.PlatformRoles;
 using static OpenIddict.Abstractions.OpenIddictConstants;
 
@@ -22,10 +23,12 @@ internal sealed class SessionClaims(
     TimeProvider timeProvider)
 {
     private const string PlatformRoleClaimType = "platform_role";
+    private const string OrganizationIdClaimType = "organization_id";
+    private const string SchoolRoleClaimType = "school_role";
 
     private string SecurityStampClaimType => identityOptions.Value.ClaimsIdentity.SecurityStampClaimType;
 
-    public async Task<ClaimsIdentity> CreateAsync(
+    public async Task<ClaimsIdentity?> CreateAsync(
         User user,
         string sessionId,
         DateTimeOffset signedInAt,
@@ -53,7 +56,6 @@ internal sealed class SessionClaims(
 
         if (remaining <= TimeSpan.Zero
             || await userManager.FindByIdAsync(principal.GetClaim(Claims.Subject) ?? string.Empty) is not { } user
-            || user.OrganizationId is not null
             || !await signInManager.CanSignInAsync(user))
         {
             return null;
@@ -101,14 +103,30 @@ internal sealed class SessionClaims(
             ?? await context.CarrySessionOverStampChangeAsync(userId, sessionId, tokenId);
     }
 
-    private async Task<ClaimsIdentity> DescribeAsync(ClaimsIdentity identity, User user)
+    private async Task<ClaimsIdentity?> DescribeAsync(ClaimsIdentity identity, User user)
     {
-        ImmutableArray<string> platformRoles =
-            [.. await context.ListPlatformRolesAsync(user.Id, CancellationToken.None)];
+        identity.SetClaim(Claims.Name, user.DisplayName)
+            .SetClaim(Claims.Locale, user.PreferredLocale);
 
-        return identity.SetClaim(Claims.Name, user.DisplayName)
-            .SetClaim(Claims.Locale, user.PreferredLocale)
-            .SetClaims(PlatformRoleClaimType, platformRoles)
+        if (user.OrganizationId is null)
+        {
+            ImmutableArray<string> platformRoles =
+                [.. await context.ListPlatformRolesAsync(user.Id, CancellationToken.None)];
+
+            return identity.SetClaims(PlatformRoleClaimType, platformRoles)
+                .SetDestinations(GetDestinations);
+        }
+
+        var access = await context.FindSchoolAccountAccessAsync(user.Id, CancellationToken.None);
+
+        if (access is not { IsSuspended: false })
+        {
+            return null;
+        }
+
+        return identity.RemoveClaims(PlatformRoleClaimType)
+            .SetClaim(OrganizationIdClaimType, access.OrganizationId.ToString())
+            .SetClaims(SchoolRoleClaimType, [.. access.Roles])
             .SetDestinations(GetDestinations);
     }
 
@@ -116,7 +134,8 @@ internal sealed class SessionClaims(
     {
         Claims.Subject or JwtRegisteredClaimNames.Sid or Claims.AuthenticationMethodReference =>
             [Destinations.AccessToken, Destinations.IdentityToken],
-        Claims.AuthenticationTime or PlatformRoleClaimType => [Destinations.AccessToken, Destinations.IdentityToken],
+        Claims.AuthenticationTime or PlatformRoleClaimType or OrganizationIdClaimType or SchoolRoleClaimType =>
+            [Destinations.AccessToken, Destinations.IdentityToken],
         Claims.Name or Claims.Locale when claim.Subject?.HasScope(Scopes.Profile) is true =>
             [Destinations.IdentityToken],
         _ => []

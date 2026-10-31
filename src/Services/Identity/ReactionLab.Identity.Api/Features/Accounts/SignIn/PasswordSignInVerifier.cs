@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Identity;
 using ReactionLab.Identity.Api.Passwords;
+using ReactionLab.Identity.Persistence;
 using ReactionLab.Identity.Persistence.Accounts;
+using ReactionLab.Identity.Persistence.Organizations;
 using ReactionLab.SharedKernel;
 
 namespace ReactionLab.Identity.Api.Features.Accounts.SignIn;
@@ -9,9 +11,26 @@ internal sealed class PasswordSignInVerifier(
     UserManager<User> userManager,
     SignInManager<User> signInManager,
     PasswordVerificationGate verificationGate,
-    SignInAttempts signInAttempts)
+    SignInAttempts signInAttempts,
+    AppDbContext context)
 {
-    public async Task<Result<User>> VerifyAsync(string? email, string? password, CancellationToken cancellationToken)
+    public Task<Result<User>> VerifyAsync(string? email, string? password, CancellationToken cancellationToken) =>
+        VerifyPasswordAsync(() => FindUserAsync(email), password, cancellationToken);
+
+    public Task<Result<User>> VerifySchoolAccountAsync(
+        string? signInCode,
+        string? username,
+        string? password,
+        CancellationToken cancellationToken) =>
+        VerifyPasswordAsync(
+            () => FindSchoolAccountAsync(signInCode, username, cancellationToken),
+            password,
+            cancellationToken);
+
+    private async Task<Result<User>> VerifyPasswordAsync(
+        Func<Task<User?>> findAccount,
+        string? password,
+        CancellationToken cancellationToken)
     {
         var beganAt = signInAttempts.BeginAttempt();
 
@@ -20,7 +39,7 @@ internal sealed class PasswordSignInVerifier(
             return await RefuseAsync(string.Empty, beganAt, cancellationToken);
         }
 
-        var user = await FindUserAsync(email);
+        var user = await findAccount();
 
         if (user?.PasswordHash is not { } passwordHash
             || !await signInManager.CanSignInAsync(user)
@@ -53,6 +72,22 @@ internal sealed class PasswordSignInVerifier(
         var address = User.NormalizeEmail(email);
 
         return address.IsSuccess ? await userManager.FindByEmailAsync(address.Value) : null;
+    }
+
+    private async Task<User?> FindSchoolAccountAsync(
+        string? signInCode,
+        string? username,
+        CancellationToken cancellationToken)
+    {
+        var normalizedSignInCode = Organization.NormalizeSignInCode(signInCode);
+        var normalizedUsername = User.NormalizeOrganizationUsername(username);
+
+        return normalizedSignInCode.IsSuccess && normalizedUsername.IsSuccess
+            ? await context.FindSchoolAccountAsync(
+                normalizedSignInCode.Value,
+                normalizedUsername.Value,
+                cancellationToken)
+            : null;
     }
 
     private (bool Verified, string? ReplacementHash) CheckPassword(User user, string passwordHash, string password) =>

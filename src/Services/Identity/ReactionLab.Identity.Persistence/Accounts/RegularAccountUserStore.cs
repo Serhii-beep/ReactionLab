@@ -16,4 +16,12 @@ public sealed class RegularAccountUserStore(AppDbContext context, IdentityErrorD
             user => user.NormalizedEmail == normalizedEmail && user.OrganizationId == null,
             cancellationToken);
     }
+
+    public override async Task<User?> FindByLoginAsync(
+        string loginProvider,
+        string providerKey,
+        CancellationToken cancellationToken = default) =>
+        await base.FindByLoginAsync(loginProvider, providerKey, cancellationToken) is { OrganizationId: null } user
+            ? user
+            : null;
 }

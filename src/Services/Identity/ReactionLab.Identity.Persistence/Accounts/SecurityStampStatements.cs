@@ -97,7 +97,7 @@ public static class SecurityStampStatements
                 password_probation_ends_at = NULL,
                 security_stamp = {securityStamp},
                 concurrency_stamp = gen_random_uuid()::text
-            WHERE id = {userId} AND password_hash IS NOT NULL
+            WHERE id = {userId} AND organization_id IS NULL AND password_hash IS NOT NULL
                 AND EXISTS (SELECT 1 FROM user_logins
                     WHERE user_id = {userId} AND login_provider = ANY ({usableProviders}))
             """,

@@ -24,6 +24,11 @@ internal sealed class SetPasswordHandler(
             return Result.Failure(AccountErrors.NotFound);
         }
 
+        if (user.OrganizationId is not null)
+        {
+            return Result.Failure(AccountErrors.ManagedBySchool);
+        }
+
         if (user.PasswordHash is not null)
         {
             return Result.Failure(AccountErrors.PasswordAlreadySet);

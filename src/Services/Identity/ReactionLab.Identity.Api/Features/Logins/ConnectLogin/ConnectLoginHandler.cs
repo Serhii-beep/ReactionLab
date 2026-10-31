@@ -41,6 +41,11 @@ internal sealed class ConnectLoginHandler(
             return Result.Failure(AccountErrors.NotFound).ToHttpResult();
         }
 
+        if (methods.IsSchoolAccount)
+        {
+            return Result.Failure(AccountErrors.ManagedBySchool).ToHttpResult();
+        }
+
         if (methods.Logins.Any(login => login.Provider == provider.Name))
         {
             return Result.Failure(LoginErrors.AlreadyConnected).ToHttpResult();

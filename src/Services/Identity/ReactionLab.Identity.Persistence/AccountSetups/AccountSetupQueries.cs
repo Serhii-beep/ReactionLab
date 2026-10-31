@@ -9,22 +9,30 @@ public static class AccountSetupQueries
         this AppDbContext context,
         byte[] tokenHash,
         DateTimeOffset now,
-        CancellationToken cancellationToken) =>
-        context.Set<AccountSetup>().AsNoTracking()
+        CancellationToken cancellationToken)
+    {
+        var organizations = context.Set<Organization>();
+
+        return context.Set<AccountSetup>().AsNoTracking()
             .Where(setup => setup.TokenHash == tokenHash && setup.ExpiresAt > now)
             .Join(context.Users, setup => setup.UserId, user => user.Id, (setup, user) => new { setup, user })
             .Join(
-                context.Set<Organization>(),
+                organizations,
                 pending => pending.user.OrganizationId,
                 organization => (Guid?)organization.Id,
-                (pending, organization) => new PendingAccountSetup(
-                    pending.user.Id,
-                    pending.user.DisplayName,
-                    pending.user.OrganizationUsername!,
-                    organization.Name,
-                    organization.SignInCode,
-                    pending.setup.ExpiresAt))
+                (pending, organization) => new { pending.setup, pending.user, organization })
+            .Where(pending => pending.organization.SuspendedAt == null
+                && !organizations.Any(district => district.Id == pending.organization.DistrictId
+                    && district.SuspendedAt != null))
+            .Select(pending => new PendingAccountSetup(
+                pending.user.Id,
+                pending.user.DisplayName,
+                pending.user.OrganizationUsername!,
+                pending.organization.Name,
+                pending.organization.SignInCode,
+                pending.setup.ExpiresAt))
             .SingleOrDefaultAsync(cancellationToken);
+    }
 
     public static Task<AdminSetupState?> FindAdminSetupStateAsync(
         this AppDbContext context,

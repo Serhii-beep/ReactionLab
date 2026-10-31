@@ -23,6 +23,7 @@ internal sealed class AuthorizationEndpointHandler(
     IOpenIddictAuthorizationManager authorizationManager,
     IOpenIddictScopeManager scopeManager,
     SessionClaims sessionClaims,
+    SessionRevocation sessionRevocation,
     AppDbContext context,
     TimeProvider timeProvider,
     ILogger<AuthorizationEndpointHandler> logger)
@@ -41,13 +42,21 @@ internal sealed class AuthorizationEndpointHandler(
         var user = signIn.Succeeded ? await userManager.GetUserAsync(signIn.Principal!) : null;
 
         if (user is null
-            || user.OrganizationId is not null
             || signIn.Properties?.IssuedUtc is not { } signedInAt
             || !IsRecentEnough(signedInAt, request, httpContext))
         {
-            return request.HasPromptValue(PromptValues.None)
-                ? OpenIdResults.Forbid(Errors.LoginRequired, "The user must sign in.")
-                : Results.Redirect(SignInPagePath + QueryString.Create(ReturnUrlParameter, ReturnUrl(httpContext.Request, request)));
+            return SignInAgain(request, httpContext);
+        }
+
+        if (user.OrganizationId is not null && !SignedInWithPasswordOnly(signIn.Principal!))
+        {
+            logger.LogWarning(
+                "School account {AccountId} signed in without its password.",
+                user.Id);
+
+            await httpContext.SignOutAsync(IdentityConstants.ApplicationScheme);
+
+            return SignInAgain(request, httpContext);
         }
 
         var application = await applicationManager.FindByClientIdAsync(request.ClientId!)
@@ -66,7 +75,6 @@ internal sealed class AuthorizationEndpointHandler(
             ?? throw new InvalidOperationException("The session has no identifier.");
 
         await httpContext.SignOutAsync(IdentityConstants.ApplicationScheme);
-        await RevokeOldestSessionsAsync(user, sessionId);
 
         var identity = await sessionClaims.CreateAsync(
             user,
@@ -75,6 +83,20 @@ internal sealed class AuthorizationEndpointHandler(
             [.. signIn.Principal!.FindAll(AuthenticationMethods.ClaimType).Select(claim => claim.Value)],
             scopes,
             resources);
+
+        if (identity is null)
+        {
+            await sessionRevocation.RevokeAsync(sessionId, CancellationToken.None);
+
+            logger.LogInformation(
+                "Account {AccountId} can't start session {SessionId}: its organization is suspended.",
+                user.Id,
+                sessionId);
+
+            return SignInAgain(request, httpContext);
+        }
+
+        await RevokeOldestSessionsAsync(user, sessionId);
 
         return Results.SignIn(
             new ClaimsPrincipal(identity),
@@ -143,6 +165,17 @@ internal sealed class AuthorizationEndpointHandler(
             ?.GetProperty<ProcessAuthenticationContext>(typeof(ProcessAuthenticationContext).FullName!)
             ?.RequestTokenPrincipal
             ?.GetCreationDate();
+
+    private static bool SignedInWithPasswordOnly(ClaimsPrincipal signIn) =>
+        signIn.FindAll(AuthenticationMethods.ClaimType)
+            .Select(claim => claim.Value)
+            .SequenceEqual([AuthenticationMethods.Password]);
+
+    private static IResult SignInAgain(OpenIddictRequest request, HttpContext httpContext) =>
+        request.HasPromptValue(PromptValues.None)
+            ? OpenIdResults.Forbid(Errors.LoginRequired, "The user must sign in.")
+            : Results.Redirect(
+                SignInPagePath + QueryString.Create(ReturnUrlParameter, ReturnUrl(httpContext.Request, request)));
 
     private static string ReturnUrl(HttpRequest httpRequest, OpenIddictRequest request) =>
         httpRequest.PathBase + httpRequest.Path + QueryString.Create(

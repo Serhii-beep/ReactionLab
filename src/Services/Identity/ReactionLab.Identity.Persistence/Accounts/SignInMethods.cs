@@ -1,6 +1,7 @@
 namespace ReactionLab.Identity.Persistence.Accounts;
 
 public sealed record SignInMethods(
+    bool IsSchoolAccount,
     bool HasPassword,
     bool PasswordSignsIn,
     DateTimeOffset? PasswordProbationEndsAt,

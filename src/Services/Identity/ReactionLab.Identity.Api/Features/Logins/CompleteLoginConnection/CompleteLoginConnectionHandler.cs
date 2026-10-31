@@ -98,6 +98,11 @@ internal sealed class CompleteLoginConnectionHandler(
             return Result.Failure<LoginConnectionOutcome>(AccountErrors.NotFound);
         }
 
+        if (methods.IsSchoolAccount)
+        {
+            return Result.Failure<LoginConnectionOutcome>(AccountErrors.ManagedBySchool);
+        }
+
         return Result.Failure<LoginConnectionOutcome>(methods.Logins.Any(login => login.Provider == provider.Name)
             ? LoginErrors.AlreadyConnected
             : SessionErrors.Ended);

@@ -36,4 +36,42 @@ public static class OrganizationStatements
                 clock_timestamp())
             """,
             CancellationToken.None);
+
+    public static Task<int> SuspendOrganizationAsync(
+        this AppDbContext context,
+        Guid organizationId,
+        Guid changedBy,
+        Guid changedInSession) =>
+        context.Database.ExecuteSqlAsync(
+            $"""
+            WITH suspended AS (
+                UPDATE organizations SET suspended_at = clock_timestamp()
+                WHERE id = {organizationId} AND suspended_at IS NULL
+                RETURNING id, suspended_at)
+            INSERT INTO organization_changes
+                (id, organization_id, change, account_id, role, changed_by, changed_in_session, changed_at)
+            SELECT uuidv7(), id, {OrganizationChangeNames.Suspended}, NULL, NULL, {changedBy}, {changedInSession},
+                suspended_at
+            FROM suspended
+            """,
+            CancellationToken.None);
+
+    public static Task<int> ReinstateOrganizationAsync(
+        this AppDbContext context,
+        Guid organizationId,
+        Guid changedBy,
+        Guid changedInSession) =>
+        context.Database.ExecuteSqlAsync(
+            $"""
+            WITH reinstated AS (
+                UPDATE organizations SET suspended_at = NULL
+                WHERE id = {organizationId} AND suspended_at IS NOT NULL
+                RETURNING id)
+            INSERT INTO organization_changes
+                (id, organization_id, change, account_id, role, changed_by, changed_in_session, changed_at)
+            SELECT uuidv7(), id, {OrganizationChangeNames.Reinstated}, NULL, NULL, {changedBy}, {changedInSession},
+                clock_timestamp()
+            FROM reinstated
+            """,
+            CancellationToken.None);
 }

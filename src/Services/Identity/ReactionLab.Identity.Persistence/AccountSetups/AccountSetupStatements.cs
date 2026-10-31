@@ -50,6 +50,12 @@ public static class AccountSetupStatements
             WITH consumed AS (
                 DELETE FROM account_setups
                 WHERE user_id = {accountId} AND token_hash = {tokenHash} AND expires_at > {now}
+                    AND EXISTS (
+                        SELECT 1 FROM users
+                        JOIN organizations ON organizations.id = users.organization_id
+                        LEFT JOIN organizations AS districts ON districts.id = organizations.district_id
+                        WHERE users.id = {accountId} AND organizations.suspended_at IS NULL
+                            AND districts.suspended_at IS NULL)
                 RETURNING user_id)
             UPDATE users
             SET password_hash = {passwordHash},

@@ -4,6 +4,8 @@ using ReactionLab.Identity.Api.Features.Organizations.CreateOrganization;
 using ReactionLab.Identity.Api.Features.Organizations.GetOrganization;
 using ReactionLab.Identity.Api.Features.Organizations.IssueAdminSetupLink;
 using ReactionLab.Identity.Api.Features.Organizations.ListOrganizations;
+using ReactionLab.Identity.Api.Features.Organizations.ReinstateOrganization;
+using ReactionLab.Identity.Api.Features.Organizations.SuspendOrganization;
 using ReactionLab.Identity.Api.Http;
 using ReactionLab.SharedKernel.Pagination;
 using ReactionLab.Web;
@@ -105,6 +107,44 @@ internal static class OrganizationEndpoints
         .WithName("IssueAdminSetupLink")
         .WithSummary("Replace an admin's setup link. For platform admins who confirmed their password in this session.")
         .Produces<AccountSetupLinkResponse>()
+        .ProducesProblem(StatusCodes.Status401Unauthorized)
+        .ProducesProblem(StatusCodes.Status403Forbidden)
+        .ProducesProblem(StatusCodes.Status404NotFound)
+        .ProducesProblem(StatusCodes.Status409Conflict);
+
+        group.MapPut("/{organizationId:guid}/suspension", async (
+            Guid organizationId,
+            ClaimsPrincipal user,
+            SuspendOrganizationHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            var command = new SuspendOrganizationCommand(user.GetAccountId(), user.GetSessionId(), organizationId);
+            var result = await handler.HandleAsync(command, cancellationToken);
+
+            return result.ToHttpResult();
+        })
+        .WithName("SuspendOrganization")
+        .WithSummary("Suspend an organization and its schools. For platform admins who confirmed their password.")
+        .Produces(StatusCodes.Status204NoContent)
+        .ProducesProblem(StatusCodes.Status401Unauthorized)
+        .ProducesProblem(StatusCodes.Status403Forbidden)
+        .ProducesProblem(StatusCodes.Status404NotFound)
+        .ProducesProblem(StatusCodes.Status409Conflict);
+
+        group.MapDelete("/{organizationId:guid}/suspension", async (
+            Guid organizationId,
+            ClaimsPrincipal user,
+            ReinstateOrganizationHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            var command = new ReinstateOrganizationCommand(user.GetAccountId(), user.GetSessionId(), organizationId);
+            var result = await handler.HandleAsync(command, cancellationToken);
+
+            return result.ToHttpResult();
+        })
+        .WithName("ReinstateOrganization")
+        .WithSummary("Lift an organization's suspension. For platform admins who confirmed their password.")
+        .Produces(StatusCodes.Status204NoContent)
         .ProducesProblem(StatusCodes.Status401Unauthorized)
         .ProducesProblem(StatusCodes.Status403Forbidden)
         .ProducesProblem(StatusCodes.Status404NotFound)

@@ -52,6 +52,7 @@ internal static class AccountSettingsEndpoints
         .Produces<ProfileResponse>()
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status401Unauthorized)
+        .ProducesProblem(StatusCodes.Status403Forbidden)
         .ProducesProblem(StatusCodes.Status404NotFound);
 
         group.MapPost("/password-changes", async (

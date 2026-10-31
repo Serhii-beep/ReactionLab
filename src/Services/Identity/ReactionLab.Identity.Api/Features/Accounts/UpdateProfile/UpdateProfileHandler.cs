@@ -26,6 +26,11 @@ internal sealed class UpdateProfileHandler(AppDbContext context, ILogger<UpdateP
             return Result.Failure<ProfileResponse>(locale.Error);
         }
 
+        if (displayName is not null && await context.IsSchoolAccountAsync(command.AccountId, cancellationToken))
+        {
+            return Result.Failure<ProfileResponse>(AccountErrors.ManagedBySchool);
+        }
+
         var profile = await context.UpdateProfileAsync(command.AccountId, displayName?.Value, locale?.Value.Code);
 
         if (profile is null)

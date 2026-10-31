@@ -11,6 +11,7 @@ public static class LoginQueries
         context.Users.AsNoTracking()
             .Where(user => user.Id == userId)
             .Select(user => new SignInMethods(
+                user.OrganizationId != null,
                 user.PasswordHash != null,
                 user.PasswordHash != null && user.NormalizedEmail != null && user.LockoutEnd != DateTimeOffset.MaxValue,
                 user.PasswordProbationEndsAt,

@@ -622,10 +622,6 @@ namespace ReactionLab.Identity.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_users");
 
-                    b.HasIndex("NormalizedEmail")
-                        .IsUnique()
-                        .HasDatabaseName("ix_users_normalized_email");
-
                     b.HasIndex("NormalizedUserName")
                         .IsUnique()
                         .HasDatabaseName("ix_users_normalized_user_name");
@@ -682,6 +678,10 @@ namespace ReactionLab.Identity.Persistence.Migrations
                         .HasMaxLength(16)
                         .HasColumnType("character varying(16)")
                         .HasColumnName("sign_in_code");
+
+                    b.Property<DateTimeOffset?>("SuspendedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("suspended_at");
 
                     b.HasKey("Id")
                         .HasName("pk_organizations");
