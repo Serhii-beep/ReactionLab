@@ -33,10 +33,11 @@ internal sealed class MigrationWorker(
             await scope.ServiceProvider.GetRequiredService<OpenIdRegistration>().RegisterAsync(stoppingToken);
             await scope.ServiceProvider.GetRequiredService<PlatformAdminSeeding>().SeedAsync(stoppingToken);
             await scope.ServiceProvider.GetRequiredService<DemoDistrictSeeding>().SeedAsync(stoppingToken);
+            await scope.ServiceProvider.GetRequiredService<IdentityTopicProvisioning>().ProvisionAsync();
         }
         catch (Exception ex)
         {
-            logger.LogCritical(ex, "Database migration, OpenID registration or seeding failed.");
+            logger.LogCritical(ex, "Database migration, OpenID registration, seeding or topic creation failed.");
             Environment.ExitCode = 1;
         }
         finally

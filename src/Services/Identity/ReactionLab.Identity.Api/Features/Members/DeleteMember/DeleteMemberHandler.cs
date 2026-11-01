@@ -1,5 +1,7 @@
+using ReactionLab.Identity.Contracts;
 using ReactionLab.Identity.Persistence;
 using ReactionLab.Identity.Persistence.Organizations;
+using ReactionLab.Messaging.Outbox;
 using ReactionLab.SharedKernel;
 
 namespace ReactionLab.Identity.Api.Features.Members.DeleteMember;
@@ -7,6 +9,7 @@ namespace ReactionLab.Identity.Api.Features.Members.DeleteMember;
 internal sealed class DeleteMemberHandler(
     SchoolAdminTransaction adminTransaction,
     AppDbContext context,
+    OutboxWriter outbox,
     TimeProvider timeProvider,
     ILogger<DeleteMemberHandler> logger) : ICommandHandler<DeleteMemberCommand>
 {
@@ -74,10 +77,15 @@ internal sealed class DeleteMemberHandler(
             command.ActorId,
             command.ActorSessionId);
 
-        if (await context.DeleteMemberAsync(command.AccountId, command.OrganizationId) != 1)
+        if (await context.DeleteMemberAsync(command.AccountId, command.OrganizationId) is not { } deletedVersion)
         {
             return MemberErrors.NotFound;
         }
+
+        await outbox.InsertAsync(
+            context,
+            new UserErasureRequested(command.AccountId, deletedVersion + 1, command.OrganizationId));
+        await outbox.InsertTombstoneAsync(context, IdentityTopics.Profiles, command.AccountId);
 
         return true;
     }

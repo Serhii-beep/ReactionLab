@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using ReactionLab.Identity.Persistence.Accounts;
+using ReactionLab.Messaging.Outbox;
 
 namespace ReactionLab.Identity.Persistence;
 
@@ -16,5 +17,6 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
 
         builder.UseOpenIddict<Guid>();
         builder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+        builder.ApplyConfiguration(new OutboxMessageConfiguration());
     }
 }

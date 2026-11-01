@@ -16,6 +16,7 @@
   </Folder>
   <Folder Name="/src/" />
   <Folder Name="/src/BuildingBlocks/">
+    <Project Path="src/BuildingBlocks/ReactionLab.Messaging/ReactionLab.Messaging.csproj" />
     <Project Path="src/BuildingBlocks/ReactionLab.SharedKernel/ReactionLab.SharedKernel.csproj" />
     <Project Path="src/BuildingBlocks/ReactionLab.Web/ReactionLab.Web.csproj" />
   </Folder>
@@ -36,6 +37,7 @@
   </Folder>
   <Folder Name="/src/Services/Identity/">
     <Project Path="src/Services/Identity/ReactionLab.Identity.Api/ReactionLab.Identity.Api.csproj" />
+    <Project Path="src/Services/Identity/ReactionLab.Identity.Contracts/ReactionLab.Identity.Contracts.csproj" />
     <Project Path="src/Services/Identity/ReactionLab.Identity.Migrator/ReactionLab.Identity.Migrator.csproj" />
     <Project Path="src/Services/Identity/ReactionLab.Identity.Persistence/ReactionLab.Identity.Persistence.csproj" />
   </Folder>

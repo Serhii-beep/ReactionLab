@@ -30,6 +30,11 @@ var storage = builder.AddAzureStorage("storage")
 
 var blobs = storage.AddBlobs("blobs");
 
+var kafka = builder.AddKafka("kafka")
+    .WithDataVolume("reactionlab-kafkadata")
+    .WithLifetime(ContainerLifetime.Persistent)
+    .WithKafkaUI();
+
 var catalogMigrator = builder.AddProject<Projects.ReactionLab_Catalog_Migrator>("catalog-migrator")
     .WithReference(catalogDatabase, connectionName: "DefaultConnection")
     .WithReference(blobs)
@@ -56,10 +61,13 @@ var catalog = builder.AddProject<Projects.ReactionLab_Catalog_Api>("catalog")
 
 var identityMigrator = builder.AddProject<Projects.ReactionLab_Identity_Migrator>("identity-migrator")
     .WithReference(identityDatabase, connectionName: "DefaultConnection")
-    .WaitFor(identityDatabase);
+    .WithReference(kafka)
+    .WaitFor(identityDatabase)
+    .WaitFor(kafka);
 
 var identity = builder.AddProject<Projects.ReactionLab_Identity_Api>("identity")
     .WithReference(identityDatabase, connectionName: "DefaultConnection")
+    .WithReference(kafka)
     .WaitForCompletion(identityMigrator);
 
 var gateway = builder.AddProject<Projects.ReactionLab_Gateway>("gateway")
@@ -102,7 +110,9 @@ if (builder.ExecutionContext.IsRunMode)
         secret: true,
         persist: true);
 
-    identityMigrator.WithEnvironment("Identity__DemoPassword", demoPassword);
+    identityMigrator
+        .WithEnvironment("Identity__DemoPassword", demoPassword)
+        .WithEnvironment("Messaging__CreateTopics", "true");
 }
 
 await builder.Build().RunAsync();

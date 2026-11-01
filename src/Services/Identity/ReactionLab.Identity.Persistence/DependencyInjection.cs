@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
+using ReactionLab.Messaging;
+using ReactionLab.Messaging.Outbox;
 
 namespace ReactionLab.Identity.Persistence;
 
@@ -22,7 +24,10 @@ public static class DependencyInjection
             AutoPrepareMinUsages = 2
         }.ConnectionString;
 
-        services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString, NpgsqlSetup.Configure));
+        services.AddOutbox(IdentityEvents.Publish);
+        services.AddDbContext<AppDbContext>((provider, options) => options
+            .UseNpgsql(connectionString, NpgsqlSetup.Configure)
+            .AddInterceptors(provider.GetRequiredService<DomainEventOutboxInterceptor>()));
         services.AddHealthChecks().AddDbContextCheck<AppDbContext>("database");
 
         services.AddOpenIddict()

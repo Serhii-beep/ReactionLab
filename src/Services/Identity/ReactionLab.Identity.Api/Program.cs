@@ -1,7 +1,9 @@
 using ReactionLab.Identity.Api;
 using ReactionLab.Identity.Api.Endpoints;
 using ReactionLab.Identity.Api.Http;
+using ReactionLab.Identity.Contracts;
 using ReactionLab.Identity.Persistence;
+using ReactionLab.Messaging;
 using ReactionLab.ServiceDefaults;
 using ReactionLab.Web;
 using Scalar.AspNetCore;
@@ -11,6 +13,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
 
 builder.Services.AddPersistence(builder.Configuration);
+builder.AddOutboxRelay<AppDbContext>("kafka", IdentityEventTypes.Source);
 builder.Services.AddAccounts();
 builder.Services.AddOpenIdServer(builder.Configuration, builder.Environment);
 builder.Services.AddExternalSignIn(builder.Configuration, builder.Environment);

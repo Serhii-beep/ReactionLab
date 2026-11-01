@@ -56,21 +56,25 @@ public static class MemberStatements
             """,
             CancellationToken.None);
 
-    public static Task<int> RenameMemberAsync(
+    public static async Task<RenamedMember?> RenameMemberAsync(
         this AppDbContext context,
         Guid accountId,
         Guid organizationId,
         string? displayName,
         string? username) =>
-        context.Database.ExecuteSqlAsync(
+        (await context.Database.SqlQuery<RenamedMember>(
             $"""
             UPDATE users
             SET display_name = coalesce({displayName}, display_name),
                 organization_username = coalesce({username}, organization_username),
+                version = version + CASE
+                    WHEN coalesce({displayName}, display_name) IS DISTINCT FROM display_name THEN 1 ELSE 0 END,
                 concurrency_stamp = gen_random_uuid()::text
             WHERE id = {accountId} AND organization_id = {organizationId}
-            """,
-            CancellationToken.None);
+            RETURNING display_name, preferred_locale, version, version <> old.version AS display_name_changed
+            """)
+            .ToListAsync(CancellationToken.None))
+            .SingleOrDefault();
 
     public static Task<int> DisableMemberAsync(this AppDbContext context, Guid accountId, Guid organizationId) =>
         context.Database.ExecuteSqlAsync(
@@ -182,7 +186,7 @@ public static class MemberStatements
             """,
             CancellationToken.None);
 
-    public static async Task<int> DeleteMemberAsync(this AppDbContext context, Guid accountId, Guid organizationId)
+    public static async Task<long?> DeleteMemberAsync(this AppDbContext context, Guid accountId, Guid organizationId)
     {
         await context.Database.ExecuteSqlAsync(
             $"""
@@ -192,9 +196,15 @@ public static class MemberStatements
             """,
             CancellationToken.None);
 
-        return await context.Database.ExecuteSqlAsync(
-            $"DELETE FROM users WHERE id = {accountId} AND organization_id = {organizationId}",
-            CancellationToken.None);
+        var deletedVersions = await context.Database
+            .SqlQuery<long>(
+                $"""
+                DELETE FROM users WHERE id = {accountId} AND organization_id = {organizationId}
+                RETURNING version AS "Value"
+                """)
+            .ToListAsync(CancellationToken.None);
+
+        return deletedVersions.Count == 1 ? deletedVersions[0] : null;
     }
 
     public static async Task<int> TransferMemberAsync(

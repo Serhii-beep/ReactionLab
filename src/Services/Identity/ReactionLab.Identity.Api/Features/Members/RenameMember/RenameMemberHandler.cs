@@ -1,8 +1,10 @@
 using Npgsql;
 using ReactionLab.Identity.Api.Features.Members.Contracts;
+using ReactionLab.Identity.Contracts;
 using ReactionLab.Identity.Persistence;
 using ReactionLab.Identity.Persistence.Accounts;
 using ReactionLab.Identity.Persistence.Organizations;
+using ReactionLab.Messaging.Outbox;
 using ReactionLab.SharedKernel;
 
 namespace ReactionLab.Identity.Api.Features.Members.RenameMember;
@@ -10,6 +12,7 @@ namespace ReactionLab.Identity.Api.Features.Members.RenameMember;
 internal sealed class RenameMemberHandler(
     SchoolAdminTransaction adminTransaction,
     AppDbContext context,
+    OutboxWriter outbox,
     TimeProvider timeProvider,
     ILogger<RenameMemberHandler> logger) : ICommandHandler<RenameMemberCommand, MemberResponse>
 {
@@ -94,16 +97,27 @@ internal sealed class RenameMemberHandler(
         string? username,
         DateTimeOffset now)
     {
+        RenamedMember? renamed;
+
         try
         {
-            if (await context.RenameMemberAsync(command.AccountId, command.OrganizationId, displayName, username) != 1)
-            {
-                return MemberErrors.NotFound;
-            }
+            renamed = await context.RenameMemberAsync(command.AccountId, command.OrganizationId, displayName, username);
         }
         catch (PostgresException ex) when (MemberConflicts.Of(ex) is { } conflict)
         {
             return conflict;
+        }
+
+        if (renamed is null)
+        {
+            return MemberErrors.NotFound;
+        }
+
+        if (renamed.DisplayNameChanged)
+        {
+            await outbox.InsertAsync(
+                context,
+                new UserProfile(command.AccountId, renamed.Version, renamed.DisplayName, renamed.PreferredLocale));
         }
 
         await context.RecordOrganizationChangeAsync(

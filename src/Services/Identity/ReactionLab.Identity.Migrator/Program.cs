@@ -16,6 +16,7 @@ builder.Services.AddSingleton(Options.Create(GatewayClientOptions.Read(builder.C
 builder.Services.AddScoped<OpenIdRegistration>();
 builder.Services.AddScoped<PlatformAdminSeeding>();
 builder.Services.AddScoped<DemoDistrictSeeding>();
+builder.Services.AddScoped<IdentityTopicProvisioning>();
 builder.Services.AddHostedService<MigrationWorker>();
 
 var host = builder.Build();

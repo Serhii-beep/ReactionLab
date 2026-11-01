@@ -1,11 +1,12 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Identity;
+using ReactionLab.Identity.Contracts;
 using ReactionLab.SharedKernel;
 
 namespace ReactionLab.Identity.Persistence.Accounts;
 
-public sealed partial class User : IdentityUser<Guid>
+public sealed partial class User : IdentityUser<Guid>, IDomainEventSource
 {
     public const int MaximumEmailLength = 256;
     public const int MaximumDisplayNameLength = 64;
@@ -76,6 +77,8 @@ public sealed partial class User : IdentityUser<Guid>
 
     private static readonly EmailAddressAttribute EmailFormat = new();
 
+    private readonly List<IDomainEvent> _domainEvents = [];
+
     private User()
     {
 
@@ -100,6 +103,10 @@ public sealed partial class User : IdentityUser<Guid>
     public string? OrganizationUsername { get; private set; }
 
     public DateTimeOffset? DisabledAt { get; private set; }
+
+    public long Version { get; private set; }
+
+    public IReadOnlyList<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
 
     public static Result<User> Register(
         string? email,
@@ -170,8 +177,7 @@ public sealed partial class User : IdentityUser<Guid>
         }
 
         var id = Guid.CreateVersion7(now);
-
-        return new User
+        var account = new User
         {
             Id = id,
             UserName = id.ToString(),
@@ -180,8 +186,13 @@ public sealed partial class User : IdentityUser<Guid>
             PreferredLocale = locale.Code,
             OrganizationId = organizationId,
             OrganizationUsername = organizationUsername.Value,
-            CreatedAt = now
+            CreatedAt = now,
+            Version = 1
         };
+
+        account.RaiseRegistered(AccountKinds.School);
+
+        return account;
     }
 
     public static Result<string> NormalizeEmail(string? email)
@@ -261,8 +272,7 @@ public sealed partial class User : IdentityUser<Guid>
         }
 
         var id = Guid.CreateVersion7(now);
-
-        return new User
+        var user = new User
         {
             Id = id,
             UserName = email ?? id.ToString(),
@@ -271,8 +281,13 @@ public sealed partial class User : IdentityUser<Guid>
             DisplayName = name.Value,
             PreferredLocale = locale.Code,
             BirthYear = birthYear,
-            CreatedAt = now
+            CreatedAt = now,
+            Version = 1
         };
+
+        user.RaiseRegistered(AccountKinds.Regular);
+
+        return user;
     }
 
     private static Result CheckSelfRegistrationAge(int? birthYear, DateTimeOffset now)
@@ -291,6 +306,12 @@ public sealed partial class User : IdentityUser<Guid>
 
     private static bool UpperCasesIntoAscii(char character) =>
         !char.IsAscii(character) && char.IsAscii(char.ToUpperInvariant(character));
+
+    private void RaiseRegistered(string accountKind)
+    {
+        _domainEvents.Add(new UserRegistered(Id, Version, accountKind, OrganizationId));
+        _domainEvents.Add(new UserProfile(Id, Version, DisplayName, PreferredLocale));
+    }
 
     [GeneratedRegex(@"^[a-z0-9][a-z0-9._-]*\z", RegexOptions.CultureInvariant)]
     private static partial Regex UsernamePattern();

@@ -1,6 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <ProjectReference Include="..\..\..\BuildingBlocks\ReactionLab.SharedKernel\ReactionLab.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\ReactionLab.Messaging\ReactionLab.Messaging.csproj" />
+    <ProjectReference Include="..\ReactionLab.Identity.Contracts\ReactionLab.Identity.Contracts.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="EFCore.NamingConventions" />
