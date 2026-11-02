@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+option csharp_namespace = "ReactionLab.Identity.Contracts.Contacts.V1";
+
+package reactionlab.identity.contacts.v1;
+
+service Contacts {
+    rpc GetContact (GetContactRequest) returns (Contact);
+}
+
+message GetContactRequest {
+    string account_id = 1;
+}
+
+message Contact {
+    string account_id = 1;
+    optional string email = 2;
+    bool email_confirmed = 3;
+    string display_name = 4;
+    string locale = 5;
+}

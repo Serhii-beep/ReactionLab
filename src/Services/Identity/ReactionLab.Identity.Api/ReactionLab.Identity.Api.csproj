@@ -6,6 +6,12 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="CsvHelper" />
+    <PackageReference Include="Google.Protobuf" />
+    <PackageReference Include="Grpc.AspNetCore.Server" />
+    <PackageReference Include="Grpc.Tools">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
     <PackageReference Include="OpenIddict.Client.AspNetCore" />
     <PackageReference Include="OpenIddict.Client.SystemNetHttp" />
@@ -14,6 +20,12 @@
     <PackageReference Include="OpenIddict.Validation.AspNetCore" />
     <PackageReference Include="OpenIddict.Validation.ServerIntegration" />
     <PackageReference Include="Scalar.AspNetCore" />
+  </ItemGroup>
+  <ItemGroup>
+    <Protobuf Include="..\ReactionLab.Identity.Contracts\Protos\contacts.proto" Link="Protos\contacts.proto">
+      <GrpcServices>Server</GrpcServices>
+      <Access>Internal</Access>
+    </Protobuf>
   </ItemGroup>
   <PropertyGroup>
     <UserSecretsId>reactionlab-identity</UserSecretsId>

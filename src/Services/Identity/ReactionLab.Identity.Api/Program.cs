@@ -44,6 +44,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.MapOpenIdEndpoints();
+app.MapServiceCallEndpoints();
 
 var api = app.MapGroup("/api/v1");
 api.MapAccountEndpoints();

@@ -249,6 +249,9 @@ public sealed partial class User : IdentityUser<Guid>, IDomainEventSource
         return UsernamePattern().IsMatch(lowered) ? lowered : UsernameInvalid;
     }
 
+    public void RecordRepeatedRegistration(Guid eventId) =>
+        _domainEvents.Add(new RegistrationRepeated(Id, Version) { EventId = eventId });
+
     private static Result<User> Create(
         string? email,
         bool emailConfirmed,

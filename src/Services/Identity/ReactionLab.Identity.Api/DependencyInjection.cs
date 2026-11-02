@@ -1,3 +1,4 @@
+using Grpc.AspNetCore.Server;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -68,6 +69,7 @@ using ReactionLab.Identity.Api.Features.Sessions.RevokeSession;
 using ReactionLab.Identity.Api.Http;
 using ReactionLab.Identity.Api.OpenId;
 using ReactionLab.Identity.Api.Passwords;
+using ReactionLab.Identity.Api.ServiceCalls;
 using ReactionLab.Identity.Persistence.Accounts;
 using ReactionLab.Identity.Persistence.OpenId;
 using ReactionLab.Web;
@@ -82,6 +84,7 @@ internal static class DependencyInjection
     private const string PendingExternalSignInCookieName = "__Host-identity-external";
     private const string CorrelationCookieName = "__Host-identity-correlation";
     private const string IssuerKey = "OpenId:Issuer";
+    private const int MaximumServiceCallMessageBytes = 64 * 1024;
 
     private static readonly TimeSpan IdentityCookieLifetime = TimeSpan.FromMinutes(30);
     private static readonly TimeSpan ExternalSignInStateLifetime = TimeSpan.FromMinutes(10);
@@ -94,6 +97,7 @@ internal static class DependencyInjection
 
         services.AddRateLimiter(RateLimitPolicies.Configure);
         services.AddAuthorization(AuthorizationPolicies.Configure);
+        services.AddGrpc(ConfigureServiceCalls);
 
         return services;
     }
@@ -159,6 +163,7 @@ internal static class DependencyInjection
 
                 server.AllowAuthorizationCodeFlow()
                     .AllowRefreshTokenFlow()
+                    .AllowClientCredentialsFlow()
                     .RequireProofKeyForCodeExchange()
                     .RequirePushedAuthorizationRequests()
                     .RegisterScopes(Scopes.OpenId, Scopes.Profile, Scopes.OfflineAccess, OpenIdNames.ApiScope);
@@ -315,6 +320,13 @@ internal static class DependencyInjection
         services.AddScoped<SwitchActiveOrganizationHandler>();
 
         return services;
+    }
+
+    private static void ConfigureServiceCalls(GrpcServiceOptions options)
+    {
+        options.MaxReceiveMessageSize = MaximumServiceCallMessageBytes;
+        options.CompressionProviders = [new BoundedGzipCompressionProvider(MaximumServiceCallMessageBytes)];
+        options.IgnoreUnknownServices = true;
     }
 
     private static void ConfigureIdentity(IdentityOptions options) =>

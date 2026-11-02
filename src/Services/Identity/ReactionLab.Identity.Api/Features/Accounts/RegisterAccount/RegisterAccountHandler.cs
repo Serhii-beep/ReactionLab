@@ -1,13 +1,17 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Npgsql;
+using ReactionLab.Identity.Persistence;
 using ReactionLab.Identity.Persistence.Accounts;
+using ReactionLab.Messaging.Outbox;
 using ReactionLab.SharedKernel;
 
 namespace ReactionLab.Identity.Api.Features.Accounts.RegisterAccount;
 
 internal sealed class RegisterAccountHandler(
     UserManager<User> userManager,
+    AppDbContext context,
     TimeProvider timeProvider,
     ILogger<RegisterAccountHandler> logger) : ICommandHandler<RegisterAccountCommand>
 {
@@ -43,6 +47,7 @@ internal sealed class RegisterAccountHandler(
 
         if (created.Errors.Any(error => error.IsAlreadyRegistered()))
         {
+            await PublishRegistrationRepeatedAsync(user.Value.Email ?? string.Empty);
             logger.LogInformation("Registration for an address that already has an account.");
 
             return Result.Success();
@@ -60,6 +65,36 @@ internal sealed class RegisterAccountHandler(
         catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
         {
             return IdentityResult.Failed(userManager.ErrorDescriber.DuplicateEmail(user.Email ?? string.Empty));
+        }
+    }
+
+    private async Task PublishRegistrationRepeatedAsync(string email)
+    {
+        try
+        {
+            await context.Database.CreateExecutionStrategy().ExecuteAsync(
+                Guid.CreateVersion7(),
+                async (_, eventId, cancellationToken) =>
+                {
+                    context.ChangeTracker.Clear();
+
+                    if (await userManager.FindByEmailAsync(email) is not { } account)
+                    {
+                        return false;
+                    }
+
+                    account.RecordRepeatedRegistration(eventId);
+
+                    return await context.SaveChangesAsync(cancellationToken) > 0;
+                },
+                async (_, eventId, cancellationToken) => new ExecutionResult<bool>(
+                    await context.Set<OutboxMessage>().AnyAsync(message => message.Id == eventId, cancellationToken),
+                    true),
+                CancellationToken.None);
+        }
+        finally
+        {
+            context.ChangeTracker.Clear();
         }
     }
 }

@@ -18,6 +18,12 @@ var gatewayClientSecret = builder.AddParameter(
     secret: true,
     persist: true);
 
+var notificationsClientSecret = builder.AddParameter(
+    "notifications-client-secret",
+    new GenerateParameterDefault { MinLength = 32, Special = false },
+    secret: true,
+    persist: true);
+
 var cache = builder.AddRedis("cache")
     .WithDataVolume("reactionlab-redisdata")
     .WithLifetime(ContainerLifetime.Persistent)
@@ -84,7 +90,8 @@ identityMigrator
     .WithEnvironment("OpenId__Gateway__RedirectUri", ReferenceExpression.Create($"{gatewayAddress}/signin-oidc"))
     .WithEnvironment(
         "OpenId__Gateway__PostLogoutRedirectUri",
-        ReferenceExpression.Create($"{gatewayAddress}/signout-callback-oidc"));
+        ReferenceExpression.Create($"{gatewayAddress}/signout-callback-oidc"))
+    .WithEnvironment("OpenId__Notifications__Secret", notificationsClientSecret);
 
 if (builder.Configuration["Identity:FirstPlatformAdminEmail"] is { Length: > 0 } firstPlatformAdminEmail)
 {

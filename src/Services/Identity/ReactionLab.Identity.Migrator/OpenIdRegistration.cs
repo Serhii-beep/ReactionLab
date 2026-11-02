@@ -10,40 +10,35 @@ internal sealed class OpenIdRegistration(
     IOpenIddictApplicationManager applicationManager,
     IOpenIddictScopeManager scopeManager,
     IOptions<GatewayClientOptions> gatewayOptions,
+    IOptions<NotificationsClientOptions> notificationsOptions,
     ILogger<OpenIdRegistration> logger)
 {
     public async Task RegisterAsync(CancellationToken cancellationToken)
     {
-        await RegisterApiScopeAsync(cancellationToken);
-        await RegisterGatewayAsync(cancellationToken);
+        await RegisterScopeAsync(
+            new OpenIddictScopeDescriptor
+            {
+                Name = OpenIdNames.ApiScope,
+                DisplayName = "ReactionLab APIs",
+                Resources = { OpenIdNames.IdentityAudience, OpenIdNames.CatalogAudience }
+            },
+            cancellationToken);
+
+        await RegisterScopeAsync(
+            new OpenIddictScopeDescriptor
+            {
+                Name = OpenIdNames.ContactsScope,
+                DisplayName = "Account contacts",
+                Resources = { OpenIdNames.IdentityAudience }
+            },
+            cancellationToken);
+
+        await RegisterClientAsync(DescribeGateway(gatewayOptions.Value), cancellationToken);
+        await RegisterClientAsync(DescribeNotifications(notificationsOptions.Value), cancellationToken);
     }
 
-    private async Task RegisterApiScopeAsync(CancellationToken cancellationToken)
-    {
-        var descriptor = new OpenIddictScopeDescriptor
-        {
-            Name = OpenIdNames.ApiScope,
-            DisplayName = "ReactionLab APIs",
-            Resources = { OpenIdNames.IdentityAudience, OpenIdNames.CatalogAudience }
-        };
-
-        if (await scopeManager.FindByNameAsync(OpenIdNames.ApiScope, cancellationToken) is { } scope)
-        {
-            await scopeManager.UpdateAsync(scope, descriptor, cancellationToken);
-        }
-        else
-        {
-            await scopeManager.CreateAsync(descriptor, cancellationToken);
-        }
-
-        logger.LogInformation("Registered the OpenID scope {Scope}.", OpenIdNames.ApiScope);
-    }
-
-    private async Task RegisterGatewayAsync(CancellationToken cancellationToken)
-    {
-        var gateway = gatewayOptions.Value;
-
-        var descriptor = new OpenIddictApplicationDescriptor
+    private static OpenIddictApplicationDescriptor DescribeGateway(GatewayClientOptions gateway) =>
+        new()
         {
             ClientId = OpenIdNames.GatewayClientId,
             ClientSecret = gateway.Secret,
@@ -72,7 +67,40 @@ internal sealed class OpenIdRegistration(
             }
         };
 
-        if (await applicationManager.FindByClientIdAsync(OpenIdNames.GatewayClientId, cancellationToken) is { } application)
+    private static OpenIddictApplicationDescriptor DescribeNotifications(NotificationsClientOptions notifications) =>
+        new()
+        {
+            ClientId = OpenIdNames.NotificationsClientId,
+            ClientSecret = notifications.Secret,
+            ClientType = ClientTypes.Confidential,
+            DisplayName = "ReactionLab notifications",
+            Permissions =
+            {
+                Permissions.Endpoints.Token,
+                Permissions.GrantTypes.ClientCredentials,
+                Permissions.Prefixes.Scope + OpenIdNames.ContactsScope
+            }
+        };
+
+    private async Task RegisterScopeAsync(OpenIddictScopeDescriptor descriptor, CancellationToken cancellationToken)
+    {
+        if (await scopeManager.FindByNameAsync(descriptor.Name!, cancellationToken) is { } scope)
+        {
+            await scopeManager.UpdateAsync(scope, descriptor, cancellationToken);
+        }
+        else
+        {
+            await scopeManager.CreateAsync(descriptor, cancellationToken);
+        }
+
+        logger.LogInformation("Registered the OpenID scope {Scope}.", descriptor.Name);
+    }
+
+    private async Task RegisterClientAsync(
+        OpenIddictApplicationDescriptor descriptor,
+        CancellationToken cancellationToken)
+    {
+        if (await applicationManager.FindByClientIdAsync(descriptor.ClientId!, cancellationToken) is { } application)
         {
             await applicationManager.UpdateAsync(application, descriptor, cancellationToken);
         }
@@ -81,6 +109,6 @@ internal sealed class OpenIdRegistration(
             await applicationManager.CreateAsync(descriptor, cancellationToken);
         }
 
-        logger.LogInformation("Registered the OpenID client {ClientId}.", OpenIdNames.GatewayClientId);
+        logger.LogInformation("Registered the OpenID client {ClientId}.", descriptor.ClientId);
     }
 }
