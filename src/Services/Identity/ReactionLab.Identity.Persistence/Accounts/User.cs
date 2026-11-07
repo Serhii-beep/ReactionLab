@@ -250,7 +250,7 @@ public sealed partial class User : IdentityUser<Guid>, IDomainEventSource
     }
 
     public void RecordRepeatedRegistration(Guid eventId) =>
-        _domainEvents.Add(new RegistrationRepeated(Id, Version) { EventId = eventId });
+        _domainEvents.Add(new RegistrationRepeated(Id, Version, CreatedAt) { EventId = eventId });
 
     private static Result<User> Create(
         string? email,

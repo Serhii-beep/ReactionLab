@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using ReactionLab.Messaging.Consuming;
 using ReactionLab.Messaging.Kafka;
 using ReactionLab.Messaging.Outbox;
 
@@ -52,6 +53,48 @@ public static class DependencyInjection
         builder.Services.AddSingleton<OutboxMetrics>();
         builder.Services.AddHostedService<OutboxRelay<TContext>>();
         builder.Services.AddHostedService<StateTopicHeartbeat>();
+        builder.Services.AddOpenTelemetry()
+            .WithTracing(tracing => tracing.AddSource(MessagingTelemetry.SourceName))
+            .WithMetrics(metrics => metrics.AddMeter(MessagingTelemetry.SourceName));
+
+        return builder;
+    }
+
+    public static IHostApplicationBuilder AddEventConsumer<TContext, TEffects>(
+        this IHostApplicationBuilder builder,
+        string connectionName,
+        string groupId,
+        IReadOnlyCollection<string> topics,
+        IReadOnlyCollection<string> eventTypes,
+        IReadOnlyCollection<string> erasureEventTypes)
+        where TContext : DbContext
+        where TEffects : class, IConsumedEventEffects
+    {
+        builder.AddKafkaConsumer<string, byte[]?>(
+            connectionName,
+            settings =>
+            {
+                settings.DisableHealthChecks = true;
+                settings.DisableTracing = true;
+                settings.Config.GroupId = groupId;
+                settings.Config.AllowAutoCreateTopics = false;
+                settings.Config.AutoOffsetReset = AutoOffsetReset.Earliest;
+                settings.Config.EnableAutoOffsetStore = false;
+                settings.Config.PartitionAssignmentStrategy = PartitionAssignmentStrategy.CooperativeSticky;
+            });
+
+        builder.Services.TryAddSingleton(TimeProvider.System);
+        builder.Services.Configure<EventConsumerOptions>(options =>
+        {
+            options.Topics = topics;
+            options.EventTypes = eventTypes;
+            options.ErasureEventTypes = erasureEventTypes;
+        });
+        builder.Services.AddScoped<IConsumedEventEffects, TEffects>();
+        builder.Services.AddSingleton<ConsumerMetrics>();
+        builder.Services.AddSingleton<DeadLetterReplay<TContext>>();
+        builder.Services.AddHostedService<EventConsumer<TContext>>();
+        builder.Services.AddHostedService<ConsumerPruningWorker<TContext>>();
         builder.Services.AddOpenTelemetry()
             .WithTracing(tracing => tracing.AddSource(MessagingTelemetry.SourceName))
             .WithMetrics(metrics => metrics.AddMeter(MessagingTelemetry.SourceName));

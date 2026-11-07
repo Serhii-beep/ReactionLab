@@ -41,6 +41,11 @@
     <Project Path="src/Services/Identity/ReactionLab.Identity.Migrator/ReactionLab.Identity.Migrator.csproj" />
     <Project Path="src/Services/Identity/ReactionLab.Identity.Persistence/ReactionLab.Identity.Persistence.csproj" />
   </Folder>
+  <Folder Name="/src/Services/Notifications/">
+    <Project Path="src/Services/Notifications/ReactionLab.Notifications.Migrator/ReactionLab.Notifications.Migrator.csproj" />
+    <Project Path="src/Services/Notifications/ReactionLab.Notifications.Persistence/ReactionLab.Notifications.Persistence.csproj" />
+    <Project Path="src/Services/Notifications/ReactionLab.Notifications/ReactionLab.Notifications.csproj" />
+  </Folder>
   <Folder Name="/tests/" />
   <Folder Name="/tests/BuildingBlocks/">
     <Project Path="tests/BuildingBlocks/ReactionLab.SharedKernel.UnitTests/ReactionLab.SharedKernel.UnitTests.csproj" />

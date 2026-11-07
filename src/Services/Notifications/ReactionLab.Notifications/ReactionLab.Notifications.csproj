@@ -1,0 +1,7 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\aspire\ReactionLab.ServiceDefaults\ReactionLab.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\..\Identity\ReactionLab.Identity.Contracts\ReactionLab.Identity.Contracts.csproj" />
+    <ProjectReference Include="..\ReactionLab.Notifications.Persistence\ReactionLab.Notifications.Persistence.csproj" />
+  </ItemGroup>
+</Project>

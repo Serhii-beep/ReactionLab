@@ -11,6 +11,7 @@ var postgres = builder.AddPostgres("postgres")
 
 var catalogDatabase = postgres.AddDatabase("catalog-db", completeVolume ? "catalog_complete" : "catalog");
 var identityDatabase = postgres.AddDatabase("identity-db", "identity");
+var notificationsDatabase = postgres.AddDatabase("notifications-db", "notifications");
 
 var gatewayClientSecret = builder.AddParameter(
     "gateway-client-secret",
@@ -75,6 +76,23 @@ var identity = builder.AddProject<Projects.ReactionLab_Identity_Api>("identity")
     .WithReference(identityDatabase, connectionName: "DefaultConnection")
     .WithReference(kafka)
     .WaitForCompletion(identityMigrator);
+
+var notificationsMigrator = builder.AddProject<Projects.ReactionLab_Notifications_Migrator>("notifications-migrator")
+    .WithReference(notificationsDatabase, connectionName: "DefaultConnection")
+    .WaitFor(notificationsDatabase);
+
+builder.AddProject<Projects.ReactionLab_Notifications>("notifications")
+    .WithReference(notificationsDatabase, connectionName: "DefaultConnection")
+    .WithReference(kafka)
+    .WaitForCompletion(identityMigrator)
+    .WaitForCompletion(notificationsMigrator);
+
+builder.AddProject<Projects.ReactionLab_Notifications>("notifications-replay")
+    .WithArgs("replay-dead-letters")
+    .WithReference(notificationsDatabase, connectionName: "DefaultConnection")
+    .WaitForCompletion(notificationsMigrator)
+    .WithExplicitStart()
+    .ExcludeFromManifest();
 
 var gateway = builder.AddProject<Projects.ReactionLab_Gateway>("gateway")
     .WithReference(catalog)
