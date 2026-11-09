@@ -1,0 +1,15 @@
+{
+    "common": {
+        "greeting": "Hi {name},",
+        "greetingWithoutName": "Hi there,",
+        "securityNoticeReason": "You're getting this because a ReactionLab account uses this address. It's a security notice, so it's sent even when you turn other emails off.",
+        "tagline": "ReactionLab · a 3D chemistry lab"
+    },
+    "repeatedRegistration": {
+        "title": "Someone tried to sign up with your email",
+        "attempt": "Someone just tried to create a ReactionLab account with {email}. You already have an account with this address, so nothing was created and nothing about your account changed.",
+        "ifItWasYou": "If it was you, sign in instead. Forgotten your password? The sign-in page can send you a link to reset it.",
+        "signIn": "Sign in to ReactionLab",
+        "ifItWasNotYou": "If it wasn't you, you don't need to do anything. Your account is safe, and nobody can use your address for another ReactionLab account."
+    }
+}

@@ -1,6 +1,7 @@
 using ReactionLab.Identity.Contracts;
 using ReactionLab.Messaging;
 using ReactionLab.Messaging.Consuming;
+using ReactionLab.Notifications;
 using ReactionLab.Notifications.Events;
 using ReactionLab.Notifications.Persistence;
 using ReactionLab.ServiceDefaults;
@@ -8,6 +9,7 @@ using ReactionLab.ServiceDefaults;
 var builder = Host.CreateApplicationBuilder(args);
 
 builder.AddServiceDefaults();
+builder.Services.Configure<HostOptions>(options => options.ServicesStopConcurrently = true);
 
 builder.Services.AddPersistence(builder.Configuration);
 builder.Services.AddScoped<RepeatedRegistrationNotices>();
@@ -19,6 +21,8 @@ builder.AddEventConsumer<AppDbContext, NotificationEventEffects>(
     [IdentityTopics.Users, IdentityTopics.Erasure],
     NotificationEventEffects.EventTypes,
     NotificationEventEffects.ErasureEventTypes);
+builder.AddIdentityCalls();
+builder.AddMailSending();
 
 using var host = builder.Build();
 

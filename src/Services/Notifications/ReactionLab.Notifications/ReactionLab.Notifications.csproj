@@ -3,5 +3,23 @@
     <ProjectReference Include="..\..\..\..\aspire\ReactionLab.ServiceDefaults\ReactionLab.ServiceDefaults.csproj" />
     <ProjectReference Include="..\..\Identity\ReactionLab.Identity.Contracts\ReactionLab.Identity.Contracts.csproj" />
     <ProjectReference Include="..\ReactionLab.Notifications.Persistence\ReactionLab.Notifications.Persistence.csproj" />
+    <ProjectReference Include="..\ReactionLab.Notifications.Mail\ReactionLab.Notifications.Mail.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Google.Protobuf" />
+    <PackageReference Include="Grpc.Net.ClientFactory" />
+    <PackageReference Include="Grpc.Tools">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="MailKit" />
+    <PackageReference Include="OpenIddict.Client.SystemNetHttp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Protobuf Include="..\..\Identity\ReactionLab.Identity.Contracts\Protos\contacts.proto"
+              Link="Protos\contacts.proto">
+      <GrpcServices>Client</GrpcServices>
+      <Access>Internal</Access>
+    </Protobuf>
   </ItemGroup>
 </Project>

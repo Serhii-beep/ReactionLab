@@ -133,6 +133,35 @@ namespace ReactionLab.Notifications.Persistence.Migrations
                     b.ToTable("processed_events", (string)null);
                 });
 
+            modelBuilder.Entity("ReactionLab.Notifications.Persistence.Mail.MailDelivery", b =>
+                {
+                    b.Property<Guid>("RecipientId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("recipient_id");
+
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("MailType")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("mail_type");
+
+                    b.Property<DateTimeOffset>("SentAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("sent_at");
+
+                    b.HasKey("RecipientId", "Id")
+                        .HasName("pk_mail_deliveries");
+
+                    b.HasIndex("SentAt")
+                        .HasDatabaseName("ix_mail_deliveries_sent_at");
+
+                    b.ToTable("mail_deliveries", (string)null);
+                });
+
             modelBuilder.Entity("ReactionLab.Notifications.Persistence.Mail.MailJob", b =>
                 {
                     b.Property<Guid>("RecipientId")
@@ -143,6 +172,10 @@ namespace ReactionLab.Notifications.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<int>("Attempts")
+                        .HasColumnType("integer")
+                        .HasColumnName("attempts");
+
                     b.Property<DateTimeOffset>("AvailableAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("available_at");
@@ -150,6 +183,15 @@ namespace ReactionLab.Notifications.Persistence.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset?>("FailedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("failed_at");
+
+                    b.Property<string>("LastFailure")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("last_failure");
 
                     b.Property<string>("MailType")
                         .IsRequired()
@@ -164,6 +206,14 @@ namespace ReactionLab.Notifications.Persistence.Migrations
 
                     b.HasKey("RecipientId", "Id")
                         .HasName("pk_mail_jobs");
+
+                    b.HasIndex("AvailableAt")
+                        .HasDatabaseName("ix_mail_jobs_due")
+                        .HasFilter("failed_at IS NULL");
+
+                    b.HasIndex("FailedAt")
+                        .HasDatabaseName("ix_mail_jobs_failed")
+                        .HasFilter("failed_at IS NOT NULL");
 
                     b.ToTable("mail_jobs", (string)null);
                 });

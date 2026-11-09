@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="@Content.Locale">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="color-scheme" content="light dark" />
+        <meta name="supported-color-schemes" content="light dark" />
+        <title>@Content.Subject</title>
+        <style>
+            @@media (max-width: 600px) {
+                .page-cell {
+                    padding: 16px !important;
+                }
+
+                .card-cell {
+                    padding: 24px 20px 28px !important;
+                }
+
+                .heading {
+                    font-size: 20px !important;
+                }
+            }
+
+            @@media (prefers-color-scheme: dark) {
+                .page, .page-cell {
+                    background-color: @MailStyle.DarkPageColor !important;
+                }
+
+                .card-cell {
+                    background-color: @MailStyle.DarkCardColor !important;
+                }
+
+                .card-cell, .rule {
+                    border-color: @MailStyle.DarkBorderColor !important;
+                }
+
+                .primary-text {
+                    color: @MailStyle.DarkPrimaryTextColor !important;
+                }
+
+                .secondary-text {
+                    color: @MailStyle.DarkSecondaryTextColor !important;
+                }
+
+                .tertiary-text {
+                    color: @MailStyle.DarkTertiaryTextColor !important;
+                }
+
+                .accent-outline {
+                    border-color: @MailStyle.DarkAccentColor !important;
+                }
+
+                .accent-text {
+                    color: @MailStyle.DarkAccentColor !important;
+                }
+            }
+        </style>
+    </head>
+    <body class="page" style="margin: 0; padding: 0; background-color: @MailStyle.PageColor;">
+        <table role="presentation" class="page" width="100%" cellpadding="0" cellspacing="0" border="0"
+            style="background-color: @MailStyle.PageColor">
+            <tr>
+                <td class="page-cell" align="center" style="padding: 40px 16px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 560px;">
+                        <tr>
+                            <td class="card-cell"
+                                style="padding: 36px 40px 40px; background-color: @MailStyle.CardColor;
+                                        border: 1px solid @MailStyle.BorderColor; border-radius: 14px;
+                                        font-family: @MailStyle.FontFamily; text-align: left;">
+                                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                                    <tr>
+                                        <td class="rule" style="padding-bottom: 24px; border-bottom: 1px solid @MailStyle.BorderColor;">
+                                            <img src="cid:@MailImages.LogoContentId" width="26" height="26" alt=""
+                                                style="display: inline-block; border: 0; vertical-align: middle;" />
+                                            <span class="primary-text"
+                                                style="margin-left: 10px; vertical-align: middle; font-size: 17px; font-weight: 600;
+                                                        letter-spacing: -0.011em; color: @MailStyle.PrimaryTextColor;">@MailStyle.BrandName</span>
+                                        </td>
+                                    </tr>
+                                </table>
+                                <h1 class="heading primary-text"
+                                    style="margin: 28px 0 0; font-size: 22px; line-height: 1.3; font-weight: 600;
+                                            letter-spacing: -0.011em; color: @MailStyle.PrimaryTextColor;">@Content.Heading</h1>
+                                @for (var index = 0; index < Content.Blocks.Count; index++)
+                                {
+                                    var gap = GapBefore(index);
+
+                                    switch (Content.Blocks[index])
+                                    {
+                                        case MailButton button:
+                                            <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top: @(gap)px;">
+                                                <tr>
+                                                    <td class="accent-outline" style="border: 1px solid @MailStyle.AccentColor; border-radius: 8px;">
+                                                        <a class="accent-text" href="@button.Target.AbsoluteUri"
+                                                            style="display: inline-block; padding: 12px 20px; font-size: 15px; font-weight: 600;
+                                                                    line-height: 20px; color: @MailStyle.AccentColor; text-decoration: none;">@button.Label</a>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                            break;
+                                        case MailParagraph { IsAside: true } aside:
+                                            <p class="secondary-text"
+                                                style="margin: @(gap)px 0 0; font-size: 14px; line-height: 1.6;
+                                                        color: @MailStyle.SecondaryTextColor; overflow-wrap: break-word;">
+                                                <MailRuns Text="aside.Text"></MailRuns>
+                                            </p>
+                                            break;
+                                        case MailParagraph paragraph:
+                                            <p class="primary-text"
+                                                style="margin: @(gap)px 0 0; font-size: 15px; line-height: 1.6;
+                                                        color: @MailStyle.PrimaryTextColor; overflow-wrap: break-word;">
+                                                <MailRuns Text="paragraph.Text"></MailRuns>
+                                            </p>
+                                            break;
+                                    }
+                                }
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 20px 8px 0; font-family: @MailStyle.FontFamily; text-align: left;">
+                                @for (var index = 0; index < Content.FooterLines.Count; index++)
+                                {
+                                    <p class="tertiary-text"
+                                        style="margin: @(index == 0 ? 0 : 8)px 0 0; font-size: 12px; line-height: 1.6;
+                                                color: @MailStyle.TertiaryTextColor;">@Content.FooterLines[index]</p>
+                                }
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </body>
+</html>
+
+@code {
+    [Parameter, EditorRequired]
+    public MailContent Content { get; set; } = null!;
+
+    private int GapBefore(int index) =>
+        index == 0 ? 20 : Content.Blocks[index] is MailButton or MailParagraph { IsAside: true } ? 28 : 12;
+}

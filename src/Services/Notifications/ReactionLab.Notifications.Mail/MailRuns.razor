@@ -1,0 +1,16 @@
+@foreach (var run in Text.Runs)
+{
+    if (run.IsEmphasized)
+    {
+        <strong style="font-weight: 600;">@run.Text</strong>
+    }
+    else
+    {
+        @run.Text
+    }
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public MailText Text { get; set; } = null!;
+}

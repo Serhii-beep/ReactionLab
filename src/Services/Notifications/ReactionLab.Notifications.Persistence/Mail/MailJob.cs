@@ -3,6 +3,7 @@ namespace ReactionLab.Notifications.Persistence.Mail;
 public sealed class MailJob
 {
     public const int MaximumMailTypeLength = 64;
+    public const int MaximumFailureLength = 128;
 
     private MailJob()
     {
@@ -20,6 +21,12 @@ public sealed class MailJob
     public DateTimeOffset AvailableAt { get; private init; }
 
     public DateTimeOffset CreatedAt { get; private init; }
+
+    public int Attempts { get; private init; }
+
+    public string? LastFailure { get; private init; }
+
+    public DateTimeOffset? FailedAt { get; private init; }
 
     public static MailJob Queue(
         Guid recipientId,

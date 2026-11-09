@@ -42,6 +42,13 @@ var kafka = builder.AddKafka("kafka")
     .WithLifetime(ContainerLifetime.Persistent)
     .WithKafkaUI();
 
+IResourceBuilder<IResourceWithConnectionString> mail = builder.ExecutionContext.IsRunMode
+    ? builder.AddMailPit("mail")
+        .WithImageTag("v1.32.0")
+        .WithDataVolume("reactionlab-maildata")
+        .WithLifetime(ContainerLifetime.Persistent)
+    : builder.AddConnectionString("mail");
+
 var catalogMigrator = builder.AddProject<Projects.ReactionLab_Catalog_Migrator>("catalog-migrator")
     .WithReference(catalogDatabase, connectionName: "DefaultConnection")
     .WithReference(blobs)
@@ -81,9 +88,12 @@ var notificationsMigrator = builder.AddProject<Projects.ReactionLab_Notification
     .WithReference(notificationsDatabase, connectionName: "DefaultConnection")
     .WaitFor(notificationsDatabase);
 
-builder.AddProject<Projects.ReactionLab_Notifications>("notifications")
+var notifications = builder.AddProject<Projects.ReactionLab_Notifications>("notifications")
     .WithReference(notificationsDatabase, connectionName: "DefaultConnection")
     .WithReference(kafka)
+    .WithReference(identity)
+    .WithReference(mail)
+    .WithEnvironment("OpenId__ClientSecret", notificationsClientSecret)
     .WaitForCompletion(identityMigrator)
     .WaitForCompletion(notificationsMigrator);
 
@@ -102,6 +112,10 @@ var gateway = builder.AddProject<Projects.ReactionLab_Gateway>("gateway")
 var gatewayAddress = gateway.GetEndpoint("https");
 
 identity.WithEnvironment("OpenId__Issuer", gatewayAddress);
+
+notifications
+    .WithEnvironment("OpenId__Issuer", gatewayAddress)
+    .WithEnvironment("Mail__SiteUri", gatewayAddress);
 
 identityMigrator
     .WithEnvironment("OpenId__Gateway__Secret", gatewayClientSecret)
@@ -138,6 +152,8 @@ if (builder.ExecutionContext.IsRunMode)
     identityMigrator
         .WithEnvironment("Identity__DemoPassword", demoPassword)
         .WithEnvironment("Messaging__CreateTopics", "true");
+
+    notifications.WithEnvironment("Mail__RequireTls", "false");
 }
 
 await builder.Build().RunAsync();

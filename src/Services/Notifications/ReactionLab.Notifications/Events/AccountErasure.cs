@@ -21,6 +21,10 @@ internal sealed class AccountErasure(AppDbContext context, TimeProvider timeProv
             .Where(throttle => throttle.RecipientId == requested.UserId)
             .ExecuteDeleteAsync(cancellationToken);
 
+        await context.Set<MailDelivery>()
+            .Where(delivery => delivery.RecipientId == requested.UserId)
+            .ExecuteDeleteAsync(cancellationToken);
+
         await context.RecordErasureAsync(
             consumed.Subject,
             requested.Version,

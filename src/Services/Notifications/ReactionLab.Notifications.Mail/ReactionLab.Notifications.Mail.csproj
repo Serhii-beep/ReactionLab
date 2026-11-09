@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+  <PropertyGroup>
+    <LocalesDirectory>..\..\..\..\reaction-lab-client\public\locales\</LocalesDirectory>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="$(LocalesDirectory)en\mail.json" LogicalName="locales/en/mail.json" />
+    <EmbeddedResource Include="Resources\logo.png" LogicalName="logo.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="MessageFormat" />
+  </ItemGroup>
+</Project>
