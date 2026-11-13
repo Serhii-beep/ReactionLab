@@ -75,7 +75,7 @@ internal sealed class PlatformAdminSeeding(
             {
                 logger.LogWarning(
                     "The address in {Setting} isn't confirmed, so it isn't made a platform admin. "
-                    + "Sign up with Google, then set a password: an admin acts with it once its probation ends.",
+                    + "Confirm the address, then run the migrator again.",
                     FirstPlatformAdminEmailKey);
                 return;
             }

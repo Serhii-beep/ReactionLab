@@ -28,7 +28,10 @@ internal sealed class LinkExternalSignInHandler(
         }
 
         var identity = pending.Identity;
-        var user = await passwordVerifier.VerifyAsync(identity.VerifiedEmail, command.Password, cancellationToken);
+        var user = await passwordVerifier.VerifyWithProvenEmailAsync(
+            identity.VerifiedEmail,
+            command.Password,
+            cancellationToken);
 
         if (user.IsFailure)
         {

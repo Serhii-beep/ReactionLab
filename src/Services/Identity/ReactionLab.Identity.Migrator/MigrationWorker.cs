@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using ReactionLab.Identity.Persistence;
+using ReactionLab.Identity.Persistence.Accounts;
 
 namespace ReactionLab.Identity.Migrator;
 
@@ -17,6 +18,8 @@ internal sealed class MigrationWorker(
     {
         try
         {
+            EmailAddresses.RequireIdnaSupport();
+
             await using var scope = services.CreateAsyncScope();
             var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
@@ -30,6 +33,7 @@ internal sealed class MigrationWorker(
 
             logger.LogInformation("Database schema is up to date.");
 
+            await scope.ServiceProvider.GetRequiredService<EmailCanonicalization>().CanonicalizeAsync(stoppingToken);
             await scope.ServiceProvider.GetRequiredService<OpenIdRegistration>().RegisterAsync(stoppingToken);
             await scope.ServiceProvider.GetRequiredService<PlatformAdminSeeding>().SeedAsync(stoppingToken);
             await scope.ServiceProvider.GetRequiredService<DemoDistrictSeeding>().SeedAsync(stoppingToken);

@@ -1,5 +1,6 @@
 using ReactionLab.Identity.Api.Features.Accounts.Contracts;
 using ReactionLab.Identity.Api.Features.Accounts.RegisterAccount;
+using ReactionLab.Identity.Api.Features.Accounts.RequestEmailConfirmation;
 using ReactionLab.Identity.Api.Features.Accounts.SchoolSignIn;
 using ReactionLab.Identity.Api.Features.Accounts.SignIn;
 using ReactionLab.Identity.Api.Features.Accounts.SignOut;
@@ -39,12 +40,29 @@ internal static class AccountEndpoints
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
 
+        group.MapPost("/email-confirmation-requests", async (
+            RequestEmailConfirmationRequest request,
+            RequestEmailConfirmationHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            var command = new RequestEmailConfirmationCommand(request.Email);
+            var result = await handler.HandleAsync(command, cancellationToken);
+
+            return result.ToHttpResult();
+        })
+        .WithName("RequestEmailConfirmation")
+        .WithSummary("Send a new confirmation link to an address whose account isn't confirmed.")
+        .RequireRateLimiting(RateLimitPolicies.EmailConfirmationRequest)
+        .Produces(StatusCodes.Status204NoContent)
+        .ProducesProblem(StatusCodes.Status400BadRequest)
+        .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
+
         group.MapPost("/sign-in", async (
             SignInRequest request,
             SignInHandler handler,
             CancellationToken cancellationToken) =>
         {
-            var command = new SignInCommand(request.Email, request.Password);
+            var command = new SignInCommand(request.Email, request.Password, request.EmailConfirmationToken);
             var result = await handler.HandleAsync(command, cancellationToken);
 
             return result.ToHttpResult();

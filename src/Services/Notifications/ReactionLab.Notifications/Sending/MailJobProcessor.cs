@@ -1,6 +1,8 @@
+using Grpc.Core;
 using Microsoft.Extensions.Options;
 using MimeKit;
 using ReactionLab.Identity.Contracts.Contacts.V1;
+using ReactionLab.Identity.Contracts.SecurityLinks.V1;
 using ReactionLab.Notifications.Mail;
 using ReactionLab.Notifications.Persistence;
 using ReactionLab.Notifications.Persistence.Mail;
@@ -12,6 +14,7 @@ namespace ReactionLab.Notifications.Sending;
 internal sealed class MailJobProcessor(
     AppDbContext context,
     ContactDirectory contacts,
+    SecurityLinkIssuer securityLinks,
     MailTemplates templates,
     ITranslationCatalog catalog,
     MailRenderer renderer,
@@ -26,8 +29,9 @@ internal sealed class MailJobProcessor(
     private static readonly TimeSpan GraceAfterStop = TimeSpan.FromSeconds(5);
     private static readonly TimeSpan FirstRetryDelay = TimeSpan.FromMinutes(1);
     private static readonly TimeSpan LongestRetryDelay = TimeSpan.FromHours(1);
+    private static readonly TimeSpan NewerIdentityRetryDelay = TimeSpan.FromMinutes(1);
 
-    public async Task<bool> ProcessAsync(
+    public async Task<(string Outcome, bool FailedSystemically)> ProcessAsync(
         MailJob job,
         SmtpMailer mailer,
         TimeSpan? pauseOnSystemicFailure,
@@ -40,7 +44,7 @@ internal sealed class MailJobProcessor(
         activity?.SetTag(MailTelemetry.OutcomeTag, outcome);
         metrics.RecordFinished(job.MailType, outcome);
 
-        return failedSystemically;
+        return (outcome, failedSystemically);
     }
 
     private async Task<(string Outcome, bool FailedSystemically)> SendAsync(
@@ -64,7 +68,7 @@ internal sealed class MailJobProcessor(
 
             if (job.CreatedAt + template.Lifetime < timeProvider.GetUtcNow())
             {
-                return (await DropAsync(job, MailJobOutcomes.Expired), false);
+                return (await ExpireAsync(job), false);
             }
 
             var contact = await contacts.FindAsync(job.RecipientId, lookup.Token);
@@ -86,7 +90,30 @@ internal sealed class MailJobProcessor(
                 return (await DropAsync(job, MailJobOutcomes.UnsendableAddress), false);
             }
 
-            var rendered = await ComposeAsync(template, contact, displayName);
+            var link = default(SecurityLinkToken);
+
+            if (template.LinkPurpose is { } purpose)
+            {
+                IssuedSecurityLink? issued;
+
+                try
+                {
+                    issued = await securityLinks.IssueAsync(job.RecipientId, job.Id, purpose, lookup.Token);
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unimplemented)
+                {
+                    return (await WaitForNewerIdentityAsync(job, ex), false);
+                }
+
+                if (issued is null)
+                {
+                    return (await DropAsync(job, MailJobOutcomes.LinkUnavailable), false);
+                }
+
+                link = new SecurityLinkToken(issued.Token, issued.ExpiresAt.ToDateTimeOffset());
+            }
+
+            var rendered = await ComposeAsync(template, contact, displayName, link);
 
             using var message = MailMessages.Create(
                 job.Id,
@@ -107,11 +134,15 @@ internal sealed class MailJobProcessor(
         return (MailJobOutcomes.Sent, false);
     }
 
-    private async Task<RenderedMail> ComposeAsync(IMailTemplate template, Contact contact, string? displayName)
+    private async Task<RenderedMail> ComposeAsync(
+        IMailTemplate template,
+        Contact contact,
+        string? displayName,
+        SecurityLinkToken? link)
     {
         try
         {
-            var recipient = new MailRecipient(displayName, contact.Email, catalog.ResolveLocale(contact.Locale));
+            var recipient = new MailRecipient(displayName, contact.Email, catalog.ResolveLocale(contact.Locale), link);
 
             return await renderer.RenderAsync(template.Compose(recipient));
         }
@@ -132,6 +163,36 @@ internal sealed class MailJobProcessor(
             outcome);
 
         return outcome;
+    }
+
+    private async Task<string> ExpireAsync(MailJob job)
+    {
+        await context.DropMailJobAsync(job, CancellationToken.None);
+
+        logger.LogWarning(
+            "Mail job {MailJobId} of type {MailType} expired unsent. Its last failure: {Failure}.",
+            job.Id,
+            job.MailType,
+            job.LastFailure ?? "none");
+
+        return MailJobOutcomes.Expired;
+    }
+
+    private async Task<string> WaitForNewerIdentityAsync(MailJob job, RpcException exception)
+    {
+        var failure = MailFailures.Describe(exception);
+
+        await context.DeferMailJobAsync(job, NewerIdentityRetryDelay, failure, CancellationToken.None);
+
+        logger.LogInformation(
+            "Mail job {MailJobId} of type {MailType} reached an older Identity, so it waits {RetryDelay} "
+            + "with its attempt given back: {Failure}.",
+            job.Id,
+            job.MailType,
+            NewerIdentityRetryDelay,
+            failure);
+
+        return MailJobOutcomes.WaitingForNewerIdentity;
     }
 
     private async Task<(string Outcome, bool FailedSystemically)> SettleFailureAsync(

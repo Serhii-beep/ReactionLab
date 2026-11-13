@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package reactionlab.identity.security_links.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option csharp_namespace = "ReactionLab.Identity.Contracts.SecurityLinks.V1";
+
+service SecurityLinks {
+  rpc IssueSecurityLink(IssueSecurityLinkRequest) returns (IssuedSecurityLink);
+}
+
+enum SecurityLinkPurpose {
+  SECURITY_LINK_PURPOSE_UNSPECIFIED = 0;
+  SECURITY_LINK_PURPOSE_EMAIL_CONFIRMATION = 1;
+}
+
+message IssueSecurityLinkRequest {
+  string account_id = 1;
+  string request_id = 2;
+  SecurityLinkPurpose purpose = 3;
+}
+
+message IssuedSecurityLink {
+  string token = 1;
+  google.protobuf.Timestamp expires_at = 2;
+}

@@ -33,6 +33,15 @@ internal sealed class OpenIdRegistration(
             },
             cancellationToken);
 
+        await RegisterScopeAsync(
+            new OpenIddictScopeDescriptor
+            {
+                Name = OpenIdNames.SecurityLinksScope,
+                DisplayName = "Security links",
+                Resources = { OpenIdNames.IdentityAudience }
+            },
+            cancellationToken);
+
         await RegisterClientAsync(DescribeGateway(gatewayOptions.Value), cancellationToken);
         await RegisterClientAsync(DescribeNotifications(notificationsOptions.Value), cancellationToken);
     }
@@ -78,7 +87,8 @@ internal sealed class OpenIdRegistration(
             {
                 Permissions.Endpoints.Token,
                 Permissions.GrantTypes.ClientCredentials,
-                Permissions.Prefixes.Scope + OpenIdNames.ContactsScope
+                Permissions.Prefixes.Scope + OpenIdNames.ContactsScope,
+                Permissions.Prefixes.Scope + OpenIdNames.SecurityLinksScope
             }
         };
 

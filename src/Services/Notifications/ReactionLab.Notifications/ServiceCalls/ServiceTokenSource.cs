@@ -58,7 +58,7 @@ internal sealed class ServiceTokenSource(OpenIddictClientService openIdClient, T
         {
             var result = await openIdClient.AuthenticateWithClientCredentialsAsync(new()
             {
-                Scopes = [IdentityScopes.Contacts],
+                Scopes = [IdentityScopes.Contacts, IdentityScopes.SecurityLinks],
                 CancellationToken = cancellationToken
             });
 

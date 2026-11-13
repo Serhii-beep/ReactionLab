@@ -17,7 +17,9 @@ internal sealed class MailJobWorker(
     private const int BatchSize = 10;
     private const int SystemicFailuresBeforePause = 2;
     private const string SampleAddress = "sample@example.com";
+    private const string SampleLinkToken = "sample";
 
+    private static readonly TimeSpan SampleLinkLifetime = TimeSpan.FromDays(1);
     private static readonly TimeSpan Lease = TimeSpan.FromMinutes(10);
     private static readonly TimeSpan IdleDelay = TimeSpan.FromSeconds(2);
     private static readonly TimeSpan FailureDelay = TimeSpan.FromSeconds(5);
@@ -75,19 +77,24 @@ internal sealed class MailJobWorker(
             {
                 foreach (var displayName in SampleDisplayNames)
                 {
-                    await renderer.RenderAsync(
-                        template.Compose(new MailRecipient(displayName, SampleAddress, locale)));
+                    await renderer.RenderAsync(template.Compose(
+                        new MailRecipient(displayName, SampleAddress, locale, SampleLink(template))));
                 }
             }
         }
     }
+
+    private SecurityLinkToken? SampleLink(IMailTemplate template) =>
+        template.LinkPurpose is null
+            ? null
+            : new SecurityLinkToken(SampleLinkToken, timeProvider.GetUtcNow() + SampleLinkLifetime);
 
     private async Task<MailBatchOutcome> SendBatchAsync(CancellationToken stoppingToken)
     {
         await using var scope = scopeFactory.CreateAsyncScope();
         var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var processor = scope.ServiceProvider.GetRequiredService<MailJobProcessor>();
-        var jobs = await context.ClaimDueMailJobsAsync(Lease, BatchSize, stoppingToken);
+        var jobs = await context.ClaimDueMailJobsAsync(Lease, BatchSize, templates.WrittenMailTypes, stoppingToken);
 
         if (jobs.Count == 0)
         {
@@ -104,16 +111,21 @@ internal sealed class MailJobWorker(
             {
                 stoppingToken.ThrowIfCancellationRequested();
 
-                var failedSystemically = await processor.ProcessAsync(
+                var (outcome, failedSystemically) = await processor.ProcessAsync(
                     jobs[index],
                     mailer,
                     PauseOnSystemicFailure(),
                     stoppingToken);
 
-                if (!failedSystemically)
+                if (outcome == MailJobOutcomes.Sent)
                 {
                     _systemicFailuresInARow = 0;
                     _pause = FirstPause;
+                    continue;
+                }
+
+                if (!failedSystemically)
+                {
                     continue;
                 }
 

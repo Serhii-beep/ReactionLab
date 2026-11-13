@@ -9,6 +9,8 @@ internal sealed class MailTemplates(IEnumerable<IMailTemplate> templates)
 
     public IEnumerable<IMailTemplate> All => _templatesByMailType.Values;
 
+    public string[] WrittenMailTypes => [.. _templatesByMailType.Keys];
+
     public IMailTemplate Find(string mailType) =>
         _templatesByMailType.TryGetValue(mailType, out var template)
             ? template

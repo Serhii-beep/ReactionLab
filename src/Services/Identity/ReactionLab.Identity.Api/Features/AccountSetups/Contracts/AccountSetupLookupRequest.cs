@@ -4,5 +4,5 @@ namespace ReactionLab.Identity.Api.Features.AccountSetups.Contracts;
 
 internal sealed record AccountSetupLookupRequest(
     [property: Required]
-    [property: MaxLength(AccountSetupTokens.TokenLength)]
+    [property: MaxLength(OneTimeLinkTokens.TokenLength)]
     string? Token);

@@ -13,6 +13,7 @@ using ReactionLab.Identity.Api.Features.Accounts.ListAccountOrganizations;
 using ReactionLab.Identity.Api.Features.Accounts.Reauthenticate;
 using ReactionLab.Identity.Api.Features.Accounts.RegisterAccount;
 using ReactionLab.Identity.Api.Features.Accounts.RemovePassword;
+using ReactionLab.Identity.Api.Features.Accounts.RequestEmailConfirmation;
 using ReactionLab.Identity.Api.Features.Accounts.SchoolSignIn;
 using ReactionLab.Identity.Api.Features.Accounts.SetPassword;
 using ReactionLab.Identity.Api.Features.Accounts.SignIn;
@@ -104,6 +105,8 @@ internal static class DependencyInjection
 
     public static IServiceCollection AddAccounts(this IServiceCollection services)
     {
+        EmailAddresses.RequireIdnaSupport();
+
         services.TryAddSingleton(TimeProvider.System);
 
         services.AddIdentityCore<User>(ConfigureIdentity)
@@ -115,6 +118,7 @@ internal static class DependencyInjection
 
         services.Configure<PasswordHasherOptions>(options => options.IterationCount = PasswordPolicy.HashIterations);
         services.Replace(ServiceDescriptor.Singleton<IPasswordHasher<User>, NormalizingPasswordHasher>());
+        services.Replace(ServiceDescriptor.Scoped<IUserConfirmation<User>, AccountConfirmation>());
         services.AddSingleton<PasswordVerificationGate>();
 
         services.AddHttpClient<PwnedPasswordsClient>(PwnedPasswordsClient.Configure).RemoveAllLoggers();
@@ -129,6 +133,7 @@ internal static class DependencyInjection
         services.AddScoped<SignInAttempts>();
         services.AddScoped<PasswordSignInVerifier>();
         services.AddScoped<RegisterAccountHandler>();
+        services.AddScoped<RequestEmailConfirmationHandler>();
         services.AddScoped<SignInHandler>();
         services.AddScoped<SchoolSignInHandler>();
         services.AddScoped<SignOutHandler>();
@@ -329,8 +334,11 @@ internal static class DependencyInjection
         options.IgnoreUnknownServices = true;
     }
 
-    private static void ConfigureIdentity(IdentityOptions options) =>
+    private static void ConfigureIdentity(IdentityOptions options)
+    {
         options.User.AllowedUserNameCharacters = string.Empty;
+        options.SignIn.RequireConfirmedAccount = true;
+    }
 
     private static Uri ReadIssuer(IConfiguration configuration) =>
         Uri.TryCreate(configuration[IssuerKey], UriKind.Absolute, out var issuer)

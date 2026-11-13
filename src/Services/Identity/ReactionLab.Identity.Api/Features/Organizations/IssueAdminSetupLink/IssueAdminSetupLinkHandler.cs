@@ -1,4 +1,3 @@
-using ReactionLab.Identity.Api.Features.AccountSetups;
 using ReactionLab.Identity.Api.Features.Organizations.Contracts;
 using ReactionLab.Identity.Api.Features.PlatformRoles;
 using ReactionLab.Identity.Api.Features.Sessions;
@@ -48,7 +47,7 @@ internal sealed class IssueAdminSetupLinkHandler(
         }
 
         var now = timeProvider.GetDatabaseUtcNow();
-        var (setupToken, setupTokenHash) = AccountSetupTokens.Issue();
+        var (setupToken, setupTokenHash) = OneTimeLinkTokens.Issue();
         var setupExpiresAt = now + AccountSetup.Lifetime;
 
         var issued = await adminTransaction.RunAsync(

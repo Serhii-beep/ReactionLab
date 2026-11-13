@@ -50,6 +50,7 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
 
         builder.Property(user => user.BirthYear);
         builder.Property(user => user.CreatedAt).IsRequired();
+        builder.Property(user => user.EmailConfirmationExempt);
         builder.Property(user => user.OrganizationUsername).HasMaxLength(User.MaximumUsernameLength);
         builder.Property(user => user.Version).HasDefaultValue(1L);
         builder.Ignore(user => user.DomainEvents);

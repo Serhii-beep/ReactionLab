@@ -29,7 +29,7 @@ public sealed class MailRenderer(IServiceProvider services, ILoggerFactory logge
             .Append(MailStyle.BrandName).Append("\n\n")
             .Append(content.Heading).Append('\n');
 
-        foreach (var block in content.Blocks)
+        foreach (var block in content.Blocks.Where(block => block is not MailLinkCopy))
         {
             text.Append('\n');
 

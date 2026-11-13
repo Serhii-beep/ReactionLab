@@ -21,5 +21,10 @@
       <GrpcServices>Client</GrpcServices>
       <Access>Internal</Access>
     </Protobuf>
+    <Protobuf Include="..\..\Identity\ReactionLab.Identity.Contracts\Protos\security_links.proto"
+              Link="Protos\security_links.proto">
+      <GrpcServices>Client</GrpcServices>
+      <Access>Internal</Access>
+    </Protobuf>
   </ItemGroup>
 </Project>

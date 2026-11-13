@@ -26,6 +26,11 @@
       <GrpcServices>Server</GrpcServices>
       <Access>Internal</Access>
     </Protobuf>
+    <Protobuf Include="..\ReactionLab.Identity.Contracts\Protos\security_links.proto"
+              Link="Protos\security_links.proto">
+      <GrpcServices>Server</GrpcServices>
+      <Access>Internal</Access>
+    </Protobuf>
   </ItemGroup>
   <PropertyGroup>
     <UserSecretsId>reactionlab-identity</UserSecretsId>

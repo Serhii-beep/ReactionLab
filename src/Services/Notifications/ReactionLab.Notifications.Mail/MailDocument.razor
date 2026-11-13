@@ -19,6 +19,15 @@
                 .heading {
                     font-size: 20px !important;
                 }
+
+                .primary-button {
+                    width: 100% !important;
+                }
+
+                .primary-button-link {
+                    display: block !important;
+                    text-align: center !important;
+                }
             }
 
             @@media (prefers-color-scheme: dark) {
@@ -52,6 +61,18 @@
 
                 .accent-text {
                     color: @MailStyle.DarkAccentColor !important;
+                }
+
+                .accent-fill {
+                    background-color: @MailStyle.DarkAccentColor !important;
+                }
+
+                .accent-contrast-text {
+                    color: @MailStyle.DarkAccentContrastColor !important;
+                }
+
+                .inset {
+                    background-color: @MailStyle.DarkInsetColor !important;
                 }
             }
         </style>
@@ -87,6 +108,19 @@
 
                                     switch (Content.Blocks[index])
                                     {
+                                        case MailButton { IsPrimary: true } button:
+                                            <table role="presentation" class="primary-button" cellpadding="0" cellspacing="0" border="0"
+                                                style="margin-top: @(gap)px;">
+                                                <tr>
+                                                    <td class="accent-fill"
+                                                        style="background-color: @MailStyle.AccentColor; border-radius: 8px;">
+                                                        <a class="accent-contrast-text primary-button-link" href="@button.Target.AbsoluteUri"
+                                                            style="display: inline-block; padding: 14px 24px; font-size: 15px; font-weight: 600;
+                                                                line-height: 20px; color: @MailStyle.AccentContrastColor; text-decoration: none;">@button.Label</a>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                            break;
                                         case MailButton button:
                                             <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top: @(gap)px;">
                                                 <tr>
@@ -94,6 +128,23 @@
                                                         <a class="accent-text" href="@button.Target.AbsoluteUri"
                                                             style="display: inline-block; padding: 12px 20px; font-size: 15px; font-weight: 600;
                                                                     line-height: 20px; color: @MailStyle.AccentColor; text-decoration: none;">@button.Label</a>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                            break;
+                                        case MailLinkCopy copy:
+                                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                                                style="margin-top: @(gap)px;">
+                                                <tr>
+                                                    <td class="inset"
+                                                        style="padding: 14px 16px; background-color: @MailStyle.InsetColor; border-radius: 8px;">
+                                                        <p class="secondary-text"
+                                                            style="margin: 0; font-size: 13px; line-height: 1.5;
+                                                                color: @MailStyle.SecondaryTextColor;">@copy.Label</p>
+                                                        <p class="primary-text"
+                                                            style="margin: 6px 0 0; font-family: @MailStyle.MonospaceFontFamily;
+                                                                font-size: 12.5px; line-height: 1.5; color: @MailStyle.PrimaryTextColor;
+                                                                word-break: break-all;">@copy.Target.AbsoluteUri</p>
                                                     </td>
                                                 </tr>
                                             </table>
@@ -138,5 +189,14 @@
     public MailContent Content { get; set; } = null!;
 
     private int GapBefore(int index) =>
-        index == 0 ? 20 : Content.Blocks[index] is MailButton or MailParagraph { IsAside: true } ? 28 : 12;
+        index == 0
+            ? 20
+            : (Content.Blocks[index - 1], Content.Blocks[index]) switch
+            {
+                (_, MailButton) => 28,
+                (MailButton { IsPrimary: true }, MailParagraph { IsAside: true }) => 20,
+                (_, MailLinkCopy) or (MailLinkCopy, _) => 24,
+                (_, MailParagraph { IsAside: true }) => 28,
+                _ => 12
+            };
 }

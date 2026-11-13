@@ -3,6 +3,7 @@ using ReactionLab.Identity.Api.Passwords;
 using ReactionLab.Identity.Persistence;
 using ReactionLab.Identity.Persistence.Accounts;
 using ReactionLab.Identity.Persistence.Organizations;
+using ReactionLab.Identity.Persistence.SecurityLinks;
 using ReactionLab.SharedKernel;
 
 namespace ReactionLab.Identity.Api.Features.Accounts.SignIn;
@@ -14,8 +15,24 @@ internal sealed class PasswordSignInVerifier(
     SignInAttempts signInAttempts,
     AppDbContext context)
 {
-    public Task<Result<User>> VerifyAsync(string? email, string? password, CancellationToken cancellationToken) =>
-        VerifyPasswordAsync(() => FindUserAsync(email), password, cancellationToken);
+    public Task<Result<User>> VerifyAsync(
+        string? email,
+        string? password,
+        string? emailConfirmationToken,
+        CancellationToken cancellationToken) =>
+        VerifyPasswordAsync(
+            () => FindUserAsync(email),
+            password,
+            OneTimeLinkTokens.TryHash(emailConfirmationToken, out var tokenHash)
+                ? EmailProof.ConfirmationLink(tokenHash)
+                : EmailProof.None,
+            cancellationToken);
+
+    public Task<Result<User>> VerifyWithProvenEmailAsync(
+        string? email,
+        string? password,
+        CancellationToken cancellationToken) =>
+        VerifyPasswordAsync(() => FindUserAsync(email), password, EmailProof.Provider, cancellationToken);
 
     public Task<Result<User>> VerifySchoolAccountAsync(
         string? signInCode,
@@ -25,11 +42,13 @@ internal sealed class PasswordSignInVerifier(
         VerifyPasswordAsync(
             () => FindSchoolAccountAsync(signInCode, username, cancellationToken),
             password,
+            EmailProof.None,
             cancellationToken);
 
     private async Task<Result<User>> VerifyPasswordAsync(
         Func<Task<User?>> findAccount,
         string? password,
+        EmailProof emailProof,
         CancellationToken cancellationToken)
     {
         var beganAt = signInAttempts.BeginAttempt();
@@ -42,7 +61,7 @@ internal sealed class PasswordSignInVerifier(
         var user = await findAccount();
 
         if (user?.PasswordHash is not { } passwordHash
-            || !await signInManager.CanSignInAsync(user)
+            || !await MaySignInAsync(user, emailProof, cancellationToken)
             || !await signInAttempts.ClaimAsync(user.Id))
         {
             return await RefuseAsync(normalizedPassword, beganAt, cancellationToken);
@@ -64,7 +83,39 @@ internal sealed class PasswordSignInVerifier(
             await signInAttempts.ReplacePasswordHashAsync(user.Id, passwordHash, replacementHash);
         }
 
+        if (emailProof != EmailProof.None
+            && !user.EmailConfirmed
+            && !await ConfirmEmailAsync(user, emailProof, cancellationToken))
+        {
+            return await FailAsync(beganAt, cancellationToken);
+        }
+
         return user;
+    }
+
+    private async Task<bool> MaySignInAsync(User user, EmailProof emailProof, CancellationToken cancellationToken) =>
+        await signInManager.CanSignInAsync(user)
+        || emailProof.ByProvider
+        || emailProof.ConfirmationLinkTokenHash is { } tokenHash
+            && await context.HoldsEmailConfirmationLinkAsync(user.Id, tokenHash, cancellationToken);
+
+    private async Task<bool> ConfirmEmailAsync(User user, EmailProof emailProof, CancellationToken cancellationToken)
+    {
+        if (emailProof.ByProvider)
+        {
+            await context.ConfirmEmailThroughProviderAsync(user.Id, user.Email ?? string.Empty);
+
+            return true;
+        }
+
+        if (emailProof.ConfirmationLinkTokenHash is { } tokenHash
+            && await context.ConfirmEmailWithLinkAsync(user.Id, tokenHash) > 0)
+        {
+            return true;
+        }
+
+        return await signInManager.CanSignInAsync(user)
+            || await context.FindContactAsync(user.Id, cancellationToken) is { EmailConfirmed: true };
     }
 
     private async Task<User?> FindUserAsync(string? email)

@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using OpenIddict.Client;
 using ReactionLab.Identity.Contracts.Contacts.V1;
+using ReactionLab.Identity.Contracts.SecurityLinks.V1;
 using ReactionLab.Notifications.Mail;
 using ReactionLab.Notifications.Sending;
 using ReactionLab.Notifications.ServiceCalls;
@@ -50,15 +51,22 @@ internal static class DependencyInjection
         builder.Services.AddGrpcClient<Contacts.ContactsClient>(options => options.Address = IdentityAddress)
             .ConfigureChannel(channel => channel.MaxReceiveMessageSize = MaximumServiceCallMessageBytes);
 
+        builder.Services.AddGrpcClient<SecurityLinks.SecurityLinksClient>(options => options.Address = IdentityAddress)
+            .ConfigureChannel(channel => channel.MaxReceiveMessageSize = MaximumServiceCallMessageBytes);
+
         builder.Services.TryAddSingleton(TimeProvider.System);
         builder.Services.AddSingleton<ServiceTokenSource>();
+        builder.Services.AddScoped<IdentityCalls>();
         builder.Services.AddScoped<ContactDirectory>();
+        builder.Services.AddScoped<SecurityLinkIssuer>();
 
         return builder;
     }
 
     public static IHostApplicationBuilder AddMailSending(this IHostApplicationBuilder builder)
     {
+        MailAddresses.RequireIdnaSupport();
+
         var developing = builder.Environment.IsDevelopment();
 
         builder.Services.AddOptions<MailOptions>()
@@ -76,6 +84,7 @@ internal static class DependencyInjection
 
         builder.Services.AddMailRendering();
         builder.Services.AddSingleton<IMailTemplate, RepeatedRegistrationMail>();
+        builder.Services.AddSingleton<IMailTemplate, EmailConfirmationMail>();
         builder.Services.AddSingleton<MailTemplates>();
         builder.Services.AddSingleton<MailMetrics>();
         builder.Services.AddSingleton(services => SmtpEndpoint.Parse(

@@ -9,11 +9,11 @@ public sealed class OutboxWriter(PublishedEventTypes eventTypes, TimeProvider ti
     {
         RequireTransaction(context);
 
-        return context.InsertOutboxMessageAsync(eventTypes.ToOutboxMessage(
-            domainEvent,
-            MessagingTelemetry.CurrentTraceParent(),
-            timeProvider.GetUtcNow()));
+        return context.InsertOutboxMessageAsync(CreateMessage(domainEvent));
     }
+
+    public OutboxMessage CreateMessage(IDomainEvent domainEvent) =>
+        eventTypes.ToOutboxMessage(domainEvent, MessagingTelemetry.CurrentTraceParent(), timeProvider.GetUtcNow());
 
     public async Task<int> InsertTombstoneAsync(DbContext context, string topic, Guid subject)
     {

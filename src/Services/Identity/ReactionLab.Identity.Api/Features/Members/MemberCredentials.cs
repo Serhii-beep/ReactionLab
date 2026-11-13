@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Identity;
-using ReactionLab.Identity.Api.Features.AccountSetups;
 using ReactionLab.Identity.Api.Passwords;
 using ReactionLab.Identity.Persistence;
 using ReactionLab.Identity.Persistence.Accounts;
@@ -26,7 +25,7 @@ internal sealed class MemberCredentials(
 
         if (kind == MemberCredentialKinds.SetupLink)
         {
-            var (setupToken, setupTokenHash) = AccountSetupTokens.Issue();
+            var (setupToken, setupTokenHash) = OneTimeLinkTokens.Issue();
 
             return new MemberCredential(kind, null, null, setupToken, setupTokenHash, now, now + AccountSetup.Lifetime);
         }

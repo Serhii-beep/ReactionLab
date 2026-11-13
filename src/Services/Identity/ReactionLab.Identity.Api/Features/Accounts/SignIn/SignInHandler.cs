@@ -11,7 +11,11 @@ internal sealed class SignInHandler(
 {
     public async ValueTask<Result> HandleAsync(SignInCommand command, CancellationToken cancellationToken)
     {
-        var user = await passwordVerifier.VerifyAsync(command.Email, command.Password, cancellationToken);
+        var user = await passwordVerifier.VerifyAsync(
+            command.Email,
+            command.Password,
+            command.EmailConfirmationToken,
+            cancellationToken);
 
         if (user.IsFailure)
         {

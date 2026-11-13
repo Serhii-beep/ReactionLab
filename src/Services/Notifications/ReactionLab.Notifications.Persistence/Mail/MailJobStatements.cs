@@ -9,6 +9,7 @@ public static class MailJobStatements
         this AppDbContext context,
         TimeSpan lease,
         int batchSize,
+        string[] mailTypes,
         CancellationToken cancellationToken) =>
         context.Set<MailJob>()
             .FromSql(
@@ -17,7 +18,7 @@ public static class MailJobStatements
                 SET available_at = now() + {lease}, attempts = attempts + 1
                 WHERE (recipient_id, id) IN (
                     SELECT recipient_id, id FROM mail_jobs
-                    WHERE available_at <= now() AND failed_at IS NULL
+                    WHERE available_at <= now() AND failed_at IS NULL AND mail_type = ANY({mailTypes})
                     ORDER BY available_at
                     LIMIT {batchSize}
                     FOR UPDATE SKIP LOCKED)

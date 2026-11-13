@@ -1,3 +1,3 @@
 namespace ReactionLab.Notifications.Templates;
 
-internal sealed record MailRecipient(string? DisplayName, string Email, string Locale);
+internal sealed record MailRecipient(string? DisplayName, string Email, string Locale, SecurityLinkToken? Link);

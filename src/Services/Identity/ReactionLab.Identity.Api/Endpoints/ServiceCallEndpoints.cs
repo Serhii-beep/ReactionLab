@@ -14,6 +14,10 @@ internal static class ServiceCallEndpoints
             .RequireAuthorization(AuthorizationPolicies.ContactsReader)
             .WithMetadata(new RequestSizeLimitAttribute(MaximumRequestBodyBytesAboveStreamWindow));
 
+        app.MapGrpcService<SecurityLinksService>()
+            .RequireAuthorization(AuthorizationPolicies.SecurityLinksIssuer)
+            .WithMetadata(new RequestSizeLimitAttribute(MaximumRequestBodyBytesAboveStreamWindow));
+
         return app;
     }
 }

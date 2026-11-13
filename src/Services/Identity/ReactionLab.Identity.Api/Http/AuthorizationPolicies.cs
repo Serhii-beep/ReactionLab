@@ -11,6 +11,7 @@ internal static class AuthorizationPolicies
     public const string AccessToken = "access-token";
     public const string PlatformAdmin = "platform-admin";
     public const string ContactsReader = "contacts-reader";
+    public const string SecurityLinksIssuer = "security-links-issuer";
 
     public static void Configure(AuthorizationOptions options)
     {
@@ -27,5 +28,10 @@ internal static class AuthorizationPolicies
             .AddAuthenticationSchemes(OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme)
             .RequireAuthenticatedUser()
             .RequireAssertion(context => context.User.HasScope(OpenIdNames.ContactsScope)));
+
+        options.AddPolicy(SecurityLinksIssuer, policy => policy
+            .AddAuthenticationSchemes(OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme)
+            .RequireAuthenticatedUser()
+            .RequireAssertion(context => context.User.HasScope(OpenIdNames.SecurityLinksScope)));
     }
 }

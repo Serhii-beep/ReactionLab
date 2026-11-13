@@ -13,6 +13,7 @@ builder.Services.Configure<HostOptions>(options => options.ServicesStopConcurren
 
 builder.Services.AddPersistence(builder.Configuration);
 builder.Services.AddScoped<RepeatedRegistrationNotices>();
+builder.Services.AddScoped<EmailConfirmationRequests>();
 builder.Services.AddScoped<AccountErasure>();
 builder.Services.AddHostedService<NotificationPruningWorker>();
 builder.AddEventConsumer<AppDbContext, NotificationEventEffects>(
@@ -35,4 +36,12 @@ if (args is [DeadLetterReplay<AppDbContext>.CommandName])
     return;
 }
 
-await host.RunAsync();
+try
+{
+    await host.RunAsync();
+}
+catch (Exception ex)
+{
+    await Console.Error.WriteLineAsync(ex.ToString());
+    Environment.ExitCode = 1;
+}

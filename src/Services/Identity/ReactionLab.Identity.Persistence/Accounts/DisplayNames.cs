@@ -11,7 +11,7 @@ public static partial class DisplayNames
     private const int ZeroWidthJoiner = 0x200D;
     private const int MaximumCombiningMarksInARow = 4;
 
-    private static readonly int[] BlankLookingCharacters =
+    internal static readonly int[] BlankLookingCharacters =
         [0x034F, 0x115F, 0x1160, 0x17B4, 0x17B5, 0x2800, 0x3164, 0xFFA0];
 
     public static Result<string> Normalize(

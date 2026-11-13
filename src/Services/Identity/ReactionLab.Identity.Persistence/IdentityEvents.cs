@@ -17,6 +17,11 @@ public static class IdentityEvents
                 IdentityEventTypes.RegistrationRepeated,
                 repeated => repeated.UserId,
                 IdentityEventJsonContext.Default.RegistrationRepeated)
+            .Add(
+                IdentityTopics.Users,
+                IdentityEventTypes.EmailConfirmationRequested,
+                requested => requested.UserId,
+                IdentityEventJsonContext.Default.EmailConfirmationRequested)
             .AddState(
                 IdentityTopics.Profiles,
                 IdentityEventTypes.UserProfile,

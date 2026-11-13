@@ -92,6 +92,8 @@ public sealed partial class User : IdentityUser<Guid>, IDomainEventSource
 
     public DateTimeOffset CreatedAt { get; private set; }
 
+    public bool EmailConfirmationExempt { get; private set; }
+
     public int CurrentPasswordFailures { get; private set; }
 
     public DateTimeOffset? CurrentPasswordLockoutEnd { get; private set; }
@@ -115,7 +117,7 @@ public sealed partial class User : IdentityUser<Guid>, IDomainEventSource
         int? birthYear,
         DateTimeOffset now)
     {
-        var address = NormalizeEmail(email);
+        var address = CanonicalizeEmail(email);
 
         if (address.IsFailure)
         {
@@ -137,7 +139,7 @@ public sealed partial class User : IdentityUser<Guid>, IDomainEventSource
             return Create(null, emailConfirmed: false, displayName, locale, birthYear, now);
         }
 
-        var address = NormalizeEmail(verifiedEmail);
+        var address = CanonicalizeEmail(verifiedEmail);
 
         if (address.IsFailure)
         {
@@ -169,7 +171,7 @@ public sealed partial class User : IdentityUser<Guid>, IDomainEventSource
             return organizationUsername.Error;
         }
 
-        var address = string.IsNullOrWhiteSpace(email) ? null : NormalizeEmail(email);
+        var address = string.IsNullOrWhiteSpace(email) ? null : CanonicalizeEmail(email);
 
         if (address is { IsFailure: true })
         {
@@ -197,24 +199,30 @@ public sealed partial class User : IdentityUser<Guid>, IDomainEventSource
 
     public static Result<string> NormalizeEmail(string? email)
     {
-        if (string.IsNullOrWhiteSpace(email))
+        var typed = NormalizeTypedEmail(email);
+
+        return typed.IsSuccess
+            && EmailAddresses.TryCanonicalize(typed.Value, out var canonical)
+            && canonical.Length <= MaximumEmailLength
+                ? canonical
+                : typed;
+    }
+
+    public static Result<string> CanonicalizeEmail(string? email)
+    {
+        var typed = NormalizeTypedEmail(email);
+
+        if (typed.IsFailure)
         {
-            return EmailRequired;
+            return typed;
         }
 
-        if (!UnicodeText.TryNormalize(email.Trim(), out var normalized)
-            || normalized.Any(char.IsControl)
-            || normalized.Any(UpperCasesIntoAscii))
+        if (!EmailAddresses.TryCanonicalize(typed.Value, out var canonical))
         {
             return EmailInvalid;
         }
 
-        if (normalized.Length > MaximumEmailLength)
-        {
-            return EmailTooLong;
-        }
-
-        return EmailFormat.IsValid(normalized) ? normalized : EmailInvalid;
+        return canonical.Length > MaximumEmailLength ? EmailTooLong : canonical;
     }
 
     public static Result<string> NormalizeDisplayName(string? displayName) =>
@@ -251,6 +259,9 @@ public sealed partial class User : IdentityUser<Guid>, IDomainEventSource
 
     public void RecordRepeatedRegistration(Guid eventId) =>
         _domainEvents.Add(new RegistrationRepeated(Id, Version, CreatedAt) { EventId = eventId });
+
+    public void RecordEmailConfirmationRequest(Guid requestId) =>
+        _domainEvents.Add(new EmailConfirmationRequested(Id, Version, requestId));
 
     private static Result<User> Create(
         string? email,
@@ -305,6 +316,28 @@ public sealed partial class User : IdentityUser<Guid>, IDomainEventSource
         return youngestPossibleAge >= MinimumSelfRegistrationAge
             ? Result.Success()
             : Result.Failure(SchoolAccountRequired);
+    }
+
+    private static Result<string> NormalizeTypedEmail(string? email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return EmailRequired;
+        }
+
+        if (!UnicodeText.TryNormalize(email.Trim(), out var normalized)
+            || normalized.Any(char.IsControl)
+            || normalized.Any(UpperCasesIntoAscii))
+        {
+            return EmailInvalid;
+        }
+
+        if (normalized.Length > MaximumEmailLength)
+        {
+            return EmailTooLong;
+        }
+
+        return EmailFormat.IsValid(normalized) ? normalized : EmailInvalid;
     }
 
     private static bool UpperCasesIntoAscii(char character) =>

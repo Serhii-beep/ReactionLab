@@ -8,6 +8,7 @@ public static class OpenIdNames
     public const string NotificationsClientId = "notifications";
     public const string ApiScope = "api";
     public const string ContactsScope = IdentityScopes.Contacts;
+    public const string SecurityLinksScope = IdentityScopes.SecurityLinks;
     public const string IdentityAudience = "identity";
     public const string CatalogAudience = "catalog";
 }

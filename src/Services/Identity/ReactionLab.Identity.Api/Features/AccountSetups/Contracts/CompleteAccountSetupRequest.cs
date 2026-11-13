@@ -5,7 +5,7 @@ namespace ReactionLab.Identity.Api.Features.AccountSetups.Contracts;
 
 internal sealed record CompleteAccountSetupRequest(
     [property: Required]
-    [property: MaxLength(AccountSetupTokens.TokenLength)]
+    [property: MaxLength(OneTimeLinkTokens.TokenLength)]
     string? Token,
     [property: Required]
     [property: MinLength(PasswordPolicy.MinimumLength)]

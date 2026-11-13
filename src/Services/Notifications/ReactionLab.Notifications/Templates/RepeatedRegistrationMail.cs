@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Options;
+using ReactionLab.Identity.Contracts.SecurityLinks.V1;
 using ReactionLab.Notifications.Mail;
 using ReactionLab.Notifications.Persistence.Mail;
 using ReactionLab.Notifications.Sending;
@@ -13,6 +14,8 @@ internal sealed class RepeatedRegistrationMail(ITranslationCatalog catalog, IOpt
     public string MailType => MailTypes.RepeatedRegistration;
 
     public TimeSpan Lifetime { get; } = TimeSpan.FromDays(1);
+
+    public SecurityLinkPurpose? LinkPurpose => null;
 
     public MailContent Compose(MailRecipient recipient)
     {

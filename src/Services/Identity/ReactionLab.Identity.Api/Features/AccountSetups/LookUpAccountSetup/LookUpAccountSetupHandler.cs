@@ -12,7 +12,7 @@ internal sealed class LookUpAccountSetupHandler(AppDbContext context, TimeProvid
         LookUpAccountSetupQuery query,
         CancellationToken cancellationToken)
     {
-        if (!AccountSetupTokens.TryHash(query.Token, out var tokenHash)
+        if (!OneTimeLinkTokens.TryHash(query.Token, out var tokenHash)
             || await context.FindPendingAccountSetupAsync(tokenHash, timeProvider.GetUtcNow(), cancellationToken)
                 is not { } setup)
         {

@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Identity;
 using ReactionLab.Identity.Api.Features.Accounts;
-using ReactionLab.Identity.Api.Features.AccountSetups;
 using ReactionLab.Identity.Api.Features.Organizations.Contracts;
 using ReactionLab.Identity.Api.Features.PlatformRoles;
 using ReactionLab.Identity.Api.Features.Sessions;
@@ -71,7 +70,7 @@ internal sealed class CreateOrganizationHandler(
             return Result.Failure<CreatedOrganizationResponse>(proof.Error);
         }
 
-        var (setupToken, setupTokenHash) = AccountSetupTokens.Issue();
+        var (setupToken, setupTokenHash) = OneTimeLinkTokens.Issue();
         var setupExpiresAt = now + AccountSetup.Lifetime;
 
         var created = await adminTransaction.RunAsync(

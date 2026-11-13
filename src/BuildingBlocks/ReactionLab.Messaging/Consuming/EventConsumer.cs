@@ -20,6 +20,19 @@ public sealed class EventConsumer<TContext>(
 {
     private const string MalformedMessage = "MalformedMessage";
 
+    private volatile bool _disposedBeforeStop;
+
+    public override void Dispose()
+    {
+        _disposedBeforeStop = true;
+        base.Dispose();
+
+        if (ExecuteTask is { } consuming)
+        {
+            Task.WaitAny([consuming]);
+        }
+    }
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         consumer.Subscribe(options.Value.Topics);
@@ -43,7 +56,10 @@ public sealed class EventConsumer<TContext>(
         }
         finally
         {
-            consumer.Close();
+            if (!_disposedBeforeStop)
+            {
+                consumer.Close();
+            }
         }
     }
 

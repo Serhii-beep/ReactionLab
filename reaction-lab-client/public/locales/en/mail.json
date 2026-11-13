@@ -2,6 +2,7 @@
     "common": {
         "greeting": "Hi {name},",
         "greetingWithoutName": "Hi there,",
+        "linkCopy": "Button not working? Paste this into your browser:",
         "securityNoticeReason": "You're getting this because a ReactionLab account uses this address. It's a security notice, so it's sent even when you turn other emails off.",
         "tagline": "ReactionLab · a 3D chemistry lab"
     },
@@ -11,5 +12,14 @@
         "ifItWasYou": "If it was you, sign in instead. Forgotten your password? The sign-in page can send you a link to reset it.",
         "signIn": "Sign in to ReactionLab",
         "ifItWasNotYou": "If it wasn't you, you don't need to do anything. Your account is safe, and nobody can use your address for another ReactionLab account."
+    },
+    "emailConfirmation": {
+        "title": "Confirm your email address",
+        "greeting": "Hi there, welcome to ReactionLab.",
+        "ownership": "Confirm that {email} is yours, and you can sign in and start experimenting.",
+        "confirm": "Confirm my email",
+        "expiry": "The link works once and expires in {hours, plural, one {# hour} other {# hours}}.",
+        "ifItWasNotYou": "Didn't sign up? Ignore this email. Nobody can sign in with this address until it's confirmed.",
+        "reason": "You're getting this because someone signed up for ReactionLab with this address."
     }
 }

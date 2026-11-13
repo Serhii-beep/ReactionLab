@@ -13,6 +13,12 @@ internal static class MailAddresses
 
     private static readonly SearchValues<char> RewrittenAddressCharacters = SearchValues.Create("\"()[]\\");
 
+    private static readonly HashSet<string> SpecialUseTopLevelDomains = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "alt", "arpa", "corp", "example", "home", "internal", "intranet", "invalid", "lan", "local", "localdomain",
+        "localhost", "mail", "onion", "private", "test"
+    };
+
     public static bool TryCreateMailbox(
         string? displayName,
         string address,
@@ -44,6 +50,26 @@ internal static class MailAddresses
             StringComparison.OrdinalIgnoreCase);
     }
 
+    public static void RequireIdnaSupport()
+    {
+        try
+        {
+            var mapping = new IdnMapping();
+
+            if (mapping.GetAscii("\uFF45xample.com") == "example.com"
+                && mapping.GetAscii("stra\u00DFe.de") == "xn--strae-oqa.de")
+            {
+                return;
+            }
+        }
+        catch (ArgumentException)
+        {
+        }
+
+        throw new InvalidOperationException(
+            "Mail addresses need ICU's IDNA mapping. Run with ICU globalization, not in invariant or NLS mode.");
+    }
+
     private static bool TryEncodeDomain(string domain, out string encodedDomain)
     {
         var idn = new IdnMapping();
@@ -71,7 +97,7 @@ internal static class MailAddresses
         return lastDot > 0
             && topLevel.Length >= 2
             && !IPAddress.TryParse(encodedDomain, out _)
-            && !topLevel.Equals("localhost", StringComparison.OrdinalIgnoreCase)
+            && !SpecialUseTopLevelDomains.Contains(topLevel)
             && (topLevel.All(char.IsAsciiLetter)
                 || topLevel.StartsWith(AceLabelPrefix, StringComparison.OrdinalIgnoreCase));
     }

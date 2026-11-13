@@ -2,8 +2,10 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Npgsql;
+using ReactionLab.Identity.Contracts;
 using ReactionLab.Identity.Persistence;
 using ReactionLab.Identity.Persistence.Accounts;
+using ReactionLab.Identity.Persistence.SecurityLinks;
 using ReactionLab.Messaging.Outbox;
 using ReactionLab.SharedKernel;
 
@@ -12,6 +14,7 @@ namespace ReactionLab.Identity.Api.Features.Accounts.RegisterAccount;
 internal sealed class RegisterAccountHandler(
     UserManager<User> userManager,
     AppDbContext context,
+    OutboxWriter outbox,
     TimeProvider timeProvider,
     ILogger<RegisterAccountHandler> logger) : ICommandHandler<RegisterAccountCommand>
 {
@@ -24,17 +27,23 @@ internal sealed class RegisterAccountHandler(
             return Result.Failure(locale.Error);
         }
 
+        var now = timeProvider.GetUtcNow();
         var user = User.Register(
             command.Email,
             command.DisplayName,
             locale.Value,
             command.BirthYear,
-            timeProvider.GetUtcNow());
+            now);
 
         if (user.IsFailure)
         {
             return Result.Failure(user.Error);
         }
+
+        var link = SecurityLink.RequestEmailConfirmation(user.Value, now);
+
+        user.Value.RecordEmailConfirmationRequest(link.RequestId);
+        context.Add(link);
 
         var created = await CreateAsync(user.Value, command.Password ?? string.Empty);
 
@@ -47,7 +56,7 @@ internal sealed class RegisterAccountHandler(
 
         if (created.Errors.Any(error => error.IsAlreadyRegistered()))
         {
-            await PublishRegistrationRepeatedAsync(user.Value.Email ?? string.Empty);
+            await AnswerRepeatedRegistrationAsync(user.Value.Email ?? string.Empty);
             logger.LogInformation("Registration for an address that already has an account.");
 
             return Result.Success();
@@ -68,7 +77,7 @@ internal sealed class RegisterAccountHandler(
         }
     }
 
-    private async Task PublishRegistrationRepeatedAsync(string email)
+    private async Task AnswerRepeatedRegistrationAsync(string email)
     {
         try
         {
@@ -81,6 +90,19 @@ internal sealed class RegisterAccountHandler(
                     if (await userManager.FindByEmailAsync(email) is not { } account)
                     {
                         return false;
+                    }
+
+                    if (account is { EmailConfirmed: false, EmailConfirmationExempt: false, PasswordHash: not null })
+                    {
+                        var requested = new EmailConfirmationRequested(account.Id, account.Version, eventId)
+                        {
+                            EventId = eventId
+                        };
+
+                        return await context.RequestEmailConfirmationAsync(
+                            account.Id,
+                            eventId,
+                            outbox.CreateMessage(requested)) > 0;
                     }
 
                     account.RecordRepeatedRegistration(eventId);

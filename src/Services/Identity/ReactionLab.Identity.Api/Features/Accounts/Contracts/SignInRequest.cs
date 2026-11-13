@@ -6,4 +6,6 @@ internal sealed record SignInRequest(
     [property: Required]
     string? Email,
     [property: Required]
-    string? Password);
+    string? Password,
+    [property: MaxLength(OneTimeLinkTokens.TokenLength)]
+    string? EmailConfirmationToken);

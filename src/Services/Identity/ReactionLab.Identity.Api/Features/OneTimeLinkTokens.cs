@@ -2,9 +2,9 @@ using System.Buffers.Text;
 using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 
-namespace ReactionLab.Identity.Api.Features.AccountSetups;
+namespace ReactionLab.Identity.Api.Features;
 
-internal static class AccountSetupTokens
+internal static class OneTimeLinkTokens
 {
     public const int TokenLength = 43;
 

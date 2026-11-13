@@ -5,5 +5,5 @@ namespace ReactionLab.SharedKernel;
 public abstract record DomainEvent : IDomainEvent
 {
     [JsonIgnore]
-    public Guid EventId { get; init; } = Guid.CreateVersion7();
+    public Guid EventId { get; init; } = EventIds.Next();
 }

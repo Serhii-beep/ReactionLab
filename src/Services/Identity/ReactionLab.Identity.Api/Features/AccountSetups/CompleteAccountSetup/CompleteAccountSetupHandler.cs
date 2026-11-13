@@ -21,7 +21,7 @@ internal sealed class CompleteAccountSetupHandler(
 
     public async ValueTask<Result> HandleAsync(CompleteAccountSetupCommand command, CancellationToken cancellationToken)
     {
-        if (!AccountSetupTokens.TryHash(command.Token, out var tokenHash)
+        if (!OneTimeLinkTokens.TryHash(command.Token, out var tokenHash)
             || await context.FindPendingAccountSetupAsync(tokenHash, timeProvider.GetUtcNow(), cancellationToken)
                 is not { } setup
             || await userManager.FindByIdAsync(setup.AccountId.ToString()) is not { } account)
