@@ -8,10 +8,10 @@ public static class KafkaTopics
     private static readonly TimeSpan MetadataTimeout = TimeSpan.FromSeconds(10);
 
     public static async Task<IReadOnlyList<string>> EnsureAsync(
-        string bootstrapServers,
+        AdminClientConfig adminClientConfig,
         IReadOnlyCollection<TopicSpecification> topics)
     {
-        using var admin = new AdminClientBuilder(new AdminClientConfig { BootstrapServers = bootstrapServers }).Build();
+        using var admin = new AdminClientBuilder(adminClientConfig).Build();
 
         var partitionCountsByTopic = admin.GetMetadata(MetadataTimeout).Topics
             .ToDictionary(topic => topic.Topic, topic => topic.Partitions.Count);

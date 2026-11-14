@@ -1,4 +1,5 @@
 using System.Globalization;
+using Confluent.Kafka;
 using Confluent.Kafka.Admin;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -12,6 +13,7 @@ internal sealed class IdentityTopicProvisioning(
     ILogger<IdentityTopicProvisioning> logger)
 {
     private const string CreateTopicsKey = "Messaging:CreateTopics";
+    private const string AdminClientSection = "Messaging:AdminClient";
     private const string KafkaConnectionName = "kafka";
     private const int PartitionsPerTopic = 6;
     private const short LocalReplicationFactor = 1;
@@ -29,8 +31,11 @@ internal sealed class IdentityTopicProvisioning(
         var bootstrapServers = configuration.GetConnectionString(KafkaConnectionName)
             ?? throw new InvalidOperationException($"Connection string '{KafkaConnectionName}' is not configured.");
 
+        var adminClientConfig = new AdminClientConfig { BootstrapServers = bootstrapServers };
+        configuration.GetSection(AdminClientSection).Bind(adminClientConfig);
+
         var created = await KafkaTopics.EnsureAsync(
-            bootstrapServers,
+            adminClientConfig,
             [
                 EventTopic(IdentityTopics.Users),
                 EventTopic(IdentityTopics.Erasure),

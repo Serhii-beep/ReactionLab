@@ -151,9 +151,14 @@ if (builder.ExecutionContext.IsRunMode)
 
     identityMigrator
         .WithEnvironment("Identity__DemoPassword", demoPassword)
-        .WithEnvironment("Messaging__CreateTopics", "true");
+        .WithEnvironment("Messaging__CreateTopics", "true")
+        .WithEnvironment("Messaging__AdminClient__BrokerAddressFamily", "V4");
 
-    notifications.WithEnvironment("Mail__RequireTls", "false");
+    identity.WithEnvironment("Aspire__Confluent__Kafka__Producer__Config__BrokerAddressFamily", "V4");
+
+    notifications
+        .WithEnvironment("Mail__RequireTls", "false")
+        .WithEnvironment("Aspire__Confluent__Kafka__Consumer__Config__BrokerAddressFamily", "V4");
 }
 
 await builder.Build().RunAsync();
