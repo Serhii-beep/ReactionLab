@@ -6,4 +6,5 @@ internal sealed record SetPasswordCommand(
     Guid AccountId,
     Guid CurrentSessionId,
     SessionSignIn SignIn,
-    string? NewPassword);
+    string? NewPassword,
+    string? UserAgent);

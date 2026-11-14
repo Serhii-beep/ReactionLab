@@ -86,6 +86,10 @@ internal static class AccountEndpoints
             var command = new ResetPasswordCommand(
                 request.Token,
                 request.NewPassword,
+                request.DisplayName,
+                request.BirthYear,
+                request.Locale ?? httpContext.ResolveLocale().Code,
+                request.TimeZone,
                 httpContext.Request.Headers.UserAgent.ToString());
 
             var result = await handler.HandleAsync(command, cancellationToken);

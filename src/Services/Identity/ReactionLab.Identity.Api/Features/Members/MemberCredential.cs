@@ -9,9 +9,11 @@ internal sealed record MemberCredential(
     string? SetupToken,
     byte[]? SetupTokenHash,
     DateTimeOffset IssuedAt,
-    DateTimeOffset? SetupExpiresAt)
+    DateTimeOffset? SetupExpiresAt,
+    bool SetupLinkMailed)
 {
-    public MemberCredentialResponse ToResponse() => new(Kind, Password, SetupToken, SetupExpiresAt);
+    public MemberCredentialResponse ToResponse() =>
+        new(Kind, Password, SetupToken, SetupExpiresAt, SetupLinkMailed);
 
     public override string ToString() => Kind;
 }

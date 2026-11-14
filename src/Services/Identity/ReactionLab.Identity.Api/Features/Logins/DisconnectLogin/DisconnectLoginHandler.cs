@@ -14,6 +14,7 @@ internal sealed class DisconnectLoginHandler(
     RecentSignInCheck recentSignInCheck,
     AppDbContext context,
     SecurityStampRotation securityStampRotation,
+    SignInMethodChanges signInMethodChanges,
     TimeProvider timeProvider,
     ILogger<DisconnectLoginHandler> logger) : ICommandHandler<DisconnectLoginCommand>
 {
@@ -49,12 +50,19 @@ internal sealed class DisconnectLoginHandler(
             return proof;
         }
 
+        var changeId = Guid.CreateVersion7();
         var rotation = await securityStampRotation.RemoveLoginAsync(
             command.AccountId,
             command.CurrentSessionId,
             provider.Name,
             providers.Names,
-            now);
+            now,
+            () => signInMethodChanges.RecordAsync(
+                command.AccountId,
+                changeId,
+                SignInMethodChangeNames.ProviderDisconnected,
+                provider.Name,
+                command.UserAgent));
 
         if (!rotation.AccountMatched)
         {

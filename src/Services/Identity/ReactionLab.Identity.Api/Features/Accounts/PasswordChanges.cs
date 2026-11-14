@@ -10,7 +10,7 @@ internal sealed class PasswordChanges(AppDbContext context, OutboxWriter outbox)
 {
     public async Task RecordAsync(Guid accountId, Guid changeId, string? userAgent)
     {
-        if (await context.RecordPasswordChangeAsync(changeId, accountId, Bounded(userAgent)) == 0)
+        if (await context.RecordPasswordChangeAsync(changeId, accountId, UserAgents.Bounded(userAgent)) == 0)
         {
             return;
         }
@@ -22,11 +22,4 @@ internal sealed class PasswordChanges(AppDbContext context, OutboxWriter outbox)
 
         await outbox.InsertAsync(context, new PasswordChanged(accountId, version, changeId));
     }
-
-    private static string? Bounded(string? userAgent) =>
-        string.IsNullOrEmpty(userAgent)
-            ? null
-            : userAgent.Length > PasswordChange.MaximumUserAgentLength
-                ? userAgent[..PasswordChange.MaximumUserAgentLength]
-                : userAgent;
 }

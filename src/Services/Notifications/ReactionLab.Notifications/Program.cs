@@ -16,6 +16,11 @@ builder.Services.AddScoped<RepeatedRegistrationNotices>();
 builder.Services.AddScoped<EmailConfirmationRequests>();
 builder.Services.AddScoped<PasswordResetRequests>();
 builder.Services.AddScoped<PasswordChangeNotices>();
+builder.Services.AddScoped<SignInMethodChangeNotices>();
+builder.Services.AddScoped<LockoutNotices>();
+builder.Services.AddScoped<PlatformAdminChangeNotices>();
+builder.Services.AddScoped<SchoolAdminChangeNotices>();
+builder.Services.AddScoped<AccountSetupRequests>();
 builder.Services.AddScoped<AccountErasure>();
 builder.Services.AddHostedService<NotificationPruningWorker>();
 builder.AddEventConsumer<AppDbContext, NotificationEventEffects>(

@@ -61,16 +61,21 @@ internal sealed class AccountRetentionWorker(
             context.DeleteExpiredPasswordChangesAsync,
             PasswordChangeStatements.PruningBatchSize,
             cancellationToken);
+        var methodChanges = await RepeatAsync(
+            context.DeleteExpiredSignInMethodChangesAsync,
+            SignInMethodChangeStatements.PruningBatchSize,
+            cancellationToken);
         var requests = await RepeatAsync(
             context.DeleteSpentPasswordResetRequestsAsync,
             SecurityLinkStatements.PruningBatchSize,
             cancellationToken);
 
         logger.LogInformation(
-            "Erased {ErasedCount} account(s) never confirmed in time, and pruned {ChangeCount} password change(s) "
-            + "and {RequestCount} spent reset request(s) in {Elapsed}.",
+            "Erased {ErasedCount} account(s) never confirmed in time, and pruned {ChangeCount} password change(s), "
+            + "{MethodChangeCount} sign-in method change(s) and {RequestCount} spent reset request(s) in {Elapsed}.",
             erased,
             changes,
+            methodChanges,
             requests,
             timeProvider.GetElapsedTime(startedAt));
     }

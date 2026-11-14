@@ -32,6 +32,31 @@ public static class IdentityEvents
                 IdentityEventTypes.PasswordChanged,
                 changed => changed.UserId,
                 IdentityEventJsonContext.Default.PasswordChanged)
+            .Add(
+                IdentityTopics.Users,
+                IdentityEventTypes.SignInMethodChanged,
+                changed => changed.UserId,
+                IdentityEventJsonContext.Default.SignInMethodChanged)
+            .Add(
+                IdentityTopics.Users,
+                IdentityEventTypes.AccountLocked,
+                locked => locked.UserId,
+                IdentityEventJsonContext.Default.AccountLocked)
+            .Add(
+                IdentityTopics.Users,
+                IdentityEventTypes.PlatformAdminChangeAnnounced,
+                announced => announced.UserId,
+                IdentityEventJsonContext.Default.PlatformAdminChangeAnnounced)
+            .Add(
+                IdentityTopics.Users,
+                IdentityEventTypes.SchoolAdminChangeAnnounced,
+                announced => announced.UserId,
+                IdentityEventJsonContext.Default.SchoolAdminChangeAnnounced)
+            .Add(
+                IdentityTopics.Users,
+                IdentityEventTypes.AccountSetupRequested,
+                requested => requested.UserId,
+                IdentityEventJsonContext.Default.AccountSetupRequested)
             .AddState(
                 IdentityTopics.Profiles,
                 IdentityEventTypes.UserProfile,

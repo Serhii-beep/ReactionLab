@@ -9,7 +9,8 @@ internal sealed record OrganizationSettingsResponse(
     string Locale,
     string TimeZone,
     string SignInCode,
-    bool TeachersMayResetStudentPasswords)
+    bool TeachersMayResetStudentPasswords,
+    bool AccountsMayResetOwnPasswords)
 {
     public static OrganizationSettingsResponse From(Organization organization) =>
         new(
@@ -19,5 +20,6 @@ internal sealed record OrganizationSettingsResponse(
             organization.Locale,
             organization.TimeZone,
             organization.SignInCode,
-            organization.TeachersMayResetStudentPasswords);
+            organization.TeachersMayResetStudentPasswords,
+            organization.AccountsMayResetOwnPasswords);
 }

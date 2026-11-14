@@ -29,6 +29,9 @@ public sealed record Error(
     public static Error Forbidden(string code, string description, string? field = null) =>
         new(code, description, ErrorType.Forbidden, Field: field);
 
+    public static Error TooManyRequests(string code, string description, string? field = null) =>
+        new(code, description, ErrorType.TooManyRequests, Field: field);
+
     public static Error Unexpected(string code, string description, string? field = null) =>
         new(code, description, ErrorType.Unexpected, Field: field);
 

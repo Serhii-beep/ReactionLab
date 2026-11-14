@@ -20,6 +20,10 @@ internal sealed class MailJobConfiguration : IEntityTypeConfiguration<MailJob>
             .HasDatabaseName("ix_mail_jobs_due")
             .HasFilter("failed_at IS NULL");
 
+        builder.HasIndex(job => job.AvailableAt, "ix_mail_jobs_urgent_due")
+            .HasDatabaseName("ix_mail_jobs_urgent_due")
+            .HasFilter("failed_at IS NULL AND urgent");
+
         builder.HasIndex(job => job.FailedAt)
             .HasDatabaseName("ix_mail_jobs_failed")
             .HasFilter("failed_at IS NOT NULL");

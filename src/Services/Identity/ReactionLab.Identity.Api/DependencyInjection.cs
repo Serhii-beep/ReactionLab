@@ -22,8 +22,10 @@ using ReactionLab.Identity.Api.Features.Accounts.SignIn;
 using ReactionLab.Identity.Api.Features.Accounts.SignOut;
 using ReactionLab.Identity.Api.Features.Accounts.SwitchActiveOrganization;
 using ReactionLab.Identity.Api.Features.Accounts.UpdateProfile;
+using ReactionLab.Identity.Api.Features.AccountSetups;
 using ReactionLab.Identity.Api.Features.AccountSetups.CompleteAccountSetup;
 using ReactionLab.Identity.Api.Features.AccountSetups.LookUpAccountSetup;
+using ReactionLab.Identity.Api.Features.AccountSetups.RequestSchoolPasswordReset;
 using ReactionLab.Identity.Api.Features.ExternalSignIn;
 using ReactionLab.Identity.Api.Features.ExternalSignIn.CompleteExternalSignIn;
 using ReactionLab.Identity.Api.Features.ExternalSignIn.GetExternalIdentity;
@@ -32,6 +34,7 @@ using ReactionLab.Identity.Api.Features.ExternalSignIn.ListSignInMethods;
 using ReactionLab.Identity.Api.Features.ExternalSignIn.RegisterExternalAccount;
 using ReactionLab.Identity.Api.Features.ExternalSignIn.StartExternalSignIn;
 using ReactionLab.Identity.Api.Features.ExternalSignIn.TakeOverAccount;
+using ReactionLab.Identity.Api.Features.Logins;
 using ReactionLab.Identity.Api.Features.Logins.CompleteLoginConnection;
 using ReactionLab.Identity.Api.Features.Logins.ConnectLogin;
 using ReactionLab.Identity.Api.Features.Logins.DisconnectLogin;
@@ -142,6 +145,7 @@ internal static class DependencyInjection
         services.AddScoped<RequestPasswordResetHandler>();
         services.AddScoped<ResetPasswordHandler>();
         services.AddScoped<PasswordChanges>();
+        services.AddScoped<SignInMethodChanges>();
         services.AddHostedService<AccountRetentionWorker>();
         services.AddScoped<SignInHandler>();
         services.AddScoped<SchoolSignInHandler>();
@@ -307,6 +311,8 @@ internal static class DependencyInjection
         services.AddScoped<ReinstateOrganizationHandler>();
         services.AddScoped<LookUpAccountSetupHandler>();
         services.AddScoped<CompleteAccountSetupHandler>();
+        services.AddScoped<RequestSchoolPasswordResetHandler>();
+        services.AddScoped<MailedAccountSetups>();
 
         return services;
     }

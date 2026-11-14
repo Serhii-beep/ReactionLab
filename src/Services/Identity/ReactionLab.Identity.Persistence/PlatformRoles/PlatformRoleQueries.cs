@@ -1,10 +1,69 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using ReactionLab.Identity.Persistence.Accounts;
 
 namespace ReactionLab.Identity.Persistence.PlatformRoles;
 
 public static class PlatformRoleQueries
 {
+    public static Task<List<NoticeRecipient>> ListPlatformAdminRecipientsAsync(
+        this AppDbContext context,
+        Guid changedAccountId,
+        CancellationToken cancellationToken)
+    {
+        var roles = context.Set<IdentityRole<Guid>>();
+        var adminIds = context.Set<IdentityUserRole<Guid>>()
+            .Where(userRole => roles.Any(role => role.Id == userRole.RoleId && role.Name == PlatformRoleNames.Admin))
+            .Select(userRole => userRole.UserId);
+
+        return context.Users.AsNoTracking()
+            .Where(user => user.OrganizationId == null
+                && user.NormalizedEmail != null
+                && user.EmailConfirmed
+                && (user.Id == changedAccountId || adminIds.Contains(user.Id)))
+            .OrderBy(user => user.Id)
+            .Select(user => new NoticeRecipient(user.Id, user.Version))
+            .ToListAsync(cancellationToken);
+    }
+
+    public static async Task<PlatformRoleChangeDescription?> FindPlatformRoleChangeAsync(
+        this AppDbContext context,
+        Guid recipientId,
+        Guid changeId,
+        CancellationToken cancellationToken)
+    {
+        var recipientIsAdmin = await context.HoldsPlatformRoleAsync(
+            recipientId,
+            PlatformRoleNames.Admin,
+            cancellationToken);
+
+        return await context.Set<PlatformRoleChange>().AsNoTracking()
+            .Where(change => change.Id == changeId && (recipientIsAdmin || change.AccountId == recipientId))
+            .Select(change => new PlatformRoleChangeDescription(
+                change.ChangedAt,
+                change.Role,
+                change.Granted,
+                change.Source,
+                context.Users
+                    .Where(user => user.Id == change.AccountId)
+                    .Select(user => user.DisplayName)
+                    .FirstOrDefault(),
+                context.Users
+                    .Where(user => user.Id == change.AccountId)
+                    .Select(user => user.Email)
+                    .FirstOrDefault(),
+                context.Users
+                    .Where(user => user.Id == change.ChangedBy)
+                    .Select(user => user.DisplayName)
+                    .FirstOrDefault(),
+                context.Users
+                    .Where(user => user.Id == change.ChangedBy)
+                    .Select(user => user.Email)
+                    .FirstOrDefault(),
+                recipientIsAdmin))
+            .SingleOrDefaultAsync(cancellationToken);
+    }
+
     public static async Task<List<string>> ListPlatformRolesAsync(
         this AppDbContext context,
         Guid accountId,

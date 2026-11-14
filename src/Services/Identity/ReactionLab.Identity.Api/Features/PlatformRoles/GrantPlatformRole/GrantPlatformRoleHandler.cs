@@ -1,6 +1,7 @@
 using ReactionLab.Identity.Api.Features.Sessions;
 using ReactionLab.Identity.Persistence;
 using ReactionLab.Identity.Persistence.PlatformRoles;
+using ReactionLab.Messaging.Outbox;
 using ReactionLab.SharedKernel;
 
 namespace ReactionLab.Identity.Api.Features.PlatformRoles.GrantPlatformRole;
@@ -9,6 +10,7 @@ internal sealed class GrantPlatformRoleHandler(
     RecentSignInCheck recentSignInCheck,
     PlatformAdminTransaction adminTransaction,
     AppDbContext context,
+    OutboxWriter outbox,
     IHostEnvironment environment,
     ILogger<GrantPlatformRoleHandler> logger) : ICommandHandler<GrantPlatformRoleCommand>
 {
@@ -71,12 +73,17 @@ internal sealed class GrantPlatformRoleHandler(
             return Result.Failure<bool>(refusal);
         }
 
-        var granted = await context.GrantPlatformRoleAsync(
+        var changeId = await context.GrantPlatformRoleAsync(
             command.AccountId,
             command.Role,
             PlatformRoleChangeAuthor.Admin(command.AdminId, command.AdminSessionId));
 
-        return Result.Success(granted == 1);
+        if (changeId is { } grantId && command.Role == PlatformRoleNames.Admin)
+        {
+            await context.AnnouncePlatformAdminChangeAsync(outbox, grantId, command.AccountId);
+        }
+
+        return Result.Success(changeId is not null);
     }
 
     private async Task<Error?> FindRefusalAsync(Guid accountId, CancellationToken cancellationToken) =>

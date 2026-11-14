@@ -5,4 +5,5 @@ internal sealed record UpdateOrganizationSettingsRequest(
     string? Locale,
     string? TimeZone,
     string? SignInCode,
-    bool? TeachersMayResetStudentPasswords);
+    bool? TeachersMayResetStudentPasswords,
+    bool? AccountsMayResetOwnPasswords);

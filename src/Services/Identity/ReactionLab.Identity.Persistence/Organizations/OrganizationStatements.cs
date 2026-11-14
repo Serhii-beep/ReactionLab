@@ -20,22 +20,28 @@ public static class OrganizationStatements
             """,
             CancellationToken.None);
 
-    public static Task<int> RecordOrganizationChangeAsync(
+    public static async Task<Guid> RecordOrganizationChangeAsync(
         this AppDbContext context,
         Guid organizationId,
         string change,
         Guid? accountId,
         string? role,
         Guid? changedBy,
-        Guid? changedInSession) =>
-        context.Database.ExecuteSqlAsync(
+        Guid? changedInSession,
+        Guid? batchId = null)
+    {
+        var changeIds = await context.Database.SqlQuery<Guid>(
             $"""
             INSERT INTO organization_changes
-                (id, organization_id, change, account_id, role, changed_by, changed_in_session, changed_at)
+                (id, organization_id, change, account_id, role, changed_by, changed_in_session, changed_at, batch_id)
             VALUES (uuidv7(), {organizationId}, {change}, {accountId}, {role}, {changedBy}, {changedInSession},
-                clock_timestamp())
-            """,
-            CancellationToken.None);
+                clock_timestamp(), {batchId})
+            RETURNING id AS "Value"
+            """)
+            .ToListAsync(CancellationToken.None);
+
+        return changeIds[0];
+    }
 
     public static Task<int> SuspendOrganizationAsync(
         this AppDbContext context,

@@ -4,6 +4,25 @@ namespace ReactionLab.Identity.Persistence.Accounts;
 
 public static class ProfileStatements
 {
+    public static async Task<long> ReplaceRegisteredProfileAsync(
+        this AppDbContext context,
+        Guid userId,
+        RegisteredProfile profile) =>
+        (await context.Database.SqlQuery<long>(
+            $"""
+            UPDATE users
+            SET display_name = {profile.DisplayName},
+                preferred_locale = {profile.PreferredLocale},
+                time_zone = {profile.TimeZone},
+                birth_year = {profile.BirthYear},
+                version = version + 1,
+                concurrency_stamp = gen_random_uuid()::text
+            WHERE id = {userId} AND organization_id IS NULL
+            RETURNING version AS "Value"
+            """)
+            .ToListAsync(CancellationToken.None))
+            .Single();
+
     public static async Task<UpdatedProfile?> UpdateProfileAsync(
         this AppDbContext context,
         Guid userId,

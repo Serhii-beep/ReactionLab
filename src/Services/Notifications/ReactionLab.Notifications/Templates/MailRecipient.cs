@@ -6,4 +6,4 @@ internal sealed record MailRecipient(
     string Locale,
     string? TimeZone,
     SecurityLinkToken? Link,
-    RecordedPasswordChange? PasswordChange);
+    MailDetail? Detail);

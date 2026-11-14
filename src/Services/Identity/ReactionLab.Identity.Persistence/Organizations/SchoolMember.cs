@@ -3,7 +3,7 @@ namespace ReactionLab.Identity.Persistence.Organizations;
 public sealed record SchoolMember(
     Guid AccountId,
     Guid OrganizationId,
-    string Username,
+    string? Username,
     string DisplayName,
     string? Email,
     IReadOnlyList<string> Roles,

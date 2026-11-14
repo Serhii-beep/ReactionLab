@@ -71,7 +71,10 @@ internal sealed class DeleteMemberHandler(
 
         await MemberSessions.EndAllAsync(context, command.AccountId);
 
-        await context.RecordAccountChangeAsync(
+        var adminOrganizationIds = await context.ListAdminOrganizationIdsAsync(
+            command.AccountId,
+            CancellationToken.None);
+        var recordedChanges = await context.RecordAccountChangeAsync(
             command.AccountId,
             OrganizationChangeNames.AccountDeleted,
             command.ActorId,
@@ -86,6 +89,15 @@ internal sealed class DeleteMemberHandler(
             context,
             new UserErasureRequested(command.AccountId, deletedVersion + 1, command.OrganizationId));
         await outbox.InsertTombstoneAsync(context, IdentityTopics.Profiles, command.AccountId);
+
+        foreach (var recorded in recordedChanges.Where(change => adminOrganizationIds.Contains(change.OrganizationId)))
+        {
+            await context.AnnounceSchoolAdminChangeAsync(
+                outbox,
+                recorded.OrganizationId,
+                recorded.Id,
+                [command.AccountId]);
+        }
 
         return true;
     }

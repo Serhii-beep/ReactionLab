@@ -19,7 +19,7 @@ internal sealed class PasswordResetMail(
 
     public SecurityLinkPurpose? LinkPurpose => SecurityLinkPurpose.PasswordReset;
 
-    public bool DescribesPasswordChange => false;
+    public MailDetailKind Detail => MailDetailKind.None;
 
     public MailContent Compose(MailRecipient recipient)
     {

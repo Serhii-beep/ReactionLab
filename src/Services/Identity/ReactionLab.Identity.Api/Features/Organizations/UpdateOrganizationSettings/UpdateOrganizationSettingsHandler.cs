@@ -33,7 +33,8 @@ internal sealed class UpdateOrganizationSettingsHandler(
         }
 
         if (command is { Name: null, Locale: null, TimeZone: null, SignInCode: null }
-            && command.TeachersMayResetStudentPasswords is null)
+            && command.TeachersMayResetStudentPasswords is null
+            && command.AccountsMayResetOwnPasswords is null)
         {
             return Result.Failure<OrganizationSettingsResponse>(OrganizationErrors.SettingsRequired);
         }
@@ -129,5 +130,6 @@ internal sealed class UpdateOrganizationSettingsHandler(
             command.Locale,
             command.TimeZone,
             command.SignInCode,
-            command.TeachersMayResetStudentPasswords);
+            command.TeachersMayResetStudentPasswords,
+            command.AccountsMayResetOwnPasswords);
 }

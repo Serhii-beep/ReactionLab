@@ -9,6 +9,11 @@ package reactionlab.identity.contacts.v1;
 service Contacts {
     rpc GetContact (GetContactRequest) returns (Contact);
     rpc GetPasswordChange (GetPasswordChangeRequest) returns (PasswordChangeDetails);
+    rpc GetSignInMethodChange (GetSignInMethodChangeRequest) returns (SignInMethodChangeDetails);
+    rpc GetLockout (GetLockoutRequest) returns (LockoutDetails);
+    rpc GetPlatformRoleChange (GetPlatformRoleChangeRequest) returns (PlatformRoleChangeDetails);
+    rpc GetOrganizationChange (GetOrganizationChangeRequest) returns (OrganizationChangeDetails);
+    rpc GetAccountSetup (GetAccountSetupRequest) returns (AccountSetupDetails);
 }
 
 message GetContactRequest {
@@ -33,4 +38,111 @@ message PasswordChangeDetails {
     google.protobuf.Timestamp changed_at = 1;
     string browser = 2;
     string operating_system = 3;
+}
+
+message GetSignInMethodChangeRequest {
+    string account_id = 1;
+    string change_id = 2;
+}
+
+enum SignInMethodChangeKind {
+    SIGN_IN_METHOD_CHANGE_KIND_UNSPECIFIED = 0;
+    SIGN_IN_METHOD_CHANGE_KIND_PROVIDER_CONNECTED = 1;
+    SIGN_IN_METHOD_CHANGE_KIND_PROVIDER_DISCONNECTED = 2;
+    SIGN_IN_METHOD_CHANGE_KIND_PASSWORD_SET = 3;
+    SIGN_IN_METHOD_CHANGE_KIND_PASSWORD_REMOVED = 4;
+    SIGN_IN_METHOD_CHANGE_KIND_ACCOUNT_TAKEN_OVER = 5;
+}
+
+message SignInMethodChangeDetails {
+    google.protobuf.Timestamp changed_at = 1;
+    SignInMethodChangeKind change = 2;
+    string provider_display_name = 3;
+    string browser = 4;
+    string operating_system = 5;
+    bool has_password = 6;
+    repeated string provider_display_names = 7;
+}
+
+message GetLockoutRequest {
+    string account_id = 1;
+}
+
+message LockoutDetails {
+    google.protobuf.Timestamp sign_in_paused_until = 1;
+    bool sign_in_disabled = 2;
+    int32 sign_in_failures = 3;
+    google.protobuf.Timestamp password_checks_paused_until = 4;
+    bool password_checks_disabled = 5;
+    int32 password_check_failures = 6;
+}
+
+message GetPlatformRoleChangeRequest {
+    string account_id = 1;
+    string change_id = 2;
+}
+
+enum PlatformRoleChangeSource {
+    PLATFORM_ROLE_CHANGE_SOURCE_UNSPECIFIED = 0;
+    PLATFORM_ROLE_CHANGE_SOURCE_ADMIN = 1;
+    PLATFORM_ROLE_CHANGE_SOURCE_FIRST_ADMIN = 2;
+    PLATFORM_ROLE_CHANGE_SOURCE_BREAK_GLASS = 3;
+}
+
+message PlatformRoleChangeDetails {
+    google.protobuf.Timestamp changed_at = 1;
+    string role = 2;
+    bool granted = 3;
+    PlatformRoleChangeSource source = 4;
+    string account_display_name = 5;
+    string account_email = 6;
+    string changed_by_display_name = 7;
+    string changed_by_email = 8;
+}
+
+message GetOrganizationChangeRequest {
+    string account_id = 1;
+    string change_id = 2;
+}
+
+enum AdminRoleChange {
+    ADMIN_ROLE_CHANGE_UNSPECIFIED = 0;
+    ADMIN_ROLE_CHANGE_GRANTED = 1;
+    ADMIN_ROLE_CHANGE_REVOKED = 2;
+    ADMIN_ROLE_CHANGE_ACCOUNT_DELETED = 3;
+}
+
+message OrganizationChangeDetails {
+    google.protobuf.Timestamp changed_at = 1;
+    string organization_name = 2;
+    AdminRoleChange change = 3;
+    string role = 4;
+    string account_display_name = 5;
+    string account_username = 6;
+    string changed_by_display_name = 7;
+    int32 account_count = 8;
+    bool changed_by_platform = 9;
+}
+
+message GetAccountSetupRequest {
+    string account_id = 1;
+    string request_id = 2;
+}
+
+enum AccountSetupPurpose {
+    ACCOUNT_SETUP_PURPOSE_UNSPECIFIED = 0;
+    ACCOUNT_SETUP_PURPOSE_INVITATION = 1;
+    ACCOUNT_SETUP_PURPOSE_ADMIN_RESET = 2;
+    ACCOUNT_SETUP_PURPOSE_SELF_RESET = 3;
+}
+
+message AccountSetupDetails {
+    AccountSetupPurpose purpose = 1;
+    string organization_name = 2;
+    string sign_in_code = 3;
+    string username = 4;
+    repeated string roles = 5;
+    string requested_by_display_name = 6;
+    bool requested_by_platform_admin = 7;
+    repeated string requested_by_roles = 8;
 }

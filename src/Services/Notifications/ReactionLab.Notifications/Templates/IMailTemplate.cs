@@ -11,7 +11,7 @@ internal interface IMailTemplate
 
     SecurityLinkPurpose? LinkPurpose { get; }
 
-    bool DescribesPasswordChange { get; }
+    MailDetailKind Detail { get; }
 
     MailContent Compose(MailRecipient recipient);
 }

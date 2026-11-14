@@ -62,7 +62,7 @@ internal sealed class PasswordSignInVerifier(
 
         if (user?.PasswordHash is not { } passwordHash
             || !await MaySignInAsync(user, emailProof, cancellationToken)
-            || !await signInAttempts.ClaimAsync(user.Id))
+            || !await signInAttempts.ClaimAsync(user))
         {
             return await RefuseAsync(normalizedPassword, beganAt, cancellationToken);
         }

@@ -32,16 +32,32 @@ internal sealed class SecurityStampRotation(AppDbContext context)
         Guid currentSessionId,
         string provider,
         string[] usableProviders,
-        DateTimeOffset now) =>
-        RunAsync(accountId, currentSessionId, securityStamp =>
-            context.RemoveLoginAndReplaceSecurityStampAsync(accountId, provider, usableProviders, now, securityStamp));
+        DateTimeOffset now,
+        Func<Task> recordChange) =>
+        RunAsync(
+            accountId,
+            currentSessionId,
+            securityStamp => context.RemoveLoginAndReplaceSecurityStampAsync(
+                accountId,
+                provider,
+                usableProviders,
+                now,
+                securityStamp),
+            recordChange);
 
     public Task<SecurityStampRotationOutcome> RemovePasswordAsync(
         Guid accountId,
         Guid currentSessionId,
-        string[] usableProviders) =>
-        RunAsync(accountId, currentSessionId, securityStamp =>
-            context.RemovePasswordAndReplaceSecurityStampAsync(accountId, usableProviders, securityStamp));
+        string[] usableProviders,
+        Func<Task> recordChange) =>
+        RunAsync(
+            accountId,
+            currentSessionId,
+            securityStamp => context.RemovePasswordAndReplaceSecurityStampAsync(
+                accountId,
+                usableProviders,
+                securityStamp),
+            recordChange);
 
     private Task<SecurityStampRotationOutcome> RunAsync(
         Guid accountId,

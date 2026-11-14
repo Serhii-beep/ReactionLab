@@ -111,6 +111,10 @@ public sealed partial class User : IdentityUser<Guid>, IDomainEventSource
 
     public long Version { get; private set; }
 
+    public DateTimeOffset? MailedSetupsSince { get; private set; }
+
+    public int MailedSetupCount { get; private set; }
+
     public IReadOnlyList<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
 
     public static Result<User> Register(
@@ -176,30 +180,26 @@ public sealed partial class User : IdentityUser<Guid>, IDomainEventSource
             return organizationUsername.Error;
         }
 
-        var address = string.IsNullOrWhiteSpace(email) ? null : CanonicalizeEmail(email);
+        return NewSchoolAccount(organizationId, name.Value, organizationUsername.Value, email, locale, now);
+    }
 
-        if (address is { IsFailure: true })
+    public static Result<User> InviteSchoolAccount(
+        Guid organizationId,
+        string? displayName,
+        string? email,
+        SupportedLocale locale,
+        DateTimeOffset now)
+    {
+        var name = NormalizeDisplayName(displayName);
+
+        if (name.IsFailure)
         {
-            return address.Error;
+            return name.Error;
         }
 
-        var id = Guid.CreateVersion7(now);
-        var account = new User
-        {
-            Id = id,
-            UserName = id.ToString(),
-            Email = address?.Value,
-            DisplayName = name.Value,
-            PreferredLocale = locale.Code,
-            OrganizationId = organizationId,
-            OrganizationUsername = organizationUsername.Value,
-            CreatedAt = now,
-            Version = 1
-        };
-
-        account.RaiseRegistered(AccountKinds.School);
-
-        return account;
+        return string.IsNullOrWhiteSpace(email)
+            ? EmailRequired
+            : NewSchoolAccount(organizationId, name.Value, null, email, locale, now);
     }
 
     public static Result<string> NormalizeEmail(string? email)
@@ -265,15 +265,7 @@ public sealed partial class User : IdentityUser<Guid>, IDomainEventSource
         return UsernamePattern().IsMatch(lowered) ? lowered : UsernameInvalid;
     }
 
-    public void RecordRepeatedRegistration(Guid eventId) =>
-        _domainEvents.Add(new RegistrationRepeated(Id, Version, CreatedAt) { EventId = eventId });
-
-    public void RecordEmailConfirmationRequest(Guid requestId) =>
-        _domainEvents.Add(new EmailConfirmationRequested(Id, Version, requestId));
-
-    private static Result<User> Create(
-        string? email,
-        bool emailConfirmed,
+    public static Result<RegisteredProfile> CheckRegisteredProfile(
         string? displayName,
         SupportedLocale locale,
         int? birthYear,
@@ -294,6 +286,31 @@ public sealed partial class User : IdentityUser<Guid>, IDomainEventSource
             return eligibility.Error;
         }
 
+        return new RegisteredProfile(name.Value, locale.Code, birthYear!.Value, NormalizeTimeZone(timeZone));
+    }
+
+    public void RecordRepeatedRegistration(Guid eventId) =>
+        _domainEvents.Add(new RegistrationRepeated(Id, Version, CreatedAt) { EventId = eventId });
+
+    public void RecordEmailConfirmationRequest(Guid requestId) =>
+        _domainEvents.Add(new EmailConfirmationRequested(Id, Version, requestId));
+
+    private static Result<User> Create(
+        string? email,
+        bool emailConfirmed,
+        string? displayName,
+        SupportedLocale locale,
+        int? birthYear,
+        string? timeZone,
+        DateTimeOffset now)
+    {
+        var profile = CheckRegisteredProfile(displayName, locale, birthYear, timeZone, now);
+
+        if (profile.IsFailure)
+        {
+            return profile.Error;
+        }
+
         var id = Guid.CreateVersion7(now);
         var user = new User
         {
@@ -301,10 +318,10 @@ public sealed partial class User : IdentityUser<Guid>, IDomainEventSource
             UserName = email ?? id.ToString(),
             Email = email,
             EmailConfirmed = emailConfirmed,
-            DisplayName = name.Value,
-            PreferredLocale = locale.Code,
-            TimeZone = NormalizeTimeZone(timeZone),
-            BirthYear = birthYear,
+            DisplayName = profile.Value.DisplayName,
+            PreferredLocale = profile.Value.PreferredLocale,
+            TimeZone = profile.Value.TimeZone,
+            BirthYear = profile.Value.BirthYear,
             CreatedAt = now,
             Version = 1
         };
@@ -312,6 +329,40 @@ public sealed partial class User : IdentityUser<Guid>, IDomainEventSource
         user.RaiseRegistered(AccountKinds.Regular);
 
         return user;
+    }
+
+    private static Result<User> NewSchoolAccount(
+        Guid organizationId,
+        string displayName,
+        string? organizationUsername,
+        string? email,
+        SupportedLocale locale,
+        DateTimeOffset now)
+    {
+        var address = string.IsNullOrWhiteSpace(email) ? null : CanonicalizeEmail(email);
+
+        if (address is { IsFailure: true })
+        {
+            return address.Error;
+        }
+
+        var id = Guid.CreateVersion7(now);
+        var account = new User
+        {
+            Id = id,
+            UserName = id.ToString(),
+            Email = address?.Value,
+            DisplayName = displayName,
+            PreferredLocale = locale.Code,
+            OrganizationId = organizationId,
+            OrganizationUsername = organizationUsername,
+            CreatedAt = now,
+            Version = 1
+        };
+
+        account.RaiseRegistered(AccountKinds.School);
+
+        return account;
     }
 
     private static Result CheckSelfRegistrationAge(int? birthYear, DateTimeOffset now)

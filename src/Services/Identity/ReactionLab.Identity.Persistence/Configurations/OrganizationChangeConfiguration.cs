@@ -13,5 +13,6 @@ internal sealed class OrganizationChangeConfiguration : IEntityTypeConfiguration
         builder.Property(change => change.Change).HasMaxLength(OrganizationChange.MaximumChangeLength).IsRequired();
         builder.Property(change => change.Role).HasMaxLength(OrganizationChange.MaximumRoleLength);
         builder.HasIndex(change => new { change.OrganizationId, change.Id });
+        builder.HasIndex(change => change.BatchId).HasFilter("batch_id IS NOT NULL");
     }
 }

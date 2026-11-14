@@ -60,7 +60,7 @@ internal static class DependencyInjection
         builder.Services.AddScoped<IdentityCalls>();
         builder.Services.AddScoped<ContactDirectory>();
         builder.Services.AddScoped<SecurityLinkIssuer>();
-        builder.Services.AddScoped<PasswordChangeDirectory>();
+        builder.Services.AddScoped<MailDetailDirectory>();
 
         return builder;
     }
@@ -90,6 +90,13 @@ internal static class DependencyInjection
         builder.Services.AddSingleton<IMailTemplate, EmailConfirmationMail>();
         builder.Services.AddSingleton<IMailTemplate, PasswordResetMail>();
         builder.Services.AddSingleton<IMailTemplate, PasswordChangedMail>();
+        builder.Services.AddSingleton<IMailTemplate, SignInMethodChangedMail>();
+        builder.Services.AddSingleton<IMailTemplate, SignInLockedMail>();
+        builder.Services.AddSingleton<IMailTemplate, PasswordChecksLockedMail>();
+        builder.Services.AddSingleton<IMailTemplate, PlatformAdminChangedMail>();
+        builder.Services.AddSingleton<IMailTemplate, SchoolAdminChangedMail>();
+        builder.Services.AddSingleton<IMailTemplate, SchoolInvitationMail>();
+        builder.Services.AddSingleton<IMailTemplate, SchoolPasswordResetMail>();
         builder.Services.AddSingleton<MailTemplates>();
         builder.Services.AddSingleton<MailMetrics>();
         builder.Services.AddSingleton(services => SmtpEndpoint.Parse(

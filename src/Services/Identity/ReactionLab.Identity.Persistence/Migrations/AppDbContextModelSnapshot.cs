@@ -480,9 +480,18 @@ namespace ReactionLab.Identity.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("user_id");
 
+                    b.Property<string>("Email")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("email");
+
                     b.Property<DateTimeOffset>("ExpiresAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("expires_at");
+
+                    b.Property<DateTimeOffset?>("FirstRequestedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("first_requested_at");
 
                     b.Property<DateTimeOffset>("IssuedAt")
                         .HasColumnType("timestamp with time zone")
@@ -496,8 +505,26 @@ namespace ReactionLab.Identity.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("issued_in_session");
 
+                    b.Property<string>("Purpose")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("purpose");
+
+                    b.Property<int>("RequestCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("request_count");
+
+                    b.Property<Guid?>("RequestId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("request_id");
+
+                    b.Property<DateTimeOffset?>("RequestedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("requested_at");
+
                     b.Property<byte[]>("TokenHash")
-                        .IsRequired()
                         .HasColumnType("bytea")
                         .HasColumnName("token_hash");
 
@@ -542,6 +569,50 @@ namespace ReactionLab.Identity.Persistence.Migrations
                         .HasDatabaseName("ix_password_changes_user_id");
 
                     b.ToTable("password_changes", (string)null);
+                });
+
+            modelBuilder.Entity("ReactionLab.Identity.Persistence.Accounts.SignInMethodChange", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Change")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("change");
+
+                    b.Property<DateTimeOffset>("ChangedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("changed_at")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<string>("Provider")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("provider");
+
+                    b.Property<string>("UserAgent")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("user_agent");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_sign_in_method_changes");
+
+                    b.HasIndex("ChangedAt")
+                        .HasDatabaseName("ix_sign_in_method_changes_changed_at");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_sign_in_method_changes_user_id");
+
+                    b.ToTable("sign_in_method_changes", (string)null);
                 });
 
             modelBuilder.Entity("ReactionLab.Identity.Persistence.Accounts.User", b =>
@@ -605,6 +676,14 @@ namespace ReactionLab.Identity.Persistence.Migrations
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("lockout_end");
+
+                    b.Property<int>("MailedSetupCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("mailed_setup_count");
+
+                    b.Property<DateTimeOffset?>("MailedSetupsSince")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("mailed_setups_since");
 
                     b.Property<string>("NormalizedEmail")
                         .HasMaxLength(256)
@@ -703,7 +782,7 @@ namespace ReactionLab.Identity.Persistence.Migrations
 
                     b.ToTable("users", null, t =>
                         {
-                            t.HasCheckConstraint("ck_users_organization_username", "(organization_id IS NULL) = (organization_username IS NULL)");
+                            t.HasCheckConstraint("ck_users_organization_username", "(organization_id IS NULL AND organization_username IS NULL) OR (organization_id IS NOT NULL AND (organization_username IS NOT NULL OR password_hash IS NULL))");
                         });
                 });
 
@@ -712,6 +791,10 @@ namespace ReactionLab.Identity.Persistence.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")
                         .HasColumnName("id");
+
+                    b.Property<bool>("AccountsMayResetOwnPasswords")
+                        .HasColumnType("boolean")
+                        .HasColumnName("accounts_may_reset_own_passwords");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -734,6 +817,14 @@ namespace ReactionLab.Identity.Persistence.Migrations
                         .HasColumnType("character varying(10)")
                         .HasDefaultValue("en")
                         .HasColumnName("locale");
+
+                    b.Property<int>("MailedSetupCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("mailed_setup_count");
+
+                    b.Property<DateTimeOffset?>("MailedSetupsSince")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("mailed_setups_since");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -791,6 +882,10 @@ namespace ReactionLab.Identity.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("account_id");
 
+                    b.Property<Guid?>("BatchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("batch_id");
+
                     b.Property<string>("Change")
                         .IsRequired()
                         .HasMaxLength(32)
@@ -820,6 +915,10 @@ namespace ReactionLab.Identity.Persistence.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_organization_changes");
+
+                    b.HasIndex("BatchId")
+                        .HasDatabaseName("ix_organization_changes_batch_id")
+                        .HasFilter("batch_id IS NOT NULL");
 
                     b.HasIndex("OrganizationId", "Id")
                         .HasDatabaseName("ix_organization_changes_organization_id_id");
@@ -1112,6 +1211,16 @@ namespace ReactionLab.Identity.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_password_changes_users_user_id");
+                });
+
+            modelBuilder.Entity("ReactionLab.Identity.Persistence.Accounts.SignInMethodChange", b =>
+                {
+                    b.HasOne("ReactionLab.Identity.Persistence.Accounts.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_sign_in_method_changes_users_user_id");
                 });
 
             modelBuilder.Entity("ReactionLab.Identity.Persistence.Accounts.User", b =>

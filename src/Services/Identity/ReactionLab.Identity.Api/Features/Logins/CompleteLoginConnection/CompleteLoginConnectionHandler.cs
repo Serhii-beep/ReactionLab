@@ -17,12 +17,14 @@ internal sealed class CompleteLoginConnectionHandler(
     RecentSignInCheck recentSignInCheck,
     AppDbContext context,
     UserManager<User> userManager,
+    SignInMethodChanges signInMethodChanges,
     ILogger<CompleteLoginConnectionHandler> logger)
 {
     public async Task<IResult> HandleAsync(
         IExternalSignInProvider provider,
         AuthenticateResult authentication,
-        LoginConnection connection)
+        LoginConnection connection,
+        string? userAgent)
     {
         var returnUrl = LocalReturnUrls.OrDefault(authentication.Properties?.RedirectUri);
 
@@ -40,7 +42,7 @@ internal sealed class CompleteLoginConnectionHandler(
                 LoginConnections.WithError(ExternalSignInErrors.CodeForProviderError(error), returnUrl));
         }
 
-        var outcome = await ConnectAsync(provider, identity, connection);
+        var outcome = await ConnectAsync(provider, identity, connection, userAgent);
 
         if (outcome.IsFailure)
         {
@@ -69,7 +71,8 @@ internal sealed class CompleteLoginConnectionHandler(
     private async Task<Result<LoginConnectionOutcome>> ConnectAsync(
         IExternalSignInProvider provider,
         ExternalIdentity identity,
-        LoginConnection connection)
+        LoginConnection connection,
+        string? userAgent)
     {
         var confirmedPassword = await recentSignInCheck.CheckConfirmedPasswordAsync(
             connection.AccountId,
@@ -81,7 +84,7 @@ internal sealed class CompleteLoginConnectionHandler(
             return Result.Failure<LoginConnectionOutcome>(confirmedPassword.Error);
         }
 
-        if (await InsertAsync(provider, identity, connection) == 1)
+        if (await InsertAsync(provider, identity, connection, userAgent) == 1)
         {
             return Result.Success(LoginConnectionOutcome.Added);
         }
@@ -111,8 +114,12 @@ internal sealed class CompleteLoginConnectionHandler(
     private Task<int> InsertAsync(
         IExternalSignInProvider provider,
         ExternalIdentity identity,
-        LoginConnection connection) =>
-        context.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
+        LoginConnection connection,
+        string? userAgent)
+    {
+        var changeId = Guid.CreateVersion7();
+
+        return context.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
         {
             await using var transaction = await context.Database.BeginTransactionAsync(CancellationToken.None);
 
@@ -123,8 +130,19 @@ internal sealed class CompleteLoginConnectionHandler(
                 identity.Subject,
                 provider.DisplayName);
 
+            if (inserted == 1)
+            {
+                await signInMethodChanges.RecordAsync(
+                    connection.AccountId,
+                    changeId,
+                    SignInMethodChangeNames.ProviderConnected,
+                    provider.Name,
+                    userAgent);
+            }
+
             await transaction.CommitAsync(CancellationToken.None);
 
             return inserted;
         });
+    }
 }

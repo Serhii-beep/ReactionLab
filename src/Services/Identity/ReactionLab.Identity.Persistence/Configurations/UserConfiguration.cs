@@ -11,7 +11,8 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
     {
         builder.ToTable("users", table => table.HasCheckConstraint(
             "ck_users_organization_username",
-            "(organization_id IS NULL) = (organization_username IS NULL)"));
+            "(organization_id IS NULL AND organization_username IS NULL) OR (organization_id IS NOT NULL"
+                + " AND (organization_username IS NOT NULL OR password_hash IS NULL))"));
 
         builder.Property(user => user.Id).ValueGeneratedNever();
 

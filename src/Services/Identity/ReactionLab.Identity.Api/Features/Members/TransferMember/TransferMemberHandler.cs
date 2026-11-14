@@ -46,9 +46,8 @@ internal sealed class TransferMemberHandler(
             return Result.Failure<MemberResponse>(refusal);
         }
 
-        var taken = await context.ListTakenUsernamesAsync(destinationId, [student.Value.Username], cancellationToken);
-
-        if (taken.Count > 0)
+        if (student.Value.Username is { } username
+            && (await context.ListTakenUsernamesAsync(destinationId, [username], cancellationToken)).Count > 0)
         {
             return Result.Failure<MemberResponse>(MemberErrors.UsernameInUse);
         }

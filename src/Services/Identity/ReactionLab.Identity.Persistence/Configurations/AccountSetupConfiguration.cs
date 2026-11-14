@@ -11,8 +11,10 @@ internal sealed class AccountSetupConfiguration : IEntityTypeConfiguration<Accou
     {
         builder.ToTable("account_setups");
         builder.HasKey(setup => setup.UserId);
-        builder.Property(setup => setup.TokenHash).IsRequired();
         builder.HasIndex(setup => setup.TokenHash).IsUnique();
+        builder.Property(setup => setup.Email).HasMaxLength(User.MaximumEmailLength);
+        builder.Property(setup => setup.Purpose).HasMaxLength(AccountSetup.MaximumPurposeLength);
+        builder.Property(setup => setup.RequestCount).HasDefaultValue(0);
 
         builder.HasOne<User>()
             .WithOne()

@@ -5,7 +5,7 @@ namespace ReactionLab.Identity.Api.Features.Members.Contracts;
 internal sealed record MemberResponse(
     Guid AccountId,
     Guid OrganizationId,
-    string Username,
+    string? Username,
     string DisplayName,
     string? Email,
     IReadOnlyList<string> Roles,

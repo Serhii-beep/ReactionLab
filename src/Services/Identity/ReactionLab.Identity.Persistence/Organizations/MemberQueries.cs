@@ -157,7 +157,7 @@ public static class MemberQueries
         return accounts.Select(user => new SchoolMember(
             user.Id,
             user.OrganizationId!.Value,
-            user.OrganizationUsername!,
+            user.OrganizationUsername,
             user.DisplayName,
             user.Email,
             schoolRoles

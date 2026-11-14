@@ -8,6 +8,11 @@ internal sealed class NotificationEventEffects(
     EmailConfirmationRequests emailConfirmationRequests,
     PasswordResetRequests passwordResetRequests,
     PasswordChangeNotices passwordChangeNotices,
+    SignInMethodChangeNotices signInMethodChangeNotices,
+    LockoutNotices lockoutNotices,
+    PlatformAdminChangeNotices platformAdminChangeNotices,
+    SchoolAdminChangeNotices schoolAdminChangeNotices,
+    AccountSetupRequests accountSetupRequests,
     AccountErasure accountErasure) : IConsumedEventEffects
 {
     public static readonly IReadOnlyCollection<string> EventTypes =
@@ -16,6 +21,11 @@ internal sealed class NotificationEventEffects(
         IdentityEventTypes.EmailConfirmationRequested,
         IdentityEventTypes.PasswordResetRequested,
         IdentityEventTypes.PasswordChanged,
+        IdentityEventTypes.SignInMethodChanged,
+        IdentityEventTypes.AccountLocked,
+        IdentityEventTypes.PlatformAdminChangeAnnounced,
+        IdentityEventTypes.SchoolAdminChangeAnnounced,
+        IdentityEventTypes.AccountSetupRequested,
         IdentityEventTypes.UserErasureRequested
     ];
 
@@ -35,6 +45,16 @@ internal sealed class NotificationEventEffects(
                 passwordResetRequests.QueueAsync(consumed, cancellationToken),
             IdentityEventTypes.PasswordChanged =>
                 passwordChangeNotices.QueueAsync(consumed, cancellationToken),
+            IdentityEventTypes.SignInMethodChanged =>
+                signInMethodChangeNotices.QueueAsync(consumed, cancellationToken),
+            IdentityEventTypes.AccountLocked =>
+                lockoutNotices.QueueAsync(consumed, cancellationToken),
+            IdentityEventTypes.PlatformAdminChangeAnnounced =>
+                platformAdminChangeNotices.QueueAsync(consumed, cancellationToken),
+            IdentityEventTypes.SchoolAdminChangeAnnounced =>
+                schoolAdminChangeNotices.QueueAsync(consumed, cancellationToken),
+            IdentityEventTypes.AccountSetupRequested =>
+                accountSetupRequests.QueueAsync(consumed, cancellationToken),
             IdentityEventTypes.UserErasureRequested =>
                 accountErasure.EraseAsync(consumed, cancellationToken),
             _ => throw new InvalidOperationException($"Notifications has no effect for {consumed.Type}.")

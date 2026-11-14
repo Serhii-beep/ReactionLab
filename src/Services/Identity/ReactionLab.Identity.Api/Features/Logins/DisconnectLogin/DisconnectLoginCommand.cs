@@ -6,4 +6,5 @@ internal sealed record DisconnectLoginCommand(
     Guid AccountId,
     Guid CurrentSessionId,
     SessionSignIn SignIn,
-    string Provider);
+    string Provider,
+    string? UserAgent);

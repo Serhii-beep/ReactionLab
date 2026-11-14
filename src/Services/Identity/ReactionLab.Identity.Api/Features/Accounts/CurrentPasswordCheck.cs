@@ -2,9 +2,11 @@ using Microsoft.AspNetCore.Identity;
 using ReactionLab.Identity.Api.Features.Sessions;
 using ReactionLab.Identity.Api.OpenId;
 using ReactionLab.Identity.Api.Passwords;
+using ReactionLab.Identity.Contracts;
 using ReactionLab.Identity.Persistence;
 using ReactionLab.Identity.Persistence.Accounts;
 using ReactionLab.Identity.Persistence.OpenId;
+using ReactionLab.Messaging.Outbox;
 using ReactionLab.SharedKernel;
 
 namespace ReactionLab.Identity.Api.Features.Accounts;
@@ -14,6 +16,7 @@ internal sealed class CurrentPasswordCheck(
     UserManager<User> userManager,
     PasswordVerificationGate verificationGate,
     SessionRevocation sessionRevocation,
+    OutboxWriter outbox,
     TimeProvider timeProvider,
     ILogger<CurrentPasswordCheck> logger)
 {
@@ -36,7 +39,11 @@ internal sealed class CurrentPasswordCheck(
         }
 
         if (!signedInWithPassword
-            && !await context.ClaimCurrentPasswordCheckAsync(user.Id, PasswordPolicy.Lockout, timeProvider.GetUtcNow()))
+            && !await context.ClaimCurrentPasswordCheckAsync(
+                user.Id,
+                PasswordPolicy.Lockout,
+                timeProvider.GetUtcNow(),
+                LockAnnouncements.For(outbox, user, AccountLocks.PasswordChecks)))
         {
             logger.LogInformation(
                 "Session {SessionId} may not check a password - account {AccountId} is locked after wrong ones.",

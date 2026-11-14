@@ -6,6 +6,7 @@ using ReactionLab.Identity.Api.Features.Organizations;
 using ReactionLab.Identity.Persistence;
 using ReactionLab.Identity.Persistence.Accounts;
 using ReactionLab.Identity.Persistence.Organizations;
+using ReactionLab.Messaging.Outbox;
 using ReactionLab.SharedKernel;
 
 namespace ReactionLab.Identity.Api.Features.Members.CreateMember;
@@ -15,6 +16,7 @@ internal sealed class CreateMemberHandler(
     MemberCredentials memberCredentials,
     UserManager<User> userManager,
     AppDbContext context,
+    OutboxWriter outbox,
     TimeProvider timeProvider,
     ILogger<CreateMemberHandler> logger) : ICommandHandler<CreateMemberCommand, CreatedMemberResponse>
 {
@@ -44,25 +46,15 @@ internal sealed class CreateMemberHandler(
         }
 
         var now = timeProvider.GetDatabaseUtcNow();
-        var account = User.CreateSchoolAccount(
-            command.OrganizationId,
-            command.DisplayName,
-            command.Username,
-            command.Email,
-            locale.Value,
-            now);
+        var account = CreateAccount(command, kind.Value, locale.Value, now);
 
         if (account.IsFailure)
         {
             return Result.Failure<CreatedMemberResponse>(account.Error);
         }
 
-        var taken = await context.ListTakenUsernamesAsync(
-            command.OrganizationId,
-            [account.Value.OrganizationUsername!],
-            cancellationToken);
-
-        if (taken.Count > 0)
+        if (account.Value.OrganizationUsername is { } username
+            && (await context.ListTakenUsernamesAsync(command.OrganizationId, [username], cancellationToken)).Count > 0)
         {
             return Result.Failure<CreatedMemberResponse>(MemberErrors.UsernameInUse);
         }
@@ -92,6 +84,28 @@ internal sealed class CreateMemberHandler(
         return Result.Success(new CreatedMemberResponse(
             MemberResponse.From(created.Value, now),
             credential.ToResponse()));
+    }
+
+    private static Result<User> CreateAccount(
+        CreateMemberCommand command,
+        string credentialKind,
+        SupportedLocale locale,
+        DateTimeOffset now)
+    {
+        if (!string.IsNullOrWhiteSpace(command.Username))
+        {
+            return User.CreateSchoolAccount(
+                command.OrganizationId,
+                command.DisplayName,
+                command.Username,
+                command.Email,
+                locale,
+                now);
+        }
+
+        return credentialKind == MemberCredentialKinds.SetupLink && !string.IsNullOrWhiteSpace(command.Email)
+            ? User.InviteSchoolAccount(command.OrganizationId, command.DisplayName, command.Email, locale, now)
+            : MemberErrors.InvitationNeedsEmail;
     }
 
     private async Task<Result<Guid>> PlaceRoleAsync(
@@ -165,22 +179,26 @@ internal sealed class CreateMemberHandler(
             return conflict;
         }
 
-        var granted = await context.GrantMemberRoleAsync(account.Id, roleOrganizationId, command.Role!);
-
-        if (granted != 1
-            || !await memberCredentials.ApplyAsync(
-                credential,
-                account.Id,
-                command.OrganizationId,
-                command.ActorId,
-                command.ActorSessionId))
+        if (await context.GrantMemberRoleAsync(account.Id, roleOrganizationId, command.Role!) != 1)
         {
-            throw new InvalidOperationException("The new member's role or credential was not saved.");
+            throw new InvalidOperationException("The new member's role was not saved.");
+        }
+
+        var applied = await memberCredentials.ApplyAsync(
+            credential,
+            account.Id,
+            command.OrganizationId,
+            command.ActorId,
+            command.ActorSessionId);
+
+        if (applied.IsFailure)
+        {
+            return applied.Error;
         }
 
         var ownRole = roleOrganizationId == command.OrganizationId ? command.Role : null;
 
-        await context.RecordOrganizationChangeAsync(
+        var createdChangeId = await context.RecordOrganizationChangeAsync(
             command.OrganizationId,
             OrganizationChangeNames.AccountCreated,
             account.Id,
@@ -188,15 +206,19 @@ internal sealed class CreateMemberHandler(
             command.ActorId,
             command.ActorSessionId);
 
-        if (ownRole is null)
-        {
-            await context.RecordOrganizationChangeAsync(
+        var roleChangeId = ownRole is not null
+            ? createdChangeId
+            : await context.RecordOrganizationChangeAsync(
                 roleOrganizationId,
                 OrganizationChangeNames.RoleGranted,
                 account.Id,
                 command.Role,
                 command.ActorId,
                 command.ActorSessionId);
+
+        if (SchoolAdminAnnouncements.IsAdminRole(command.Role))
+        {
+            await context.AnnounceSchoolAdminChangeAsync(outbox, roleOrganizationId, roleChangeId, [account.Id]);
         }
 
         return await context.FindMemberAsync(command.OrganizationId, null, account.Id, now, CancellationToken.None)

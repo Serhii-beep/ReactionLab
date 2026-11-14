@@ -138,13 +138,13 @@ public static class MemberStatements
             """,
             CancellationToken.None);
 
-    public static Task<int> RecordAccountChangeAsync(
+    public static Task<List<RecordedOrganizationChange>> RecordAccountChangeAsync(
         this AppDbContext context,
         Guid accountId,
         string change,
         Guid changedBy,
         Guid changedInSession) =>
-        context.Database.ExecuteSqlAsync(
+        context.Database.SqlQuery<RecordedOrganizationChange>(
             $"""
             INSERT INTO organization_changes
                 (id, organization_id, change, account_id, role, changed_by, changed_in_session, changed_at)
@@ -154,8 +154,9 @@ public static class MemberStatements
                 SELECT organization_id FROM users WHERE id = {accountId}
                 UNION
                 SELECT organization_id FROM user_school_roles WHERE user_id = {accountId}) AS affected
-            """,
-            CancellationToken.None);
+            RETURNING organization_id, id
+            """)
+            .ToListAsync(CancellationToken.None);
 
     public static async Task<long?> DeleteMemberAsync(this AppDbContext context, Guid accountId, Guid organizationId)
     {

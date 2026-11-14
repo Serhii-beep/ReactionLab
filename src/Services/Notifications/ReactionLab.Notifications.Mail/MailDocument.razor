@@ -74,6 +74,10 @@
                 .inset {
                     background-color: @MailStyle.DarkInsetColor !important;
                 }
+
+                .accent-subtle {
+                    background-color: @MailStyle.DarkAccentSubtleColor !important;
+                }
             }
         </style>
     </head>
@@ -97,6 +101,18 @@
                                                 style="margin-left: 10px; vertical-align: middle; font-size: 17px; font-weight: 600;
                                                         letter-spacing: -0.011em; color: @MailStyle.PrimaryTextColor;">@MailStyle.BrandName</span>
                                         </td>
+                                        @if (Content.OrganizationName is { } organizationName)
+                                        {
+                                            <td class="rule" align="right"
+                                                style="padding: 0 0 24px 12px; text-align: right;
+                                                        border-bottom: 1px solid @MailStyle.BorderColor;">
+                                                <span class="accent-subtle primary-text"
+                                                    style="display: inline-block; padding: 4px 10px; border-radius: 999px;
+                                                            background-color: @MailStyle.AccentSubtleColor;
+                                                            font-size: 13px; font-weight: 500;
+                                                            color: @MailStyle.PrimaryTextColor;">@organizationName</span>
+                                            </td>
+                                        }
                                     </tr>
                                 </table>
                                 <h1 class="heading primary-text"

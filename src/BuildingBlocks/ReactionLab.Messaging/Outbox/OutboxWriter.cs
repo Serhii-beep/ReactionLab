@@ -12,6 +12,15 @@ public sealed class OutboxWriter(PublishedEventTypes eventTypes, TimeProvider ti
         return context.InsertOutboxMessageAsync(CreateMessage(domainEvent));
     }
 
+    public Task<int> InsertAllAsync(DbContext context, IEnumerable<IDomainEvent> domainEvents)
+    {
+        RequireTransaction(context);
+
+        var messages = domainEvents.Select(CreateMessage).ToList();
+
+        return messages.Count == 0 ? Task.FromResult(0) : context.InsertOutboxMessagesAsync(messages);
+    }
+
     public OutboxMessage CreateMessage(IDomainEvent domainEvent) =>
         eventTypes.ToOutboxMessage(domainEvent, MessagingTelemetry.CurrentTraceParent(), timeProvider.GetUtcNow());
 

@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using ReactionLab.Identity.Api.ExternalSignIn;
 using ReactionLab.Identity.Api.Features.Accounts;
 using ReactionLab.Identity.Api.Features.Accounts.SignIn;
@@ -17,6 +18,7 @@ internal sealed class LinkExternalSignInHandler(
     AppDbContext context,
     UserManager<User> userManager,
     SignInManager<User> signInManager,
+    SignInMethodChanges signInMethodChanges,
     ILogger<LinkExternalSignInHandler> logger) : ICommandHandler<LinkExternalSignInCommand>
 {
     public async ValueTask<Result> HandleAsync(LinkExternalSignInCommand command, CancellationToken cancellationToken)
@@ -38,11 +40,12 @@ internal sealed class LinkExternalSignInHandler(
             return Result.Failure(user.Error);
         }
 
-        var added = await context.AddLoginAsync(
+        var added = await AddLoginAsync(
             user.Value.Id,
             identity.Provider,
             identity.Subject,
-            provider.DisplayName);
+            provider.DisplayName,
+            command.UserAgent);
 
         if (added == 0)
         {
@@ -74,5 +77,36 @@ internal sealed class LinkExternalSignInHandler(
         }
 
         return Result.Success();
+    }
+
+    private Task<int> AddLoginAsync(
+        Guid accountId,
+        string providerName,
+        string subject,
+        string providerDisplayName,
+        string? userAgent)
+    {
+        var changeId = Guid.CreateVersion7();
+
+        return context.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
+        {
+            await using var transaction = await context.Database.BeginTransactionAsync(CancellationToken.None);
+
+            var added = await context.AddLoginAsync(accountId, providerName, subject, providerDisplayName);
+
+            if (added == 1)
+            {
+                await signInMethodChanges.RecordAsync(
+                    accountId,
+                    changeId,
+                    SignInMethodChangeNames.ProviderConnected,
+                    providerName,
+                    userAgent);
+            }
+
+            await transaction.CommitAsync(CancellationToken.None);
+
+            return added;
+        });
     }
 }

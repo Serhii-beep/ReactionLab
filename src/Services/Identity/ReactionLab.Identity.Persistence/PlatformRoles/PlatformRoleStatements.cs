@@ -9,12 +9,13 @@ public static class PlatformRoleStatements
             $"SELECT 1 FROM platform_roles WHERE name = {PlatformRoleNames.Admin} FOR UPDATE",
             CancellationToken.None);
 
-    public static Task<int> GrantPlatformRoleAsync(
+    public static async Task<Guid?> GrantPlatformRoleAsync(
         this AppDbContext context,
         Guid accountId,
         string role,
-        PlatformRoleChangeAuthor author) =>
-        context.Database.ExecuteSqlAsync(
+        PlatformRoleChangeAuthor author)
+    {
+        var changeIds = await context.Database.SqlQuery<Guid>(
             $"""
             WITH granted AS (
                 INSERT INTO user_platform_roles (user_id, role_id)
@@ -27,15 +28,20 @@ public static class PlatformRoleStatements
             SELECT uuidv7(), user_id, {role}, true, {author.Source}, {author.AccountId}::uuid,
                 {author.SessionId}::uuid, clock_timestamp()
             FROM granted
-            """,
-            CancellationToken.None);
+            RETURNING id AS "Value"
+            """)
+            .ToListAsync(CancellationToken.None);
 
-    public static Task<int> RevokePlatformRoleAsync(
+        return changeIds.Count == 0 ? null : changeIds[0];
+    }
+
+    public static async Task<Guid?> RevokePlatformRoleAsync(
         this AppDbContext context,
         Guid accountId,
         string role,
-        PlatformRoleChangeAuthor author) =>
-        context.Database.ExecuteSqlAsync(
+        PlatformRoleChangeAuthor author)
+    {
+        var changeIds = await context.Database.SqlQuery<Guid>(
             $"""
             WITH revoked AS (
                 DELETE FROM user_platform_roles USING platform_roles
@@ -47,6 +53,10 @@ public static class PlatformRoleStatements
             SELECT uuidv7(), user_id, {role}, false, {author.Source}, {author.AccountId}::uuid,
                 {author.SessionId}::uuid, clock_timestamp()
             FROM revoked
-            """,
-            CancellationToken.None);
+            RETURNING id AS "Value"
+            """)
+            .ToListAsync(CancellationToken.None);
+
+        return changeIds.Count == 0 ? null : changeIds[0];
+    }
 }

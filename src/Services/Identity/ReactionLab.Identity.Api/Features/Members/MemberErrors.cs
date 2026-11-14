@@ -91,4 +91,17 @@ internal static class MemberErrors
         "Member.StatusUnknown",
         "A status is active, pending, locked or disabled.",
         "Status");
+
+    public static readonly Error UsernameNotChosen = Error.Conflict(
+        "Member.UsernameNotChosen",
+        "The invited account has no username yet, so it gets a setup link, not a password.");
+
+    public static readonly Error SetupLinkLimitReached = Error.TooManyRequests(
+        "Member.SetupLinkLimitReached",
+        "The account, or its school, has had as many setup links mailed as a day allows.");
+
+    public static readonly Error InvitationNeedsEmail = Error.Validation(
+        "Member.InvitationNeedsEmail",
+        "An account created without a username needs an email address and a setup link.",
+        "Username");
 }

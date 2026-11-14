@@ -1,5 +1,6 @@
 using ReactionLab.Identity.Persistence;
 using ReactionLab.Identity.Persistence.Organizations;
+using ReactionLab.Messaging.Outbox;
 using ReactionLab.SharedKernel;
 
 namespace ReactionLab.Identity.Api.Features.Members.RevokeMemberRole;
@@ -7,6 +8,7 @@ namespace ReactionLab.Identity.Api.Features.Members.RevokeMemberRole;
 internal sealed class RevokeMemberRoleHandler(
     SchoolAdminTransaction adminTransaction,
     AppDbContext context,
+    OutboxWriter outbox,
     TimeProvider timeProvider,
     ILogger<RevokeMemberRoleHandler> logger) : ICommandHandler<RevokeMemberRoleCommand>
 {
@@ -78,13 +80,18 @@ internal sealed class RevokeMemberRoleHandler(
             return MemberErrors.LastAdmin;
         }
 
-        await context.RecordOrganizationChangeAsync(
+        var changeId = await context.RecordOrganizationChangeAsync(
             command.OrganizationId,
             OrganizationChangeNames.RoleRevoked,
             command.AccountId,
             command.Role,
             command.ActorId,
             command.ActorSessionId);
+
+        if (SchoolAdminAnnouncements.IsAdminRole(command.Role))
+        {
+            await context.AnnounceSchoolAdminChangeAsync(outbox, command.OrganizationId, changeId, [command.AccountId]);
+        }
 
         return true;
     }

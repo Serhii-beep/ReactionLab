@@ -5,4 +5,5 @@ public sealed record MailContent(
     string Subject,
     string Heading,
     IReadOnlyList<MailBlock> Blocks,
-    IReadOnlyList<string> FooterLines);
+    IReadOnlyList<string> FooterLines,
+    string? OrganizationName = null);

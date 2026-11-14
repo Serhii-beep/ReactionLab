@@ -88,23 +88,23 @@ internal sealed class ResetMemberPasswordHandler(
             return target.Error;
         }
 
-        if (!await memberCredentials.ApplyAsync(
+        var applied = await memberCredentials.ApplyAsync(
             credential,
             command.AccountId,
             command.OrganizationId,
             command.ActorId,
-            command.ActorSessionId))
+            command.ActorSessionId);
+
+        if (applied.IsFailure)
         {
-            return MemberErrors.NotFound;
+            return applied.Error;
         }
 
         await MemberSessions.EndAllAsync(context, command.AccountId);
 
         await context.RecordOrganizationChangeAsync(
             command.OrganizationId,
-            credential.Kind == MemberCredentialKinds.SetupLink
-                ? OrganizationChangeNames.SetupLinkIssued
-                : OrganizationChangeNames.PasswordReset,
+            MemberCredentials.ChangeName(credential),
             command.AccountId,
             role: null,
             command.ActorId,
@@ -127,11 +127,18 @@ internal sealed class ResetMemberPasswordHandler(
                 cancellationToken),
             command.OrganizationId);
 
-        if (member.IsFailure || access.IsAdmin)
+        if (member.IsFailure)
         {
             return member;
         }
 
-        return member.Value.Roles is [SchoolRoleNames.Student] ? member : MemberErrors.ResetNotAllowed;
+        if (member.Value.Username is null && command.Credential == MemberCredentialKinds.Password)
+        {
+            return MemberErrors.UsernameNotChosen;
+        }
+
+        return access.IsAdmin || member.Value.Roles is [SchoolRoleNames.Student]
+            ? member
+            : MemberErrors.ResetNotAllowed;
     }
 }

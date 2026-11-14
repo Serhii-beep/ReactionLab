@@ -5,6 +5,7 @@ using ReactionLab.Identity.Api.Features.Members.Contracts;
 using ReactionLab.Identity.Persistence;
 using ReactionLab.Identity.Persistence.Accounts;
 using ReactionLab.Identity.Persistence.Organizations;
+using ReactionLab.Messaging.Outbox;
 using ReactionLab.SharedKernel;
 
 namespace ReactionLab.Identity.Api.Features.Members.ImportMembers;
@@ -14,6 +15,7 @@ internal sealed class ImportMembersHandler(
     MemberCredentials memberCredentials,
     UserManager<User> userManager,
     AppDbContext context,
+    OutboxWriter outbox,
     TimeProvider timeProvider,
     ILogger<ImportMembersHandler> logger) : ICommandHandler<ImportMembersCommand, ImportedMembersResponse>
 {
@@ -169,15 +171,32 @@ internal sealed class ImportMembersHandler(
         {
             context.ChangeTracker.Clear();
 
+            var batchId = Guid.CreateVersion7();
+            var importedAdmins = new List<ImportedAdmin>();
+
             for (var index = 0; index < accounts.Count; index++)
             {
                 var (row, account) = accounts[index];
-                var created = await CreateAsync(command, row, account, credentials[index]);
+                var created = await CreateAsync(command, row, account, credentials[index], batchId);
 
                 if (created.IsFailure)
                 {
                     return ForRow(created.Error, row);
                 }
+
+                if (SchoolAdminAnnouncements.IsAdminRole(row.Role))
+                {
+                    importedAdmins.Add(new ImportedAdmin(account.Id, created.Value));
+                }
+            }
+
+            if (importedAdmins.Count > 0)
+            {
+                await context.AnnounceSchoolAdminChangeAsync(
+                    outbox,
+                    command.OrganizationId,
+                    importedAdmins[0].ChangeId,
+                    [.. importedAdmins.Select(imported => imported.AccountId)]);
             }
         }
 
@@ -194,11 +213,12 @@ internal sealed class ImportMembersHandler(
             .ToList();
     }
 
-    private async Task<Result> CreateAsync(
+    private async Task<Result<Guid>> CreateAsync(
         ImportMembersCommand command,
         MemberCsvRow row,
         User account,
-        MemberCredential credential)
+        MemberCredential credential,
+        Guid batchId)
     {
         try
         {
@@ -206,34 +226,39 @@ internal sealed class ImportMembersHandler(
 
             if (!saved.Succeeded)
             {
-                return Result.Failure(saved.Errors.First().ToError());
+                return saved.Errors.First().ToError();
             }
         }
         catch (DbUpdateException ex) when (MemberConflicts.Of(ex) is { } conflict)
         {
-            return Result.Failure(conflict);
+            return conflict;
         }
 
-        if (await context.GrantMemberRoleAsync(account.Id, command.OrganizationId, row.Role) != 1
-            || !await memberCredentials.ApplyAsync(
-                credential,
-                account.Id,
-                command.OrganizationId,
-                command.ActorId,
-                command.ActorSessionId))
+        if (await context.GrantMemberRoleAsync(account.Id, command.OrganizationId, row.Role) != 1)
         {
-            throw new InvalidOperationException("An imported member's role or credential was not saved.");
+            throw new InvalidOperationException("An imported member's role was not saved.");
         }
 
-        await context.RecordOrganizationChangeAsync(
+        var applied = await memberCredentials.ApplyAsync(
+            credential,
+            account.Id,
+            command.OrganizationId,
+            command.ActorId,
+            command.ActorSessionId);
+
+        if (applied.IsFailure)
+        {
+            return applied.Error;
+        }
+
+        return await context.RecordOrganizationChangeAsync(
             command.OrganizationId,
             OrganizationChangeNames.AccountCreated,
             account.Id,
             row.Role,
             command.ActorId,
-            command.ActorSessionId);
-
-        return Result.Success();
+            command.ActorSessionId,
+            batchId);
     }
 
     private static MemberCsvRow? FindRepeated(

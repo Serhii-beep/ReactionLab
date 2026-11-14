@@ -52,6 +52,7 @@ internal static class ApiProblems
         ErrorType.Conflict => (StatusCodes.Status409Conflict, "Conflict", "conflict"),
         ErrorType.Unauthorized => (StatusCodes.Status401Unauthorized, "Authentication required", "unauthorized"),
         ErrorType.Forbidden => (StatusCodes.Status403Forbidden, "Forbidden", "forbidden"),
+        ErrorType.TooManyRequests => (StatusCodes.Status429TooManyRequests, "Too many requests", "rate-limited"),
         ErrorType.Unexpected => (StatusCodes.Status500InternalServerError, "Unexpected error", "unexpected"),
         ErrorType.None => (StatusCodes.Status500InternalServerError, "Unexpected error", "unexpected"),
         _ => (StatusCodes.Status500InternalServerError, "Unexpected error", "unexpected")

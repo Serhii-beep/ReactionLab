@@ -9,6 +9,11 @@ namespace ReactionLab.Identity.Contracts;
 [JsonSerializable(typeof(EmailConfirmationRequested))]
 [JsonSerializable(typeof(PasswordResetRequested))]
 [JsonSerializable(typeof(PasswordChanged))]
+[JsonSerializable(typeof(SignInMethodChanged))]
+[JsonSerializable(typeof(AccountLocked))]
+[JsonSerializable(typeof(PlatformAdminChangeAnnounced))]
+[JsonSerializable(typeof(SchoolAdminChangeAnnounced))]
+[JsonSerializable(typeof(AccountSetupRequested))]
 [JsonSerializable(typeof(UserProfile))]
 [JsonSerializable(typeof(UserErasureRequested))]
 public sealed partial class IdentityEventJsonContext : JsonSerializerContext;

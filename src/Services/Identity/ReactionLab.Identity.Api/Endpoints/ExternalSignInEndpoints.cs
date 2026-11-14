@@ -89,9 +89,12 @@ internal static class ExternalSignInEndpoints
         group.MapPost("/external-links", async (
             LinkExternalSignInRequest request,
             LinkExternalSignInHandler handler,
+            HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
-            var command = new LinkExternalSignInCommand(request.Password);
+            var command = new LinkExternalSignInCommand(
+                request.Password,
+                httpContext.Request.Headers.UserAgent.ToString());
             var result = await handler.HandleAsync(command, cancellationToken);
 
             return result.ToHttpResult();
@@ -108,9 +111,16 @@ internal static class ExternalSignInEndpoints
         group.MapPost("/external-takeovers", async (
             TakeOverAccountRequest request,
             TakeOverAccountHandler handler,
+            HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
-            var result = await handler.HandleAsync(new TakeOverAccountCommand(), cancellationToken);
+            var command = new TakeOverAccountCommand(
+                request.DisplayName,
+                request.BirthYear,
+                request.Locale ?? httpContext.ResolveLocale().Code,
+                request.TimeZone,
+                httpContext.Request.Headers.UserAgent.ToString());
+            var result = await handler.HandleAsync(command, cancellationToken);
 
             return result.ToHttpResult();
         })

@@ -121,13 +121,15 @@ internal static class AccountSettingsEndpoints
             SetPasswordRequest request,
             ClaimsPrincipal user,
             SetPasswordHandler handler,
+            HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
             var command = new SetPasswordCommand(
                 user.GetAccountId(),
                 user.GetSessionId(),
                 user.GetSessionSignIn(),
-                request.NewPassword);
+                request.NewPassword,
+                httpContext.Request.Headers.UserAgent.ToString());
 
             var result = await handler.HandleAsync(command, cancellationToken);
 
@@ -147,12 +149,14 @@ internal static class AccountSettingsEndpoints
         group.MapDelete("/password", async (
             ClaimsPrincipal user,
             RemovePasswordHandler handler,
+            HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
             var command = new RemovePasswordCommand(
                 user.GetAccountId(),
                 user.GetSessionId(),
-                user.GetSessionSignIn());
+                user.GetSessionSignIn(),
+                httpContext.Request.Headers.UserAgent.ToString());
 
             var result = await handler.HandleAsync(command, cancellationToken);
 

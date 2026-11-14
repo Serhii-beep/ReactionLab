@@ -4,7 +4,13 @@
         "greetingWithoutName": "Hi there,",
         "linkCopy": "Button not working? Paste this into your browser:",
         "securityNoticeReason": "You're getting this because a ReactionLab account uses this address. It's a security notice, so it's sent even when you turn other emails off.",
-        "tagline": "ReactionLab · a 3D chemistry lab"
+        "tagline": "ReactionLab · a 3D chemistry lab",
+        "when": "When",
+        "device": "Device",
+        "deviceDescription": "{browser} on {system}",
+        "unknownDevice": "Unknown",
+        "pausedUntil": "Paused until",
+        "wrongPasswords": "Wrong passwords"
     },
     "repeatedRegistration": {
         "title": "Someone tried to sign up with your email",
@@ -33,13 +39,159 @@
     "passwordChanged": {
         "title": "Your password was changed",
         "changed": "The password of your ReactionLab account was just changed, and every other device was signed out.",
-        "when": "When",
-        "device": "Device",
-        "deviceDescription": "{browser} on {system}",
-        "unknownDevice": "Unknown",
         "ifItWasYou": "If this was you, there's nothing else to do.",
         "ifItWasNotYou": "If it wasn't, reset your password now. The link in that email signs out whoever changed it.",
         "reset": "It wasn't me: reset my password",
         "reason": "You're getting this because the password of the ReactionLab account at this address changed. It's a security notice, so it's sent even when you turn other emails off."
+    },
+    "signInMethodChanged": {
+        "methods": "Your methods",
+        "password": "Password",
+        "noMethods": "None",
+        "ifItWasYou": "If this was you, there's nothing else to do.",
+        "review": "Review sign-in methods",
+        "reset": "It wasn't me: reset my password",
+        "reason": "You're getting this because the sign-in methods of the ReactionLab account at this address changed. It's a security notice, so it's sent even when you turn other emails off.",
+        "connected": {
+            "title": "{provider} sign-in was connected to your account",
+            "changed": "You can now sign in to ReactionLab with {provider}.",
+            "ifItWasNotYou": "If it wasn't you, sign in, disconnect {provider} in Settings › Sign-in methods, and change your password."
+        },
+        "disconnected": {
+            "title": "{provider} sign-in was disconnected from your account",
+            "changed": "You can no longer sign in to ReactionLab with {provider}, and every other device was signed out.",
+            "ifItWasNotYou": "If it wasn't you, reset your password now: the link in that email signs out whoever changed it. Then connect {provider} again."
+        },
+        "passwordSet": {
+            "title": "A password was added to your account",
+            "changed": "You can now sign in to ReactionLab with your email address and this password. For its first 7 days it can't be used to remove your other ways to sign in.",
+            "ifItWasNotYou": "If it wasn't you, sign in another way and remove the password in Settings › Sign-in methods. That signs out every other device."
+        },
+        "passwordRemoved": {
+            "title": "The password was removed from your account",
+            "changed": "You can no longer sign in to ReactionLab with a password, and every other device was signed out.",
+            "ifItWasNotYou": "If it wasn't you, reset your password now: the link in that email lets you choose a new one and signs out whoever removed it."
+        },
+        "takenOver": {
+            "title": "{provider} sign-in now opens your account",
+            "changed": "Someone had signed up with your address without ever confirming it. Signing in with {provider} proved the address is yours, so their password and sign-in methods were removed and every device they used was signed out.",
+            "ifItWasNotYou": "If it wasn't you, someone else is signed in to your {provider} account. Secure it with {provider} first, then review your sign-in methods here."
+        }
+    },
+    "signInLocked": {
+        "reset": "Reset my password",
+        "reason": "You're getting this because signing in to the ReactionLab account at this address was paused after wrong passwords. It's a security notice, so it's sent even when you turn other emails off.",
+        "paused": {
+            "title": "Password sign-in was paused on your account",
+            "happened": "Someone, maybe you, typed a wrong password for your ReactionLab account too many times in a row, so signing in with the password was paused.",
+            "ifItWasYou": "If it was you, sign in again once the pause is over, or reset your password, which ends it at once.",
+            "ifItWasNotYou": "If it wasn't you, nobody got in: the pause is what stops the guessing. A long password you use nowhere else keeps it that way."
+        },
+        "disabled": {
+            "title": "Password sign-in is turned off on your account",
+            "happened": "After {count} wrong passwords in a row, signing in to your ReactionLab account with the password is turned off until you reset it. Other ways to sign in, such as Google, still work.",
+            "ifItWasYou": "If it was you, reset your password to turn password sign-in back on.",
+            "ifItWasNotYou": "If it wasn't you, nobody got in. Resetting your password turns password sign-in back on and starts the count again."
+        }
+    },
+    "passwordChecksLocked": {
+        "reset": "Reset my password",
+        "reviewDevices": "Review your devices",
+        "ifItWasNotYou": "If it wasn't you, someone may be using your Google account on a shared computer. Sign out of Google there, then end your other sessions in Settings › Devices.",
+        "reason": "You're getting this because password checks on the ReactionLab account at this address were paused after wrong passwords. It's a security notice, so it's sent even when you turn other emails off.",
+        "paused": {
+            "title": "Password checks were paused on your account",
+            "happened": "A session that signed in to your ReactionLab account without the password, for example through Google, typed a wrong password too many times, so such sessions couldn't check your password for a while.",
+            "ifItWasYou": "If it was you, wait for the pause to end, or sign in with your password, which this pause doesn't affect."
+        },
+        "disabled": {
+            "title": "Password checks are turned off on your account",
+            "happened": "After {count} wrong passwords, sessions that signed in to your ReactionLab account without the password can no longer check it until you reset your password.",
+            "ifItWasYou": "If it was you, reset your password to turn the checks back on."
+        }
+    },
+    "platformAdminChanged": {
+        "account": "Account",
+        "changedBy": "By",
+        "firstAdminSetting": "The first-admin setting",
+        "breakGlassSetting": "The break-glass setting",
+        "everyAdmin": "Every platform admin hears of each change to who is an admin.",
+        "ifUnexpected": "If nobody on your team made this change, an admin account may be in the wrong hands. Review the platform roles now.",
+        "review": "Review platform roles",
+        "reason": "You're getting this because you are or were a platform admin of ReactionLab. It's a security notice, so it's sent even when you turn other emails off.",
+        "granted": {
+            "title": "A platform admin was added",
+            "changed": "{account} is now a platform admin of ReactionLab."
+        },
+        "revoked": {
+            "title": "A platform admin was removed",
+            "changed": "{account} is no longer a platform admin of ReactionLab."
+        }
+    },
+    "schoolAdminChanged": {
+        "account": "Account",
+        "changedBy": "By",
+        "changedByPlatform": "The ReactionLab team",
+        "schoolAdmin": "a school admin",
+        "districtAdmin": "a district admin",
+        "schoolAdmins": "school admins",
+        "districtAdmins": "district admins",
+        "everyAdmin": "Every admin of {organization} hears of each change to who its admins are.",
+        "ifUnexpected": "If nobody at your school made this change, tell your school's other admins right away.",
+        "review": "Review members",
+        "reason": "You're getting this because you are or were an admin of {organization} on ReactionLab. It's a security notice, so it's sent even when you turn other emails off.",
+        "granted": {
+            "title": "An admin was added at {organization}",
+            "changed": "{account} is now {role} at {organization}."
+        },
+        "revoked": {
+            "title": "An admin was removed at {organization}",
+            "changed": "{account} is no longer {role} at {organization}."
+        },
+        "deleted": {
+            "title": "An admin's account was deleted at {organization}",
+            "changed": "An account that was {role} at {organization} was deleted, with everything it held."
+        },
+        "imported": {
+            "title": "{count} admins were added at {organization}",
+            "changed": "{count} accounts are now {roles} at {organization}, among them {account}."
+        }
+    },
+    "schoolRoles": {
+        "districtAdmin": "a district admin",
+        "schoolAdmin": "an admin",
+        "teacher": "a teacher",
+        "student": "a student",
+        "member": "a member"
+    },
+    "schoolInvitation": {
+        "title": "You're invited to {organization} on ReactionLab",
+        "invited": "{inviter} invited you to join {organization} as {role}.",
+        "invitedBySchool": "You're invited to join {organization} as {role}.",
+        "firstAdmin": "The ReactionLab team set up {organization} and made you its first admin.",
+        "chooseUsername": "Your school account is ready for you to set up: you'll choose your username and your password.",
+        "choosePassword": "Your school account is ready for you to set up: your username is {username}, and you'll choose your password.",
+        "setUp": "Set up my account",
+        "expiry": "The invitation works once and expires on {date}.",
+        "ifUnexpected": "Not expecting this? Ignore it, or ask your school. Nothing happens until someone sets the account up.",
+        "reason": "You're getting this because a school admin at {organization} invited this address. Questions about your school account go to your school.",
+        "firstAdminReason": "You're getting this because ReactionLab set up {organization} with this address for its first admin. Questions go to whoever arranged it at your school."
+    },
+    "schoolPasswordReset": {
+        "requestedTitle": "Reset the password of your school account",
+        "resetTitle": "Choose a new password for your school account",
+        "requested": "Someone, hopefully you, asked to reset the password of your school account at {organization}.",
+        "resetByMember": "{requester}, {role} at {organization}, reset the password of your school account. Choose a new one to sign in again.",
+        "resetBySchool": "Your school, {organization}, reset the password of your school account. Choose a new one to sign in again.",
+        "resetByPlatform": "The ReactionLab team reset the password of your school account at {organization}, because none of its admins could sign in. Choose a new one to sign in again.",
+        "signInCode": "School code",
+        "username": "Username",
+        "choose": "Choose a new password",
+        "expiresInHours": "The link works once and expires in {hours, plural, one {# hour} other {# hours}}. Choosing a new password signs you out on every device.",
+        "expiresInMinutes": "The link works once and expires in {minutes, plural, one {# minute} other {# minutes}}. Choosing a new password signs you out on every device.",
+        "expiresOnDate": "The link works once and expires on {date}. Choosing a new password signs you out on every device.",
+        "ifItWasNotYou": "Didn't ask for this? Ignore this email: your password stays the same, and nobody can use the link without this mailbox.",
+        "questions": "Questions about your school account go to your school's admins.",
+        "reason": "You're getting this because the school account at {organization} with this address needs a new password. It's a security email, so it's sent even when you turn other emails off."
     }
 }

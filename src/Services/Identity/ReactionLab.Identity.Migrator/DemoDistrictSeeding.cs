@@ -98,7 +98,7 @@ internal sealed class DemoDistrictSeeding(
         });
     }
 
-    private Task<int> RecordCreatedAsync(Organization organization) =>
+    private Task<Guid> RecordCreatedAsync(Organization organization) =>
         context.RecordOrganizationChangeAsync(
             organization.Id,
             OrganizationChangeNames.Created,

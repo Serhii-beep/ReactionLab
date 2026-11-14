@@ -25,9 +25,14 @@ public sealed class MailRenderer(IServiceProvider services, ILoggerFactory logge
 
     private static string RenderText(MailContent content)
     {
-        var text = new StringBuilder()
-            .Append(MailStyle.BrandName).Append("\n\n")
-            .Append(content.Heading).Append('\n');
+        var text = new StringBuilder().Append(MailStyle.BrandName);
+
+        if (content.OrganizationName is { } organizationName)
+        {
+            text.Append(" · ").Append(organizationName);
+        }
+
+        text.Append("\n\n").Append(content.Heading).Append('\n');
 
         foreach (var block in content.Blocks.Where(block => block is not MailLinkCopy))
         {

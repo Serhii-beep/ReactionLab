@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using ReactionLab.Identity.Api.Features.Logins;
 using ReactionLab.Identity.Api.Features.Sessions;
 using ReactionLab.Identity.Api.Passwords;
 using ReactionLab.Identity.Persistence;
@@ -14,6 +15,7 @@ internal sealed class SetPasswordHandler(
     RecentSignInCheck recentSignInCheck,
     NewPasswordCheck newPasswordCheck,
     AppDbContext context,
+    SignInMethodChanges signInMethodChanges,
     TimeProvider timeProvider,
     ILogger<SetPasswordHandler> logger) : ICommandHandler<SetPasswordCommand>
 {
@@ -83,8 +85,11 @@ internal sealed class SetPasswordHandler(
         return saved;
     }
 
-    private Task<Result> SaveAsync(SetPasswordCommand command, string passwordHash, DateTimeOffset probationEndsAt) =>
-        context.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
+    private Task<Result> SaveAsync(SetPasswordCommand command, string passwordHash, DateTimeOffset probationEndsAt)
+    {
+        var changeId = Guid.CreateVersion7();
+
+        return context.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
         {
             await using var transaction = await context.Database.BeginTransactionAsync(CancellationToken.None);
 
@@ -98,8 +103,15 @@ internal sealed class SetPasswordHandler(
                 return Result.Failure(SessionErrors.Ended);
             }
 
+            await signInMethodChanges.RecordAsync(
+                command.AccountId,
+                changeId,
+                SignInMethodChangeNames.PasswordSet,
+                null,
+                command.UserAgent);
             await transaction.CommitAsync(CancellationToken.None);
 
             return Result.Success();
         });
+    }
 }

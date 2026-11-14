@@ -5,6 +5,8 @@ namespace ReactionLab.Notifications.Persistence.Mail;
 
 public static class MailJobStatements
 {
+    private const int OldestJobsPerBatch = 2;
+
     public static Task<List<MailJob>> ClaimDueMailJobsAsync(
         this AppDbContext context,
         TimeSpan lease,
@@ -14,19 +16,33 @@ public static class MailJobStatements
         context.Set<MailJob>()
             .FromSql(
                 $"""
-                UPDATE mail_jobs
-                SET available_at = now() + {lease}, attempts = attempts + 1
-                WHERE (recipient_id, id) IN (
+                WITH urgent AS MATERIALIZED (
+                    SELECT recipient_id, id FROM mail_jobs
+                    WHERE available_at <= now() AND failed_at IS NULL AND urgent AND mail_type = ANY({mailTypes})
+                    ORDER BY available_at
+                    LIMIT {Math.Max(1, batchSize - OldestJobsPerBatch)}
+                    FOR UPDATE SKIP LOCKED),
+                oldest AS MATERIALIZED (
                     SELECT recipient_id, id FROM mail_jobs
                     WHERE available_at <= now() AND failed_at IS NULL AND mail_type = ANY({mailTypes})
+                        AND (recipient_id, id) NOT IN (SELECT recipient_id, id FROM urgent)
                     ORDER BY available_at
-                    LIMIT {batchSize}
-                    FOR UPDATE SKIP LOCKED)
-                RETURNING recipient_id, id, mail_type, trace_parent, available_at, created_at,
-                    attempts, last_failure, failed_at
+                    LIMIT {batchSize} - (SELECT count(*) FROM urgent)
+                    FOR UPDATE SKIP LOCKED),
+                claimed AS (
+                    SELECT recipient_id, id FROM urgent
+                    UNION ALL
+                    SELECT recipient_id, id FROM oldest)
+                UPDATE mail_jobs
+                SET available_at = now() + {lease}, attempts = attempts + 1
+                FROM claimed
+                WHERE mail_jobs.recipient_id = claimed.recipient_id AND mail_jobs.id = claimed.id
+                RETURNING mail_jobs.recipient_id, mail_jobs.id, mail_jobs.mail_type, mail_jobs.trace_parent,
+                    mail_jobs.available_at, mail_jobs.created_at, mail_jobs.attempts, mail_jobs.last_failure,
+                    mail_jobs.failed_at, mail_jobs.urgent
                 """)
             .AsNoTracking()
-        .ToListAsync(cancellationToken);
+            .ToListAsync(cancellationToken);
 
     public static Task<int> FinishSentMailJobAsync(
         this AppDbContext context,

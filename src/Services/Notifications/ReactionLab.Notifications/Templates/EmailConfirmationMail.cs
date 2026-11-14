@@ -19,7 +19,7 @@ internal sealed class EmailConfirmationMail(
 
     public SecurityLinkPurpose? LinkPurpose => SecurityLinkPurpose.EmailConfirmation;
 
-    public bool DescribesPasswordChange => false;
+    public MailDetailKind Detail => MailDetailKind.None;
 
     public MailContent Compose(MailRecipient recipient)
     {

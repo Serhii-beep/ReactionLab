@@ -1,5 +1,6 @@
 using ReactionLab.Identity.Persistence;
 using ReactionLab.Identity.Persistence.Organizations;
+using ReactionLab.Messaging.Outbox;
 using ReactionLab.SharedKernel;
 
 namespace ReactionLab.Identity.Api.Features.Members.GrantMemberRole;
@@ -7,6 +8,7 @@ namespace ReactionLab.Identity.Api.Features.Members.GrantMemberRole;
 internal sealed class GrantMemberRoleHandler(
     SchoolAdminTransaction adminTransaction,
     AppDbContext context,
+    OutboxWriter outbox,
     TimeProvider timeProvider,
     ILogger<GrantMemberRoleHandler> logger) : ICommandHandler<GrantMemberRoleCommand>
 {
@@ -102,13 +104,18 @@ internal sealed class GrantMemberRoleHandler(
             throw new InvalidOperationException("The role was not granted.");
         }
 
-        await context.RecordOrganizationChangeAsync(
+        var changeId = await context.RecordOrganizationChangeAsync(
             command.OrganizationId,
             OrganizationChangeNames.RoleGranted,
             command.AccountId,
             command.Role,
             command.ActorId,
             command.ActorSessionId);
+
+        if (SchoolAdminAnnouncements.IsAdminRole(command.Role))
+        {
+            await context.AnnounceSchoolAdminChangeAsync(outbox, command.OrganizationId, changeId, [command.AccountId]);
+        }
 
         return true;
     }

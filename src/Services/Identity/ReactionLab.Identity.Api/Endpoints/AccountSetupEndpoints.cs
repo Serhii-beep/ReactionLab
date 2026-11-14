@@ -1,6 +1,7 @@
 using ReactionLab.Identity.Api.Features.AccountSetups.CompleteAccountSetup;
 using ReactionLab.Identity.Api.Features.AccountSetups.Contracts;
 using ReactionLab.Identity.Api.Features.AccountSetups.LookUpAccountSetup;
+using ReactionLab.Identity.Api.Features.AccountSetups.RequestSchoolPasswordReset;
 using ReactionLab.Identity.Api.Http;
 using ReactionLab.Web;
 
@@ -35,17 +36,35 @@ internal static class AccountSetupEndpoints
             CompleteAccountSetupHandler handler,
             CancellationToken cancellationToken) =>
         {
-            var command = new CompleteAccountSetupCommand(request.Token, request.NewPassword);
+            var command = new CompleteAccountSetupCommand(request.Token, request.NewPassword, request.Username);
             var result = await handler.HandleAsync(command, cancellationToken);
 
             return result.ToHttpResult();
         })
         .WithName("CompleteAccountSetup")
-        .WithSummary("Set the account's password through its setup link, which then stops working.")
+        .WithSummary("Set the account's password, and its username if it has none, through its setup link.")
         .RequireRateLimiting(RateLimitPolicies.AccountSetup)
         .Produces(StatusCodes.Status204NoContent)
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status404NotFound)
+        .ProducesProblem(StatusCodes.Status409Conflict)
+        .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
+
+        group.MapPost("/school-password-reset-requests", async (
+            RequestSchoolPasswordResetRequest request,
+            RequestSchoolPasswordResetHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            var command = new RequestSchoolPasswordResetCommand(request.SignInCode, request.Username);
+            var result = await handler.HandleAsync(command, cancellationToken);
+
+            return result.ToHttpResult();
+        })
+        .WithName("RequestSchoolPasswordReset")
+        .WithSummary("Mail a setup link to a school account at a school that lets its accounts reset by mail.")
+        .RequireRateLimiting(RateLimitPolicies.PasswordResetRequest)
+        .Produces(StatusCodes.Status204NoContent)
+        .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
 
         return api;

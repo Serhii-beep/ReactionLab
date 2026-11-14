@@ -78,7 +78,7 @@ internal sealed class MailJobWorker(
             {
                 foreach (var displayName in SampleDisplayNames)
                 {
-                    foreach (var passwordChange in SamplePasswordChanges(template))
+                    foreach (var detail in MailDetailSamples.For(template, timeProvider.GetUtcNow()))
                     {
                         await renderer.RenderAsync(template.Compose(new MailRecipient(
                             displayName,
@@ -86,7 +86,7 @@ internal sealed class MailJobWorker(
                             locale,
                             SampleTimeZone,
                             SampleLink(template),
-                            passwordChange)));
+                            detail)));
                     }
                 }
             }
@@ -97,15 +97,6 @@ internal sealed class MailJobWorker(
         template.LinkPurpose is null
             ? null
             : new SecurityLinkToken(SampleLinkToken, timeProvider.GetUtcNow() + SampleLinkLifetime);
-
-    private RecordedPasswordChange?[] SamplePasswordChanges(IMailTemplate template) =>
-        template.DescribesPasswordChange
-            ?
-            [
-                new RecordedPasswordChange(timeProvider.GetUtcNow(), "Chrome", "Windows"),
-                new RecordedPasswordChange(timeProvider.GetUtcNow(), string.Empty, string.Empty)
-            ]
-            : [null];
 
     private async Task<MailBatchOutcome> SendBatchAsync(CancellationToken stoppingToken)
     {

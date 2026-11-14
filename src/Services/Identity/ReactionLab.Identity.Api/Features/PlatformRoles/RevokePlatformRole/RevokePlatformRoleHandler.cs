@@ -1,6 +1,7 @@
 using ReactionLab.Identity.Api.Features.Sessions;
 using ReactionLab.Identity.Persistence;
 using ReactionLab.Identity.Persistence.PlatformRoles;
+using ReactionLab.Messaging.Outbox;
 using ReactionLab.SharedKernel;
 
 namespace ReactionLab.Identity.Api.Features.PlatformRoles.RevokePlatformRole;
@@ -9,6 +10,7 @@ internal sealed class RevokePlatformRoleHandler(
     RecentSignInCheck recentSignInCheck,
     PlatformAdminTransaction adminTransaction,
     AppDbContext context,
+    OutboxWriter outbox,
     TimeProvider timeProvider,
     ILogger<RevokePlatformRoleHandler> logger) : ICommandHandler<RevokePlatformRoleCommand>
 {
@@ -68,12 +70,20 @@ internal sealed class RevokePlatformRoleHandler(
             return Result.Failure<bool>(refusal);
         }
 
-        var revoked = await context.RevokePlatformRoleAsync(
-            command.AccountId,
-            command.Role,
-            PlatformRoleChangeAuthor.Admin(command.AdminId, command.AdminSessionId));
+        if (await context.RevokePlatformRoleAsync(
+                command.AccountId,
+                command.Role,
+                PlatformRoleChangeAuthor.Admin(command.AdminId, command.AdminSessionId)) is not { } changeId)
+        {
+            return Result.Failure<bool>(PlatformRoleErrors.NotGranted);
+        }
 
-        return revoked == 1 ? Result.Success(true) : Result.Failure<bool>(PlatformRoleErrors.NotGranted);
+        if (command.Role == PlatformRoleNames.Admin)
+        {
+            await context.AnnouncePlatformAdminChangeAsync(outbox, changeId, command.AccountId);
+        }
+
+        return Result.Success(true);
     }
 
     private async Task<Error?> FindRefusalAsync(RevokePlatformRoleCommand command, CancellationToken cancellationToken)

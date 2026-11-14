@@ -1,16 +1,26 @@
 using ReactionLab.Identity.Api.Passwords;
+using ReactionLab.Identity.Contracts;
 using ReactionLab.Identity.Persistence;
 using ReactionLab.Identity.Persistence.Accounts;
+using ReactionLab.Messaging.Outbox;
 using ReactionLab.SharedKernel;
 
 namespace ReactionLab.Identity.Api.Features.Accounts.SignIn;
 
-internal sealed class SignInAttempts(AppDbContext context, TimeProvider timeProvider, SignInMetrics metrics)
+internal sealed class SignInAttempts(
+    AppDbContext context,
+    OutboxWriter outbox,
+    TimeProvider timeProvider,
+    SignInMetrics metrics)
 {
     public long BeginAttempt() => timeProvider.GetTimestamp();
 
-    public Task<bool> ClaimAsync(Guid userId) =>
-        context.ClaimSignInAttemptAsync(userId, PasswordPolicy.Lockout, timeProvider.GetUtcNow());
+    public Task<bool> ClaimAsync(User account) =>
+        context.ClaimSignInAttemptAsync(
+            account.Id,
+            PasswordPolicy.Lockout,
+            timeProvider.GetUtcNow(),
+            LockAnnouncements.For(outbox, account, AccountLocks.SignIn));
 
     public Task RecordSuccessAsync(Guid userId) =>
         context.ResetSignInAttemptsAsync(userId);

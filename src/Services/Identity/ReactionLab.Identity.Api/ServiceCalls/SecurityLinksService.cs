@@ -3,6 +3,7 @@ using Grpc.Core;
 using ReactionLab.Identity.Api.Features;
 using ReactionLab.Identity.Contracts.SecurityLinks.V1;
 using ReactionLab.Identity.Persistence;
+using ReactionLab.Identity.Persistence.AccountSetups;
 using ReactionLab.Identity.Persistence.SecurityLinks;
 
 namespace ReactionLab.Identity.Api.ServiceCalls;
@@ -32,6 +33,8 @@ internal sealed class SecurityLinksService(AppDbContext identityDatabase, ILogge
                 await identityDatabase.IssueEmailConfirmationLinkAsync(accountId, requestId, tokenHash),
             SecurityLinkPurpose.PasswordReset =>
                 await identityDatabase.IssuePasswordResetLinkAsync(accountId, requestId, tokenHash),
+            SecurityLinkPurpose.AccountSetup =>
+                await identityDatabase.IssueMailedAccountSetupLinkAsync(accountId, requestId, tokenHash),
             _ => throw new RpcException(
                 new Status(StatusCode.Unimplemented, "This identity issues no link for that purpose."))
         } ?? throw new RpcException(new Status(StatusCode.NotFound, "The request was replaced, used or expired."));
@@ -39,8 +42,16 @@ internal sealed class SecurityLinksService(AppDbContext identityDatabase, ILogge
         logger.LogInformation(
             "Issued account {AccountId} a link for {Purpose}.",
             accountId,
-            request.Purpose == SecurityLinkPurpose.PasswordReset ? "a password reset" : "email confirmation");
+            Describe(request.Purpose));
 
         return new IssuedSecurityLink { Token = token, ExpiresAt = Timestamp.FromDateTimeOffset(expiresAt) };
     }
+
+    private static string Describe(SecurityLinkPurpose purpose) =>
+        purpose switch
+        {
+            SecurityLinkPurpose.PasswordReset => "a password reset",
+            SecurityLinkPurpose.AccountSetup => "an account setup",
+            _ => "email confirmation"
+        };
 }

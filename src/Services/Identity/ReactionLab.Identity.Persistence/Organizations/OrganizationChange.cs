@@ -25,4 +25,6 @@ public sealed class OrganizationChange
     public Guid? ChangedInSession { get; private set; }
 
     public DateTimeOffset ChangedAt { get; private set; }
+
+    public Guid? BatchId { get; private set; }
 }

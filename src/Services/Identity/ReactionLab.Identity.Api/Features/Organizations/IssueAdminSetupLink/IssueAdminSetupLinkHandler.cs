@@ -1,3 +1,5 @@
+using ReactionLab.Identity.Api.Features.AccountSetups;
+using ReactionLab.Identity.Api.Features.Members;
 using ReactionLab.Identity.Api.Features.Organizations.Contracts;
 using ReactionLab.Identity.Api.Features.PlatformRoles;
 using ReactionLab.Identity.Api.Features.Sessions;
@@ -12,6 +14,7 @@ internal sealed class IssueAdminSetupLinkHandler(
     RecentSignInCheck recentSignInCheck,
     PlatformAdminTransaction adminTransaction,
     AppDbContext context,
+    MailedAccountSetups mailedSetups,
     TimeProvider timeProvider,
     ILogger<IssueAdminSetupLinkHandler> logger)
     : ICommandHandler<IssueAdminSetupLinkCommand, AccountSetupLinkResponse>
@@ -47,13 +50,14 @@ internal sealed class IssueAdminSetupLinkHandler(
         }
 
         var now = timeProvider.GetDatabaseUtcNow();
-        var (setupToken, setupTokenHash) = OneTimeLinkTokens.Issue();
+        var mailed = state.Value.HasEmail;
+        (string? Token, byte[]? TokenHash) setupLink = mailed ? (null, null) : OneTimeLinkTokens.Issue();
         var setupExpiresAt = now + AccountSetup.Lifetime;
 
         var issued = await adminTransaction.RunAsync(
             command.AdminId,
             command.AdminSessionId,
-            () => IssueAsync(command, setupTokenHash, now, setupExpiresAt));
+            () => IssueAsync(command, setupLink.TokenHash, mailed, now, setupExpiresAt));
 
         if (issued.IsFailure)
         {
@@ -61,21 +65,24 @@ internal sealed class IssueAdminSetupLinkHandler(
         }
 
         logger.LogInformation(
-            "Admin {AdminId} issued a setup link for account {AccountId} in session {SessionId}.",
+            "Admin {AdminId} issued a setup link for account {AccountId} in session {SessionId}, mailed: {Mailed}.",
             command.AdminId,
             command.AccountId,
-            command.AdminSessionId);
+            command.AdminSessionId,
+            mailed);
 
         return Result.Success(new AccountSetupLinkResponse(
             command.AccountId,
             issued.Value.Username,
-            setupToken,
-            setupExpiresAt));
+            setupLink.Token,
+            setupExpiresAt,
+            SetupLinkMailed: mailed));
     }
 
     private async Task<Result<AdminSetupState>> IssueAsync(
         IssueAdminSetupLinkCommand command,
-        byte[] setupTokenHash,
+        byte[]? setupTokenHash,
+        bool mailed,
         DateTimeOffset now,
         DateTimeOffset setupExpiresAt)
     {
@@ -92,23 +99,30 @@ internal sealed class IssueAdminSetupLinkHandler(
             return state;
         }
 
-        var issued = await context.IssueAccountSetupAsync(
+        if (mailed && !await mailedSetups.RequestAsync(
             command.OrganizationId,
             command.AccountId,
-            setupTokenHash,
+            command.AdminId,
+            command.AdminSessionId))
+        {
+            return Result.Failure<AdminSetupState>(MemberErrors.SetupLinkLimitReached);
+        }
+
+        if (!mailed && await context.IssueAccountSetupAsync(
+            command.OrganizationId,
+            command.AccountId,
+            setupTokenHash!,
             now,
             setupExpiresAt,
             command.AdminId,
-            command.AdminSessionId);
-
-        if (issued != 1)
+            command.AdminSessionId) != 1)
         {
             throw new InvalidOperationException("The setup link was not stored.");
         }
 
         await context.RecordOrganizationChangeAsync(
             command.OrganizationId,
-            OrganizationChangeNames.SetupLinkIssued,
+            mailed ? OrganizationChangeNames.SetupLinkMailed : OrganizationChangeNames.SetupLinkIssued,
             command.AccountId,
             role: null,
             command.AdminId,

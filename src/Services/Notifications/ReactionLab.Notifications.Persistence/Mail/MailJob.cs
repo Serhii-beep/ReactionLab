@@ -28,6 +28,8 @@ public sealed class MailJob
 
     public DateTimeOffset? FailedAt { get; private init; }
 
+    public bool Urgent { get; private init; }
+
     public static MailJob Queue(
         Guid recipientId,
         Guid id,
@@ -41,6 +43,7 @@ public sealed class MailJob
             MailType = mailType,
             TraceParent = traceParent,
             AvailableAt = now,
-            CreatedAt = now
+            CreatedAt = now,
+            Urgent = MailTypes.IsUrgent(mailType)
         };
 }

@@ -15,6 +15,7 @@ internal static class MailStyle
     public const string TertiaryTextColor = "#61676e";
     public const string AccentColor = "#007c83";
     public const string AccentContrastColor = "#ffffff";
+    public const string AccentSubtleColor = "#e6f2f3";
     public const string InsetColor = "#eef0f3";
 
     public const string DarkPageColor = "#0b0d11";
@@ -25,5 +26,6 @@ internal static class MailStyle
     public const string DarkTertiaryTextColor = "#999fa6";
     public const string DarkAccentColor = "#00c4c9";
     public const string DarkAccentContrastColor = "#0b0d11";
+    public const string DarkAccentSubtleColor = "#132a2e";
     public const string DarkInsetColor = "#1e2226";
 }

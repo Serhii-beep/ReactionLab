@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using ReactionLab.Identity.Api.Features.Accounts;
+using ReactionLab.Identity.Api.Features.AccountSetups;
 using ReactionLab.Identity.Api.Features.Organizations.Contracts;
 using ReactionLab.Identity.Api.Features.PlatformRoles;
 using ReactionLab.Identity.Api.Features.Sessions;
@@ -7,6 +8,7 @@ using ReactionLab.Identity.Persistence;
 using ReactionLab.Identity.Persistence.Accounts;
 using ReactionLab.Identity.Persistence.AccountSetups;
 using ReactionLab.Identity.Persistence.Organizations;
+using ReactionLab.Messaging.Outbox;
 using ReactionLab.SharedKernel;
 
 namespace ReactionLab.Identity.Api.Features.Organizations.CreateOrganization;
@@ -16,6 +18,8 @@ internal sealed class CreateOrganizationHandler(
     PlatformAdminTransaction adminTransaction,
     UserManager<User> userManager,
     AppDbContext context,
+    OutboxWriter outbox,
+    MailedAccountSetups mailedSetups,
     TimeProvider timeProvider,
     ILogger<CreateOrganizationHandler> logger)
     : ICommandHandler<CreateOrganizationCommand, CreatedOrganizationResponse>
@@ -70,13 +74,18 @@ internal sealed class CreateOrganizationHandler(
             return Result.Failure<CreatedOrganizationResponse>(proof.Error);
         }
 
-        var (setupToken, setupTokenHash) = OneTimeLinkTokens.Issue();
+        var mailed = firstAdmin.Value.Email is not null;
+        (string? Token, byte[]? TokenHash) setupLink = mailed ? (null, null) : OneTimeLinkTokens.Issue();
         var setupExpiresAt = now + AccountSetup.Lifetime;
 
         var created = await adminTransaction.RunAsync(
             command.AdminId,
             command.AdminSessionId,
-            () => CreateAsync(command, organization.Value, firstAdmin.Value, setupTokenHash, now, setupExpiresAt));
+            () => CreateAsync(
+                command,
+                organization.Value,
+                firstAdmin.Value,
+                new FirstAdminSetup(setupLink.TokenHash, mailed, now, setupExpiresAt)));
 
         if (created.IsFailure)
         {
@@ -95,18 +104,17 @@ internal sealed class CreateOrganizationHandler(
             OrganizationResponse.From(created.Value),
             new AccountSetupLinkResponse(
                 firstAdmin.Value.Id,
-                firstAdmin.Value.OrganizationUsername!,
-                setupToken,
-                setupExpiresAt)));
+                firstAdmin.Value.OrganizationUsername,
+                setupLink.Token,
+                setupExpiresAt,
+                SetupLinkMailed: mailed)));
     }
 
     private async Task<Result<Organization>> CreateAsync(
         CreateOrganizationCommand command,
         Organization organization,
         User firstAdmin,
-        byte[] setupTokenHash,
-        DateTimeOffset now,
-        DateTimeOffset setupExpiresAt)
+        FirstAdminSetup setup)
     {
         if (await context.FindOrganizationAsync(organization.Id, CancellationToken.None) is not null)
         {
@@ -136,16 +144,18 @@ internal sealed class CreateOrganizationHandler(
 
         var role = SchoolRoleNames.AdminOf(organization.Kind);
         var granted = await context.GrantSchoolRoleAsync(firstAdmin.Id, organization.Id, role);
-        var issued = await context.IssueAccountSetupAsync(
-            organization.Id,
-            firstAdmin.Id,
-            setupTokenHash,
-            now,
-            setupExpiresAt,
-            command.AdminId,
-            command.AdminSessionId);
+        var issued = setup.Mailed
+            ? await mailedSetups.RequestAsync(organization.Id, firstAdmin.Id, command.AdminId, command.AdminSessionId)
+            : await context.IssueAccountSetupAsync(
+                organization.Id,
+                firstAdmin.Id,
+                setup.TokenHash!,
+                setup.IssuedAt,
+                setup.ExpiresAt,
+                command.AdminId,
+                command.AdminSessionId) == 1;
 
-        if (granted != 1 || issued != 1)
+        if (granted != 1 || !issued)
         {
             throw new InvalidOperationException("The first admin's role or setup link was not saved.");
         }
@@ -158,13 +168,15 @@ internal sealed class CreateOrganizationHandler(
             command.AdminId,
             command.AdminSessionId);
 
-        await context.RecordOrganizationChangeAsync(
+        var firstAdminChangeId = await context.RecordOrganizationChangeAsync(
             organization.Id,
             OrganizationChangeNames.AccountCreated,
             firstAdmin.Id,
             role,
             command.AdminId,
             command.AdminSessionId);
+
+        await context.AnnounceSchoolAdminChangeAsync(outbox, organization.Id, firstAdminChangeId, [firstAdmin.Id]);
 
         return Result.Success(organization);
     }

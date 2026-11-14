@@ -8,5 +8,6 @@ public enum ErrorType
     Conflict = 3,
     Forbidden = 4,
     Unexpected = 5,
-    Unauthorized = 6
+    Unauthorized = 6,
+    TooManyRequests = 7
 }

@@ -1,4 +1,5 @@
 using ReactionLab.Identity.Api.ExternalSignIn;
+using ReactionLab.Identity.Api.Features.Logins;
 using ReactionLab.Identity.Api.Features.Sessions;
 using ReactionLab.Identity.Api.OpenId;
 using ReactionLab.Identity.Persistence;
@@ -12,6 +13,7 @@ internal sealed class RemovePasswordHandler(
     RecentSignInCheck recentSignInCheck,
     AppDbContext context,
     SecurityStampRotation securityStampRotation,
+    SignInMethodChanges signInMethodChanges,
     ILogger<RemovePasswordHandler> logger) : ICommandHandler<RemovePasswordCommand>
 {
     public async ValueTask<Result> HandleAsync(RemovePasswordCommand command, CancellationToken cancellationToken)
@@ -38,10 +40,17 @@ internal sealed class RemovePasswordHandler(
             return proof;
         }
 
+        var changeId = Guid.CreateVersion7();
         var rotation = await securityStampRotation.RemovePasswordAsync(
             command.AccountId,
             command.CurrentSessionId,
-            providers.Names);
+            providers.Names,
+            () => signInMethodChanges.RecordAsync(
+                command.AccountId,
+                changeId,
+                SignInMethodChangeNames.PasswordRemoved,
+                null,
+                command.UserAgent));
 
         if (!rotation.AccountMatched)
         {

@@ -10,6 +10,7 @@ public sealed class Organization
     public const int MaximumNameLength = 128;
     public const int MaximumSignInCodeLength = 16;
     public const int MaximumTimeZoneLength = 64;
+    public const int MaximumMailedSetupsPerWindow = 2000;
     public const string DefaultTimeZone = "Etc/UTC";
 
     public static readonly Error KindUnknown = Error.Validation(
@@ -76,6 +77,12 @@ public sealed class Organization
     public string TimeZone { get; private set; } = DefaultTimeZone;
 
     public bool TeachersMayResetStudentPasswords { get; private set; }
+
+    public bool AccountsMayResetOwnPasswords { get; private set; }
+
+    public DateTimeOffset? MailedSetupsSince { get; private set; }
+
+    public int MailedSetupCount { get; private set; }
 
     public static Result<Organization> Create(string? kind, Guid? districtId, string? name, DateTimeOffset now)
     {
@@ -152,7 +159,8 @@ public sealed class Organization
         string? locale,
         string? timeZone,
         string? signInCode,
-        bool? teachersMayResetStudentPasswords)
+        bool? teachersMayResetStudentPasswords,
+        bool? accountsMayResetOwnPasswords)
     {
         Result<string> newName = name is null ? Name : NormalizeName(name);
         Result<string> newLocale = locale is null ? Locale : LocaleCode(SupportedLocale.Create(locale));
@@ -166,6 +174,7 @@ public sealed class Organization
         }
 
         var newTeacherResets = teachersMayResetStudentPasswords ?? TeachersMayResetStudentPasswords;
+        var newOwnResets = accountsMayResetOwnPasswords ?? AccountsMayResetOwnPasswords;
         string?[] changes =
         [
             newName.Value == Name ? null : OrganizationChangeNames.Renamed,
@@ -174,7 +183,10 @@ public sealed class Organization
             newSignInCode.Value == SignInCode ? null : OrganizationChangeNames.SignInCodeChanged,
             newTeacherResets == TeachersMayResetStudentPasswords ? null
                 : newTeacherResets ? OrganizationChangeNames.TeacherResetsAllowed
-                : OrganizationChangeNames.TeacherResetsDisallowed
+                : OrganizationChangeNames.TeacherResetsDisallowed,
+            newOwnResets == AccountsMayResetOwnPasswords ? null
+                : newOwnResets ? OrganizationChangeNames.OwnResetsAllowed
+                : OrganizationChangeNames.OwnResetsDisallowed
         ];
 
         Name = newName.Value;
@@ -182,6 +194,7 @@ public sealed class Organization
         TimeZone = newTimeZone.Value;
         SignInCode = newSignInCode.Value;
         TeachersMayResetStudentPasswords = newTeacherResets;
+        AccountsMayResetOwnPasswords = newOwnResets;
 
         return changes.OfType<string>().ToList();
     }

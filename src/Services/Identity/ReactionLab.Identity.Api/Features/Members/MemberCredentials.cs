@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using ReactionLab.Identity.Api.Features.AccountSetups;
 using ReactionLab.Identity.Api.Passwords;
 using ReactionLab.Identity.Persistence;
 using ReactionLab.Identity.Persistence.Accounts;
@@ -12,6 +13,7 @@ internal sealed class MemberCredentials(
     UserManager<User> userManager,
     PasswordVerificationGate verificationGate,
     AppDbContext context,
+    MailedAccountSetups mailedSetups,
     TimeProvider timeProvider)
 {
     public static Result<string> ReadKind(string? kind) =>
@@ -23,11 +25,24 @@ internal sealed class MemberCredentials(
     {
         var now = timeProvider.GetDatabaseUtcNow();
 
+        if (kind == MemberCredentialKinds.SetupLink && account.Email is not null)
+        {
+            return new MemberCredential(kind, null, null, null, null, now, now + AccountSetup.Lifetime, true);
+        }
+
         if (kind == MemberCredentialKinds.SetupLink)
         {
             var (setupToken, setupTokenHash) = OneTimeLinkTokens.Issue();
 
-            return new MemberCredential(kind, null, null, setupToken, setupTokenHash, now, now + AccountSetup.Lifetime);
+            return new MemberCredential(
+                kind,
+                null,
+                null,
+                setupToken,
+                setupTokenHash,
+                now,
+                now + AccountSetup.Lifetime,
+                false);
         }
 
         var password = GeneratedPasswords.New();
@@ -35,10 +50,10 @@ internal sealed class MemberCredentials(
             () => userManager.PasswordHasher.HashPassword(account, password),
             cancellationToken);
 
-        return new MemberCredential(kind, password, passwordHash, null, null, now, null);
+        return new MemberCredential(kind, password, passwordHash, null, null, now, null, false);
     }
 
-    public async Task<bool> ApplyAsync(
+    public async Task<Result> ApplyAsync(
         MemberCredential credential,
         Guid accountId,
         Guid organizationId,
@@ -47,17 +62,39 @@ internal sealed class MemberCredentials(
     {
         if (credential.PasswordHash is { } passwordHash)
         {
-            return await context.SetMemberPasswordAsync(accountId, organizationId, passwordHash) == 1;
+            return Applied(await context.SetMemberPasswordAsync(accountId, organizationId, passwordHash));
         }
 
-        return await context.ClearMemberPasswordAsync(accountId, organizationId) == 1
-            && await context.IssueAccountSetupAsync(
+        if (credential.SetupLinkMailed
+            && !await mailedSetups.RequestAsync(organizationId, accountId, issuedBy, issuedInSession))
+        {
+            return Result.Failure(MemberErrors.SetupLinkLimitReached);
+        }
+
+        if (await context.ClearMemberPasswordAsync(accountId, organizationId) != 1)
+        {
+            return Result.Failure(MemberErrors.NotFound);
+        }
+
+        return credential.SetupLinkMailed
+            ? Result.Success()
+            : Applied(await context.IssueAccountSetupAsync(
                 organizationId,
                 accountId,
                 credential.SetupTokenHash!,
                 credential.IssuedAt,
                 credential.SetupExpiresAt!.Value,
                 issuedBy,
-                issuedInSession) == 1;
+                issuedInSession));
     }
+
+    public static string ChangeName(MemberCredential credential) =>
+        credential switch
+        {
+            { SetupLinkMailed: true } => OrganizationChangeNames.SetupLinkMailed,
+            { Kind: MemberCredentialKinds.SetupLink } => OrganizationChangeNames.SetupLinkIssued,
+            _ => OrganizationChangeNames.PasswordReset
+        };
+
+    private static Result Applied(int rows) => rows == 1 ? Result.Success() : Result.Failure(MemberErrors.NotFound);
 }

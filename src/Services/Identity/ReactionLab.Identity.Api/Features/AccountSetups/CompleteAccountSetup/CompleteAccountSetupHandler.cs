@@ -1,7 +1,9 @@
 using System.Security.Cryptography;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using ReactionLab.Identity.Api.Features.Accounts;
+using ReactionLab.Identity.Api.Features.Members;
 using ReactionLab.Identity.Persistence;
 using ReactionLab.Identity.Persistence.Accounts;
 using ReactionLab.Identity.Persistence.AccountSetups;
@@ -25,9 +27,20 @@ internal sealed class CompleteAccountSetupHandler(
         if (!OneTimeLinkTokens.TryHash(command.Token, out var tokenHash)
             || await context.FindPendingAccountSetupAsync(tokenHash, timeProvider.GetUtcNow(), cancellationToken)
                 is not { } setup
-            || await userManager.FindByIdAsync(setup.AccountId.ToString()) is not { } account)
+            || await userManager.FindByIdAsync(setup.AccountId.ToString()) is not { OrganizationId: { } } account)
         {
             return Result.Failure(AccountSetupErrors.LinkInvalid);
+        }
+
+        var username = await ChooseUsernameAsync(
+            setup,
+            account.OrganizationId.Value,
+            command.Username,
+            cancellationToken);
+
+        if (username.IsFailure)
+        {
+            return Result.Failure(username.Error);
         }
 
         var passwordHash = await newPasswordCheck.GetValidHashAsync(account, command.NewPassword, cancellationToken);
@@ -37,7 +50,18 @@ internal sealed class CompleteAccountSetupHandler(
             return Result.Failure(passwordHash.Error);
         }
 
-        if (await CompleteAsync(account.Id, tokenHash, passwordHash.Value) is null)
+        CompletedAccountSetup? completed;
+
+        try
+        {
+            completed = await CompleteAsync(account.Id, tokenHash, username.Value, passwordHash.Value);
+        }
+        catch (PostgresException ex) when (MemberConflicts.Of(ex) == MemberErrors.UsernameInUse)
+        {
+            return Result.Failure(AccountSetupErrors.UsernameInUse);
+        }
+
+        if (completed is null)
         {
             return Result.Failure(AccountSetupErrors.LinkInvalid);
         }
@@ -47,7 +71,41 @@ internal sealed class CompleteAccountSetupHandler(
         return Result.Success();
     }
 
-    private Task<CompletedAccountSetup?> CompleteAsync(Guid accountId, byte[] tokenHash, string passwordHash) =>
+    private async Task<Result<string?>> ChooseUsernameAsync(
+        PendingAccountSetup setup,
+        Guid organizationId,
+        string? chosenUsername,
+        CancellationToken cancellationToken)
+    {
+        if (setup.Username is not null)
+        {
+            return Result.Success<string?>(null);
+        }
+
+        if (string.IsNullOrWhiteSpace(chosenUsername))
+        {
+            return Result.Failure<string?>(AccountSetupErrors.UsernameRequired);
+        }
+
+        var username = User.NormalizeOrganizationUsername(chosenUsername);
+
+        if (username.IsFailure)
+        {
+            return Result.Failure<string?>(username.Error);
+        }
+
+        var taken = await context.ListTakenUsernamesAsync(organizationId, [username.Value], cancellationToken);
+
+        return taken.Count > 0
+            ? Result.Failure<string?>(AccountSetupErrors.UsernameInUse)
+            : Result.Success<string?>(username.Value);
+    }
+
+    private Task<CompletedAccountSetup?> CompleteAsync(
+        Guid accountId,
+        byte[] tokenHash,
+        string? username,
+        string passwordHash) =>
         context.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
         {
             await using var transaction = await context.Database.BeginTransactionAsync(CancellationToken.None);
@@ -56,6 +114,7 @@ internal sealed class CompleteAccountSetupHandler(
             var completed = await context.CompleteAccountSetupAsync(
                 accountId,
                 tokenHash,
+                username,
                 passwordHash,
                 securityStamp,
                 timeProvider.GetUtcNow());

@@ -63,13 +63,15 @@ internal static class LoginEndpoints
             string provider,
             ClaimsPrincipal user,
             DisconnectLoginHandler handler,
+            HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
             var command = new DisconnectLoginCommand(
                 user.GetAccountId(),
                 user.GetSessionId(),
                 user.GetSessionSignIn(),
-                provider);
+                provider,
+                httpContext.Request.Headers.UserAgent.ToString());
 
             var result = await handler.HandleAsync(command, cancellationToken);
 

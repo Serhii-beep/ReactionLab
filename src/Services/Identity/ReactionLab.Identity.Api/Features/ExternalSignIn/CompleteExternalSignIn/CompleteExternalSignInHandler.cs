@@ -35,7 +35,11 @@ internal sealed class CompleteExternalSignInHandler(
 
         if (LoginConnections.Find(authentication.Properties) is { } connection)
         {
-            return await connectionHandler.HandleAsync(provider, authentication, connection);
+            return await connectionHandler.HandleAsync(
+                provider,
+                authentication,
+                connection,
+                httpContext.Request.Headers.UserAgent.ToString());
         }
 
         var returnUrl = LocalReturnUrls.OrDefault(authentication.Properties?.RedirectUri);

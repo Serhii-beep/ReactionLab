@@ -25,4 +25,7 @@ public static class OrganizationChangeNames
     public const string SignInCodeChanged = "sign-in-code-changed";
     public const string TeacherResetsAllowed = "teacher-resets-allowed";
     public const string TeacherResetsDisallowed = "teacher-resets-disallowed";
+    public const string OwnResetsAllowed = "own-resets-allowed";
+    public const string OwnResetsDisallowed = "own-resets-disallowed";
+    public const string SetupLinkMailed = "setup-link-mailed";
 }

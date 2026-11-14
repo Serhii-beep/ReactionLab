@@ -21,6 +21,24 @@ internal static class OutboxStatements
             """,
             CancellationToken.None);
 
+    public static Task<int> InsertOutboxMessagesAsync(this DbContext context, IReadOnlyList<OutboxMessage> messages) =>
+        context.Database.ExecuteSqlAsync(
+            $"""
+            INSERT INTO outbox_messages (id, topic, subject, type, payload, trace_parent, created_at)
+            SELECT id, topic, subject, type, payload, trace_parent, created_at
+            FROM unnest(
+                {messages.Select(message => message.Id).ToArray()},
+                {messages.Select(message => message.Topic).ToArray()},
+                {messages.Select(message => message.Subject).ToArray()},
+                {messages.Select(message => message.Type).ToArray()},
+                {messages.Select(message => message.Payload).ToArray()},
+                {messages.Select(message => message.TraceParent).ToArray()},
+                {messages.Select(message => message.CreatedAt).ToArray()})
+                WITH ORDINALITY AS message(id, topic, subject, type, payload, trace_parent, created_at, ordinal)
+            ORDER BY ordinal
+            """,
+            CancellationToken.None);
+
     public static async Task<bool> TryLockOutboxTopicAsync(
         this DbContext context,
         string topic,

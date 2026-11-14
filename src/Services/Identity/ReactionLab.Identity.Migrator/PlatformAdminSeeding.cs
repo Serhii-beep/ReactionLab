@@ -7,11 +7,13 @@ using Microsoft.Extensions.Logging;
 using ReactionLab.Identity.Persistence;
 using ReactionLab.Identity.Persistence.Accounts;
 using ReactionLab.Identity.Persistence.PlatformRoles;
+using ReactionLab.Messaging.Outbox;
 
 namespace ReactionLab.Identity.Migrator;
 
 internal sealed class PlatformAdminSeeding(
     AppDbContext context,
+    OutboxWriter outbox,
     IConfiguration configuration,
     IHostEnvironment environment,
     ILogger<PlatformAdminSeeding> logger)
@@ -80,12 +82,10 @@ internal sealed class PlatformAdminSeeding(
                 return;
             }
 
-            var granted = await context.GrantPlatformRoleAsync(
-                candidate.AccountId,
-                PlatformRoleNames.Admin,
-                PlatformRoleChangeAuthor.FirstAdmin);
-
-            if (granted == 0)
+            if (await context.GrantPlatformRoleAsync(
+                    candidate.AccountId,
+                    PlatformRoleNames.Admin,
+                    PlatformRoleChangeAuthor.FirstAdmin) is not { } changeId)
             {
                 logger.LogWarning(
                     "Account {AccountId} could not be made the first platform admin.",
@@ -93,6 +93,7 @@ internal sealed class PlatformAdminSeeding(
                 return;
             }
 
+            await context.AnnouncePlatformAdminChangeAsync(outbox, changeId, candidate.AccountId);
             await transaction.CommitAsync(cancellationToken);
 
             logger.LogInformation(
@@ -145,17 +146,16 @@ internal sealed class PlatformAdminSeeding(
                 return;
             }
 
-            var granted = await context.GrantPlatformRoleAsync(
-                accountId,
-                PlatformRoleNames.Admin,
-                PlatformRoleChangeAuthor.BreakGlass);
-
-            if (granted == 0)
+            if (await context.GrantPlatformRoleAsync(
+                    accountId,
+                    PlatformRoleNames.Admin,
+                    PlatformRoleChangeAuthor.BreakGlass) is not { } changeId)
             {
                 logger.LogWarning("Account {AccountId} could not be made a platform admin.", accountId);
                 return;
             }
 
+            await context.AnnouncePlatformAdminChangeAsync(outbox, changeId, accountId);
             await transaction.CommitAsync(cancellationToken);
 
             logger.LogWarning(

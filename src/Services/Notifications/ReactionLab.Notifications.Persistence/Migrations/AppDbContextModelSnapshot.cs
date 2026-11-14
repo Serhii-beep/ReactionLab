@@ -204,6 +204,10 @@ namespace ReactionLab.Notifications.Persistence.Migrations
                         .HasColumnType("character varying(55)")
                         .HasColumnName("trace_parent");
 
+                    b.Property<bool>("Urgent")
+                        .HasColumnType("boolean")
+                        .HasColumnName("urgent");
+
                     b.HasKey("RecipientId", "Id")
                         .HasName("pk_mail_jobs");
 
@@ -214,6 +218,10 @@ namespace ReactionLab.Notifications.Persistence.Migrations
                     b.HasIndex("FailedAt")
                         .HasDatabaseName("ix_mail_jobs_failed")
                         .HasFilter("failed_at IS NOT NULL");
+
+                    b.HasIndex(new[] { "AvailableAt" }, "ix_mail_jobs_urgent_due")
+                        .HasDatabaseName("ix_mail_jobs_urgent_due")
+                        .HasFilter("failed_at IS NULL AND urgent");
 
                     b.ToTable("mail_jobs", (string)null);
                 });

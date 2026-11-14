@@ -17,7 +17,7 @@ internal sealed class RepeatedRegistrationMail(ITranslationCatalog catalog, IOpt
 
     public SecurityLinkPurpose? LinkPurpose => null;
 
-    public bool DescribesPasswordChange => false;
+    public MailDetailKind Detail => MailDetailKind.None;
 
     public MailContent Compose(MailRecipient recipient)
     {

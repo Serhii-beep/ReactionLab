@@ -107,6 +107,7 @@ internal static class SchoolAdministrationEndpoints
         .ProducesProblem(StatusCodes.Status403Forbidden)
         .ProducesProblem(StatusCodes.Status404NotFound)
         .ProducesProblem(StatusCodes.Status409Conflict)
+        .ProducesProblem(StatusCodes.Status429TooManyRequests)
         .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
 
         group.MapPost("/member-imports", async (
@@ -136,6 +137,7 @@ internal static class SchoolAdministrationEndpoints
         .ProducesProblem(StatusCodes.Status403Forbidden)
         .ProducesProblem(StatusCodes.Status404NotFound)
         .ProducesProblem(StatusCodes.Status409Conflict)
+        .ProducesProblem(StatusCodes.Status429TooManyRequests)
         .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
 
         group.MapPatch("/members/{accountId:guid}", async (
@@ -251,6 +253,7 @@ internal static class SchoolAdministrationEndpoints
         .ProducesProblem(StatusCodes.Status403Forbidden)
         .ProducesProblem(StatusCodes.Status404NotFound)
         .ProducesProblem(StatusCodes.Status409Conflict)
+        .ProducesProblem(StatusCodes.Status429TooManyRequests)
         .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
 
         group.MapPut("/members/{accountId:guid}/disabled", async (
@@ -399,14 +402,15 @@ internal static class SchoolAdministrationEndpoints
                 request.Locale,
                 request.TimeZone,
                 request.SignInCode,
-                request.TeachersMayResetStudentPasswords);
+                request.TeachersMayResetStudentPasswords,
+                request.AccountsMayResetOwnPasswords);
 
             var result = await handler.HandleAsync(command, cancellationToken);
 
             return result.ToHttpResult();
         })
         .WithName("UpdateOrganizationSettings")
-        .WithSummary("Change an organization's name, language, time zone, sign-in code or teachers' resets.")
+        .WithSummary("Change an organization's name, language, time zone, sign-in code or who may reset passwords.")
         .Produces<OrganizationSettingsResponse>()
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status401Unauthorized)

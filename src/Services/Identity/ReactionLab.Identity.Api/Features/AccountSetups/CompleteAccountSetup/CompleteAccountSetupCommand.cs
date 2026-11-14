@@ -1,3 +1,3 @@
 namespace ReactionLab.Identity.Api.Features.AccountSetups.CompleteAccountSetup;
 
-internal sealed record CompleteAccountSetupCommand(string? Token, string? NewPassword);
+internal sealed record CompleteAccountSetupCommand(string? Token, string? NewPassword, string? Username);

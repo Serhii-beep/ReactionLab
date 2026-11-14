@@ -8,4 +8,5 @@ internal sealed record UpdateOrganizationSettingsCommand(
     string? Locale,
     string? TimeZone,
     string? SignInCode,
-    bool? TeachersMayResetStudentPasswords);
+    bool? TeachersMayResetStudentPasswords,
+    bool? AccountsMayResetOwnPasswords);
