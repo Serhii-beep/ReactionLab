@@ -1,3 +1,4 @@
+using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using ReactionLab.Identity.Contracts.Contacts.V1;
 using ReactionLab.Identity.Persistence;
@@ -22,7 +23,8 @@ internal sealed class ContactsService(AppDbContext identityDatabase) : Contacts.
             AccountId = accountId.ToString(),
             EmailConfirmed = contact.EmailConfirmed,
             DisplayName = contact.DisplayName,
-            Locale = contact.PreferredLocale
+            Locale = contact.PreferredLocale,
+            TimeZone = contact.TimeZone ?? string.Empty
         };
 
         if (contact.Email is { } email)
@@ -31,5 +33,27 @@ internal sealed class ContactsService(AppDbContext identityDatabase) : Contacts.
         }
 
         return reply;
+    }
+
+    public override async Task<PasswordChangeDetails> GetPasswordChange(
+        GetPasswordChangeRequest request,
+        ServerCallContext context)
+    {
+        if (!Guid.TryParse(request.AccountId, out var accountId) || !Guid.TryParse(request.ChangeId, out var changeId))
+        {
+            throw new RpcException(new Status(StatusCode.InvalidArgument, "The account and change ids are GUIDs."));
+        }
+
+        var change = await identityDatabase.FindPasswordChangeAsync(accountId, changeId, context.CancellationToken)
+            ?? throw new RpcException(new Status(StatusCode.NotFound, "The change is gone or never happened."));
+
+        var device = DeviceDescriptions.FromUserAgent(change.UserAgent);
+
+        return new PasswordChangeDetails
+        {
+            ChangedAt = Timestamp.FromDateTimeOffset(change.ChangedAt),
+            Browser = device.Browser,
+            OperatingSystem = device.OperatingSystem
+        };
     }
 }

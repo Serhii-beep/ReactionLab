@@ -6,12 +6,16 @@ namespace ReactionLab.Notifications.Events;
 internal sealed class NotificationEventEffects(
     RepeatedRegistrationNotices repeatedRegistrationNotices,
     EmailConfirmationRequests emailConfirmationRequests,
+    PasswordResetRequests passwordResetRequests,
+    PasswordChangeNotices passwordChangeNotices,
     AccountErasure accountErasure) : IConsumedEventEffects
 {
     public static readonly IReadOnlyCollection<string> EventTypes =
     [
         IdentityEventTypes.RegistrationRepeated,
         IdentityEventTypes.EmailConfirmationRequested,
+        IdentityEventTypes.PasswordResetRequested,
+        IdentityEventTypes.PasswordChanged,
         IdentityEventTypes.UserErasureRequested
     ];
 
@@ -27,6 +31,10 @@ internal sealed class NotificationEventEffects(
                 repeatedRegistrationNotices.QueueAsync(consumed, cancellationToken),
             IdentityEventTypes.EmailConfirmationRequested =>
                 emailConfirmationRequests.QueueAsync(consumed, cancellationToken),
+            IdentityEventTypes.PasswordResetRequested =>
+                passwordResetRequests.QueueAsync(consumed, cancellationToken),
+            IdentityEventTypes.PasswordChanged =>
+                passwordChangeNotices.QueueAsync(consumed, cancellationToken),
             IdentityEventTypes.UserErasureRequested =>
                 accountErasure.EraseAsync(consumed, cancellationToken),
             _ => throw new InvalidOperationException($"Notifications has no effect for {consumed.Type}.")

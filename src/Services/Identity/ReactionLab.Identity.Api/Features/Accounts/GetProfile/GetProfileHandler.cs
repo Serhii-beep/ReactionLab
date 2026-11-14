@@ -20,6 +20,7 @@ internal sealed class GetProfileHandler(AppDbContext context) : IQueryHandler<Ge
             profile.Email,
             profile.DisplayName,
             profile.PreferredLocale,
+            profile.TimeZone,
             profile.HasPassword));
     }
 }

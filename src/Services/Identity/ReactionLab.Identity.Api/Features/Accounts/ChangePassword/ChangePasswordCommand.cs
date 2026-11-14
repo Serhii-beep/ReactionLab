@@ -7,4 +7,5 @@ internal sealed record ChangePasswordCommand(
     Guid CurrentSessionId,
     SessionSignIn SignIn,
     string? CurrentPassword,
-    string? NewPassword);
+    string? NewPassword,
+    string? UserAgent);

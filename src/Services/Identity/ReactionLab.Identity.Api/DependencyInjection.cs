@@ -14,6 +14,8 @@ using ReactionLab.Identity.Api.Features.Accounts.Reauthenticate;
 using ReactionLab.Identity.Api.Features.Accounts.RegisterAccount;
 using ReactionLab.Identity.Api.Features.Accounts.RemovePassword;
 using ReactionLab.Identity.Api.Features.Accounts.RequestEmailConfirmation;
+using ReactionLab.Identity.Api.Features.Accounts.RequestPasswordReset;
+using ReactionLab.Identity.Api.Features.Accounts.ResetPassword;
 using ReactionLab.Identity.Api.Features.Accounts.SchoolSignIn;
 using ReactionLab.Identity.Api.Features.Accounts.SetPassword;
 using ReactionLab.Identity.Api.Features.Accounts.SignIn;
@@ -29,6 +31,7 @@ using ReactionLab.Identity.Api.Features.ExternalSignIn.LinkExternalSignIn;
 using ReactionLab.Identity.Api.Features.ExternalSignIn.ListSignInMethods;
 using ReactionLab.Identity.Api.Features.ExternalSignIn.RegisterExternalAccount;
 using ReactionLab.Identity.Api.Features.ExternalSignIn.StartExternalSignIn;
+using ReactionLab.Identity.Api.Features.ExternalSignIn.TakeOverAccount;
 using ReactionLab.Identity.Api.Features.Logins.CompleteLoginConnection;
 using ReactionLab.Identity.Api.Features.Logins.ConnectLogin;
 using ReactionLab.Identity.Api.Features.Logins.DisconnectLogin;
@@ -73,6 +76,7 @@ using ReactionLab.Identity.Api.Passwords;
 using ReactionLab.Identity.Api.ServiceCalls;
 using ReactionLab.Identity.Persistence.Accounts;
 using ReactionLab.Identity.Persistence.OpenId;
+using ReactionLab.SharedKernel;
 using ReactionLab.Web;
 using static OpenIddict.Abstractions.OpenIddictConstants;
 
@@ -106,6 +110,7 @@ internal static class DependencyInjection
     public static IServiceCollection AddAccounts(this IServiceCollection services)
     {
         EmailAddresses.RequireIdnaSupport();
+        IanaTimeZones.RequireSupport();
 
         services.TryAddSingleton(TimeProvider.System);
 
@@ -134,6 +139,10 @@ internal static class DependencyInjection
         services.AddScoped<PasswordSignInVerifier>();
         services.AddScoped<RegisterAccountHandler>();
         services.AddScoped<RequestEmailConfirmationHandler>();
+        services.AddScoped<RequestPasswordResetHandler>();
+        services.AddScoped<ResetPasswordHandler>();
+        services.AddScoped<PasswordChanges>();
+        services.AddHostedService<AccountRetentionWorker>();
         services.AddScoped<SignInHandler>();
         services.AddScoped<SchoolSignInHandler>();
         services.AddScoped<SignOutHandler>();
@@ -229,6 +238,7 @@ internal static class DependencyInjection
         services.AddScoped<GetExternalIdentityHandler>();
         services.AddScoped<RegisterExternalAccountHandler>();
         services.AddScoped<LinkExternalSignInHandler>();
+        services.AddScoped<TakeOverAccountHandler>();
         services.AddScoped<ListLoginsHandler>();
         services.AddScoped<ConnectLoginHandler>();
         services.AddScoped<CompleteLoginConnectionHandler>();

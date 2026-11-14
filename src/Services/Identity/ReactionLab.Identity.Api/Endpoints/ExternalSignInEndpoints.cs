@@ -5,6 +5,7 @@ using ReactionLab.Identity.Api.Features.ExternalSignIn.LinkExternalSignIn;
 using ReactionLab.Identity.Api.Features.ExternalSignIn.ListSignInMethods;
 using ReactionLab.Identity.Api.Features.ExternalSignIn.RegisterExternalAccount;
 using ReactionLab.Identity.Api.Features.ExternalSignIn.StartExternalSignIn;
+using ReactionLab.Identity.Api.Features.ExternalSignIn.TakeOverAccount;
 using ReactionLab.Identity.Api.Http;
 using ReactionLab.Web;
 
@@ -69,7 +70,8 @@ internal static class ExternalSignInEndpoints
             var command = new RegisterExternalAccountCommand(
                 request.DisplayName,
                 request.BirthYear,
-                request.Locale ?? httpContext.ResolveLocale().Code);
+                request.Locale ?? httpContext.ResolveLocale().Code,
+                request.TimeZone);
 
             var result = await handler.HandleAsync(command, cancellationToken);
 
@@ -96,6 +98,24 @@ internal static class ExternalSignInEndpoints
         })
         .WithName("LinkExternalSignIn")
         .WithSummary("Connect the provider's account to the account with its address, by that account's password.")
+        .RequireRateLimiting(RateLimitPolicies.SignIn)
+        .Produces(StatusCodes.Status204NoContent)
+        .ProducesProblem(StatusCodes.Status400BadRequest)
+        .ProducesProblem(StatusCodes.Status404NotFound)
+        .ProducesProblem(StatusCodes.Status409Conflict)
+        .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
+
+        group.MapPost("/external-takeovers", async (
+            TakeOverAccountRequest request,
+            TakeOverAccountHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            var result = await handler.HandleAsync(new TakeOverAccountCommand(), cancellationToken);
+
+            return result.ToHttpResult();
+        })
+        .WithName("TakeOverAccount")
+        .WithSummary("Take over the never-confirmed account at the provider's address, ending its password.")
         .RequireRateLimiting(RateLimitPolicies.SignIn)
         .Produces(StatusCodes.Status204NoContent)
         .ProducesProblem(StatusCodes.Status400BadRequest)

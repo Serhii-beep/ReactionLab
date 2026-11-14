@@ -8,6 +8,7 @@ using ReactionLab.Notifications.Mail;
 using ReactionLab.Notifications.Sending;
 using ReactionLab.Notifications.ServiceCalls;
 using ReactionLab.Notifications.Templates;
+using ReactionLab.SharedKernel;
 
 namespace ReactionLab.Notifications;
 
@@ -59,6 +60,7 @@ internal static class DependencyInjection
         builder.Services.AddScoped<IdentityCalls>();
         builder.Services.AddScoped<ContactDirectory>();
         builder.Services.AddScoped<SecurityLinkIssuer>();
+        builder.Services.AddScoped<PasswordChangeDirectory>();
 
         return builder;
     }
@@ -66,6 +68,7 @@ internal static class DependencyInjection
     public static IHostApplicationBuilder AddMailSending(this IHostApplicationBuilder builder)
     {
         MailAddresses.RequireIdnaSupport();
+        IanaTimeZones.RequireSupport();
 
         var developing = builder.Environment.IsDevelopment();
 
@@ -85,6 +88,8 @@ internal static class DependencyInjection
         builder.Services.AddMailRendering();
         builder.Services.AddSingleton<IMailTemplate, RepeatedRegistrationMail>();
         builder.Services.AddSingleton<IMailTemplate, EmailConfirmationMail>();
+        builder.Services.AddSingleton<IMailTemplate, PasswordResetMail>();
+        builder.Services.AddSingleton<IMailTemplate, PasswordChangedMail>();
         builder.Services.AddSingleton<MailTemplates>();
         builder.Services.AddSingleton<MailMetrics>();
         builder.Services.AddSingleton(services => SmtpEndpoint.Parse(

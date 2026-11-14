@@ -14,6 +14,8 @@ builder.Services.Configure<HostOptions>(options => options.ServicesStopConcurren
 builder.Services.AddPersistence(builder.Configuration);
 builder.Services.AddScoped<RepeatedRegistrationNotices>();
 builder.Services.AddScoped<EmailConfirmationRequests>();
+builder.Services.AddScoped<PasswordResetRequests>();
+builder.Services.AddScoped<PasswordChangeNotices>();
 builder.Services.AddScoped<AccountErasure>();
 builder.Services.AddHostedService<NotificationPruningWorker>();
 builder.AddEventConsumer<AppDbContext, NotificationEventEffects>(

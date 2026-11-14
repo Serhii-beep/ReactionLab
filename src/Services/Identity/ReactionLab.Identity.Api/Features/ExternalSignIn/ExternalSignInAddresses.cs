@@ -9,11 +9,14 @@ internal sealed class ExternalSignInAddresses(UserManager<User> userManager)
     {
         if (verifiedEmail is null || await userManager.FindByEmailAsync(verifiedEmail) is not { } holder)
         {
-            return new ExternalSignInAddress(verifiedEmail, BelongsToPasswordAccount: false);
+            return new ExternalSignInAddress(verifiedEmail, BelongsToPasswordAccount: false, CanBeTakenOver: false);
         }
 
         return holder.PasswordHash is null
-            ? new ExternalSignInAddress(null, BelongsToPasswordAccount: false)
-            : new ExternalSignInAddress(verifiedEmail, BelongsToPasswordAccount: true);
+            ? new ExternalSignInAddress(null, BelongsToPasswordAccount: false, CanBeTakenOver: false)
+            : new ExternalSignInAddress(
+                verifiedEmail,
+                BelongsToPasswordAccount: true,
+                CanBeTakenOver: holder is { EmailConfirmed: false, OrganizationId: null });
     }
 }

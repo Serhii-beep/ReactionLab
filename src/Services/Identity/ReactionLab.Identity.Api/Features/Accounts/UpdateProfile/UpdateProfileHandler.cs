@@ -32,12 +32,21 @@ internal sealed class UpdateProfileHandler(
             return Result.Failure<ProfileResponse>(locale.Error);
         }
 
+        var timeZone = User.NormalizeTimeZone(command.TimeZone);
+
+        if (command.TimeZone is { Length: > 0 } && timeZone is null)
+        {
+            logger.LogInformation(
+                "Account {AccountId} named a time zone this host doesn't know, so its zone stays as it was.",
+                command.AccountId);
+        }
+
         if (displayName is not null && await context.IsSchoolAccountAsync(command.AccountId, cancellationToken))
         {
             return Result.Failure<ProfileResponse>(AccountErrors.ManagedBySchool);
         }
 
-        var profile = await UpdateAsync(command.AccountId, displayName?.Value, locale?.Value.Code);
+        var profile = await UpdateAsync(command.AccountId, displayName?.Value, locale?.Value.Code, timeZone);
 
         if (profile is null)
         {
@@ -50,15 +59,20 @@ internal sealed class UpdateProfileHandler(
             profile.Email,
             profile.DisplayName,
             profile.PreferredLocale,
+            profile.TimeZone,
             profile.HasPassword));
     }
 
-    private Task<UpdatedProfile?> UpdateAsync(Guid accountId, string? displayName, string? locale) =>
+    private Task<UpdatedProfile?> UpdateAsync(
+        Guid accountId,
+        string? displayName,
+        string? locale,
+        string? timeZone) =>
         context.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
         {
             await using var transaction = await context.Database.BeginTransactionAsync(CancellationToken.None);
 
-            var profile = await context.UpdateProfileAsync(accountId, displayName, locale);
+            var profile = await context.UpdateProfileAsync(accountId, displayName, locale, timeZone);
 
             if (profile is { ProfileChanged: true })
             {

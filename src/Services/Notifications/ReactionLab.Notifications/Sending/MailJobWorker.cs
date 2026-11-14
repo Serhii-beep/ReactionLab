@@ -18,6 +18,7 @@ internal sealed class MailJobWorker(
     private const int SystemicFailuresBeforePause = 2;
     private const string SampleAddress = "sample@example.com";
     private const string SampleLinkToken = "sample";
+    private const string SampleTimeZone = "America/New_York";
 
     private static readonly TimeSpan SampleLinkLifetime = TimeSpan.FromDays(1);
     private static readonly TimeSpan Lease = TimeSpan.FromMinutes(10);
@@ -77,8 +78,16 @@ internal sealed class MailJobWorker(
             {
                 foreach (var displayName in SampleDisplayNames)
                 {
-                    await renderer.RenderAsync(template.Compose(
-                        new MailRecipient(displayName, SampleAddress, locale, SampleLink(template))));
+                    foreach (var passwordChange in SamplePasswordChanges(template))
+                    {
+                        await renderer.RenderAsync(template.Compose(new MailRecipient(
+                            displayName,
+                            SampleAddress,
+                            locale,
+                            SampleTimeZone,
+                            SampleLink(template),
+                            passwordChange)));
+                    }
                 }
             }
         }
@@ -88,6 +97,15 @@ internal sealed class MailJobWorker(
         template.LinkPurpose is null
             ? null
             : new SecurityLinkToken(SampleLinkToken, timeProvider.GetUtcNow() + SampleLinkLifetime);
+
+    private RecordedPasswordChange?[] SamplePasswordChanges(IMailTemplate template) =>
+        template.DescribesPasswordChange
+            ?
+            [
+                new RecordedPasswordChange(timeProvider.GetUtcNow(), "Chrome", "Windows"),
+                new RecordedPasswordChange(timeProvider.GetUtcNow(), string.Empty, string.Empty)
+            ]
+            : [null];
 
     private async Task<MailBatchOutcome> SendBatchAsync(CancellationToken stoppingToken)
     {

@@ -40,6 +40,11 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
             .HasDatabaseName("ix_users_organization_id_id")
             .HasFilter("organization_id IS NOT NULL");
 
+        builder.HasIndex(user => user.CreatedAt)
+            .HasDatabaseName("ix_users_unconfirmed_created_at")
+            .HasFilter("organization_id IS NULL AND email IS NOT NULL AND NOT email_confirmed"
+                + " AND NOT email_confirmation_exempt");
+
         builder.Property(user => user.DisplayName)
             .HasMaxLength(User.MaximumDisplayNameLength)
             .IsRequired();
@@ -47,6 +52,8 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(user => user.PreferredLocale)
             .HasMaxLength(User.MaximumLocaleLength)
             .IsRequired();
+
+        builder.Property(user => user.TimeZone).HasMaxLength(User.MaximumTimeZoneLength);
 
         builder.Property(user => user.BirthYear);
         builder.Property(user => user.CreatedAt).IsRequired();

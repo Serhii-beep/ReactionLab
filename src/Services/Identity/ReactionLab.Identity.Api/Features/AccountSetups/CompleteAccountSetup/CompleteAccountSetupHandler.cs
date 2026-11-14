@@ -5,6 +5,7 @@ using ReactionLab.Identity.Api.Features.Accounts;
 using ReactionLab.Identity.Persistence;
 using ReactionLab.Identity.Persistence.Accounts;
 using ReactionLab.Identity.Persistence.AccountSetups;
+using ReactionLab.Identity.Persistence.OpenId;
 using ReactionLab.Identity.Persistence.Organizations;
 using ReactionLab.SharedKernel;
 

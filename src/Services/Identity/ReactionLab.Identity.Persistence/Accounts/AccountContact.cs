@@ -1,3 +1,8 @@
 namespace ReactionLab.Identity.Persistence.Accounts;
 
-public sealed record AccountContact(string? Email, bool EmailConfirmed, string DisplayName, string PreferredLocale);
+public sealed record AccountContact(
+    string? Email,
+    bool EmailConfirmed,
+    string DisplayName,
+    string PreferredLocale,
+    string? TimeZone);

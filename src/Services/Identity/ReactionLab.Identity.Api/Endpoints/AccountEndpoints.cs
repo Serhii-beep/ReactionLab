@@ -1,6 +1,8 @@
 using ReactionLab.Identity.Api.Features.Accounts.Contracts;
 using ReactionLab.Identity.Api.Features.Accounts.RegisterAccount;
 using ReactionLab.Identity.Api.Features.Accounts.RequestEmailConfirmation;
+using ReactionLab.Identity.Api.Features.Accounts.RequestPasswordReset;
+using ReactionLab.Identity.Api.Features.Accounts.ResetPassword;
 using ReactionLab.Identity.Api.Features.Accounts.SchoolSignIn;
 using ReactionLab.Identity.Api.Features.Accounts.SignIn;
 using ReactionLab.Identity.Api.Features.Accounts.SignOut;
@@ -27,7 +29,8 @@ internal static class AccountEndpoints
                 request.Password,
                 request.DisplayName,
                 request.BirthYear,
-                request.Locale ?? httpContext.ResolveLocale().Code);
+                request.Locale ?? httpContext.ResolveLocale().Code,
+                request.TimeZone);
 
             var result = await handler.HandleAsync(command, cancellationToken);
 
@@ -55,6 +58,47 @@ internal static class AccountEndpoints
         .RequireRateLimiting(RateLimitPolicies.EmailConfirmationRequest)
         .Produces(StatusCodes.Status204NoContent)
         .ProducesProblem(StatusCodes.Status400BadRequest)
+        .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
+
+        group.MapPost("/password-reset-requests", async (
+            RequestPasswordResetRequest request,
+            RequestPasswordResetHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            var command = new RequestPasswordResetCommand(request.Email);
+            var result = await handler.HandleAsync(command, cancellationToken);
+
+            return result.ToHttpResult();
+        })
+        .WithName("RequestPasswordReset")
+        .WithSummary("Mail a link that sets a new password to the account at an address, if one is there.")
+        .RequireRateLimiting(RateLimitPolicies.PasswordResetRequest)
+        .Produces(StatusCodes.Status204NoContent)
+        .ProducesProblem(StatusCodes.Status400BadRequest)
+        .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
+
+        group.MapPost("/password-resets", async (
+            ResetPasswordRequest request,
+            HttpContext httpContext,
+            ResetPasswordHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            var command = new ResetPasswordCommand(
+                request.Token,
+                request.NewPassword,
+                httpContext.Request.Headers.UserAgent.ToString());
+
+            var result = await handler.HandleAsync(command, cancellationToken);
+
+            return result.ToHttpResult();
+        })
+        .WithName("ResetPassword")
+        .WithSummary("Set a new password through a mailed reset link, which signs every session out.")
+        .WithNoStore()
+        .RequireRateLimiting(RateLimitPolicies.PasswordReset)
+        .Produces(StatusCodes.Status204NoContent)
+        .ProducesProblem(StatusCodes.Status400BadRequest)
+        .ProducesProblem(StatusCodes.Status404NotFound)
         .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
 
         group.MapPost("/sign-in", async (

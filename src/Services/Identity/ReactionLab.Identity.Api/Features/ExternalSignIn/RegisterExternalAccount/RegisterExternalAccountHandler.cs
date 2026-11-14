@@ -51,6 +51,7 @@ internal sealed class RegisterExternalAccountHandler(
             command.DisplayName,
             locale.Value,
             command.BirthYear,
+            command.TimeZone,
             timeProvider.GetUtcNow());
 
         if (user.IsFailure)
@@ -71,6 +72,13 @@ internal sealed class RegisterExternalAccountHandler(
         if (created.Succeeded)
         {
             logger.LogInformation("Registered account {AccountId} with {Provider}.", user.Value.Id, identity.Provider);
+
+            if (command.TimeZone is { Length: > 0 } && user.Value.TimeZone is null)
+            {
+                logger.LogInformation(
+                    "Account {AccountId} named a time zone this host doesn't know, so it has none.",
+                    user.Value.Id);
+            }
 
             await pendingSignIns.EndAsync();
             await signInManager.SignInWithClaimsAsync(

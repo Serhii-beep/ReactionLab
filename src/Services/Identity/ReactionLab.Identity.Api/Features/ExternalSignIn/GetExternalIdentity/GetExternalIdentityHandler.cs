@@ -30,6 +30,7 @@ internal sealed class GetExternalIdentityHandler(
             address.Email,
             pending.Identity.Name,
             address.BelongsToPasswordAccount ? LinkStep : SignUpStep,
+            address.CanBeTakenOver,
             pending.ReturnUrl));
     }
 }

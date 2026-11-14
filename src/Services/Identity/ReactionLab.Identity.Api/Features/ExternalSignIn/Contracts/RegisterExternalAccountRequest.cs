@@ -9,4 +9,6 @@ internal sealed record RegisterExternalAccountRequest(
     string? DisplayName,
     [property: Required]
     int? BirthYear,
-    string? Locale);
+    string? Locale,
+    [property: MaxLength(User.MaximumTimeZoneLength)]
+    string? TimeZone);

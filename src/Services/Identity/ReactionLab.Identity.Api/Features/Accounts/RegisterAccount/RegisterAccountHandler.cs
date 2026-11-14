@@ -33,6 +33,7 @@ internal sealed class RegisterAccountHandler(
             command.DisplayName,
             locale.Value,
             command.BirthYear,
+            command.TimeZone,
             now);
 
         if (user.IsFailure)
@@ -50,6 +51,13 @@ internal sealed class RegisterAccountHandler(
         if (created.Succeeded)
         {
             logger.LogInformation("Registered account {UserId}.", user.Value.Id);
+
+            if (command.TimeZone is { Length: > 0 } && user.Value.TimeZone is null)
+            {
+                logger.LogInformation(
+                    "Account {UserId} named a time zone this host doesn't know, so it has none.",
+                    user.Value.Id);
+            }
 
             return Result.Success();
         }

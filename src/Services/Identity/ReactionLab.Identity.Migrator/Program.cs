@@ -14,7 +14,6 @@ builder.Services.AddPersistence(builder.Configuration);
 builder.Services.AddIdentityCore<User>().AddUserStore<RegularAccountUserStore>();
 builder.Services.AddSingleton(Options.Create(GatewayClientOptions.Read(builder.Configuration)));
 builder.Services.AddSingleton(Options.Create(NotificationsClientOptions.Read(builder.Configuration)));
-builder.Services.AddScoped<EmailCanonicalization>();
 builder.Services.AddScoped<OpenIdRegistration>();
 builder.Services.AddScoped<PlatformAdminSeeding>();
 builder.Services.AddScoped<DemoDistrictSeeding>();

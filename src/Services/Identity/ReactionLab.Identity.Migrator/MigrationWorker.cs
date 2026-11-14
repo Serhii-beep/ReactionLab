@@ -33,7 +33,6 @@ internal sealed class MigrationWorker(
 
             logger.LogInformation("Database schema is up to date.");
 
-            await scope.ServiceProvider.GetRequiredService<EmailCanonicalization>().CanonicalizeAsync(stoppingToken);
             await scope.ServiceProvider.GetRequiredService<OpenIdRegistration>().RegisterAsync(stoppingToken);
             await scope.ServiceProvider.GetRequiredService<PlatformAdminSeeding>().SeedAsync(stoppingToken);
             await scope.ServiceProvider.GetRequiredService<DemoDistrictSeeding>().SeedAsync(stoppingToken);

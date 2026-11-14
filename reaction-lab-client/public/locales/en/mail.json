@@ -21,5 +21,25 @@
         "expiry": "The link works once and expires in {hours, plural, one {# hour} other {# hours}}.",
         "ifItWasNotYou": "Didn't sign up? Ignore this email. Nobody can sign in with this address until it's confirmed.",
         "reason": "You're getting this because someone signed up for ReactionLab with this address."
+    },
+    "passwordReset": {
+        "title": "Reset your password",
+        "request": "Someone, hopefully you, asked to reset the password of your ReactionLab account.",
+        "choose": "Choose a new password",
+        "expiry": "The link works once and expires in {hours, plural, one {# hour} other {# hours}}. Choosing a new password signs you out on every device.",
+        "ifItWasNotYou": "Didn't ask for this? Ignore this email: your password stays the same, and nobody can use the link without this mailbox.",
+        "reason": "You're getting this because someone asked to reset the password of the ReactionLab account at this address. It's a security email, so it's sent even when you turn other emails off."
+    },
+    "passwordChanged": {
+        "title": "Your password was changed",
+        "changed": "The password of your ReactionLab account was just changed, and every other device was signed out.",
+        "when": "When",
+        "device": "Device",
+        "deviceDescription": "{browser} on {system}",
+        "unknownDevice": "Unknown",
+        "ifItWasYou": "If this was you, there's nothing else to do.",
+        "ifItWasNotYou": "If it wasn't, reset your password now. The link in that email signs out whoever changed it.",
+        "reset": "It wasn't me: reset my password",
+        "reason": "You're getting this because the password of the ReactionLab account at this address changed. It's a security notice, so it's sent even when you turn other emails off."
     }
 }

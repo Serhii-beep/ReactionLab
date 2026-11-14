@@ -6,4 +6,5 @@ internal sealed record ExternalIdentityResponse(
     string? Email,
     string? SuggestedDisplayName,
     string NextStep,
+    bool CanTakeOver,
     string ReturnUrl);

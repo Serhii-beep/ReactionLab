@@ -13,6 +13,7 @@ public sealed partial class User : IdentityUser<Guid>, IDomainEventSource
     public const int MaximumUsernameLength = 64;
     public const int MaximumLocaleLength = 10;
     public const int MaximumLoginKeyLength = 128;
+    public const int MaximumTimeZoneLength = 64;
     public const int MinimumSelfRegistrationAge = 13;
     public const int EarliestBirthYear = 1900;
 
@@ -88,6 +89,8 @@ public sealed partial class User : IdentityUser<Guid>, IDomainEventSource
 
     public string PreferredLocale { get; private set; } = string.Empty;
 
+    public string? TimeZone { get; private set; }
+
     public int? BirthYear { get; private set; }
 
     public DateTimeOffset CreatedAt { get; private set; }
@@ -115,6 +118,7 @@ public sealed partial class User : IdentityUser<Guid>, IDomainEventSource
         string? displayName,
         SupportedLocale locale,
         int? birthYear,
+        string? timeZone,
         DateTimeOffset now)
     {
         var address = CanonicalizeEmail(email);
@@ -124,7 +128,7 @@ public sealed partial class User : IdentityUser<Guid>, IDomainEventSource
             return address.Error;
         }
 
-        return Create(address.Value, emailConfirmed: false, displayName, locale, birthYear, now);
+        return Create(address.Value, emailConfirmed: false, displayName, locale, birthYear, timeZone, now);
     }
 
     public static Result<User> RegisterExternal(
@@ -132,11 +136,12 @@ public sealed partial class User : IdentityUser<Guid>, IDomainEventSource
         string? displayName,
         SupportedLocale locale,
         int? birthYear,
+        string? timeZone,
         DateTimeOffset now)
     {
         if (verifiedEmail is null)
         {
-            return Create(null, emailConfirmed: false, displayName, locale, birthYear, now);
+            return Create(null, emailConfirmed: false, displayName, locale, birthYear, timeZone, now);
         }
 
         var address = CanonicalizeEmail(verifiedEmail);
@@ -146,7 +151,7 @@ public sealed partial class User : IdentityUser<Guid>, IDomainEventSource
             return address.Error;
         }
 
-        return Create(address.Value, emailConfirmed: true, displayName, locale, birthYear, now);
+        return Create(address.Value, emailConfirmed: true, displayName, locale, birthYear, timeZone, now);
     }
 
     public static Result<User> CreateSchoolAccount(
@@ -225,6 +230,9 @@ public sealed partial class User : IdentityUser<Guid>, IDomainEventSource
         return canonical.Length > MaximumEmailLength ? EmailTooLong : canonical;
     }
 
+    public static string? NormalizeTimeZone(string? timeZone) =>
+        IanaTimeZones.Find(timeZone) is { Id.Length: <= MaximumTimeZoneLength } zone ? zone.Id : null;
+
     public static Result<string> NormalizeDisplayName(string? displayName) =>
         DisplayNames.Normalize(
             displayName,
@@ -269,6 +277,7 @@ public sealed partial class User : IdentityUser<Guid>, IDomainEventSource
         string? displayName,
         SupportedLocale locale,
         int? birthYear,
+        string? timeZone,
         DateTimeOffset now)
     {
         var name = NormalizeDisplayName(displayName);
@@ -294,6 +303,7 @@ public sealed partial class User : IdentityUser<Guid>, IDomainEventSource
             EmailConfirmed = emailConfirmed,
             DisplayName = name.Value,
             PreferredLocale = locale.Code,
+            TimeZone = NormalizeTimeZone(timeZone),
             BirthYear = birthYear,
             CreatedAt = now,
             Version = 1

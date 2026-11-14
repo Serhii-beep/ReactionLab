@@ -23,4 +23,13 @@ public static class LoginQueries
                         EF.Property<DateTimeOffset?>(login, UserLoginProperties.ConnectedAt)))
                     .ToList()))
             .SingleOrDefaultAsync(cancellationToken);
+
+    public static Task<bool> HoldsLoginAsync(
+        this AppDbContext context,
+        Guid userId,
+        string provider,
+        string providerKey) =>
+        context.UserLogins.AnyAsync(
+            login => login.UserId == userId && login.LoginProvider == provider && login.ProviderKey == providerKey,
+            CancellationToken.None);
 }

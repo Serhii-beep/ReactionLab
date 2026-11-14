@@ -14,6 +14,7 @@ public static class ProfileQueries
                 user.Email,
                 user.DisplayName,
                 user.PreferredLocale,
+                user.TimeZone,
                 user.PasswordHash != null))
             .SingleOrDefaultAsync(cancellationToken);
 

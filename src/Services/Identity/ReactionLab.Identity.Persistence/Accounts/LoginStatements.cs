@@ -45,4 +45,9 @@ public static class LoginStatements
             ON CONFLICT DO NOTHING
             """,
             CancellationToken.None);
+
+    public static Task<int> DeleteLoginsAsync(this AppDbContext context, Guid userId) =>
+        context.Database.ExecuteSqlAsync(
+            $"DELETE FROM user_logins WHERE user_id = {userId}",
+            CancellationToken.None);
 }

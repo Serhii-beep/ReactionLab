@@ -14,6 +14,7 @@ public static class ContactQueries
                 user.Email,
                 user.EmailConfirmed,
                 user.DisplayName,
-                user.PreferredLocale))
+                user.PreferredLocale,
+                user.TimeZone))
             .SingleOrDefaultAsync(cancellationToken);
 }

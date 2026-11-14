@@ -16,4 +16,18 @@ public static class SecurityLinkQueries
                 && link.ExpiresAt > DateTimeOffset.UtcNow
                 && context.Users.Any(user => user.Id == link.UserId && user.Email == link.Email),
             cancellationToken);
+
+    public static Task<Guid?> FindPasswordResetAccountAsync(
+        this AppDbContext context,
+        byte[] tokenHash,
+        CancellationToken cancellationToken) =>
+        context.Set<SecurityLink>().AsNoTracking()
+            .Where(link => link.TokenHash == tokenHash
+                && link.Purpose == SecurityLinkPurposes.PasswordReset
+                && link.ExpiresAt > DateTimeOffset.UtcNow
+                && context.Users.Any(user => user.Id == link.UserId
+                    && user.Email == link.Email
+                    && user.OrganizationId == null))
+            .Select(link => (Guid?)link.UserId)
+            .SingleOrDefaultAsync(cancellationToken);
 }

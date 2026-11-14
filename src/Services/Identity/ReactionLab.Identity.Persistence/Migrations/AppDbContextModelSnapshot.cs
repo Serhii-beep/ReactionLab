@@ -511,6 +511,39 @@ namespace ReactionLab.Identity.Persistence.Migrations
                     b.ToTable("account_setups", (string)null);
                 });
 
+            modelBuilder.Entity("ReactionLab.Identity.Persistence.Accounts.PasswordChange", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("ChangedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("changed_at")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<string>("UserAgent")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("user_agent");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_password_changes");
+
+                    b.HasIndex("ChangedAt")
+                        .HasDatabaseName("ix_password_changes_changed_at");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_password_changes_user_id");
+
+                    b.ToTable("password_changes", (string)null);
+                });
+
             modelBuilder.Entity("ReactionLab.Identity.Persistence.Accounts.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -618,6 +651,11 @@ namespace ReactionLab.Identity.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("security_stamp");
 
+                    b.Property<string>("TimeZone")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("time_zone");
+
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("boolean")
                         .HasColumnName("two_factor_enabled");
@@ -635,6 +673,10 @@ namespace ReactionLab.Identity.Persistence.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_users");
+
+                    b.HasIndex("CreatedAt")
+                        .HasDatabaseName("ix_users_unconfirmed_created_at")
+                        .HasFilter("organization_id IS NULL AND email IS NOT NULL AND NOT email_confirmed AND NOT email_confirmation_exempt");
 
                     b.HasIndex("NormalizedUserName")
                         .IsUnique()
@@ -911,6 +953,11 @@ namespace ReactionLab.Identity.Persistence.Migrations
                     b.HasKey("UserId", "Purpose")
                         .HasName("pk_security_links");
 
+                    b.HasIndex("TokenHash")
+                        .IsUnique()
+                        .HasDatabaseName("ix_security_links_token_hash")
+                        .HasFilter("token_hash IS NOT NULL");
+
                     b.ToTable("security_links", (string)null);
                 });
 
@@ -1055,6 +1102,16 @@ namespace ReactionLab.Identity.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_account_setups_users_user_id");
+                });
+
+            modelBuilder.Entity("ReactionLab.Identity.Persistence.Accounts.PasswordChange", b =>
+                {
+                    b.HasOne("ReactionLab.Identity.Persistence.Accounts.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_password_changes_users_user_id");
                 });
 
             modelBuilder.Entity("ReactionLab.Identity.Persistence.Accounts.User", b =>

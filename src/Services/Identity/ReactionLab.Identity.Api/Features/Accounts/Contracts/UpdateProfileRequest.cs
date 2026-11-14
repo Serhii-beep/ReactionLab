@@ -7,4 +7,6 @@ internal sealed record UpdateProfileRequest(
     [property: MaxLength(User.MaximumDisplayNameLength)]
     string? DisplayName,
     [property: MaxLength(User.MaximumLocaleLength)]
-    string? Locale);
+    string? Locale,
+    [property: MaxLength(User.MaximumTimeZoneLength)]
+    string? TimeZone);

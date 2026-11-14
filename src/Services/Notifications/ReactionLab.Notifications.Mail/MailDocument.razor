@@ -149,6 +149,29 @@
                                                 </tr>
                                             </table>
                                             break;
+                                        case MailFacts factTable:
+                                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                                                style="margin-top: @(gap)px;">
+                                                <tr>
+                                                    <td class="inset"
+                                                        style="padding: 16px; background-color: @MailStyle.InsetColor; border-radius: 8px;">
+                                                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                                                            @for (var row = 0; row < factTable.Facts.Count; row++)
+                                                            {
+                                                                <tr>
+                                                                    <td class="secondary-text" width="96" valign="top"
+                                                                        style="width: 96px; padding: @(row == 0 ? 0 : 8)px 12px 0 0; font-size: 13px;
+                                                                            line-height: 1.5; color: @MailStyle.SecondaryTextColor;">@factTable.Facts[row].Label</td>
+                                                                    <td class="primary-text" valign="top"
+                                                                        style="padding: @(row == 0 ? 0 : 8)px 0 0; font-size: 13px; line-height: 1.5;
+                                                                            color: @MailStyle.PrimaryTextColor; overflow-wrap: break-word;">@factTable.Facts[row].Value</td>
+                                                                </tr>
+                                                            }
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                            break;
                                         case MailParagraph { IsAside: true } aside:
                                             <p class="secondary-text"
                                                 style="margin: @(gap)px 0 0; font-size: 14px; line-height: 1.6;
@@ -196,6 +219,8 @@
                 (_, MailButton) => 28,
                 (MailButton { IsPrimary: true }, MailParagraph { IsAside: true }) => 20,
                 (_, MailLinkCopy) or (MailLinkCopy, _) => 24,
+                (_, MailFacts) => 20,
+                (MailFacts, _) => 24,
                 (_, MailParagraph { IsAside: true }) => 28,
                 _ => 12
             };

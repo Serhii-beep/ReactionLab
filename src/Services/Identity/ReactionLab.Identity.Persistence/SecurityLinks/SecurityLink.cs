@@ -9,6 +9,9 @@ public sealed class SecurityLink
 
     public static readonly TimeSpan EmailConfirmationLifetime = TimeSpan.FromHours(24);
     public static readonly TimeSpan EmailConfirmationPeriod = TimeSpan.FromDays(7);
+    public static readonly TimeSpan ShortestEmailConfirmationLifetime = TimeSpan.FromHours(1);
+    public static readonly TimeSpan PasswordResetLifetime = TimeSpan.FromHours(1);
+    public static readonly TimeSpan PasswordResetRequestLifetime = TimeSpan.FromHours(1);
     public static readonly TimeSpan RequestLifetime = TimeSpan.FromDays(1);
     public static readonly TimeSpan RequestWindow = TimeSpan.FromDays(1);
     public static readonly TimeSpan MinimumIntervalBetweenRequests = TimeSpan.FromMinutes(5);

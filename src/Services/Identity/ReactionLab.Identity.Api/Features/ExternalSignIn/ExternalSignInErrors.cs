@@ -30,6 +30,10 @@ internal static class ExternalSignInErrors
         "ExternalSignIn.AlreadyLinked",
         "This provider account is already connected to an account. Sign in with it instead.");
 
+    public static readonly Error TakeoverUnavailable = Error.Conflict(
+        "ExternalSignIn.TakeoverUnavailable",
+        "The account at this address was confirmed or changed, so it can only be connected with its password.");
+
     public static string CodeForProviderError(string? error) => error switch
     {
         Errors.AccessDenied => CanceledCode,

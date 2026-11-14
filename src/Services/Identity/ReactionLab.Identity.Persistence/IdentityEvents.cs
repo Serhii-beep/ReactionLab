@@ -22,6 +22,16 @@ public static class IdentityEvents
                 IdentityEventTypes.EmailConfirmationRequested,
                 requested => requested.UserId,
                 IdentityEventJsonContext.Default.EmailConfirmationRequested)
+            .Add(
+                IdentityTopics.Users,
+                IdentityEventTypes.PasswordResetRequested,
+                requested => requested.UserId,
+                IdentityEventJsonContext.Default.PasswordResetRequested)
+            .Add(
+                IdentityTopics.Users,
+                IdentityEventTypes.PasswordChanged,
+                changed => changed.UserId,
+                IdentityEventJsonContext.Default.PasswordChanged)
             .AddState(
                 IdentityTopics.Profiles,
                 IdentityEventTypes.UserProfile,

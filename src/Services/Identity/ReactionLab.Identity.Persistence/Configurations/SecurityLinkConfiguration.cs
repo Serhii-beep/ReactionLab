@@ -16,6 +16,11 @@ internal sealed class SecurityLinkConfiguration : IEntityTypeConfiguration<Secur
         builder.Property(link => link.RequestedAt).HasDefaultValueSql("now()");
         builder.Property(link => link.FirstRequestedAt).HasDefaultValueSql("now()");
 
+        builder.HasIndex(link => link.TokenHash)
+            .HasDatabaseName("ix_security_links_token_hash")
+            .IsUnique()
+            .HasFilter("token_hash IS NOT NULL");
+
         builder.HasOne<User>()
             .WithMany()
             .HasForeignKey(link => link.UserId)

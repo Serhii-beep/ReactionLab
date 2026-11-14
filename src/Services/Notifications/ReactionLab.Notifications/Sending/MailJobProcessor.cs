@@ -15,6 +15,7 @@ internal sealed class MailJobProcessor(
     AppDbContext context,
     ContactDirectory contacts,
     SecurityLinkIssuer securityLinks,
+    PasswordChangeDirectory passwordChanges,
     MailTemplates templates,
     ITranslationCatalog catalog,
     MailRenderer renderer,
@@ -113,7 +114,33 @@ internal sealed class MailJobProcessor(
                 link = new SecurityLinkToken(issued.Token, issued.ExpiresAt.ToDateTimeOffset());
             }
 
-            var rendered = await ComposeAsync(template, contact, displayName, link);
+            var passwordChange = default(RecordedPasswordChange);
+
+            if (template.DescribesPasswordChange)
+            {
+                PasswordChangeDetails? described;
+
+                try
+                {
+                    described = await passwordChanges.FindAsync(job.RecipientId, job.Id, lookup.Token);
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Unimplemented)
+                {
+                    return (await WaitForNewerIdentityAsync(job, ex), false);
+                }
+
+                if (described is null)
+                {
+                    return (await DropAsync(job, MailJobOutcomes.ChangeUnavailable), false);
+                }
+
+                passwordChange = new RecordedPasswordChange(
+                    described.ChangedAt.ToDateTimeOffset(),
+                    described.Browser,
+                    described.OperatingSystem);
+            }
+
+            var rendered = await ComposeAsync(template, contact, displayName, link, passwordChange);
 
             using var message = MailMessages.Create(
                 job.Id,
@@ -138,11 +165,18 @@ internal sealed class MailJobProcessor(
         IMailTemplate template,
         Contact contact,
         string? displayName,
-        SecurityLinkToken? link)
+        SecurityLinkToken? link,
+        RecordedPasswordChange? passwordChange)
     {
         try
         {
-            var recipient = new MailRecipient(displayName, contact.Email, catalog.ResolveLocale(contact.Locale), link);
+            var recipient = new MailRecipient(
+                displayName,
+                contact.Email,
+                catalog.ResolveLocale(contact.Locale),
+                string.IsNullOrEmpty(contact.TimeZone) ? null : contact.TimeZone,
+                link,
+                passwordChange);
 
             return await renderer.RenderAsync(template.Compose(recipient));
         }

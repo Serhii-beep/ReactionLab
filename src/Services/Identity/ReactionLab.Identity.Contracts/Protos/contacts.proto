@@ -1,11 +1,14 @@
 syntax = "proto3";
 
+import "google/protobuf/timestamp.proto";
+
 option csharp_namespace = "ReactionLab.Identity.Contracts.Contacts.V1";
 
 package reactionlab.identity.contacts.v1;
 
 service Contacts {
     rpc GetContact (GetContactRequest) returns (Contact);
+    rpc GetPasswordChange (GetPasswordChangeRequest) returns (PasswordChangeDetails);
 }
 
 message GetContactRequest {
@@ -18,4 +21,16 @@ message Contact {
     bool email_confirmed = 3;
     string display_name = 4;
     string locale = 5;
+    string time_zone = 6;
+}
+
+message GetPasswordChangeRequest {
+    string account_id = 1;
+    string change_id = 2;
+}
+
+message PasswordChangeDetails {
+    google.protobuf.Timestamp changed_at = 1;
+    string browser = 2;
+    string operating_system = 3;
 }

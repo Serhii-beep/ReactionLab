@@ -42,13 +42,18 @@ internal static class AccountSettingsEndpoints
             UpdateProfileHandler handler,
             CancellationToken cancellationToken) =>
         {
-            var command = new UpdateProfileCommand(user.GetAccountId(), request.DisplayName, request.Locale);
+            var command = new UpdateProfileCommand(
+                user.GetAccountId(),
+                request.DisplayName,
+                request.Locale,
+                request.TimeZone);
+
             var result = await handler.HandleAsync(command, cancellationToken);
 
             return result.ToHttpResult();
         })
         .WithName("UpdateProfile")
-        .WithSummary("Change the display name, the preferred locale, or both.")
+        .WithSummary("Change the display name, the preferred locale or the time zone.")
         .Produces<ProfileResponse>()
         .ProducesProblem(StatusCodes.Status400BadRequest)
         .ProducesProblem(StatusCodes.Status401Unauthorized)
@@ -58,6 +63,7 @@ internal static class AccountSettingsEndpoints
         group.MapPost("/password-changes", async (
             ChangePasswordRequest request,
             ClaimsPrincipal user,
+            HttpContext httpContext,
             ChangePasswordHandler handler,
             CancellationToken cancellationToken) =>
         {
@@ -66,7 +72,8 @@ internal static class AccountSettingsEndpoints
                 user.GetSessionId(),
                 user.GetSessionSignIn(),
                 request.CurrentPassword,
-                request.NewPassword);
+                request.NewPassword,
+                httpContext.Request.Headers.UserAgent.ToString());
 
             var result = await handler.HandleAsync(command, cancellationToken);
 

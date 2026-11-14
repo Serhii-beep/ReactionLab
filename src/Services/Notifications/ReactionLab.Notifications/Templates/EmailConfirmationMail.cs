@@ -19,6 +19,8 @@ internal sealed class EmailConfirmationMail(
 
     public SecurityLinkPurpose? LinkPurpose => SecurityLinkPurpose.EmailConfirmation;
 
+    public bool DescribesPasswordChange => false;
+
     public MailContent Compose(MailRecipient recipient)
     {
         var link = recipient.Link ?? throw new InvalidOperationException("A confirmation mail needs its link.");

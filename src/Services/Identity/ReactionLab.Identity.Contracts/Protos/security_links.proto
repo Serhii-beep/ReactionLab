@@ -13,6 +13,7 @@ service SecurityLinks {
 enum SecurityLinkPurpose {
   SECURITY_LINK_PURPOSE_UNSPECIFIED = 0;
   SECURITY_LINK_PURPOSE_EMAIL_CONFIRMATION = 1;
+  SECURITY_LINK_PURPOSE_PASSWORD_RESET = 2;
 }
 
 message IssueSecurityLinkRequest {

@@ -41,6 +41,13 @@ public sealed class MailRenderer(IServiceProvider services, ILoggerFactory logge
                 case MailParagraph paragraph:
                     text.Append(paragraph.Text).Append('\n');
                     break;
+                case MailFacts facts:
+                    foreach (var fact in facts.Facts)
+                    {
+                        text.Append(fact.Label).Append(": ").Append(fact.Value).Append('\n');
+                    }
+
+                    break;
             }
         }
 

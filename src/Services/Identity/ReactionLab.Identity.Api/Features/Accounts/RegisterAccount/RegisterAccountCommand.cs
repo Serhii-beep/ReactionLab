@@ -5,4 +5,5 @@ internal sealed record RegisterAccountCommand(
     string? Password,
     string? DisplayName,
     int? BirthYear,
-    string Locale);
+    string Locale,
+    string? TimeZone);

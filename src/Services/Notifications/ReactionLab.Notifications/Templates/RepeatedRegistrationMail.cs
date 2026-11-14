@@ -17,6 +17,8 @@ internal sealed class RepeatedRegistrationMail(ITranslationCatalog catalog, IOpt
 
     public SecurityLinkPurpose? LinkPurpose => null;
 
+    public bool DescribesPasswordChange => false;
+
     public MailContent Compose(MailRecipient recipient)
     {
         var locale = recipient.Locale;

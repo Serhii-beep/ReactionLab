@@ -11,6 +11,7 @@ internal sealed class ChangePasswordHandler(
     CurrentPasswordCheck currentPasswordCheck,
     NewPasswordCheck newPasswordCheck,
     SecurityStampRotation securityStampRotation,
+    PasswordChanges passwordChanges,
     ILogger<ChangePasswordHandler> logger) : ICommandHandler<ChangePasswordCommand>
 {
     public async ValueTask<Result> HandleAsync(ChangePasswordCommand command, CancellationToken cancellationToken)
@@ -39,11 +40,13 @@ internal sealed class ChangePasswordHandler(
             return Result.Failure(replacementHash.Error);
         }
 
+        var changeId = Guid.CreateVersion7();
         var rotation = await securityStampRotation.ReplacePasswordAsync(
             command.AccountId,
             command.CurrentSessionId,
             verifiedHash.Value,
-            replacementHash.Value);
+            replacementHash.Value,
+            () => passwordChanges.RecordAsync(command.AccountId, changeId, command.UserAgent));
 
         if (!rotation.AccountMatched)
         {

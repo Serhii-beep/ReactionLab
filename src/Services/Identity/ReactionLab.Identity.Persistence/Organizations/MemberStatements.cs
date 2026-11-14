@@ -138,35 +138,6 @@ public static class MemberStatements
             """,
             CancellationToken.None);
 
-    public static async Task<int> EndAccountSessionsAsync(
-        this AppDbContext context,
-        Guid accountId,
-        string securityStamp) =>
-        (await context.Database.SqlQuery<int>(
-            $"""
-            WITH stamped AS (
-                UPDATE users
-                SET security_stamp = {securityStamp},
-                    concurrency_stamp = gen_random_uuid()::text
-                WHERE id = {accountId}
-                RETURNING id),
-            locked AS MATERIALIZED (
-                SELECT id FROM openiddict_authorizations
-                WHERE subject = {accountId.ToString()} AND status = 'valid'
-                ORDER BY id
-                FOR NO KEY UPDATE),
-            ended AS (
-                UPDATE openiddict_authorizations SET status = 'revoked'
-                WHERE id IN (SELECT id FROM locked) AND EXISTS (SELECT 1 FROM stamped)
-                RETURNING id),
-            ended_tokens AS (
-                UPDATE openiddict_tokens SET status = 'revoked'
-                WHERE authorization_id = ANY (ARRAY(SELECT id FROM ended)) AND status = 'valid')
-            SELECT count(*)::int AS "Value" FROM ended
-            """)
-            .ToListAsync(CancellationToken.None))
-            .Single();
-
     public static Task<int> RecordAccountChangeAsync(
         this AppDbContext context,
         Guid accountId,

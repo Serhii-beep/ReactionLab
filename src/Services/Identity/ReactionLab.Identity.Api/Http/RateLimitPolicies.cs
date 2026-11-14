@@ -11,6 +11,8 @@ internal static class RateLimitPolicies
     public const string SignIn = "sign-in";
     public const string Registration = "registration";
     public const string EmailConfirmationRequest = "email-confirmation-request";
+    public const string PasswordResetRequest = "password-reset-request";
+    public const string PasswordReset = "password-reset";
     public const string PasswordChange = "password-change";
     public const string Reauthentication = "reauthentication";
     public const string ExternalRegistration = "external-registration";
@@ -26,6 +28,10 @@ internal static class RateLimitPolicies
     private const int ProcessorsPerRegistration = 4;
     private const int EmailConfirmationRequestsInFlightPerCore = 16;
     private const int QueuedEmailConfirmationRequestsPerCore = 16;
+    private const int PasswordResetRequestsInFlightPerCore = 16;
+    private const int QueuedPasswordResetRequestsPerCore = 16;
+    private const int PasswordResetsInFlightPerCore = 4;
+    private const int QueuedPasswordResetsPerCore = 4;
     private const int QueuedRegistrationsPerPermit = 4;
     private const int ProcessorsPerAccountSetup = 4;
     private const int QueuedAccountSetupsPerPermit = 4;
@@ -65,6 +71,20 @@ internal static class RateLimitPolicies
         {
             limiter.PermitLimit = Environment.ProcessorCount * EmailConfirmationRequestsInFlightPerCore;
             limiter.QueueLimit = Environment.ProcessorCount * QueuedEmailConfirmationRequestsPerCore;
+            limiter.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        });
+
+        options.AddConcurrencyLimiter(PasswordResetRequest, limiter =>
+        {
+            limiter.PermitLimit = Environment.ProcessorCount * PasswordResetRequestsInFlightPerCore;
+            limiter.QueueLimit = Environment.ProcessorCount * QueuedPasswordResetRequestsPerCore;
+            limiter.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        });
+
+        options.AddConcurrencyLimiter(PasswordReset, limiter =>
+        {
+            limiter.PermitLimit = Environment.ProcessorCount * PasswordResetsInFlightPerCore;
+            limiter.QueueLimit = Environment.ProcessorCount * QueuedPasswordResetsPerCore;
             limiter.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
         });
 

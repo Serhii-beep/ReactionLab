@@ -1,6 +1,6 @@
 using System.Security.Cryptography;
 using ReactionLab.Identity.Persistence;
-using ReactionLab.Identity.Persistence.Organizations;
+using ReactionLab.Identity.Persistence.OpenId;
 
 namespace ReactionLab.Identity.Api.Features.Members;
 

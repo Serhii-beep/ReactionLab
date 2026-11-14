@@ -18,9 +18,14 @@ internal sealed class SecurityStampRotation(AppDbContext context)
         Guid accountId,
         Guid currentSessionId,
         string previousHash,
-        string replacementHash) =>
-        RunAsync(accountId, currentSessionId, securityStamp =>
-            context.ReplacePasswordAndSecurityStampAsync(accountId, previousHash, replacementHash, securityStamp));
+        string replacementHash,
+        Func<Task> recordChange) =>
+        RunAsync(
+            accountId,
+            currentSessionId,
+            securityStamp =>
+                context.ReplacePasswordAndSecurityStampAsync(accountId, previousHash, replacementHash, securityStamp),
+            recordChange);
 
     public Task<SecurityStampRotationOutcome> RemoveLoginAsync(
         Guid accountId,
@@ -41,7 +46,8 @@ internal sealed class SecurityStampRotation(AppDbContext context)
     private Task<SecurityStampRotationOutcome> RunAsync(
         Guid accountId,
         Guid currentSessionId,
-        Func<string, Task<string?>> replaceSecurityStamp) =>
+        Func<string, Task<string?>> replaceSecurityStamp,
+        Func<Task>? recordChange = null) =>
         context.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
         {
             var subject = accountId.ToString();
@@ -64,6 +70,11 @@ internal sealed class SecurityStampRotation(AppDbContext context)
                     SessionSecurityStamps.Hash(securityStamp)) == 0)
             {
                 return SecurityStampRotationOutcome.ActingSessionEnded;
+            }
+
+            if (recordChange is not null)
+            {
+                await recordChange();
             }
 
             await transaction.CommitAsync(CancellationToken.None);

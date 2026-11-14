@@ -116,8 +116,7 @@ public sealed class Organization
 
         return trimmed.Length is > 0 and <= MaximumTimeZoneLength
             && trimmed.Split('/').All(segment => segment.Length > 0)
-            && TimeZoneInfo.TryFindSystemTimeZoneById(trimmed, out var zone)
-            && zone.HasIanaId
+            && IanaTimeZones.Find(trimmed) is { } zone
             && zone.Id == trimmed
                 ? trimmed
                 : TimeZoneInvalid;

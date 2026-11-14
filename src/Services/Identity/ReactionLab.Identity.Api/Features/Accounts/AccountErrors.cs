@@ -54,6 +54,10 @@ internal static class AccountErrors
         "Account.PasswordSignInDisabled",
         "Password sign-in is disabled on this account until a reset.");
 
+    public static readonly Error PasswordResetLinkInvalid = Error.NotFound(
+        "Account.PasswordResetLinkInvalid",
+        "This reset link is not valid: it was used, replaced or has expired.");
+
     public static Error Rejected(string description) =>
         Error.Validation("Account.Rejected", description);
 
