@@ -82,9 +82,66 @@ jobs:
       
       - name: Contrast
         run: npm run check:contrast
+      
+      - name: Desktop color tokens
+        run: |
+          npm run desktop-tokens
+          git diff --exit-code -- ../reaction-lab-desktop/render/src/theme_colors.rs
 
       - name: Publish the chemistry engine
         run: npm run chemistry
       
       - name: Build
         run: npm run build
+  desktop:
+    name: Desktop (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    defaults:
+      run:
+        working-directory: reaction-lab-desktop
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      
+      - name: Install the pinned toolchain
+        run: rustup toolchain install
+      
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: reaction-lab-desktop
+      
+      - name: Verify formatting
+        run: cargo fmt --check
+      
+      - name: Clippy
+        run: cargo clippy --all-targets --locked -- -D warnings
+      
+      - name: Build
+        run: cargo build --locked
+      
+      - name: Build the renderer for WebAssembly
+        if: runner.os == 'Linux'
+        run: cargo build --package reaction-lab-render --target wasm32-unknown-unknown --locked
+  desktop-dependencies:
+    name: Desktop dependencies (${{ matrix.checks }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        checks: [advisories, bans licenses sources]
+    continue-on-error: ${{ matrix.checks == 'advisories' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      
+      - name: Check ${{ matrix.checks }}
+        uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          manifest-path: reaction-lab-desktop/Cargo.toml
+          command: check ${{ matrix.checks }}
+          arguments: --all-features --locked

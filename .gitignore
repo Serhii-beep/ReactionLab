@@ -34,6 +34,9 @@ node_modules/
 dist/
 .angular/
 
+# Rust
+target/
+
 # Misc
 *.tmp
 *.temp

@@ -14,7 +14,8 @@
     "format:check": "prettier --check \"src/**/*.{ts,html,scss,json}\"",
     "icons": "node tools/generate-icons.mjs",
     "chemistry": "node tools/publish-chemistry.mjs",
-    "check:contrast": "node tools/check-contrast.mjs"
+    "check:contrast": "node tools/check-contrast.mjs",
+    "desktop-tokens": "node tools/generate-desktop-tokens.mjs"
   },
   "private": true,
   "packageManager": "npm@11.17.0",
@@ -53,6 +54,7 @@
     "eslint-plugin-boundaries": "^7.2.0",
     "jsdom": "^28.0.0",
     "lucide-static": "^1.38.0",
+    "postcss-scss": "^4.0.9",
     "prettier": "^3.9.6",
     "stylelint": "^17.14.1",
     "stylelint-config-standard-scss": "^17.0.0",
