@@ -26,6 +26,7 @@ using ReactionLab.Identity.Api.Features.AccountSetups;
 using ReactionLab.Identity.Api.Features.AccountSetups.CompleteAccountSetup;
 using ReactionLab.Identity.Api.Features.AccountSetups.LookUpAccountSetup;
 using ReactionLab.Identity.Api.Features.AccountSetups.RequestSchoolPasswordReset;
+using ReactionLab.Identity.Api.Features.Erasures;
 using ReactionLab.Identity.Api.Features.ExternalSignIn;
 using ReactionLab.Identity.Api.Features.ExternalSignIn.CompleteExternalSignIn;
 using ReactionLab.Identity.Api.Features.ExternalSignIn.GetExternalIdentity;
@@ -339,6 +340,17 @@ internal static class DependencyInjection
         services.AddScoped<ListOrganizationChangesHandler>();
         services.AddScoped<ListAccountOrganizationsHandler>();
         services.AddScoped<SwitchActiveOrganizationHandler>();
+
+        return services;
+    }
+
+    public static IServiceCollection AddErasures(this IServiceCollection services)
+    {
+        services.TryAddSingleton(TimeProvider.System);
+        services.AddSingleton<ErasureMetrics>();
+        services.AddSingleton<ProfileReconciliation>();
+        services.AddHostedService<ErasureEscalationWorker>();
+        services.AddHostedService<ProfileReconciliationWorker>();
 
         return services;
     }

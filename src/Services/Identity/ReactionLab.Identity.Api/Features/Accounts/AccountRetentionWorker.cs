@@ -1,8 +1,9 @@
 using Microsoft.EntityFrameworkCore;
-using ReactionLab.Identity.Contracts;
 using ReactionLab.Identity.Persistence;
 using ReactionLab.Identity.Persistence.Accounts;
+using ReactionLab.Identity.Persistence.Erasures;
 using ReactionLab.Identity.Persistence.SecurityLinks;
+using ReactionLab.Messaging.Consuming;
 using ReactionLab.Messaging.Outbox;
 
 namespace ReactionLab.Identity.Api.Features.Accounts;
@@ -80,19 +81,25 @@ internal sealed class AccountRetentionWorker(
             timeProvider.GetElapsedTime(startedAt));
     }
 
-    private static Task<int> EraseBatchAsync(AppDbContext context, OutboxWriter outbox) =>
+    private Task<int> EraseBatchAsync(AppDbContext context, OutboxWriter outbox) =>
         context.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
         {
             await using var transaction = await context.Database.BeginTransactionAsync(CancellationToken.None);
 
+            await context.StartTransactionOnServerAsync(CancellationToken.None);
+
             var erased = await context.EraseUnconfirmedAccountsAsync(SecurityLink.EmailConfirmationPeriod);
+            var requestedAt = timeProvider.GetUtcNow();
 
             foreach (var account in erased)
             {
-                await outbox.InsertAsync(
-                    context,
-                    new UserErasureRequested(account.Id, account.Version + 1, OrganizationId: null));
-                await outbox.InsertTombstoneAsync(context, IdentityTopics.Profiles, account.Id);
+                await context.RequestAccountErasureAsync(
+                    outbox,
+                    account.Id,
+                    account.Version + 1,
+                    organizationId: null,
+                    ErasureReasons.NeverConfirmed,
+                    requestedAt);
             }
 
             await transaction.CommitAsync(CancellationToken.None);

@@ -9,10 +9,17 @@ public sealed class ConsumerMetrics
     private readonly Counter<long> _consumed;
     private readonly Counter<long> _deadLettered;
     private readonly Histogram<double> _delay;
+    private int _parked;
 
     public ConsumerMetrics(IMeterFactory meterFactory)
     {
         var meter = meterFactory.Create(MessagingTelemetry.SourceName);
+
+        meter.CreateObservableGauge(
+            "reactionlab.consumer.parked",
+            () => Volatile.Read(ref _parked),
+            "{consumer}",
+            "1 once the consumer has stopped reading after a failure while its service keeps serving, otherwise 0.");
 
         _consumed = meter.CreateCounter<long>(
             "reactionlab.consumer.consumed",
@@ -49,4 +56,6 @@ public sealed class ConsumerMetrics
 
     public void RecordDeadLettered(string topic) =>
         _deadLettered.Add(1, new KeyValuePair<string, object?>("messaging.destination.name", topic));
+
+    public void RecordParked() => Volatile.Write(ref _parked, 1);
 }

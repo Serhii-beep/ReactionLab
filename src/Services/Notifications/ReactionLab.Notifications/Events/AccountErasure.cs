@@ -1,17 +1,24 @@
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using ReactionLab.Identity.Contracts;
 using ReactionLab.Messaging.Consuming;
+using ReactionLab.Messaging.Outbox;
 using ReactionLab.Notifications.Persistence;
 using ReactionLab.Notifications.Persistence.Mail;
 using ReactionLab.Notifications.Persistence.Notices;
 
 namespace ReactionLab.Notifications.Events;
 
-internal sealed class AccountErasure(AppDbContext context, TimeProvider timeProvider)
+internal sealed class AccountErasure(AppDbContext context, OutboxWriter outbox, TimeProvider timeProvider)
 {
     public async Task EraseAsync(ConsumedEvent consumed, CancellationToken cancellationToken)
     {
         var requested = consumed.Read(IdentityEventJsonContext.Default.UserErasureRequested);
+
+        if (requested.UserId.ToString() != consumed.Subject)
+        {
+            throw new JsonException($"{consumed.Type} names another account than its key.");
+        }
 
         await context.Set<MailJob>()
             .Where(job => job.RecipientId == requested.UserId)
@@ -30,5 +37,9 @@ internal sealed class AccountErasure(AppDbContext context, TimeProvider timeProv
             requested.Version,
             timeProvider.GetUtcNow(),
             cancellationToken);
+
+        await outbox.InsertAsync(
+            context,
+            new UserDataErased(requested.UserId, requested.Version, ErasureServices.Notifications));
     }
 }

@@ -1,9 +1,12 @@
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 
 namespace ReactionLab.Messaging.Consuming;
 
 public static class ConsumerStatements
 {
+    private static readonly string[] UnappliableFailures = [typeof(JsonException).FullName!, DeadLetter.MalformedFailure];
+
     public static async Task RecordErasureAsync(
         this DbContext context,
         string subject,
@@ -25,7 +28,7 @@ public static class ConsumerStatements
             .ExecuteDeleteAsync(cancellationToken);
     }
 
-    internal static Task<int> StartTransactionOnServerAsync(
+    public static Task<int> StartTransactionOnServerAsync(
         this DbContext context,
         CancellationToken cancellationToken) =>
         context.Database.ExecuteSqlAsync($"SELECT 1", cancellationToken);
@@ -33,6 +36,7 @@ public static class ConsumerStatements
     internal static async Task<bool> RememberEventAsync(
         this DbContext context,
         ConsumedEvent consumed,
+        bool isErasure,
         DateTimeOffset processedAt,
         CancellationToken cancellationToken)
     {
@@ -45,9 +49,9 @@ public static class ConsumerStatements
                     ON CONFLICT (event_id) DO NOTHING
                     RETURNING event_id)
                 SELECT EXISTS (SELECT FROM remembered)
-                    AND NOT EXISTS (
+                    AND ({isErasure} OR NOT EXISTS (
                         SELECT FROM erasure_markers
-                        WHERE subject = {consumed.Subject} AND version >= {consumed.ReadVersion()}) AS "Value"
+                        WHERE subject = {consumed.Subject} AND version >= {consumed.ReadVersion()})) AS "Value"
                 """)
             .ToListAsync(cancellationToken);
 
@@ -126,7 +130,8 @@ public static class ConsumerStatements
             DELETE FROM dead_letters
             WHERE id IN (
                 SELECT id FROM dead_letters
-                WHERE failed_at < {failedBefore} AND (type IS NULL OR type <> ALL({keptEventTypes}))
+                WHERE failed_at < {failedBefore}
+                    AND (type IS NULL OR type <> ALL({keptEventTypes}) OR failure = ANY({UnappliableFailures}))
                 ORDER BY failed_at
                 LIMIT {PruningWorker.BatchSize}
                 FOR UPDATE SKIP LOCKED)

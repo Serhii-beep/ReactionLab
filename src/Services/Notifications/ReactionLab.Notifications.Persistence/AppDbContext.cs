@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using ReactionLab.Messaging.Consuming;
+using ReactionLab.Messaging.Outbox;
 
 namespace ReactionLab.Notifications.Persistence;
 
@@ -14,5 +15,6 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
         modelBuilder.ApplyConfiguration(new ProcessedEventConfiguration());
         modelBuilder.ApplyConfiguration(new ErasureMarkerConfiguration());
         modelBuilder.ApplyConfiguration(new DeadLetterConfiguration());
+        modelBuilder.ApplyConfiguration(new OutboxMessageConfiguration());
     }
 }

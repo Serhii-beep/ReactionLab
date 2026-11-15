@@ -17,4 +17,6 @@ public sealed class EventConsumerOptions
     public TimeSpan HoldDelay { get; set; } = TimeSpan.FromSeconds(5);
 
     public TimeSpan Retention { get; set; } = TimeSpan.FromDays(40);
+
+    public bool StopHostOnFailure { get; set; } = true;
 }

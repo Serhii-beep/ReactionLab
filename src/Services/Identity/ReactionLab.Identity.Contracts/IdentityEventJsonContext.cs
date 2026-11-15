@@ -16,4 +16,5 @@ namespace ReactionLab.Identity.Contracts;
 [JsonSerializable(typeof(AccountSetupRequested))]
 [JsonSerializable(typeof(UserProfile))]
 [JsonSerializable(typeof(UserErasureRequested))]
+[JsonSerializable(typeof(UserDataErased))]
 public sealed partial class IdentityEventJsonContext : JsonSerializerContext;

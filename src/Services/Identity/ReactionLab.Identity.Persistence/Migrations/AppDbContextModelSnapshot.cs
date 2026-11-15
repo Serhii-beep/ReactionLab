@@ -786,6 +786,94 @@ namespace ReactionLab.Identity.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("ReactionLab.Identity.Persistence.Erasures.AccountErasure", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<DateTimeOffset?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("completed_at");
+
+                    b.Property<DateTimeOffset?>("EscalatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("escalated_at");
+
+                    b.Property<Guid?>("OrganizationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("organization_id");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("reason");
+
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("requested_at");
+
+                    b.Property<long>("Version")
+                        .HasColumnType("bigint")
+                        .HasColumnName("version");
+
+                    b.HasKey("UserId")
+                        .HasName("pk_account_erasures");
+
+                    b.HasIndex("CompletedAt")
+                        .HasDatabaseName("ix_account_erasures_completed_at")
+                        .HasFilter("completed_at IS NOT NULL");
+
+                    b.HasIndex("RequestedAt")
+                        .HasDatabaseName("ix_account_erasures_incomplete_requested_at")
+                        .HasFilter("completed_at IS NULL");
+
+                    b.ToTable("account_erasures", (string)null);
+                });
+
+            modelBuilder.Entity("ReactionLab.Identity.Persistence.Erasures.ErasureConfirmation", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<string>("Service")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("service");
+
+                    b.Property<DateTimeOffset?>("ConfirmedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("confirmed_at");
+
+                    b.HasKey("UserId", "Service")
+                        .HasName("pk_erasure_confirmations");
+
+                    b.ToTable("erasure_confirmations", (string)null);
+                });
+
+            modelBuilder.Entity("ReactionLab.Identity.Persistence.Maintenance.MaintenanceRun", b =>
+                {
+                    b.Property<string>("Name")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("name");
+
+                    b.Property<DateTimeOffset>("DueAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("due_at");
+
+                    b.Property<DateTimeOffset?>("LeasedUntil")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("leased_until");
+
+                    b.HasKey("Name")
+                        .HasName("pk_maintenance_runs");
+
+                    b.ToTable("maintenance_runs", (string)null);
+                });
+
             modelBuilder.Entity("ReactionLab.Identity.Persistence.Organizations.Organization", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1060,6 +1148,117 @@ namespace ReactionLab.Identity.Persistence.Migrations
                     b.ToTable("security_links", (string)null);
                 });
 
+            modelBuilder.Entity("ReactionLab.Messaging.Consuming.DeadLetter", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("EventId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("event_id");
+
+                    b.Property<DateTimeOffset>("FailedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("failed_at");
+
+                    b.Property<string>("Failure")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("failure");
+
+                    b.Property<DateTimeOffset?>("OccurredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("occurred_at");
+
+                    b.Property<long>("Offset")
+                        .HasColumnType("bigint")
+                        .HasColumnName("offset");
+
+                    b.Property<int>("Partition")
+                        .HasColumnType("integer")
+                        .HasColumnName("partition");
+
+                    b.Property<byte[]>("Payload")
+                        .HasColumnType("bytea")
+                        .HasColumnName("payload");
+
+                    b.Property<string>("Subject")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("subject");
+
+                    b.Property<string>("Topic")
+                        .IsRequired()
+                        .HasMaxLength(249)
+                        .HasColumnType("character varying(249)")
+                        .HasColumnName("topic");
+
+                    b.Property<string>("TraceParent")
+                        .HasMaxLength(55)
+                        .HasColumnType("character varying(55)")
+                        .HasColumnName("trace_parent");
+
+                    b.Property<string>("Type")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("type");
+
+                    b.HasKey("Id")
+                        .HasName("pk_dead_letters");
+
+                    b.HasIndex("FailedAt")
+                        .HasDatabaseName("ix_dead_letters_failed_at");
+
+                    b.HasIndex("Subject")
+                        .HasDatabaseName("ix_dead_letters_subject");
+
+                    b.ToTable("dead_letters", (string)null);
+                });
+
+            modelBuilder.Entity("ReactionLab.Messaging.Consuming.ErasureMarker", b =>
+                {
+                    b.Property<string>("Subject")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("subject");
+
+                    b.Property<DateTimeOffset>("ErasedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("erased_at");
+
+                    b.Property<long>("Version")
+                        .HasColumnType("bigint")
+                        .HasColumnName("version");
+
+                    b.HasKey("Subject")
+                        .HasName("pk_erasure_markers");
+
+                    b.HasIndex("ErasedAt")
+                        .HasDatabaseName("ix_erasure_markers_erased_at");
+
+                    b.ToTable("erasure_markers", (string)null);
+                });
+
+            modelBuilder.Entity("ReactionLab.Messaging.Consuming.ProcessedEvent", b =>
+                {
+                    b.Property<Guid>("EventId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("event_id");
+
+                    b.Property<DateTimeOffset>("ProcessedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("processed_at");
+
+                    b.HasKey("EventId")
+                        .HasName("pk_processed_events");
+
+                    b.HasIndex("ProcessedAt")
+                        .HasDatabaseName("ix_processed_events_processed_at");
+
+                    b.ToTable("processed_events", (string)null);
+                });
+
             modelBuilder.Entity("ReactionLab.Messaging.Outbox.OutboxMessage", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1230,6 +1429,16 @@ namespace ReactionLab.Identity.Persistence.Migrations
                         .HasForeignKey("OrganizationId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("fk_users_organizations_organization_id");
+                });
+
+            modelBuilder.Entity("ReactionLab.Identity.Persistence.Erasures.ErasureConfirmation", b =>
+                {
+                    b.HasOne("ReactionLab.Identity.Persistence.Erasures.AccountErasure", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_erasure_confirmations_account_erasures_user_id");
                 });
 
             modelBuilder.Entity("ReactionLab.Identity.Persistence.Organizations.Organization", b =>

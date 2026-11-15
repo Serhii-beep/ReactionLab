@@ -1,11 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace ReactionLab.Messaging.Consuming;
 
 public sealed class DeadLetterReplay<TContext>(
     IServiceProvider services,
+    IOptions<EventConsumerOptions> options,
     TimeProvider timeProvider,
     ILogger<DeadLetterReplay<TContext>> logger)
     where TContext : DbContext
@@ -73,7 +75,11 @@ public sealed class DeadLetterReplay<TContext>(
                 var consumed = letter.ToConsumedEvent()
                     ?? throw new InvalidOperationException("A malformed message can't be replayed.");
 
-                if (await context.RememberEventAsync(consumed, timeProvider.GetUtcNow(), cancellation))
+                if (await context.RememberEventAsync(
+                    consumed,
+                    options.Value.ErasureEventTypes.Contains(consumed.Type),
+                    timeProvider.GetUtcNow(),
+                    cancellation))
                 {
                     await effects.ApplyAsync(consumed, cancellation);
                 }

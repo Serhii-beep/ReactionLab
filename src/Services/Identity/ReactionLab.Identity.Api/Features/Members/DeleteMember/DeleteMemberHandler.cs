@@ -1,5 +1,5 @@
-using ReactionLab.Identity.Contracts;
 using ReactionLab.Identity.Persistence;
+using ReactionLab.Identity.Persistence.Erasures;
 using ReactionLab.Identity.Persistence.Organizations;
 using ReactionLab.Messaging.Outbox;
 using ReactionLab.SharedKernel;
@@ -85,10 +85,13 @@ internal sealed class DeleteMemberHandler(
             return MemberErrors.NotFound;
         }
 
-        await outbox.InsertAsync(
-            context,
-            new UserErasureRequested(command.AccountId, deletedVersion + 1, command.OrganizationId));
-        await outbox.InsertTombstoneAsync(context, IdentityTopics.Profiles, command.AccountId);
+        await context.RequestAccountErasureAsync(
+            outbox,
+            command.AccountId,
+            deletedVersion + 1,
+            command.OrganizationId,
+            ErasureReasons.DeletedBySchool,
+            timeProvider.GetUtcNow());
 
         foreach (var recorded in recordedChanges.Where(change => adminOrganizationIds.Contains(change.OrganizationId)))
         {

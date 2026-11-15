@@ -1,3 +1,4 @@
+using OpenTelemetry.Logs;
 using ReactionLab.Identity.Contracts;
 using ReactionLab.Messaging;
 using ReactionLab.Messaging.Consuming;
@@ -12,6 +13,8 @@ builder.AddServiceDefaults();
 builder.Services.Configure<HostOptions>(options => options.ServicesStopConcurrently = true);
 
 builder.Services.AddPersistence(builder.Configuration);
+builder.Services.AddOutbox(NotificationEvents.Publish);
+builder.AddOutboxRelay<AppDbContext>("kafka", NotificationEvents.Source);
 builder.Services.AddScoped<RepeatedRegistrationNotices>();
 builder.Services.AddScoped<EmailConfirmationRequests>();
 builder.Services.AddScoped<PasswordResetRequests>();
@@ -39,6 +42,8 @@ if (args is [DeadLetterReplay<AppDbContext>.CommandName])
     var replay = host.Services.GetRequiredService<DeadLetterReplay<AppDbContext>>();
 
     Environment.ExitCode = await replay.ReplayAllAsync(CancellationToken.None) ? 0 : 1;
+
+    host.Services.GetService<LoggerProvider>()?.ForceFlush();
 
     return;
 }

@@ -18,6 +18,15 @@ public static class ProfileQueries
                 user.PasswordHash != null))
             .SingleOrDefaultAsync(cancellationToken);
 
+    public static Task<List<Guid>> ListExistingAccountIdsAsync(
+        this AppDbContext context,
+        IReadOnlyCollection<Guid> userIds,
+        CancellationToken cancellationToken) =>
+        context.Users.AsNoTracking()
+            .Where(user => userIds.Contains(user.Id))
+            .Select(user => user.Id)
+            .ToListAsync(cancellationToken);
+
     public static Task<bool> IsSchoolAccountAsync(
         this AppDbContext context,
         Guid userId,

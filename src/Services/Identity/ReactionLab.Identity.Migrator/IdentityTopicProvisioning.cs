@@ -4,6 +4,7 @@ using Confluent.Kafka.Admin;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using ReactionLab.Identity.Contracts;
+using ReactionLab.Identity.Persistence.Erasures;
 using ReactionLab.Messaging.Kafka;
 
 namespace ReactionLab.Identity.Migrator;
@@ -39,7 +40,9 @@ internal sealed class IdentityTopicProvisioning(
             [
                 EventTopic(IdentityTopics.Users),
                 EventTopic(IdentityTopics.Erasure),
-                ProfileTopic(IdentityTopics.Profiles)
+                ProfileTopic(IdentityTopics.Profiles),
+                .. AccountErasure.ConfirmingServices
+                    .Select(service => EventTopic(ErasureTopics.ConfirmationsOf(service)))
             ]);
 
         if (created.Count > 0)

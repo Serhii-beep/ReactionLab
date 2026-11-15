@@ -104,6 +104,13 @@ builder.AddProject<Projects.ReactionLab_Notifications>("notifications-replay")
     .WithExplicitStart()
     .ExcludeFromManifest();
 
+var identityReplay = builder.AddProject<Projects.ReactionLab_Identity_Api>("identity-replay", launchProfileName: null)
+    .WithArgs("replay-dead-letters")
+    .WithReference(identityDatabase, connectionName: "DefaultConnection")
+    .WaitForCompletion(identityMigrator)
+    .WithExplicitStart()
+    .ExcludeFromManifest();
+
 var gateway = builder.AddProject<Projects.ReactionLab_Gateway>("gateway")
     .WithReference(catalog)
     .WithReference(identity)
@@ -112,6 +119,7 @@ var gateway = builder.AddProject<Projects.ReactionLab_Gateway>("gateway")
 var gatewayAddress = gateway.GetEndpoint("https");
 
 identity.WithEnvironment("OpenId__Issuer", gatewayAddress);
+identityReplay.WithEnvironment("OpenId__Issuer", gatewayAddress);
 
 notifications
     .WithEnvironment("OpenId__Issuer", gatewayAddress)
@@ -154,10 +162,15 @@ if (builder.ExecutionContext.IsRunMode)
         .WithEnvironment("Messaging__CreateTopics", "true")
         .WithEnvironment("Messaging__AdminClient__BrokerAddressFamily", "V4");
 
-    identity.WithEnvironment("Aspire__Confluent__Kafka__Producer__Config__BrokerAddressFamily", "V4");
+    identity
+        .WithEnvironment("Aspire__Confluent__Kafka__Producer__Config__BrokerAddressFamily", "V4")
+        .WithEnvironment("Aspire__Confluent__Kafka__Consumer__Config__BrokerAddressFamily", "V4");
+
+    identityReplay.WithEnvironment("ASPNETCORE_ENVIRONMENT", "Development");
 
     notifications
         .WithEnvironment("Mail__RequireTls", "false")
+        .WithEnvironment("Aspire__Confluent__Kafka__Producer__Config__BrokerAddressFamily", "V4")
         .WithEnvironment("Aspire__Confluent__Kafka__Consumer__Config__BrokerAddressFamily", "V4");
 }
 

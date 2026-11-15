@@ -4,6 +4,8 @@ namespace ReactionLab.Messaging.Consuming;
 
 public sealed class DeadLetter
 {
+    internal const string MalformedFailure = "MalformedMessage";
+
     private DeadLetter()
     {
 

@@ -18,8 +18,6 @@ public sealed class EventConsumer<TContext>(
     ILogger<EventConsumer<TContext>> logger) : BackgroundService
     where TContext : DbContext
 {
-    private const string MalformedMessage = "MalformedMessage";
-
     private volatile bool _disposedBeforeStop;
 
     public override void Dispose()
@@ -35,6 +33,8 @@ public sealed class EventConsumer<TContext>(
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        var parked = false;
+
         consumer.Subscribe(options.Value.Topics);
 
         try
@@ -48,6 +48,16 @@ public sealed class EventConsumer<TContext>(
         {
             logger.LogInformation("The event consumer is stopping.");
         }
+        catch (Exception ex) when (!stoppingToken.IsCancellationRequested && !options.Value.StopHostOnFailure)
+        {
+            parked = true;
+            metrics.RecordParked();
+            logger.LogCritical(
+                ex,
+                "The event consumer failed and stopped reading {Topics}. The service keeps serving. Restart it to "
+                + "resume consuming.",
+                string.Join(", ", options.Value.Topics));
+        }
         catch (Exception) when (!stoppingToken.IsCancellationRequested)
         {
             Environment.ExitCode = 1;
@@ -58,8 +68,20 @@ public sealed class EventConsumer<TContext>(
         {
             if (!_disposedBeforeStop)
             {
-                consumer.Close();
+                CloseConsumer(parked);
             }
+        }
+    }
+
+    private void CloseConsumer(bool parked)
+    {
+        try
+        {
+            consumer.Close();
+        }
+        catch (KafkaException ex) when (parked)
+        {
+            logger.LogWarning(ex, "The parked event consumer couldn't leave its group cleanly.");
         }
     }
 
@@ -96,7 +118,7 @@ public sealed class EventConsumer<TContext>(
     {
         if (CloudEventReader.TryRead(result) is not { } consumed)
         {
-            return await TryDeadLetterAsync(result, null, MalformedMessage, stoppingToken);
+            return await TryDeadLetterAsync(result, null, DeadLetter.MalformedFailure, stoppingToken);
         }
 
         if (!options.Value.EventTypes.Contains(consumed.Type))
@@ -157,7 +179,11 @@ public sealed class EventConsumer<TContext>(
 
                 await context.StartTransactionOnServerAsync(cancellation);
 
-                var applies = await context.RememberEventAsync(consumed, timeProvider.GetUtcNow(), cancellation);
+                var applies = await context.RememberEventAsync(
+                    consumed,
+                    options.Value.ErasureEventTypes.Contains(consumed.Type),
+                    timeProvider.GetUtcNow(),
+                    cancellation);
 
                 if (applies)
                 {
