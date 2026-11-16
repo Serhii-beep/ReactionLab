@@ -1,4 +1,5 @@
 using System.Numerics;
+using ReactionLab.Chemistry.Numerics;
 
 namespace ReactionLab.Chemistry.Geometry;
 
@@ -58,7 +59,7 @@ public static class GeometryRelaxation
 
                     var across = Math.Sqrt(
                         (left * left) + (right * right)
-                        - (2 * left * right * Math.Cos(double.DegreesToRadians(degrees))));
+                        - (2 * left * right * PortableTrigonometry.Cos(double.DegreesToRadians(degrees))));
 
                     targets.Add(new DistanceTarget(firstAtom, secondAtom, (float)across, 0.6f, false));
                 }
@@ -132,8 +133,10 @@ public static class GeometryRelaxation
 
             if (!target.FloorOnly || distance < target.Distance)
             {
-                total += target.Weight * Math.Pow(distance - target.Distance, 2);
+                var stretch = (double)(distance - target.Distance);
+                total += target.Weight * (stretch * stretch);
             }
+
         }
 
         return total;
@@ -309,7 +312,7 @@ public static class GeometryRelaxation
         {
             for (var second = first + 1; second < directions.Count; second++)
             {
-                var between = double.RadiansToDegrees(Math.Acos(Math.Clamp(
+                var between = double.RadiansToDegrees(PortableTrigonometry.Acos(Math.Clamp(
                     Vector3.Dot(
                         Vector3.Normalize(directions[first]),
                         Vector3.Normalize(directions[second])), -1f, 1f)));

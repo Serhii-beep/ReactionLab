@@ -50,9 +50,9 @@ public static class Torsion
 
         foreach (var target in targets)
         {
-            if (Dihedral(positions[target.First], positions[target.Second], positions[target.Third], positions[target.Fourth]) is { } angle)
+            if (Dihedral(positions, target) is { } dihedral)
             {
-                total += target.Weight * (1d - Math.Cos(target.Periodicity * (angle - target.PreferredRadians))) / 2d;
+                total += target.Weight * (1d - Phase(dihedral, target).Cosine) / 2d;
             }
         }
 
@@ -77,8 +77,9 @@ public static class Torsion
             }
 
             var axisLength = axis.Length();
-            var angle = MathF.Atan2(axisLength * Vector3.Dot(inbound, farNormal), Vector3.Dot(nearNormal, farNormal));
-            var slope = target.Weight * target.Periodicity * MathF.Sin(target.Periodicity * (angle - target.PreferredRadians)) / 2f;
+            var dihedral = DihedralAngle.Of(
+                axisLength * Vector3.Dot(inbound, farNormal), Vector3.Dot(nearNormal, farNormal));
+            var slope = (float)(target.Weight * target.Periodicity * Phase(dihedral, target).Sine / 2d);
             var towardFirst = -axisLength / nearArea * nearNormal;
             var towardFourth = axisLength / farArea * farNormal;
             var inboundShare = Vector3.Dot(inbound, axis) / (axisLength * axisLength);
@@ -138,8 +139,8 @@ public static class Torsion
             foreach (var right in after)
             {
                 targets.Add(skewed
-                    ? new TorsionTarget(left, bond.From, bond.To, right, 2, MathF.PI / 2f, weight)
-                    : new TorsionTarget(left, bond.From, bond.To, right, 3, MathF.PI, weight));
+                    ? new TorsionTarget(left, bond.From, bond.To, right, 2, DihedralAngle.Perpendicular, weight)
+                    : new TorsionTarget(left, bond.From, bond.To, right, 3, DihedralAngle.Anti, weight));
             }
         }
     }
@@ -157,7 +158,13 @@ public static class Torsion
         foreach (var substituent in substituents)
         {
             targets.Add(new TorsionTarget(
-                substituent, tetrahedral, trigonal, neighbors[trigonal][partner].Atom, 3, 0f, EclipsingWeight / substituents.Count));
+                substituent,
+                tetrahedral,
+                trigonal,
+                neighbors[trigonal][partner].Atom,
+                3,
+                DihedralAngle.Eclipsed,
+                EclipsingWeight / substituents.Count));
         }
     }
 
@@ -173,7 +180,7 @@ public static class Torsion
         {
             foreach (var right in after.Where(atom => heavy[atom] && !Connected(left, atom, bond, neighbors)))
             {
-                targets.Add(new TorsionTarget(left, bond.From, bond.To, right, 1, MathF.PI, AntiWeight));
+                targets.Add(new TorsionTarget(left, bond.From, bond.To, right, 1, DihedralAngle.Anti, AntiWeight));
             }
         }
     }
@@ -202,7 +209,7 @@ public static class Torsion
 
     private static void AddCumulenePairs(List<TorsionTarget> targets, int end, List<int> before, int last, List<int> after, int doubleBonds)
     {
-        var preferred = doubleBonds % 2 == 0 ? MathF.PI / 2f : 0f;
+        var preferred = doubleBonds % 2 == 0 ? DihedralAngle.Perpendicular : DihedralAngle.Eclipsed;
 
         foreach (var left in before)
         {
@@ -262,11 +269,11 @@ public static class Torsion
         return false;
     }
 
-    private static float? Dihedral(Vector3 first, Vector3 second, Vector3 third, Vector3 fourth)
+    private static DihedralAngle? Dihedral(IReadOnlyList<Vector3> positions, TorsionTarget target)
     {
-        var inbound = second - first;
-        var axis = third - second;
-        var outbound = fourth - third;
+        var inbound = positions[target.Second] - positions[target.First];
+        var axis = positions[target.Third] - positions[target.Second];
+        var outbound = positions[target.Fourth] - positions[target.Third];
         var nearNormal = Vector3.Cross(inbound, axis);
         var farNormal = Vector3.Cross(axis, outbound);
 
@@ -275,6 +282,10 @@ public static class Torsion
             return null;
         }
 
-        return MathF.Atan2(axis.Length() * Vector3.Dot(inbound, farNormal), Vector3.Dot(nearNormal, farNormal));
+        return DihedralAngle.Of(axis.Length() * Vector3.Dot(inbound, farNormal), Vector3.Dot(nearNormal, farNormal));
     }
+
+    private static DihedralAngle Phase(DihedralAngle dihedral, TorsionTarget target) =>
+        dihedral.Minus(target.PreferredDihedral).Times(target.Periodicity);
+
 }

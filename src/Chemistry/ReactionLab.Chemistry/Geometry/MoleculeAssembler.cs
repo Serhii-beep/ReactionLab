@@ -1,4 +1,5 @@
 using System.Numerics;
+using ReactionLab.Chemistry.Numerics;
 
 namespace ReactionLab.Chemistry.Geometry;
 
@@ -178,8 +179,9 @@ public static class MoleculeAssembler
             return frame;
         }
 
-        var turn = Quaternion.CreateFromAxisAngle(
-            axis, MathF.Atan2(Vector3.Dot(axis, Vector3.Cross(slot, anti)), Vector3.Dot(slot, anti)));
+        var turn = RotationAbout(
+            axis, PortableTrigonometry.Atan2(Vector3.Dot(axis, Vector3.Cross(slot, anti)), Vector3.Dot(slot, anti)));
+
 
         return [.. frame.Select(direction => Vector3.Transform(direction, turn))];
     }
@@ -208,10 +210,16 @@ public static class MoleculeAssembler
                 axis = Vector3.Cross(from, Vector3.UnitY);
             }
 
-            return Quaternion.CreateFromAxisAngle(Vector3.Normalize(axis), MathF.PI);
+            return RotationAbout(Vector3.Normalize(axis), Math.PI);
         }
 
-        return Quaternion.CreateFromAxisAngle(
-            Vector3.Normalize(Vector3.Cross(from, to)), MathF.Acos(dot));
+        return RotationAbout(Vector3.Normalize(Vector3.Cross(from, to)), PortableTrigonometry.Acos(dot));
+    }
+
+    private static Quaternion RotationAbout(Vector3 axis, double radians)
+    {
+        var (sine, cosine) = PortableTrigonometry.SinCos(radians / 2d);
+
+        return new Quaternion(axis * (float)sine, (float)cosine);
     }
 }

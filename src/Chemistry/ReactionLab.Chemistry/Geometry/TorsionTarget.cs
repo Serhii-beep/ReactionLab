@@ -6,5 +6,5 @@ public readonly record struct TorsionTarget(
     int Third,
     int Fourth,
     int Periodicity,
-    float PreferredRadians,
+    DihedralAngle PreferredDihedral,
     float Weight);
