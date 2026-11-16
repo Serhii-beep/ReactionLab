@@ -1,0 +1,16 @@
+[package]
+name = "reaction-lab-chemistry"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+
+[dependencies]
+libloading = "0.9"
+thiserror = "2"
+
+[lints.rust]
+unsafe_code = "deny"
+
+[lints.clippy]
+undocumented_unsafe_blocks = "deny"

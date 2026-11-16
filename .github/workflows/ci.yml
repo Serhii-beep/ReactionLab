@@ -93,6 +93,7 @@ jobs:
       
       - name: Build
         run: npm run build
+
   desktop:
     name: Desktop (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
@@ -127,6 +128,15 @@ jobs:
       - name: Build the renderer for WebAssembly
         if: runner.os == 'Linux'
         run: cargo build --package reaction-lab-render --target wasm32-unknown-unknown --locked
+      
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+      
+      - name: Publish the native chemistry engine
+        run: dotnet publish ../src/Chemistry/ReactionLab.Chemistry.Native -c Release --use-current-runtime
+        
   desktop-dependencies:
     name: Desktop dependencies (${{ matrix.checks }})
     runs-on: ubuntu-latest

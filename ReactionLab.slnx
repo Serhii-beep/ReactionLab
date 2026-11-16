@@ -22,6 +22,8 @@
   </Folder>
   <Folder Name="/src/Chemistry/">
     <Project Path="src/Chemistry/ReactionLab.Chemistry.Browser/ReactionLab.Chemistry.Browser.csproj" />
+    <Project Path="src/Chemistry/ReactionLab.Chemistry.Interop/ReactionLab.Chemistry.Interop.csproj" />
+    <Project Path="src/Chemistry/ReactionLab.Chemistry.Native/ReactionLab.Chemistry.Native.csproj" />
     <Project Path="src/Chemistry/ReactionLab.Chemistry/ReactionLab.Chemistry.csproj" />
   </Folder>
   <Folder Name="/src/Gateway/">
